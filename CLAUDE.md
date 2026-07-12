@@ -1,5 +1,21 @@
 # Shattab — Claude Code Context
 
+## Quick Summary (for ChatGPT 🤖)
+**Shattab (شطب)** — Flutter marketplace for Egyptian home renovation.
+
+**Two user types:**
+- **Homeowner** → posts renovation jobs, gets quotes, hires contractors, leaves reviews
+- **Contractor** → finds matching jobs, sends quotes, manages portfolio, gets hired
+
+**User flow:**
+1. Sign up via phone OTP (+20 Egypt only) → pick role → fill onboarding
+2. **Homeowner:** Browse contractors → view profiles → send direct request OR post public job → receive & manage quotes → accept/decline → review contractor
+3. **Contractor:** View matched job opportunities → send quotes → manage portfolio (Tab 3) → receive direct requests in inbox (Tab 2) → get hired
+
+**Key rules:** No in-app chat (WhatsApp/Call only). Arabic-first RTL. Flutter 3.41 + Supabase + Riverpod 3.x + go_router 17.
+
+---
+
 ## Project
 **Shattab (شطب)** — Egyptian contractor hiring marketplace. Homeowners post renovation jobs; contractors quote and get hired.
 
@@ -42,7 +58,8 @@ Auth (phone OTP), onboarding flows for both roles, role-aware routing, core them
 **Contact:** all contact via WhatsApp/Call deep links (no in-app chat).
 **DB:** `briefs` table + `saved_contractors` + `brief-photos` storage bucket (migration `0004`).
 
-### M3 Contractor Core — 🔴 NOT STARTED (design approved, spec below)
+### M3 Contractor Core — ✅ DONE (2026-06-25, code-complete) — see `docs/m3-completion.md`
+Quotes (send/receive/accept/decline), contractor inbox (Tab 2), portfolio management (Tab 3), homeowner quote views, flutter_animate motion + shimmer skeletons. Migration `0005_quotes` applied live on Supabase `ajqdutehxpbbflzdovhw` (2026-06-25, via MCP).
 ### M4 Comm & Polish — not started (chat, push, reviews — deferred)
 
 ---

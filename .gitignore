@@ -49,6 +49,11 @@ app.*.map.json
 .env.local
 *.env.local
 
+# Android signing — never commit keystore or passwords
+**/key.properties
+*.jks
+*.keystore
+
 # Generated Dart code (committed only at release time)
 *.g.dart
 *.freezed.dart
@@ -59,4 +64,7 @@ app.*.map.json
 
 # Stitch design tool refs
 .stitch-refs/
+
+# opencode config (may contain API keys)
+opencode.json
 

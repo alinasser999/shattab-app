@@ -2,12 +2,14 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/l10n/strings.dart';
 import '../../../core/theme/batsh_colors.dart';
 import '../../../core/theme/batsh_radius.dart';
 import '../../../core/theme/batsh_spacing.dart';
 import '../../../core/theme/batsh_typography.dart';
 import '../../../core/widgets/batsh_error.dart';
 import '../../../core/widgets/batsh_loading.dart';
+import '../../../core/utils/error_mapper.dart';
 import 'providers/portfolio_providers.dart';
 
 class ProjectDetailScreen extends ConsumerWidget {
@@ -23,10 +25,13 @@ class ProjectDetailScreen extends ConsumerWidget {
       backgroundColor: BatshColors.background,
       body: async.when(
         loading: () => const BatshLoading(),
-        error: (e, _) => BatshError(message: e.toString()),
+        error: (e, _) => BatshError(
+              message: ErrorMapper.map(e),
+              onRetry: () => ref.invalidate(portfolioProjectProvider(projectId)),
+            ),
         data: (project) {
           if (project == null) {
-            return const BatshError(message: 'العمل مش موجود');
+            return BatshError(message: S.projectNotFound);
           }
           return CustomScrollView(
             slivers: [
@@ -40,9 +45,12 @@ class ProjectDetailScreen extends ConsumerWidget {
                   background: Stack(
                     fit: StackFit.expand,
                     children: [
-                      CachedNetworkImage(
-                        imageUrl: project.coverPhotoUrl,
-                        fit: BoxFit.cover,
+                      Hero(
+                        tag: 'portfolio-${project.id}',
+                        child: CachedNetworkImage(
+                          imageUrl: project.coverPhotoUrl,
+                          fit: BoxFit.cover,
+                        ),
                       ),
                       DecoratedBox(
                         decoration: BoxDecoration(
@@ -93,17 +101,17 @@ class ProjectDetailScreen extends ConsumerWidget {
                           if (project.location != null)
                             _MetaItem(
                                 icon: Icons.place_outlined,
-                                label: 'المكان',
+                                label: S.projectLocationLabel,
                                 value: project.location!),
                           if (project.yearCompleted != null)
                             _MetaItem(
                                 icon: Icons.event_outlined,
-                                label: 'سنة التنفيذ',
+                                label: S.projectYearLabel,
                                 value: '${project.yearCompleted}'),
                           if (project.apartmentType != null)
                             _MetaItem(
                                 icon: Icons.home_outlined,
-                                label: 'نوع الوحدة',
+                                label: S.apartmentTypeLabel,
                                 value: project.apartmentType!),
                         ],
                       ),

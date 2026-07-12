@@ -11,14 +11,14 @@ import '../../domain/onboarding_models.dart';
 
 part 'onboarding_provider.g.dart';
 
-@riverpod
+@Riverpod(keepAlive: true)
 Future<HomeownerProfile?> homeownerProfile(Ref ref) async {
   final session = ref.watch(currentSessionProvider);
   if (session == null) return null;
   return ref.watch(onboardingRepositoryProvider).fetchHomeowner(session.user.id);
 }
 
-@riverpod
+@Riverpod(keepAlive: true)
 Future<ContractorProfile?> contractorProfile(Ref ref) async {
   final session = ref.watch(currentSessionProvider);
   if (session == null) return null;
@@ -127,6 +127,33 @@ class OnboardingController extends _$OnboardingController {
           bio: bio,
         );
     ref.invalidate(contractorProfileProvider);
+  }
+
+  /// Edit-profile save: update showcase text fields in one upsert.
+  /// Pass only the fields being changed; nulls are skipped by the repo.
+  Future<void> saveShowcase({
+    String? businessName,
+    String? headline,
+    String? bio,
+    int? yearsExperience,
+  }) async {
+    await ref.read(onboardingRepositoryProvider).upsertContractor(
+          profileId: _requireUserId(),
+          businessName: businessName,
+          headline: headline,
+          bio: bio,
+          yearsExperience: yearsExperience,
+        );
+    ref.invalidate(contractorProfileProvider);
+  }
+
+  Future<String?> uploadCover(File file) async {
+    final userId = _requireUserId();
+    final repo = ref.read(onboardingRepositoryProvider);
+    final url = await repo.uploadContractorCover(profileId: userId, file: file);
+    await repo.upsertContractor(profileId: userId, coverPhotoUrl: url);
+    ref.invalidate(contractorProfileProvider);
+    return url;
   }
 
   Future<void> markComplete() async {

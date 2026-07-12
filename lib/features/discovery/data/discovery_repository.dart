@@ -28,8 +28,11 @@ class DiscoveryRepository {
   DiscoveryRepository(this._client);
   final SupabaseClient _client;
 
+  // `reviews!reviews_contractor_id_fkey` disambiguates the embed — reviews has
+  // two FKs to profiles (contractor_id + homeowner_id), so the contractor one
+  // must be named explicitly.
   static const String _joinedColumns =
-      'id, full_name, phone, contractor_profiles!inner(business_name, bio, logo_url, cover_photo_url, headline, specialties, service_areas, years_experience, projects_completed, response_rate)';
+      'id, full_name, phone, contractor_profiles!inner(business_name, bio, logo_url, cover_photo_url, headline, specialties, service_areas, years_experience, projects_completed, response_rate), reviews!reviews_contractor_id_fkey(rating)';
 
   Future<List<ContractorListing>> fetchContractors(
       DiscoveryFilters filters) async {

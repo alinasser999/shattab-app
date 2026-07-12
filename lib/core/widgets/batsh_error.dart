@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 import '../l10n/strings.dart';
 import '../theme/batsh_colors.dart';
@@ -18,34 +19,90 @@ class BatshError extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
+    final reduced = MediaQuery.of(context).disableAnimations;
+
+    final icon = Semantics(
+      label: S.errServerError,
+      child: const Icon(
+        Icons.error_outline_rounded,
+        color: BatshColors.error,
+        size: 48,
+      ),
+    );
+
+    final animatedIcon = reduced
+        ? icon
+        : icon.animate().shake(duration: 500.ms).scale(
+              begin: const Offset(0.8, 0.8),
+              end: const Offset(1, 1),
+              duration: 400.ms,
+              curve: Curves.elasticOut,
+            );
+
+    return Semantics(
+      label: message ?? S.errServerError,
+      child: Center(
       child: Padding(
         padding: const EdgeInsets.all(BatshSpacing.lg),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(
-              Icons.error_outline_rounded,
-              color: BatshColors.error,
-              size: 48,
-            ),
+            animatedIcon,
             const SizedBox(height: BatshSpacing.gutter),
-            Text(
-              message ?? S.unknownErrorRetry,
-              textAlign: TextAlign.center,
-              style: BatshTypography.bodyLg,
-            ),
+            _AnimatedText(message: message ?? S.unknownErrorRetry, reduced: reduced),
             if (onRetry != null) ...[
               const SizedBox(height: BatshSpacing.lg),
-              BatshButton(
-                label: 'حاول تاني',
-                onPressed: onRetry,
-                fullWidth: false,
-              ),
+              _AnimatedButton(onRetry: onRetry, reduced: reduced),
             ],
           ],
         ),
       ),
+      ),
     );
+  }
+}
+
+class _AnimatedText extends StatelessWidget {
+  const _AnimatedText({required this.message, required this.reduced});
+  final String message;
+  final bool reduced;
+
+  @override
+  Widget build(BuildContext context) {
+    final widget = Text(
+      message,
+      textAlign: TextAlign.center,
+      style: BatshTypography.bodyLg,
+    );
+    if (reduced) return widget;
+    return widget.animate().fadeIn(duration: 300.ms).slideY(
+          begin: 0.1,
+          end: 0,
+          duration: 300.ms,
+          curve: Curves.easeOut,
+        );
+  }
+}
+
+class _AnimatedButton extends StatelessWidget {
+  const _AnimatedButton({required this.onRetry, required this.reduced});
+  final VoidCallback? onRetry;
+  final bool reduced;
+
+  @override
+  Widget build(BuildContext context) {
+    final widget = SizedBox(
+      child: BatshButton(
+        label: S.tryAgain,
+        onPressed: onRetry,
+        fullWidth: false,
+      ),
+    );
+    if (reduced) return widget;
+    return widget.animate().fadeIn(
+          duration: 400.ms,
+          delay: 150.ms,
+          curve: Curves.easeOut,
+        );
   }
 }

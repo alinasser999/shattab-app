@@ -1,10 +1,12 @@
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
-import '../../features/briefs/presentation/providers/briefs_providers.dart';
+import '../l10n/strings.dart';
+import '../models/draft_photo.dart';
 import '../theme/batsh_colors.dart';
 import '../theme/batsh_radius.dart';
 import '../theme/batsh_spacing.dart';
@@ -72,7 +74,7 @@ class _PhotoPickerState extends State<PhotoPicker> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
-          'صور (${_photos.length}/${widget.maxPhotos})',
+          '${S.photos} (${_photos.length}/${widget.maxPhotos})',
           style: BatshTypography.labelMd
               .copyWith(color: BatshColors.onSurfaceVariant),
         ),
@@ -148,7 +150,11 @@ class _PhotoTile extends StatelessWidget {
     } else if (photo.bytes != null) {
       image = Image.memory(photo.bytes!, fit: BoxFit.cover);
     } else if (photo.url != null) {
-      image = Image.network(photo.url!, fit: BoxFit.cover);
+      image = CachedNetworkImage(
+          imageUrl: photo.url!,
+          fit: BoxFit.cover,
+          placeholder: (_, _) => Container(color: BatshColors.surfaceContainer),
+          errorWidget: (_, _, _) => Container(color: BatshColors.surfaceContainer));
     } else {
       image = const SizedBox.shrink();
     }
@@ -202,7 +208,11 @@ class PhotoGallery extends StatelessWidget {
             width: 200,
             height: 160,
             color: BatshColors.surfaceContainer,
-            child: Image.network(urls[i], fit: BoxFit.cover),
+            child: CachedNetworkImage(
+                      imageUrl: urls[i],
+                      fit: BoxFit.cover,
+                      placeholder: (_, _) => const SizedBox.shrink(),
+                      errorWidget: (_, _, _) => const SizedBox.shrink()),
           ),
         ),
       ),

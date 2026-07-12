@@ -22,6 +22,7 @@ class Brief {
     required this.createdAt,
     this.targetContractorId,
     this.district,
+    this.hiredAt,
   });
 
   final String id;
@@ -36,9 +37,19 @@ class Brief {
   final BriefStatus status;
   final DateTime createdAt;
 
+  /// Set once the homeowner accepts a quote (migration 0009). A hired brief is
+  /// closed: no more quotes, no accept/decline.
+  final DateTime? hiredAt;
+
   /// True when this brief was published as a public job post (no specific
   /// contractor target). False when it was sent to one specific contractor.
   bool get isPost => targetContractorId == null;
+
+  /// True once a quote has been accepted on this brief.
+  bool get isHired => hiredAt != null;
+
+  /// True while the brief is still taking quotes.
+  bool get isActive => status == BriefStatus.open && !isHired;
 
   factory Brief.fromJson(Map<String, dynamic> json) => Brief(
         id: json['id'] as String,
@@ -56,5 +67,8 @@ class Brief {
             ((json['target_specialties'] as List?) ?? const []).cast<String>(),
         status: BriefStatus.fromString(json['status'] as String),
         createdAt: DateTime.parse(json['created_at'] as String),
+        hiredAt: json['hired_at'] == null
+            ? null
+            : DateTime.parse(json['hired_at'] as String),
       );
 }

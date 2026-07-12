@@ -14,7 +14,17 @@ String? roleGuard(Ref ref, GoRouterState state) {
   final session = ref.read(currentSessionProvider);
 
   if (session == null) {
-    return path.startsWith('/login') ? null : Routes.login;
+    if (path.startsWith('/login')) return null;
+    // Guests may browse the homeowner shell (Discover, contractor profiles,
+    // portfolios) freely — sign-in is gated at the point of a write action
+    // (save / send request / create post), not at the app door.
+    if (path.startsWith(Routes.homeownerShell)) return null;
+    // Contractors still need to sign in up front — no anonymous browsing
+    // on that side.
+    if (path.startsWith(Routes.contractorShell)) return Routes.login;
+    // Splash (first launch) or any other unmatched path: land guests in
+    // Discover instead of forcing the login wall.
+    return Routes.homeownerDiscover;
   }
 
   final profileAsync = ref.read(currentProfileProvider);
@@ -28,6 +38,16 @@ String? roleGuard(Ref ref, GoRouterState state) {
     return path == Routes.onboardingRoleSelect
         ? null
         : Routes.onboardingRoleSelect;
+  }
+
+  // A brand-new, trigger-created profile has an empty full_name and role
+  // defaulted to homeowner. Anyone who entered through the /login flow (e.g.
+  // tapped "sign in as contractor") must pick their role first. A guest who
+  // signed in mid-browse via the sheet keeps their place — the sheet collects
+  // the name inline and never routes here.
+  if (profile.fullName.trim().isEmpty) {
+    if (path == Routes.onboardingRoleSelect) return null;
+    if (path.startsWith('/login')) return Routes.onboardingRoleSelect;
   }
 
   if (!profile.onboardingComplete) {
@@ -69,20 +89,17 @@ String? roleGuard(Ref ref, GoRouterState state) {
 String _nextOnboardingStep(Ref ref, Profile profile) {
   if (profile.role == UserRole.homeowner) {
     final ho = ref.read(homeownerProfileProvider).value;
-    if (ho == null || !ho.hasApartmentType) {
-      return Routes.onboardingHomeownerApartment;
+    if (ho == null || !ho.hasApartmentType || !ho.hasInterests) {
+      return Routes.onboardingHomeownerDetails;
     }
-    if (!ho.hasLocation) return Routes.onboardingHomeownerLocation;
-    if (!ho.hasInterests) return Routes.onboardingHomeownerInterests;
-    return Routes.onboardingHomeownerInterests;
+    return Routes.onboardingHomeownerLocation;
   }
   final co = ref.read(contractorProfileProvider).value;
   if (co == null || !co.hasBusinessName) {
-    return Routes.onboardingContractorBusiness;
+    return Routes.onboardingContractorProfile;
   }
-  if (!co.hasSpecialties) return Routes.onboardingContractorSpecialties;
-  if (!co.hasServiceAreas) return Routes.onboardingContractorAreas;
-  if (co.logoUrl == null) return Routes.onboardingContractorLogo;
-  if (!co.hasExperience) return Routes.onboardingContractorExperience;
-  return Routes.onboardingContractorExperience;
+  if (!co.hasSpecialties || !co.hasServiceAreas) {
+    return Routes.onboardingContractorServices;
+  }
+    return Routes.onboardingContractorExperience;
 }

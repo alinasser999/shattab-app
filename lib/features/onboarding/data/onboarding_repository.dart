@@ -56,6 +56,8 @@ class OnboardingRepository {
     required String profileId,
     String? businessName,
     String? logoUrl,
+    String? coverPhotoUrl,
+    String? headline,
     String? bio,
     List<String>? specialties,
     List<String>? serviceAreas,
@@ -64,6 +66,8 @@ class OnboardingRepository {
     final payload = <String, dynamic>{'profile_id': profileId};
     if (businessName != null) payload['business_name'] = businessName;
     if (logoUrl != null) payload['logo_url'] = logoUrl;
+    if (coverPhotoUrl != null) payload['cover_photo_url'] = coverPhotoUrl;
+    if (headline != null) payload['headline'] = headline;
     if (bio != null) payload['bio'] = bio;
     if (specialties != null) payload['specialties'] = specialties;
     if (serviceAreas != null) payload['service_areas'] = serviceAreas;
@@ -99,6 +103,21 @@ class OnboardingRepository {
           fileOptions: const FileOptions(upsert: true),
         );
     return _client.storage.from('contractor-logos').getPublicUrl(path);
+  }
+
+  Future<String> uploadContractorCover({
+    required String profileId,
+    required File file,
+  }) async {
+    final path = '$profileId/cover.jpg';
+    await _client.storage.from('contractor-logos').upload(
+          path,
+          file,
+          fileOptions: const FileOptions(upsert: true),
+        );
+    // Cache-bust so a re-upload to the same path refreshes in CachedNetworkImage.
+    final url = _client.storage.from('contractor-logos').getPublicUrl(path);
+    return '$url?v=${DateTime.now().millisecondsSinceEpoch}';
   }
 }
 

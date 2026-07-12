@@ -2,12 +2,14 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 import '../../features/discovery/domain/contractor_listing.dart';
+import '../l10n/strings.dart';
 import '../../features/onboarding/domain/onboarding_models.dart';
 import '../theme/batsh_colors.dart';
 import '../theme/batsh_radius.dart';
 import '../theme/batsh_shadows.dart';
 import '../theme/batsh_spacing.dart';
 import '../theme/batsh_typography.dart';
+import 'batsh_shimmer.dart';
 
 /// Large editorial-style card for the discover feed. Cover image + avatar +
 /// name + headline + stats row + chips. LinkedIn-meets-Behance vibe.
@@ -143,6 +145,8 @@ class _CoverWithAvatar extends StatelessWidget {
               ? CachedNetworkImage(
                   imageUrl: listing.coverPhotoUrl!,
                   fit: BoxFit.cover,
+                  placeholder: (_, _) =>
+                      const ColoredBox(color: BatshColors.surfaceContainer),
                   errorWidget: (_, _, _) => const _CoverFallback(),
                 )
               : const _CoverFallback(),
@@ -173,8 +177,9 @@ class _CoverWithAvatar extends StatelessWidget {
               color: Colors.white.withValues(alpha: 0.92),
               shape: const CircleBorder(),
               child: IconButton(
+                tooltip: isSaved ? S.unsaveTooltip : S.saveTooltip,
                 icon: Icon(
-                  isSaved ? Icons.favorite : Icons.favorite_border,
+                  isSaved ? Icons.bookmark : Icons.bookmark_border,
                   size: 18,
                   color: isSaved
                       ? BatshColors.primary
@@ -182,7 +187,7 @@ class _CoverWithAvatar extends StatelessWidget {
                 ),
                 onPressed: onToggleSave,
                 constraints:
-                    const BoxConstraints(minWidth: 36, minHeight: 36),
+                    const BoxConstraints(minWidth: 44, minHeight: 44),
                 padding: EdgeInsets.zero,
                 visualDensity: VisualDensity.compact,
               ),
@@ -205,7 +210,11 @@ class _CoverWithAvatar extends StatelessWidget {
                 color: BatshColors.surfaceContainer,
                 child: listing.logoUrl != null
                     ? CachedNetworkImage(
-                        imageUrl: listing.logoUrl!, fit: BoxFit.cover)
+                        imageUrl: listing.logoUrl!,
+                        fit: BoxFit.cover,
+                        placeholder: (_, _) => const ColoredBox(
+                            color: BatshColors.surfaceContainer),
+                      )
                     : const Icon(Icons.engineering_outlined,
                         color: BatshColors.primary, size: 28),
               ),
@@ -221,18 +230,7 @@ class _CoverFallback extends StatelessWidget {
   const _CoverFallback();
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topRight,
-          end: Alignment.bottomLeft,
-          colors: [
-            BatshColors.primaryContainer,
-            BatshColors.tertiaryContainer,
-          ],
-        ),
-      ),
-    );
+    return const BatshGradientFallback();
   }
 }
 
@@ -242,23 +240,29 @@ class _MicroStats extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isNew = listing.reviewCount == 0;
     return Row(
       children: [
-        _StatChip(
-            icon: Icons.star,
-            iconColor: BatshColors.tertiary,
-            label: listing.computedRating.toStringAsFixed(1)),
+        isNew
+            ? _StatChip(
+                icon: Icons.auto_awesome,
+                iconColor: BatshColors.secondary,
+                label: S.newBadge)
+            : _StatChip(
+                icon: Icons.star,
+                iconColor: BatshColors.tertiary,
+                label: listing.displayRating.toStringAsFixed(1)),
         const SizedBox(width: BatshSpacing.sm),
         _StatChip(
             icon: Icons.home_work_outlined,
             iconColor: BatshColors.primary,
-            label: '${listing.projectsCompleted} مشروع'),
+            label: '${listing.projectsCompleted} ${S.singleProject}'),
         if (listing.yearsExperience != null) ...[
           const SizedBox(width: BatshSpacing.sm),
           _StatChip(
               icon: Icons.workspace_premium_outlined,
               iconColor: BatshColors.secondary,
-              label: '${listing.yearsExperience} سنة'),
+              label: '${listing.yearsExperience} ${S.year}'),
         ],
       ],
     );

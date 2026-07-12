@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../data/auth_repository.dart';
+import '../../../../core/utils/error_mapper.dart';
 
 part 'otp_provider.g.dart';
 
@@ -73,7 +74,7 @@ class OtpController extends _$OtpController {
     } catch (e) {
       state = state.copyWith(
         isSending: false,
-        errorMessage: e.toString(),
+        errorMessage: ErrorMapper.map(e),
       );
       return false;
     }
@@ -92,7 +93,7 @@ class OtpController extends _$OtpController {
     } catch (e) {
       state = state.copyWith(
         isVerifying: false,
-        errorMessage: e.toString(),
+        errorMessage: ErrorMapper.map(e),
       );
       return false;
     }

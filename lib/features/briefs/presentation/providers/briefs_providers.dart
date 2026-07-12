@@ -1,9 +1,7 @@
-import 'dart:io';
-import 'dart:typed_data';
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../../../core/models/draft_photo.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../onboarding/domain/onboarding_models.dart';
 import '../../data/briefs_repository.dart';
@@ -29,14 +27,6 @@ Future<List<Brief>> contractorOpportunities(Ref ref) =>
 @riverpod
 Future<List<Brief>> contractorDirectBriefs(Ref ref) =>
     ref.watch(briefsRepositoryProvider).fetchDirectBriefsForContractor();
-
-class DraftPhoto {
-  const DraftPhoto({this.file, this.bytes, this.url});
-  final File? file;
-  final Uint8List? bytes;
-  final String? url;
-  bool get isLocal => file != null || bytes != null;
-}
 
 @riverpod
 class BriefsController extends _$BriefsController {

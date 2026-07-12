@@ -3,11 +3,14 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:flutter_animate/flutter_animate.dart';
+
 import '../../../../core/l10n/strings.dart';
 import '../../../../core/router/routes.dart';
 import '../../../../core/theme/batsh_spacing.dart';
 import '../../../../core/theme/batsh_typography.dart';
-import '../../../../core/utils/extensions.dart';
+import '../../../../core/theme/batsh_motion.dart';
+import '../../../../core/utils/error_mapper.dart';
 import '../../../../core/widgets/batsh_button.dart';
 import '../../../../core/widgets/batsh_scaffold.dart';
 import '../../../../core/widgets/batsh_text_field.dart';
@@ -38,7 +41,7 @@ class _ExperienceScreenState extends ConsumerState<ExperienceScreen> {
     final years = int.tryParse(_yearsCtrl.text.trim());
     final bio = _bioCtrl.text.trim();
     if (years == null || years < 0 || years > 80) {
-      setState(() => _error = 'سنين خبرة غير صحيحة');
+      setState(() => _error = S.yearsExperienceInvalid);
       return;
     }
     setState(() {
@@ -51,6 +54,8 @@ class _ExperienceScreenState extends ConsumerState<ExperienceScreen> {
       await controller.markComplete();
       if (!mounted) return;
       context.go(Routes.contractorDashboard);
+    } catch (e) {
+      setState(() => _error = ErrorMapper.map(e));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -66,8 +71,6 @@ class _ExperienceScreenState extends ConsumerState<ExperienceScreen> {
       if (existing.bio != null) _bioCtrl.text = existing.bio!;
       _hydrated = true;
     }
-    final isMobile = context.isMobile;
-
     return BatshScaffold(
       title: S.experienceTitle,
       body: SingleChildScrollView(
@@ -77,9 +80,7 @@ class _ExperienceScreenState extends ConsumerState<ExperienceScreen> {
             const SizedBox(height: BatshSpacing.md),
             Text(
               S.experienceTitle,
-              style: isMobile
-                  ? BatshTypography.headlineLgMobile
-                  : BatshTypography.headlineLg,
+              style: BatshTypography.headlineLg,
             ),
             const SizedBox(height: BatshSpacing.lg),
             BatshTextField(
@@ -107,7 +108,14 @@ class _ExperienceScreenState extends ConsumerState<ExperienceScreen> {
               isLoading: _busy,
             ),
             const SizedBox(height: BatshSpacing.lg),
-          ],
+          ].animate(interval: 60.ms).fadeIn(
+            duration: BatshMotion.slow,
+            curve: BatshMotion.easeOut,
+          ).slideY(
+            begin: 0.08,
+            end: 0,
+            curve: BatshMotion.easeOut,
+          ),
         ),
       ),
     );

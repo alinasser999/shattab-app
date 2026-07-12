@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart' as intl;
 
 import '../../features/briefs/domain/brief.dart';
+import '../l10n/strings.dart';
 import '../theme/batsh_colors.dart';
 import '../theme/batsh_radius.dart';
 import '../theme/batsh_spacing.dart';
@@ -116,13 +117,13 @@ class _StatusBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final (label, color, bg) = switch (status) {
       BriefStatus.cancelled => (
-        'ملغي',
+        S.statusCancelled,
         BatshColors.onSurfaceVariant,
         BatshColors.surfaceContainerHigh
       ),
       BriefStatus.open => isPost
-          ? ('بوست مفتوح', BatshColors.tertiary, BatshColors.tertiaryFixed)
-          : ('طلب مباشر', BatshColors.primary, BatshColors.primaryFixed),
+          ? (S.statusOpen, BatshColors.tertiary, BatshColors.tertiaryFixed)
+          : (S.statusDirect, BatshColors.primary, BatshColors.primaryFixed),
     };
     return Container(
       padding:

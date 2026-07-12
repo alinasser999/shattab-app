@@ -35,10 +35,10 @@ class SavedRepository {
 
   Future<void> save(
       {required String homeownerId, required String contractorId}) async {
-    await _client.from('saved_contractors').insert({
+    await _client.from('saved_contractors').upsert({
       'homeowner_id': homeownerId,
       'contractor_id': contractorId,
-    });
+    }, onConflict: 'homeowner_id, contractor_id');
   }
 
   Future<void> unsave(

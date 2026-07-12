@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/l10n/strings.dart';
+import '../../../../core/models/draft_photo.dart';
 import '../../../../core/router/routes.dart';
 import '../../../../core/theme/batsh_colors.dart';
+import '../../../../core/theme/batsh_motion.dart';
 import '../../../../core/theme/batsh_spacing.dart';
 import '../../../../core/theme/batsh_typography.dart';
 import '../../../../core/widgets/batsh_button.dart';
@@ -12,6 +16,9 @@ import '../../../../core/widgets/batsh_loading.dart';
 import '../../../../core/widgets/batsh_scaffold.dart';
 import '../../../../core/widgets/batsh_text_field.dart';
 import '../../../../core/widgets/photo_picker.dart';
+import '../../../../core/utils/error_mapper.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../auth/presentation/sign_in_sheet.dart';
 import '../../../discovery/presentation/providers/discovery_providers.dart';
 import '../../../onboarding/domain/onboarding_models.dart';
 import '../../../onboarding/presentation/providers/onboarding_provider.dart';
@@ -43,13 +50,18 @@ class _SendBriefScreenState extends ConsumerState<SendBriefScreen> {
   }
 
   Future<void> _submit() async {
+    if (ref.read(currentSessionProvider) == null) {
+      await showSignInSheet(context, reason: S.signInToSendRequest);
+      if (!mounted) return;
+      if (ref.read(currentSessionProvider) == null) return;
+    }
     final desc = _descCtrl.text.trim();
     if (desc.length < 10) {
-      setState(() => _error = 'اكتب وصف للشغل على الأقل من ١٠ حروف');
+      setState(() => _error = S.errorDescriptionShort);
       return;
     }
     if (_apartmentType == null || _city == null) {
-      setState(() => _error = 'املا نوع الشقة والمحافظة');
+      setState(() => _error = S.errorFillApartmentCity);
       return;
     }
     setState(() {
@@ -69,7 +81,7 @@ class _SendBriefScreenState extends ConsumerState<SendBriefScreen> {
       context.go(Routes.homeownerBriefSentPath(widget.contractorId));
     } catch (e) {
       if (!mounted) return;
-      setState(() => _error = e.toString());
+      setState(() => _error = ErrorMapper.map(e));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -88,56 +100,66 @@ class _SendBriefScreenState extends ConsumerState<SendBriefScreen> {
       _hydrated = true;
     }
 
+    final reduced = MediaQuery.of(context).disableAnimations;
+    final items = <Widget>[
+      const SizedBox(height: BatshSpacing.md),
+      Text(S.sendBriefProjectDetails,
+          style: BatshTypography.headlineMd),
+      const SizedBox(height: BatshSpacing.xs),
+      Text(S.sendBriefAllDetailsHint,
+          style: BatshTypography.bodyMd.copyWith(
+              color: BatshColors.onSurfaceVariant)),
+      const SizedBox(height: BatshSpacing.lg),
+      _ApartmentTypeRow(
+        selected: _apartmentType,
+        onSelect: (t) => setState(() => _apartmentType = t),
+      ),
+      const SizedBox(height: BatshSpacing.gutter),
+      _CityRow(
+        selected: _city,
+        onSelect: (c) => setState(() {
+          _city = c;
+          _district = null;
+        }),
+      ),
+      const SizedBox(height: BatshSpacing.gutter),
+      BatshTextField(
+        controller: _descCtrl,
+        label: S.sendBriefWorkDescLabel,
+        hint: S.sendBriefWorkDescHint,
+        maxLines: 6,
+        maxLength: 2000,
+        errorText: _error,
+      ),
+      const SizedBox(height: BatshSpacing.gutter),
+      PhotoPicker(
+        onChanged: (p) => _photos = p,
+      ),
+      const SizedBox(height: BatshSpacing.md),
+      Text(
+        S.phoneVisibleContractor,
+        style: BatshTypography.labelMd
+            .copyWith(color: BatshColors.onSurfaceVariant),
+      ),
+      const SizedBox(height: BatshSpacing.lg),
+      if (_busy) const BatshLoading() else BatshButton(
+        label: S.sendBriefButton,
+        onPressed: _submit,
+      ),
+      const SizedBox(height: BatshSpacing.lg),
+    ];
     return BatshScaffold(
-      title: contractor?.businessName ?? 'ابعت تفاصيل المشروع',
+      title: contractor?.businessName ?? S.sendBriefDefaultTitle,
       body: ListView(
-        children: [
-          const SizedBox(height: BatshSpacing.md),
-          Text('تفاصيل مشروعك',
-              style: BatshTypography.headlineMd),
-          const SizedBox(height: BatshSpacing.xs),
-          Text('ابعت كل التفاصيل اللي محتاج المقاول يعرفها',
-              style: BatshTypography.bodyMd.copyWith(
-                  color: BatshColors.onSurfaceVariant)),
-          const SizedBox(height: BatshSpacing.lg),
-          _ApartmentTypeRow(
-            selected: _apartmentType,
-            onSelect: (t) => setState(() => _apartmentType = t),
-          ),
-          const SizedBox(height: BatshSpacing.gutter),
-          _CityRow(
-            selected: _city,
-            onSelect: (c) => setState(() {
-              _city = c;
-              _district = null;
-            }),
-          ),
-          const SizedBox(height: BatshSpacing.gutter),
-          BatshTextField(
-            controller: _descCtrl,
-            label: 'وصف الشغل المطلوب',
-            hint: 'مثال: محتاج تشطيب كامل…',
-            maxLines: 6,
-            maxLength: 2000,
-            errorText: _error,
-          ),
-          const SizedBox(height: BatshSpacing.gutter),
-          PhotoPicker(
-            onChanged: (p) => _photos = p,
-          ),
-          const SizedBox(height: BatshSpacing.md),
-          Text(
-            'رقم تليفونك هيظهر للمقاول لما يستلم الطلب.',
-            style: BatshTypography.labelMd
-                .copyWith(color: BatshColors.onSurfaceVariant),
-          ),
-          const SizedBox(height: BatshSpacing.lg),
-          if (_busy) const BatshLoading() else BatshButton(
-            label: 'ابعت الطلب',
-            onPressed: _submit,
-          ),
-          const SizedBox(height: BatshSpacing.lg),
-        ],
+        children: reduced
+            ? items
+            : items.animate(interval: BatshMotion.staggerBase).fadeIn(
+                  duration: BatshMotion.normal,
+                ).slideY(
+                  begin: 0.06,
+                  end: 0,
+                  curve: BatshMotion.easeOut,
+                ),
       ),
     );
   }
@@ -153,7 +175,7 @@ class _ApartmentTypeRow extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text('نوع الشقة',
+        Text(S.apartmentTypeLabel,
             style: BatshTypography.labelMd
                 .copyWith(color: BatshColors.onSurfaceVariant)),
         const SizedBox(height: BatshSpacing.sm),
@@ -184,7 +206,7 @@ class _CityRow extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text('المحافظة',
+        Text(S.cityLabel,
             style: BatshTypography.labelMd
                 .copyWith(color: BatshColors.onSurfaceVariant)),
         const SizedBox(height: BatshSpacing.sm),

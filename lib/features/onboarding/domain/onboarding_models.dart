@@ -69,7 +69,7 @@ class HomeownerProfile {
         district: json['district'] as String?,
         renovationInterests:
             ((json['renovation_interests'] as List?) ?? const [])
-                .cast<String>(),
+                .map((e) => e as String).toList(),
       );
 }
 
@@ -123,9 +123,9 @@ class ContractorProfile {
         logoUrl: json['logo_url'] as String?,
         bio: json['bio'] as String?,
         specialties:
-            ((json['specialties'] as List?) ?? const []).cast<String>(),
+            ((json['specialties'] as List?) ?? const []).map((e) => e as String).toList(),
         serviceAreas:
-            ((json['service_areas'] as List?) ?? const []).cast<String>(),
+            ((json['service_areas'] as List?) ?? const []).map((e) => e as String).toList(),
         yearsExperience: json['years_experience'] as int?,
       );
 }

@@ -1,19 +1,28 @@
-/// Spacing scale on an 8px baseline grid.
-/// Use these instead of literal pixel values everywhere.
+/// 8dp spacing system — clean, consistent, premium.
+/// Every value follows an 8/4 increment rhythm.
 class BatshSpacing {
   const BatshSpacing._();
 
-  static const double xs = 4;
-  static const double sm = 8;
-  static const double md = 12;
-  static const double gutter = 16;
+  static const double xxxs = 2;
+  static const double xxs = 4;
+  static const double xs = 8;
+  static const double sm = 12;
+  static const double md = 16;
+  static const double ml = 20;
   static const double lg = 24;
-  static const double xl = 40;
-  static const double xxl = 64;
+  static const double xl = 32;
+  static const double xxl = 40;
+  static const double xxxl = 48;
+  static const double xxxxl = 64;
+  static const double huge = 80;
 
-  /// Side margin inside mobile screens (per Stitch spec).
-  static const double marginMobile = 20;
+  // Semantic aliases
+  static const double gutter = ml;
+  static const double sectionV = xxxl;
+  static const double sectionH = lg;
+  static const double cardPadding = md;
+  static const double marginMobile = md;
 
-  /// Minimum touch target per Stitch spec.
+  // Touch
   static const double minHitArea = 48;
 }

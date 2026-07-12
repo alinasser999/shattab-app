@@ -1,0 +1,289 @@
+Launching lib\main.dart on Chrome in debug mode...
+Waiting for connection from debug service on Chrome...             90.4s
+
+Flutter run key commands.
+r Hot reload. 
+R Hot restart.
+h List all available interactive commands.
+d Detach (terminate "flutter run" but leave application running).
+c Clear the screen
+q Quit (terminate the application on the device).
+
+This app is linked to the debug service: ws://127.0.0.1:50164/Y3iksW3ht9s=/ws
+Debug service listening on ws://127.0.0.1:50164/Y3iksW3ht9s=/ws
+A Dart VM Service on Chrome is available at: http://127.0.0.1:50164/Y3iksW3ht9s=
+The Flutter DevTools debugger and profiler on Chrome is available at: http://127.0.0.1:50164/Y3iksW3ht9s=/devtools/?uri=ws://127.0.0.1:50164/Y3iksW3ht9s=/ws
+Starting application from main method in: org-dartlang-app:/web_entrypoint.dart.
+supabase.supabase_flutter: INFO: ***** Supabase init completed ***** 
+supabase.auth: INFO: Signing out user with scope: SignOutScope.local 
+══╡ EXCEPTION CAUGHT BY SCHEDULER LIBRARY ╞═════════════════════════════════════════════════════════
+The following assertion was thrown during a scheduler callback:
+There are multiple heroes that share the same tag within a subtree.
+Within each subtree for which heroes are to be animated (i.e. a PageRoute subtree), each Hero must
+have a unique non-null tag.
+In this case, multiple heroes had the following tag: <default FloatingActionButton tag>
+├# Here is the subtree for one of the offending heroes: Hero
+
+When the exception was thrown, this was the stack:
+dart-sdk/lib/_internal/js_dev_runtime/private/ddc_runtime/errors.dart 274:3       throw_
+package:flutter/src/widgets/heroes.dart 289:11                                    <fn>
+package:flutter/src/widgets/heroes.dart 304:16                                    inviteHero
+package:flutter/src/widgets/heroes.dart 332:13                                    visitor
+package:flutter/src/widgets/framework.dart 7101:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 5871:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 7101:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 7101:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 5871:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 7101:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 5871:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 7101:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 5871:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 7223:9                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 5871:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 5871:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 5871:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 7223:9                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 5871:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 5871:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 5871:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 5871:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 5871:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 7101:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 5871:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 7101:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 5871:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 5871:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 5871:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 5871:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 5871:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 5871:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 5871:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 5871:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 5871:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 5871:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 7101:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 5871:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 7101:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 7101:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 5871:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 7101:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 5871:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 7101:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 5871:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 7101:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 5871:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 7101:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 5871:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 5871:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 5871:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 5871:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 5871:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 5871:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 7101:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 5871:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 5871:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 5871:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 5871:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 5871:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 7101:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 5871:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 5871:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 5871:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 5871:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 5871:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 7223:9                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 5871:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 5871:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 5871:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 5871:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 5871:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 5871:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 5871:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 7101:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 7101:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 5871:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 5871:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 5871:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 5871:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 5871:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 5871:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 5871:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 5871:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 5871:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 5871:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 7101:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 5871:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 5871:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 5871:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 7101:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 7101:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 5871:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 5871:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 7223:9                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 5871:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 5871:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 5871:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 5871:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 5871:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 5871:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 5871:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 7223:9                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 5871:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 5871:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 5871:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 5871:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 5871:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 7101:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 5871:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 7101:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 5871:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 5871:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 5871:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 5871:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 5871:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 5871:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 5871:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 5871:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 5871:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 5871:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 7101:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 5871:7                                 visitChildren
+package:flutter/src/widgets/heroes.dart 338:14                                    visitor
+package:flutter/src/widgets/framework.dart 7101:7                                 visitChildren
+package:flutter/src/widgets/framework.dart 3934:5                                 visitChildElements
+package:flutter/src/widgets/heroes.dart 341:12                                    _allHeroesFor
+package:flutter/src/widgets/heroes.dart 1016:16                                   [_startHeroTransition]
+package:flutter/src/widgets/heroes.dart 972:9                                     <fn>
+package:flutter/src/scheduler/binding.dart 1430:7                                 [_invokeFrameCallback]
+package:flutter/src/scheduler/binding.dart 1357:11                                handleDrawFrame
+package:flutter/src/scheduler/binding.dart 1198:5                                 [_handleDrawFrame]
+dart-sdk/lib/_internal/js_dev_runtime/private/ddc_runtime/operations.dart 118:77  tear
+lib/_engine/engine/platform_dispatcher.dart 1700:5                                invoke
+lib/_engine/engine/platform_dispatcher.dart 268:5                                 invokeOnDrawFrame
+lib/_engine/engine/frame_service.dart 209:32                                      [_renderFrame]
+lib/_engine/engine/frame_service.dart 117:9                                       <fn>
+dart-sdk/lib/async/zone.dart 962:54                                               runUnary
+dart-sdk/lib/async/zone.dart 917:26                                               <fn>
+dart-sdk/lib/_internal/js_dev_runtime/patch/js_allow_interop_patch.dart 218:27    _callDartFunctionFast1
+dart-sdk/lib/_internal/js_dev_runtime/patch/js_allow_interop_patch.dart 78:15     ret
+════════════════════════════════════════════════════════════════════════════════════════════════════
+supabase.auth: INFO: Signing out user with scope: SignOutScope.local 
+Another exception was thrown: There are multiple heroes that share the same tag within a subtree.

@@ -31,7 +31,6 @@ class CurrentProfile extends _$CurrentProfile {
   }
 
   Future<void> refresh() async {
-    state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
       final session = ref.read(currentSessionProvider);
       if (session == null) return null;

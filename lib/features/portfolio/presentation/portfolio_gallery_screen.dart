@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/l10n/strings.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/batsh_colors.dart';
 import '../../../core/theme/batsh_radius.dart';
@@ -11,9 +12,10 @@ import '../../../core/theme/batsh_spacing.dart';
 import '../../../core/theme/batsh_typography.dart';
 import '../../../core/widgets/batsh_empty_state.dart';
 import '../../../core/widgets/batsh_error.dart';
-import '../../../core/widgets/batsh_loading.dart';
 import '../../../core/widgets/batsh_scaffold.dart';
+import '../../../core/widgets/batsh_shimmer.dart';
 import '../../discovery/presentation/providers/discovery_providers.dart';
+import '../../../core/utils/error_mapper.dart';
 import '../domain/portfolio_project.dart';
 import 'providers/portfolio_providers.dart';
 
@@ -30,44 +32,56 @@ class PortfolioGalleryScreen extends ConsumerWidget {
         ref.watch(portfolioForContractorProvider(contractorId));
 
     return BatshScaffold(
-      title: 'معرض الأعمال',
+      title: S.portfolioGalleryTitle,
       body: projectsAsync.when(
-        loading: () => const BatshLoading(),
-        error: (e, _) => BatshError(message: e.toString()),
+        loading: () => const _GallerySkeleton(),
+        error: (e, _) => BatshError(
+              message: ErrorMapper.map(e),
+              onRetry: () =>
+                  ref.invalidate(portfolioForContractorProvider(contractorId)),
+            ),
         data: (projects) {
-          if (projects.isEmpty) {
-            return const BatshEmptyState(
-              title: 'مفيش أعمال متضافة لسه',
-              message: 'المقاول هيضيف شغله هنا قريب.',
-              icon: Icons.photo_library_outlined,
-            );
-          }
-          return ListView(
-            padding:
-                const EdgeInsets.symmetric(vertical: BatshSpacing.md),
-            children: [
-              if (contractor != null) ...[
-                Padding(
-                  padding: const EdgeInsets.only(bottom: BatshSpacing.md),
-                  child: Text(
-                    contractor.businessName.isNotEmpty
-                        ? contractor.businessName
-                        : contractor.fullName,
-                    style: BatshTypography.titleLg
-                        .copyWith(color: BatshColors.onSurfaceVariant),
+          return RefreshIndicator(
+            onRefresh: () async =>
+                ref.invalidate(portfolioForContractorProvider(contractorId)),
+            child: projects.isEmpty
+                ? ListView(
+                    children: [
+                      BatshEmptyState(
+                        title: S.noWorksTitle,
+                        message: S.noWorksMessage,
+                        icon: Icons.photo_library_outlined,
+                      ),
+                    ],
+                  )
+                : ListView(
+                    padding: const EdgeInsets.symmetric(
+                        vertical: BatshSpacing.md),
+                    children: [
+                      if (contractor != null) ...[
+                        Padding(
+                          padding: const EdgeInsets.only(
+                              bottom: BatshSpacing.md),
+                          child: Text(
+                            contractor.businessName.isNotEmpty
+                                ? contractor.businessName
+                                : contractor.fullName,
+                            style: BatshTypography.titleLg.copyWith(
+                                color: BatshColors.onSurfaceVariant),
+                          ),
+                        ),
+                      ],
+                      for (final p in projects) ...[
+                        _ProjectMagazineCard(
+                          project: p,
+                          onTap: () => context.push(
+                              Routes.homeownerProjectDetailPath(
+                                  contractorId, p.id)),
+                        ),
+                        const SizedBox(height: BatshSpacing.lg),
+                      ],
+                    ],
                   ),
-                ),
-              ],
-              for (final p in projects) ...[
-                _ProjectMagazineCard(
-                  project: p,
-                  onTap: () => context.push(
-                      Routes.homeownerProjectDetailPath(
-                          contractorId, p.id)),
-                ),
-                const SizedBox(height: BatshSpacing.lg),
-              ],
-            ],
           );
         },
       ),
@@ -95,6 +109,8 @@ class _ProjectMagazineCard extends StatelessWidget {
               aspectRatio: 16 / 11,
               child: DecoratedBox(
                 decoration: BoxDecoration(boxShadow: BatshShadows.soft),
+                child: Hero(
+                tag: 'portfolio-${project.id}',
                 child: CachedNetworkImage(
                   imageUrl: project.coverPhotoUrl,
                   fit: BoxFit.cover,
@@ -106,6 +122,7 @@ class _ProjectMagazineCard extends StatelessWidget {
                     ),
                   ),
                 ),
+              ),
               ),
             ),
             Padding(
@@ -176,6 +193,41 @@ class _Specs extends StatelessWidget {
                       color: BatshColors.onSurfaceVariant)),
             ],
           ),
+      ],
+    );
+  }
+}
+
+class _GallerySkeleton extends StatelessWidget {
+  const _GallerySkeleton();
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      padding: const EdgeInsets.symmetric(vertical: BatshSpacing.md),
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: BatshSpacing.marginMobile),
+          child: BatshShimmerBox(width: 180, height: 18, borderRadius: BatshRadius.brSm),
+        ),
+        const SizedBox(height: BatshSpacing.md),
+        for (var i = 0; i < 3; i++) ...[
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: BatshSpacing.marginMobile),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                BatshShimmerBox(width: double.infinity, height: 180, borderRadius: BatshRadius.brLg),
+                const SizedBox(height: BatshSpacing.gutter),
+                BatshShimmerBox(width: 100, height: 12, borderRadius: BatshRadius.brSm),
+                const SizedBox(height: BatshSpacing.xs),
+                BatshShimmerBox(width: 200, height: 18, borderRadius: BatshRadius.brSm),
+                const SizedBox(height: BatshSpacing.xs),
+                BatshShimmerBox(width: double.infinity, height: 14, borderRadius: BatshRadius.brSm),
+              ],
+            ),
+          ),
+          const SizedBox(height: BatshSpacing.lg),
+        ],
       ],
     );
   }

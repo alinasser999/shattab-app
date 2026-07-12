@@ -1,0 +1,1988 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>شطب — لوحة التحكم</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+Arabic:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --brand: #9e3d18;
+  --brand-light: #c44a1e;
+  --brand-dark: #7a2e12;
+  --brand-bg: #fff5f0;
+  --brand-50: #fef3ee;
+  --brand-100: #fde4d7;
+  --brand-200: #fac5a9;
+  --brand-300: #f6a078;
+  --brand-400: #f27b4a;
+  --brand-500: #ee5a24;
+  --brand-600: #c44a1e;
+  --brand-700: #9e3d18;
+  --brand-800: #7a2e12;
+  --brand-900: #5a200c;
+  --olive: #5c614d;
+  --olive-light: #e0e5cc;
+  --gold: #735c00;
+  --gold-light: #ffe088;
+  --white: #ffffff;
+  --bg: #f6f5f3;
+  --bg-card: #ffffff;
+  --bg-sidebar: #1a1815;
+  --bg-sidebar-hover: #2a2723;
+  --bg-sidebar-active: #9e3d18;
+  --text: #1f1b14;
+  --text-secondary: #6b6558;
+  --text-muted: #9c9588;
+  --text-inverse: #ffffff;
+  --text-sidebar: #b0a99c;
+  --text-sidebar-active: #ffffff;
+  --border: #ebe6dc;
+  --border-light: #f3f0e9;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+  --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 6px rgba(0,0,0,0.05), 0 2px 4px rgba(0,0,0,0.04);
+  --shadow-lg: 0 10px 15px rgba(0,0,0,0.05), 0 4px 6px rgba(0,0,0,0.04);
+  --shadow-xl: 0 20px 25px rgba(0,0,0,0.06), 0 10px 10px rgba(0,0,0,0.04);
+  --radius-sm: 6px;
+  --radius: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
+  --sidebar-w: 260px;
+  --sidebar-collapsed-w: 64px;
+  --topbar-h: 64px;
+  --font-ui: 'Inter', -apple-system, sans-serif;
+  --font-arabic: 'Noto Sans Arabic', 'Inter', -apple-system, sans-serif;
+  --transition: 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --transition-fast: 0.15s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+.dark {
+  --bg: #141210;
+  --bg-card: #1f1d19;
+  --bg-sidebar: #0f0e0c;
+  --bg-sidebar-hover: #2a2723;
+  --bg-sidebar-active: #9e3d18;
+  --text: #f0ece0;
+  --text-secondary: #aea799;
+  --text-muted: #7a7568;
+  --border: #333028;
+  --border-light: #2a2723;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.2);
+  --shadow: 0 1px 3px rgba(0,0,0,0.3);
+  --shadow-md: 0 4px 6px rgba(0,0,0,0.3);
+  --shadow-lg: 0 10px 15px rgba(0,0,0,0.3);
+  --shadow-xl: 0 20px 25px rgba(0,0,0,0.4);
+  --brand-bg: #1f0e08;
+  --brand-50: #2a1209;
+}
+html { font-size: 15px; }
+body {
+  font-family: var(--font-arabic);
+  background: var(--bg);
+  color: var(--text);
+  overflow: hidden;
+  height: 100vh;
+  transition: background var(--transition), color var(--transition);
+}
+a { text-decoration: none; color: inherit; }
+button { cursor: pointer; font-family: inherit; border: none; background: none; }
+input, select, textarea { font-family: inherit; }
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+/* Layout */
+.app-layout { display: flex; height: 100vh; }
+.sidebar {
+  width: var(--sidebar-w);
+  background: var(--bg-sidebar);
+  color: var(--text-sidebar);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  transition: width var(--transition);
+  overflow: hidden;
+  z-index: 100;
+  position: relative;
+}
+.sidebar.collapsed { width: var(--sidebar-collapsed-w); }
+.sidebar-brand {
+  height: var(--topbar-h);
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  gap: 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  flex-shrink: 0;
+}
+.sidebar-brand .brand-icon {
+  width: 32px; height: 32px;
+  background: var(--brand);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 800;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+.sidebar-brand .brand-name {
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--text-inverse);
+  white-space: nowrap;
+  overflow: hidden;
+}
+.sidebar.collapsed .brand-name { display: none; }
+.sidebar-nav {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 10px;
+}
+.sidebar-section { margin-bottom: 8px; }
+.sidebar-section-title {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  padding: 8px 12px 4px;
+  opacity: 0.6;
+  white-space: nowrap;
+}
+.sidebar.collapsed .sidebar-section-title { display: none; }
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 12px;
+  border-radius: var(--radius-sm);
+  color: var(--text-sidebar);
+  font-size: 13.5px;
+  font-weight: 400;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+  cursor: pointer;
+  position: relative;
+}
+.sidebar-link i {
+  width: 20px;
+  text-align: center;
+  font-size: 15px;
+  flex-shrink: 0;
+}
+.sidebar-link:hover { background: var(--bg-sidebar-hover); color: var(--text-inverse); }
+.sidebar-link.active { background: var(--bg-sidebar-active); color: var(--text-sidebar-active); font-weight: 500; }
+.sidebar.collapsed .sidebar-link { justify-content: center; padding: 9px 0; }
+.sidebar.collapsed .sidebar-link span { display: none; }
+.sidebar-badge {
+  margin-right: auto;
+  background: var(--brand);
+  color: white;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1px 7px;
+  border-radius: 10px;
+  min-width: 18px;
+  text-align: center;
+}
+.sidebar.collapsed .sidebar-badge { display: none; }
+.sidebar-toggle {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 48px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  color: var(--text-sidebar);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+.sidebar-toggle:hover { background: var(--bg-sidebar-hover); }
+
+/* Topbar */
+.main-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.topbar {
+  height: var(--topbar-h);
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+  gap: 16px;
+  flex-shrink: 0;
+  transition: background var(--transition), border var(--transition);
+}
+.topbar-search {
+  flex: 1;
+  max-width: 420px;
+  position: relative;
+}
+.topbar-search i {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  font-size: 14px;
+}
+.topbar-search input {
+  width: 100%;
+  height: 38px;
+  padding: 0 36px 0 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 13px;
+  outline: none;
+  transition: all var(--transition-fast);
+}
+.topbar-search input:focus { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(158,61,24,0.1); }
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  transition: all var(--transition-fast);
+}
+.theme-toggle:hover { background: var(--bg); color: var(--text); }
+.notif-btn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  transition: all var(--transition-fast);
+}
+.notif-btn:hover { background: var(--bg); color: var(--text); }
+.notif-dot {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 8px;
+  height: 8px;
+  background: var(--brand);
+  border-radius: 50%;
+  border: 2px solid var(--bg-card);
+}
+.notif-panel {
+  position: absolute;
+  top: calc(var(--topbar-h) - 8px);
+  left: 16px;
+  width: 380px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xl);
+  display: none;
+  z-index: 200;
+  max-height: 480px;
+  overflow-y: auto;
+}
+.notif-panel.show { display: block; }
+.notif-panel-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.notif-panel-header h3 { font-size: 14px; font-weight: 600; }
+.notif-panel-header a { font-size: 12px; color: var(--brand); }
+.notif-item {
+  padding: 12px 20px;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  transition: background var(--transition-fast);
+  cursor: pointer;
+}
+.notif-item:hover { background: var(--brand-50); }
+.notif-item.unread { background: var(--brand-50); }
+.notif-item-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 13px;
+  background: var(--brand-100);
+  color: var(--brand);
+}
+.notif-item-content { flex: 1; min-width: 0; }
+.notif-item-content p { font-size: 13px; line-height: 1.4; }
+.notif-item-content .time { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+.profile-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  transition: background var(--transition-fast);
+}
+.profile-btn:hover { background: var(--bg); }
+.profile-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--brand);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 13px;
+}
+.profile-info { text-align: right; }
+.profile-info .name { font-size: 13px; font-weight: 500; }
+.profile-info .role { font-size: 11px; color: var(--text-muted); }
+
+/* Main Content */
+.content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+}
+.page { display: none; animation: fadeIn 0.35s ease; }
+.page.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes slideUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes countUp { from { opacity: 0; } to { opacity: 1; } }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+@keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+
+/* KPI Cards */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.kpi-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  transition: all var(--transition);
+}
+.kpi-card:hover {
+  box-shadow: var(--shadow-md);
+  border-color: var(--border);
+}
+.kpi-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+.kpi-card-header .label {
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+.kpi-card-header .icon {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+.kpi-value {
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.2;
+  margin-bottom: 4px;
+}
+.kpi-change {
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.kpi-change.up { color: #16a34a; }
+.kpi-change.down { color: #dc2626; }
+.kpi-change.neutral { color: var(--text-muted); }
+
+/* Charts Section */
+.charts-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.chart-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  transition: all var(--transition);
+}
+.chart-card:hover { box-shadow: var(--shadow-md); }
+.chart-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+.chart-card-header h3 { font-size: 15px; font-weight: 600; }
+.chart-card-header select {
+  font-size: 12px;
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  color: var(--text);
+  outline: none;
+}
+.chart-wrap { position: relative; height: 260px; }
+.chart-wrap canvas { width: 100% !important; height: 100% !important; }
+
+/* Activity Feed */
+.activity-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  transition: all var(--transition);
+}
+.activity-card:hover { box-shadow: var(--shadow-md); }
+.activity-card-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-light);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.activity-card-header h3 { font-size: 15px; font-weight: 600; }
+.activity-card-header a { font-size: 12px; color: var(--brand); }
+.activity-item {
+  display: flex;
+  gap: 12px;
+  padding: 12px 20px;
+  align-items: flex-start;
+  transition: background var(--transition-fast);
+}
+.activity-item:hover { background: var(--brand-50); }
+.activity-item:not(:last-child) { border-bottom: 1px solid var(--border-light); }
+.activity-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-top: 6px;
+  flex-shrink: 0;
+}
+.activity-content { flex: 1; min-width: 0; }
+.activity-content p {
+  font-size: 13px;
+  line-height: 1.4;
+}
+.activity-content p strong { font-weight: 600; }
+.activity-content .time {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+/* Bottom Grid */
+.bottom-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+/* Quick Actions */
+.quick-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.quick-action-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 16px 12px;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  font-size: 12px;
+  transition: all var(--transition-fast);
+}
+.quick-action-btn:hover {
+  border-color: var(--brand);
+  color: var(--brand);
+  background: var(--brand-50);
+}
+.quick-action-btn i {
+  font-size: 18px;
+}
+
+/* Page Headers */
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+.page-header h1 {
+  font-size: 22px;
+  font-weight: 700;
+}
+.page-header p {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+.page-actions {
+  display: flex;
+  gap: 8px;
+}
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
+  cursor: pointer;
+  border: none;
+}
+.btn-primary {
+  background: var(--brand);
+  color: white;
+}
+.btn-primary:hover { background: var(--brand-light); }
+.btn-secondary {
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+.btn-secondary:hover { background: var(--border-light); }
+.btn-outline {
+  background: transparent;
+  color: var(--brand);
+  border: 1px solid var(--brand);
+}
+.btn-outline:hover { background: var(--brand-50); }
+.btn-sm { padding: 6px 12px; font-size: 12px; }
+.btn-icon {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Data Table */
+.table-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  transition: all var(--transition);
+}
+.table-card:hover { box-shadow: var(--shadow-md); }
+.table-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-light);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.table-header h3 { font-size: 15px; font-weight: 600; }
+.table-toolbar {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.table-toolbar input {
+  height: 34px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 12px;
+  outline: none;
+  width: 200px;
+}
+.table-toolbar input:focus { border-color: var(--brand); }
+.table-wrap { overflow-x: auto; }
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+table th {
+  text-align: right;
+  padding: 12px 16px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border-light);
+  white-space: nowrap;
+}
+table td {
+  padding: 12px 16px;
+  font-size: 13px;
+  border-bottom: 1px solid var(--border-light);
+}
+table tr:last-child td { border-bottom: none; }
+table tr:hover td { background: var(--brand-50); }
+.user-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+.user-avatar.ho { background: #dbeafe; color: #1d4ed8; }
+.user-avatar.co { background: var(--brand-100); color: var(--brand); }
+.user-avatar.ad { background: var(--olive-light); color: var(--olive); }
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 500;
+}
+.status-badge.active { background: #dcfce7; color: #15803d; }
+.status-badge.pending { background: #fef9c3; color: #a16207; }
+.status-badge.suspended { background: #fee2e2; color: #b91c1c; }
+.status-badge.verified { background: #dcfce7; color: #15803d; }
+.status-badge.rejected { background: #fee2e2; color: #b91c1c; }
+.status-badge.open { background: #dbeafe; color: #1d4ed8; }
+.status-badge.in-progress { background: #fef9c3; color: #a16207; }
+.status-badge.completed { background: #dcfce7; color: #15803d; }
+.status-badge.cancelled { background: #f3f0e9; color: #6b6558; }
+.dark .status-badge.active { background: rgba(22,163,74,0.15); }
+.dark .status-badge.pending { background: rgba(234,179,8,0.15); }
+.dark .status-badge.suspended { background: rgba(220,38,38,0.15); }
+.dark .status-badge.verified { background: rgba(22,163,74,0.15); }
+.dark .status-badge.rejected { background: rgba(220,38,38,0.15); }
+.dark .status-badge.open { background: rgba(59,130,246,0.15); }
+.dark .status-badge.in-progress { background: rgba(234,179,8,0.15); }
+.dark .status-badge.completed { background: rgba(22,163,74,0.15); }
+.dark .status-badge.cancelled { background: rgba(107,101,88,0.15); }
+
+.table-pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 20px;
+  border-top: 1px solid var(--border-light);
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.pagination-btns { display: flex; gap: 4px; }
+.pagination-btns button {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text);
+  transition: all var(--transition-fast);
+}
+.pagination-btns button:hover { border-color: var(--brand); color: var(--brand); }
+.pagination-btns button.active { background: var(--brand); color: white; border-color: var(--brand); }
+
+/* Stats Grid */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.stat-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius);
+  padding: 16px;
+  text-align: center;
+  transition: all var(--transition);
+}
+.stat-card:hover { box-shadow: var(--shadow-md); }
+.stat-value { font-size: 24px; font-weight: 700; }
+.stat-label { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+
+/* Scrollbar for content */
+.content::-webkit-scrollbar { width: 4px; }
+.content::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+/* Skeleton loading */
+.skeleton {
+  background: linear-gradient(90deg, var(--border-light) 25%, var(--bg) 50%, var(--border-light) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: var(--radius-sm);
+}
+
+/* Map placeholder */
+.map-placeholder {
+  height: 300px;
+  background: var(--brand-50);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: 14px;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+/* AI Insights bar */
+.insights-bar {
+  background: var(--brand-50);
+  border: 1px solid var(--brand-100);
+  border-radius: var(--radius-lg);
+  padding: 16px 20px;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  overflow: hidden;
+}
+.insights-bar i {
+  font-size: 16px;
+  color: var(--brand);
+  flex-shrink: 0;
+}
+.insights-scroll {
+  display: flex;
+  gap: 24px;
+  overflow-x: auto;
+  flex: 1;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.insights-scroll::-webkit-scrollbar { display: none; }
+.insight-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--brand-dark);
+  white-space: nowrap;
+  padding: 4px 0;
+}
+.insight-chip i { font-size: 12px; }
+.insight-chip .up { color: #16a34a; }
+.insight-chip .down { color: #dc2626; }
+
+/* Empty state */
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text-muted);
+}
+.empty-state i { font-size: 48px; margin-bottom: 16px; opacity: 0.4; }
+.empty-state h3 { font-size: 16px; font-weight: 600; color: var(--text-secondary); margin-bottom: 4px; }
+.empty-state p { font-size: 13px; }
+
+/* Responsive */
+@media (max-width: 1200px) {
+  .charts-grid { grid-template-columns: 1fr; }
+  .bottom-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 900px) {
+  .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 768px) {
+  .sidebar { width: var(--sidebar-collapsed-w); }
+  .sidebar .brand-name,
+  .sidebar .sidebar-section-title,
+  .sidebar .sidebar-link span,
+  .sidebar .sidebar-badge { display: none; }
+  .sidebar .sidebar-link { justify-content: center; padding: 9px 0; }
+  .sidebar .sidebar-brand { padding: 0; justify-content: center; }
+  .content { padding: 16px; }
+  .kpi-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 480px) {
+  .topbar { padding: 0 12px; gap: 8px; }
+  .topbar-search { max-width: 160px; }
+  .page-header { flex-direction: column; align-items: flex-start; gap: 12px; }
+}
+</style>
+</head>
+<body>
+<div class="app-layout" id="app">
+
+<!-- Sidebar -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-icon">ش</div>
+    <span class="brand-name">شطب</span>
+  </div>
+  <nav class="sidebar-nav" id="sidebarNav"></nav>
+  <div class="sidebar-toggle" id="sidebarToggle" title="تصغير القائمة">
+    <i class="fas fa-chevron-right"></i>
+  </div>
+</aside>
+
+<!-- Main -->
+<div class="main-area">
+  <header class="topbar">
+    <div class="topbar-search">
+      <i class="fas fa-search"></i>
+      <input type="text" placeholder="بحث في المنصة..." id="globalSearch">
+    </div>
+    <div style="flex:1"></div>
+    <button class="theme-toggle" id="themeToggle" title="الوضع الليلي">
+      <i class="fas fa-moon"></i>
+    </button>
+    <div style="position:relative">
+      <button class="notif-btn" id="notifBtn" title="الإشعارات">
+        <i class="far fa-bell"></i>
+        <span class="notif-dot"></span>
+      </button>
+      <div class="notif-panel" id="notifPanel">
+        <div class="notif-panel-header">
+          <h3>الإشعارات</h3>
+          <a href="#" onclick="navigate('notifications')">عرض الكل</a>
+        </div>
+        <div id="notifList"></div>
+      </div>
+    </div>
+    <button class="profile-btn" onclick="navigate('settings')">
+      <div class="profile-info">
+        <div class="name">أحمد المصري</div>
+        <div class="role">مدير النظام</div>
+      </div>
+      <div class="profile-avatar">أ</div>
+    </button>
+  </header>
+
+  <main class="content" id="mainContent"></main>
+</div>
+
+</div>
+
+<script>
+// ─── Data ──────────────────────────────────────────────────────────────────
+const AR = {
+  dashboard: 'لوحة التحكم',
+  analytics: 'التحليلات',
+  users: 'المستخدمين',
+  contractors: 'المقاولين',
+  customers: 'العملاء',
+  jobs: 'طلبات العمل',
+  payments: 'المدفوعات',
+  revenue: 'الإيرادات',
+  reviews: 'التقييمات',
+  verification: 'التحقق',
+  disputes: 'النزاعات',
+  support: 'الدعم',
+  notifications: 'الإشعارات',
+  content: 'إدارة المحتوى',
+  categories: 'التصنيفات',
+  cities: 'المدن',
+  promotions: 'العروض',
+  reports: 'التقارير',
+  health: 'صحة النظام',
+  audit: 'سجل التدقيق',
+  roles: 'الأدوار والصلاحيات',
+  settings: 'الإعدادات',
+  messages: 'الرسائل',
+  orders: 'الطلبات',
+};
+
+const sidebarSections = [
+  { title: 'الرئيسية', items: [
+    { id: 'dashboard', icon: 'fa-house', label: 'لوحة التحكم' },
+    { id: 'analytics', icon: 'fa-chart-line', label: 'التحليلات' },
+  ]},
+  { title: 'إدارة المستخدمين', items: [
+    { id: 'users', icon: 'fa-users', label: 'المستخدمين', badge: 3 },
+    { id: 'contractors', icon: 'fa-hard-hat', label: 'المقاولين', badge: 12 },
+    { id: 'customers', icon: 'fa-user', label: 'العملاء' },
+  ]},
+  { title: 'المنصة', items: [
+    { id: 'jobs', icon: 'fa-briefcase', label: 'طلبات العمل' },
+    { id: 'payments', icon: 'fa-credit-card', label: 'المدفوعات' },
+    { id: 'revenue', icon: 'fa-sack-dollar', label: 'الإيرادات' },
+    { id: 'reviews', icon: 'fa-star', label: 'التقييمات', badge: 5 },
+    { id: 'disputes', icon: 'fa-scale-balanced', label: 'النزاعات', badge: 2 },
+  ]},
+  { title: 'الخدمات', items: [
+    { id: 'verification', icon: 'fa-circle-check', label: 'مركز التحقق' },
+    { id: 'support', icon: 'fa-headset', label: 'الدعم', badge: 8 },
+    { id: 'notifications', icon: 'fa-bell', label: 'الإشعارات' },
+  ]},
+  { title: 'الإدارة', items: [
+    { id: 'content', icon: 'fa-pen-to-square', label: 'إدارة المحتوى' },
+    { id: 'reports', icon: 'fa-flag', label: 'التقارير', badge: 4 },
+    { id: 'health', icon: 'fa-heart-pulse', label: 'صحة النظام' },
+    { id: 'audit', icon: 'fa-clipboard-list', label: 'سجل التدقيق' },
+    { id: 'roles', icon: 'fa-lock', label: 'الأدوار والصلاحيات' },
+    { id: 'settings', icon: 'fa-gear', label: 'الإعدادات' },
+  ]},
+];
+
+const users = [
+  { id: 1, name: 'أحمد محمد', email: 'ahmed@example.com', role: 'ho', roleLabel: 'عميل', status: 'active', phone: '+20 100 123 4567', joined: '2025-01-15', city: 'القاهرة', projects: 3, spent: 45000 },
+  { id: 2, name: 'خالد علي', email: 'khaled@example.com', role: 'co', roleLabel: 'مقاول', status: 'verified', phone: '+20 112 234 5678', joined: '2024-11-20', city: 'الإسكندرية', projects: 12, revenue: 280000 },
+  { id: 3, name: 'سارة عبدالله', email: 'sara@example.com', role: 'ho', roleLabel: 'عميلة', status: 'active', phone: '+20 109 345 6789', joined: '2025-03-08', city: 'الجيزة', projects: 1, spent: 12000 },
+  { id: 4, name: 'محمود حسن', email: 'mahmoud@example.com', role: 'co', roleLabel: 'مقاول', status: 'pending', phone: '+20 115 456 7890', joined: '2025-04-12', city: 'المنصورة', projects: 0, revenue: 0 },
+  { id: 5, name: 'نورا سعيد', email: 'nora@example.com', role: 'ho', roleLabel: 'عميلة', status: 'active', phone: '+20 127 567 8901', joined: '2024-09-01', city: 'القاهرة', projects: 7, spent: 89000 },
+  { id: 6, name: 'كريم عبدالعزيز', email: 'karim@example.com', role: 'co', roleLabel: 'مقاول', status: 'verified', phone: '+20 122 678 9012', joined: '2024-06-15', city: 'الغردقة', projects: 9, revenue: 195000 },
+  { id: 7, name: 'دينا فهمي', email: 'dina@example.com', role: 'ho', roleLabel: 'عميلة', status: 'suspended', phone: '+20 100 789 0123', joined: '2025-02-28', city: 'الإسكندرية', projects: 1, spent: 5000 },
+  { id: 8, name: 'عمر الشريف', email: 'omar@example.com', role: 'co', roleLabel: 'مقاول', status: 'active', phone: '+20 111 890 1234', joined: '2024-08-10', city: 'القاهرة', projects: 25, revenue: 620000 },
+  { id: 9, name: 'ليلى إبراهيم', email: 'layla@example.com', role: 'ho', roleLabel: 'عميلة', status: 'active', phone: '+20 106 901 2345', joined: '2025-05-03', city: 'طنطا', projects: 2, spent: 22000 },
+  { id: 10, name: 'ياسر جمال', email: 'yasser@example.com', role: 'co', roleLabel: 'مقاول', status: 'verified', phone: '+20 114 012 3456', joined: '2024-04-22', city: 'الأقصر', projects: 16, revenue: 410000 },
+];
+
+const activities = [
+  { type: 'project', text: '<strong>أحمد محمد</strong> نشر طلب عمل جديد - تشطيب شقة', time: 'منذ ٥ دقائق', color: '#1d4ed8' },
+  { type: 'contractor', text: '<strong>مقاول كهرباء</strong> قبل عرض سعر في القاهرة', time: 'منذ ١٢ دقيقة', color: '#16a34a' },
+  { type: 'payment', text: 'تم إتمام دفعة <strong>١٢٬٠٠٠ ج.م</strong> - مشروع دهانات', time: 'منذ ٢٥ دقيقة', color: '#9333ea' },
+  { type: 'review', text: 'تقييم جديد <strong>★★★★★</strong> للمقاول خالد علي', time: 'منذ ٣٨ دقيقة', color: '#f59e0b' },
+  { type: 'dispute', text: 'تم فتح نزاع في مشروع <strong>تشطيب فيلا</strong>', time: 'منذ ٥٢ دقيقة', color: '#dc2626' },
+  { type: 'verification', text: 'تم توثيق <strong>محمود حسن</strong> كمقاول معتمد', time: 'منذ ١ ساعة', color: '#16a34a' },
+  { type: 'support', text: 'تذكرة دعم جديدة من <strong>سارة عبدالله</strong>', time: 'منذ ١ ساعة', color: '#6366f1' },
+  { type: 'project', text: 'اكتمل مشروع <strong>سباكة حمام</strong> - تم التأكيد', time: 'منذ ٢ ساعة', color: '#16a34a' },
+  { type: 'contractor', text: 'قدم <strong>كريم عبدالعزيز</strong> عرض سباكة جديد', time: 'منذ ٢ ساعة', color: '#1d4ed8' },
+  { type: 'payment', text: 'تم سحب <strong>٢٥٬٠٠٠ ج.م</strong> بواسطة مقاول', time: 'منذ ٣ ساعات', color: '#d97706' },
+];
+
+const jobs = [
+  { id: 'JOB-001', title: 'تشطيب شقة ١٥٠م', owner: 'أحمد محمد', city: 'القاهرة', budget: '٨٠٬٠٠٠ - ١٢٠٬٠٠٠ ج.م', applicants: 6, status: 'open', date: '2025-06-28', specialty: 'تشطيب' },
+  { id: 'JOB-002', title: 'سباكة حمام كاملة', owner: 'نورا سعيد', city: 'الجيزة', budget: '٢٠٬٠٠٠ - ٣٥٬٠٠٠ ج.م', applicants: 4, status: 'in-progress', date: '2025-06-25', specialty: 'سباكة' },
+  { id: 'JOB-003', title: 'دهانات شقة ١٠٠م', owner: 'سارة عبدالله', city: 'القاهرة', budget: '١٥٬٠٠٠ - ٢٥٬٠٠٠ ج.م', applicants: 8, status: 'open', date: '2025-06-29', specialty: 'دهانات' },
+  { id: 'JOB-004', title: 'تركيب مطبخ ٦م', owner: 'ليلى إبراهيم', city: 'طنطا', budget: '٣٠٬٠٠٠ - ٥٠٬٠٠٠ ج.م', applicants: 3, status: 'completed', date: '2025-06-20', specialty: 'مطابخ' },
+  { id: 'JOB-005', title: 'تشطيب فيلا ٣٠٠م', owner: 'يوسف رضوان', city: 'الإسكندرية', budget: '٢٠٠٬٠٠٠ - ٣٥٠٬٠٠٠ ج.م', applicants: 10, status: 'open', date: '2025-06-27', specialty: 'تشطيب' },
+  { id: 'JOB-006', title: 'كهرباء شقة كاملة', owner: 'مريم عادل', city: 'القاهرة', budget: '١٢٬٠٠٠ - ١٨٬٠٠٠ ج.م', applicants: 5, status: 'cancelled', date: '2025-06-22', specialty: 'كهرباء' },
+  { id: 'JOB-007', title: 'تركيب سيراميك حمامين', owner: 'خالد عبدالله', city: 'المنصورة', budget: '٢٥٬٠٠٠ - ٤٠٬٠٠٠ ج.م', applicants: 7, status: 'open', date: '2025-06-30', specialty: 'سيراميك' },
+  { id: 'JOB-008', title: 'تشطيب شقة ٢٠٠م', owner: 'أحمد محمد', city: 'التجمع الخامس', budget: '١٠٠٬٠٠٠ - ١٥٠٬٠٠٠ ج.م', applicants: 9, status: 'in-progress', date: '2025-06-18', specialty: 'تشطيب' },
+];
+
+const notifications = [
+  { type: 'new-user', icon: 'fa-user-plus', text: 'عميل جديد: <strong>سارة عبدالله</strong>', time: 'منذ ١٠ دقائق', unread: true },
+  { type: 'verification', icon: 'fa-certificate', text: 'طلب توثيق جديد من <strong>محمود حسن</strong>', time: 'منذ ٢٥ دقيقة', unread: true },
+  { type: 'dispute', icon: 'fa-scale-balanced', text: 'نزاع مرفوع على مشروع <strong>تشطيب فيلا</strong>', time: 'منذ ٤٠ دقيقة', unread: true },
+  { type: 'payment', icon: 'fa-credit-card', text: 'معاملة معلقة بقيمة <strong>١٥٬٠٠٠ ج.م</strong>', time: 'منذ ١ ساعة', unread: false },
+  { type: 'support', icon: 'fa-headset', text: 'تذكرة دعم بدون رد <strong>أكثر من ٢ ساعة</strong>', time: 'منذ ٢ ساعة', unread: false },
+  { type: 'alert', icon: 'fa-triangle-exclamation', text: 'انخفاض في عدد المقاولين النشطين <strong>بنسبة ٨٪</strong>', time: 'منذ ٣ ساعات', unread: false },
+];
+
+const insights = [
+  'ارتفاع طلبات الدهانات بنسبة ٢٤٪ هذا الأسبوع 📈',
+  'مقاولو الكهرباء في القاهرة محملين فوق طاقتهم ⚡',
+  'وقت الرد انخفض بنسبة ١٥٪ مقارنة بالشهر الماضي ✅',
+  'نسبة إلغاء العقود ارتفعت إلى ٤.٢٪ ⚠️',
+  'أفضل مقاول أداءً هذا الشهر: عمر الشريف 🏆',
+];
+
+// ─── Sidebar ──────────────────────────────────────────────────────────────
+function buildSidebar() {
+  const nav = document.getElementById('sidebarNav');
+  nav.innerHTML = sidebarSections.map(s => `
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">${s.title}</div>
+      ${s.items.map(item => `
+        <div class="sidebar-link${item.id === currentPage ? ' active' : ''}" data-page="${item.id}" onclick="navigate('${item.id}')">
+          <i class="fas ${item.icon}"></i>
+          <span>${item.label}</span>
+          ${item.badge ? `<span class="sidebar-badge">${item.badge}</span>` : ''}
+        </div>
+      `).join('')}
+    </div>
+  `).join('');
+}
+
+// ─── Router ────────────────────────────────────────────────────────────────
+let currentPage = 'dashboard';
+let charts = {};
+
+function navigate(page) {
+  currentPage = page;
+  document.querySelectorAll('.sidebar-link').forEach(el => el.classList.toggle('active', el.dataset.page === page));
+  document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
+  closeNotifPanel();
+  renderPage(page);
+  const pageEl = document.getElementById('page-' + page);
+  if (pageEl) pageEl.classList.add('active');
+}
+
+function closeNotifPanel() {
+  document.getElementById('notifPanel').classList.remove('show');
+}
+
+// ─── Render Pages ─────────────────────────────────────────────────────────
+function renderPage(page) {
+  const content = document.getElementById('mainContent');
+  const renderers = {
+    dashboard: renderDashboard,
+    analytics: renderAnalytics,
+    users: () => renderTable('users'),
+    contractors: () => renderTable('contractors'),
+    customers: () => renderTable('customers'),
+    jobs: renderJobs,
+    payments: renderPayments,
+    revenue: renderRevenue,
+    reviews: renderReviews,
+    verification: renderVerification,
+    disputes: renderDisputes,
+    support: renderSupport,
+    notifications: renderNotificationsPage,
+    content: renderContent,
+    reports: renderReports,
+    health: renderHealth,
+    audit: renderAudit,
+    roles: renderRoles,
+    settings: renderSettings,
+  };
+
+  if (renderers[page]) {
+    content.innerHTML = renderers[page]();
+    // Re-init charts after DOM update
+    setTimeout(() => initPageCharts(page), 50);
+  }
+}
+
+// ─── Dashboard ─────────────────────────────────────────────────────────────
+function renderDashboard() {
+  return `
+    <div class="insights-bar">
+      <i class="fas fa-robot"></i>
+      <div class="insights-scroll" id="insightsScroll">
+        ${insights.map(i => `<span class="insight-chip"><i class="fas fa-circle" style="font-size:6px;color:var(--brand)"></i> ${i}</span>`).join('')}
+      </div>
+      <i class="fas fa-chevron-left" style="color:var(--text-muted);font-size:12px;cursor:pointer" onclick="scrollInsights()"></i>
+    </div>
+
+    <div class="kpi-grid">
+      ${kpiCard('المستخدمين الكلي', '28,450', '١٢٪', 'up', 'fa-users', '#1d4ed8', '#dbeafe')}
+      ${kpiCard('المقاولين النشطين', '3,842', '٨٪', 'up', 'fa-hard-hat', '#9e3d18', '#fde4d7')}
+      ${kpiCard('المقاولين الموثقين', '2,156', '٢٤٪', 'up', 'fa-certificate', '#16a34a', '#dcfce7')}
+      ${kpiCard('العملاء', '21,340', '١٥٪', 'up', 'fa-user', '#9333ea', '#f3e8ff')}
+      ${kpiCard('طلبات العمل المفتوحة', '1,247', '٥٪', 'up', 'fa-briefcase', '#1d4ed8', '#dbeafe')}
+      ${kpiCard('المشاريع المكتملة', '8,932', '٢٠٪', 'up', 'fa-circle-check', '#16a34a', '#dcfce7')}
+      ${kpiCard('إيرادات اليوم', '١٨٤,٢٠٠ ج.م', '١٢٪', 'up', 'fa-sack-dollar', '#d97706', '#fef3c7')}
+      ${kpiCard('إيرادات الشهر', '٤.٨ م', '٢٣٪', 'up', 'fa-chart-line', '#9e3d18', '#fde4d7')}
+      ${kpiCard('عمولة المنصة', '٧٢٠,٠٠٠ ج.م', '١٨٪', 'up', 'fa-percent', '#059669', '#d1fae5')}
+      ${kpiCard('معدل النمو', '١٦.٥٪', '٣٪', 'up', 'fa-arrow-trend-up', '#7c3aed', '#ede9fe')}
+      ${kpiCard('توثيق معلق', '٣٤', '١٢', 'down', 'fa-clock', '#dc2626', '#fee2e2')}
+      ${kpiCard('تذاكر دعم مفتوحة', '٨', '٢', 'down', 'fa-headset', '#d97706', '#fef3c7')}
+    </div>
+
+    <div class="charts-grid">
+      <div class="chart-card">
+        <div class="chart-card-header">
+          <h3>الإيرادات</h3>
+          <select><option>آخر ٣٠ يوم</option><option>آخر ٧ أيام</option><option>آخر ١٢ شهر</option></select>
+        </div>
+        <div class="chart-wrap"><canvas id="chartRevenue"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-card-header">
+          <h3>توزيع المستخدمين</h3>
+        </div>
+        <div class="chart-wrap"><canvas id="chartUsers"></canvas></div>
+      </div>
+    </div>
+
+    <div class="bottom-grid">
+      <div class="activity-card" style="grid-column:span 1">
+        <div class="activity-card-header">
+          <h3>آخر النشاطات</h3>
+          <a href="#" onclick="navigate('audit')">عرض الكل</a>
+        </div>
+        <div id="activityList">
+          ${activities.slice(0,6).map(a => `
+            <div class="activity-item">
+              <div class="activity-dot" style="background:${a.color}"></div>
+              <div class="activity-content">
+                <p>${a.text}</p>
+                <div class="time">${a.time}</div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-card-header">
+          <h3>إجراءات سريعة</h3>
+        </div>
+        <div class="quick-actions">
+          <button class="quick-action-btn" onclick="navigate('users')"><i class="fas fa-user-plus"></i> إضافة مستخدم</button>
+          <button class="quick-action-btn" onclick="navigate('verification')"><i class="fas fa-certificate"></i> توثيق مقاول</button>
+          <button class="quick-action-btn" onclick="navigate('payments')"><i class="fas fa-credit-card"></i> دفعة جديدة</button>
+          <button class="quick-action-btn" onclick="navigate('support')"><i class="fas fa-headset"></i> رد على تذكرة</button>
+          <button class="quick-action-btn" onclick="navigate('content')"><i class="fas fa-bullhorn"></i> إعلان جديد</button>
+          <button class="quick-action-btn" onclick="navigate('jobs')"><i class="fas fa-briefcase"></i> طلبات العمل</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="map-placeholder">
+      <i class="fas fa-map-location-dot" style="font-size:24px"></i>
+      خريطة تفاعلية — توزيع المقاولين والعملاء والطلبات حسب المنطقة
+    </div>
+  `;
+}
+
+function kpiCard(label, value, change, direction, icon, color, bg) {
+  const arrow = direction === 'up' ? 'fa-arrow-up' : direction === 'down' ? 'fa-arrow-down' : 'fa-minus';
+  return `
+    <div class="kpi-card">
+      <div class="kpi-card-header">
+        <span class="label">${label}</span>
+        <span class="icon" style="background:${bg};color:${color}"><i class="fas ${icon}"></i></span>
+      </div>
+      <div class="kpi-value">${value}</div>
+      <div class="kpi-change ${direction}"><i class="fas ${arrow}"></i> ${change} عن الشهر الماضي</div>
+    </div>
+  `;
+}
+
+// ─── Analytics ─────────────────────────────────────────────────────────────
+function renderAnalytics() {
+  return `
+    <div class="page-header">
+      <div>
+        <h1>التحليلات</h1>
+        <p>تحليلات متقدمة لأداء المنصة</p>
+      </div>
+      <div class="page-actions">
+        <button class="btn btn-secondary"><i class="fas fa-download"></i> تصدير</button>
+        <select style="padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg-card);color:var(--text);font-size:13px;outline:none">
+          <option>آخر ٣٠ يوم</option>
+          <option>آخر ٩٠ يوم</option>
+          <option>آخر ١٢ شهر</option>
+        </select>
+      </div>
+    </div>
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-value" style="color:var(--brand)">٩٤٬٢٠٠</div><div class="stat-label">زيارات اليوم</div></div>
+      <div class="stat-card"><div class="stat-value" style="color:#1d4ed8">٣٬١٢٠</div><div class="stat-label">مستخدمين جدد</div></div>
+      <div class="stat-card"><div class="stat-value" style="color:#16a34a">٦٨٪</div><div class="stat-label">معدل التحويل</div></div>
+      <div class="stat-card"><div class="stat-value" style="color:#9333ea">٤.٨٢</div><div class="stat-label">متوسط التقييم</div></div>
+      <div class="stat-card"><div class="stat-value" style="color:#d97706">٤٧٪</div><div class="stat-label">معدل الاحتفاظ</div></div>
+      <div class="stat-card"><div class="stat-value" style="color:#059669">٣٥,٤٠٠ ج.م</div><div class="stat-label">متوسط قيمة المشروع</div></div>
+    </div>
+    <div class="charts-grid" style="grid-template-columns:1fr 1fr">
+      <div class="chart-card"><div class="chart-card-header"><h3>المستخدمين اليوميين</h3></div><div class="chart-wrap"><canvas id="chartDailyUsers"></canvas></div></div>
+      <div class="chart-card"><div class="chart-card-header"><h3>نمو الإيرادات</h3></div><div class="chart-wrap"><canvas id="chartRevenueGrowth"></canvas></div></div>
+    </div>
+    <div class="charts-grid" style="grid-template-columns:1fr 1fr;margin-top:16px">
+      <div class="chart-card"><div class="chart-card-header"><h3>الطلب حسب التخصص</h3></div><div class="chart-wrap"><canvas id="chartCategoryDemand"></canvas></div></div>
+      <div class="chart-card"><div class="chart-card-header"><h3>أفضل المدن</h3></div><div class="chart-wrap"><canvas id="chartCities"></canvas></div></div>
+    </div>
+  `;
+}
+
+// ─── Users / Contractors / Customers Table ─────────────────────────────────
+function renderTable(page) {
+  let title, data, cols;
+  if (page === 'users') {
+    title = 'المستخدمين';
+    data = users;
+    cols = ['#', 'الاسم', 'البريد', 'نوع الحساب', 'الحالة', 'المدينة', 'تاريخ التسجيل'];
+  } else if (page === 'contractors') {
+    title = 'المقاولين';
+    data = users.filter(u => u.role === 'co');
+    cols = ['#', 'المقاول', 'البريد', 'الحالة', 'المدينة', 'المشاريع', 'الإيرادات'];
+  } else {
+    title = 'العملاء';
+    data = users.filter(u => u.role === 'ho');
+    cols = ['#', 'العميل', 'البريد', 'الحالة', 'المدينة', 'المشاريع', 'المنفق'];
+  }
+  return `
+    <div class="page-header">
+      <div>
+        <h1>${title}</h1>
+        <p>إدارة وعرض جميع ${title.toLowerCase()} على المنصة</p>
+      </div>
+      <div class="page-actions">
+        <button class="btn btn-secondary"><i class="fas fa-filter"></i> تصفية</button>
+        <button class="btn btn-secondary"><i class="fas fa-download"></i> تصدير</button>
+        <button class="btn btn-primary"><i class="fas fa-plus"></i> إضافة</button>
+      </div>
+    </div>
+    <div class="table-card">
+      <div class="table-header">
+        <h3>جميع ${title}</h3>
+        <div class="table-toolbar">
+          <input type="text" placeholder="بحث..." oninput="filterTable(this.value)">
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>${cols.map(c => `<th>${c}</th>`).join('')}</tr></thead>
+          <tbody>
+            ${data.map((u, i) => {
+              const avatarClass = u.role === 'co' ? 'co' : 'ho';
+              const initials = u.name.slice(0, 2);
+              const statusClass = u.status;
+              return `<tr>
+                <td style="color:var(--text-muted);font-size:12px">${u.id}</td>
+                <td><div class="user-cell"><div class="user-avatar ${avatarClass}">${initials}</div> ${u.name}</div></td>
+                <td style="color:var(--text-secondary)">${u.email}</td>
+                <td><span style="font-size:12px;color:var(--text-secondary)">${u.roleLabel}</span></td>
+                <td><span class="status-badge ${statusClass}">${statusClass === 'active' ? 'نشط' : statusClass === 'verified' ? 'موثق' : statusClass === 'pending' ? 'معلق' : 'موقوف'}</span></td>
+                <td>${u.city}</td>
+                <td>${page === 'contractors' ? u.projects : page === 'customers' ? u.projects : u.joined}</td>
+                ${page === 'contractors' ? `<td style="direction:ltr;text-align:right">${u.revenue?.toLocaleString('ar-EG')} ج.م</td>` : ''}
+                ${page === 'customers' ? `<td style="direction:ltr;text-align:right">${u.spent?.toLocaleString('ar-EG')} ج.م</td>` : ''}
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+      <div class="table-pagination">
+        <span>عرض ١-${data.length} من ${data.length}</span>
+        <div class="pagination-btns"><button class="active">١</button></div>
+      </div>
+    </div>
+  `;
+}
+
+function filterTable(q) { /* stub - real filtering would go here */ }
+
+// ─── Jobs ──────────────────────────────────────────────────────────────────
+function renderJobs() {
+  return `
+    <div class="page-header">
+      <div>
+        <h1>طلبات العمل</h1>
+        <p>إدارة جميع طلبات العمل المنشورة على المنصة</p>
+      </div>
+      <div class="page-actions">
+        <button class="btn btn-secondary"><i class="fas fa-filter"></i> تصفية</button>
+        <button class="btn btn-primary"><i class="fas fa-plus"></i> إضافة طلب</button>
+      </div>
+    </div>
+    <div class="table-card">
+      <div class="table-header">
+        <h3>جميع الطلبات</h3>
+        <div class="table-toolbar">
+          <input type="text" placeholder="بحث...">
+          <button class="btn btn-sm btn-secondary"><i class="fas fa-sliders"></i></button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>#</th><th>الطلب</th><th>صاحب الطلب</th><th>المدينة</th><th>التخصص</th><th>الميزانية</th><th>المتقدمين</th><th>الحالة</th><th>التاريخ</th></tr></thead>
+          <tbody>
+            ${jobs.map((j, i) => `
+              <tr>
+                <td style="color:var(--text-muted);font-size:12px">${j.id}</td>
+                <td><strong>${j.title}</strong></td>
+                <td>${j.owner}</td>
+                <td>${j.city}</td>
+                <td><span style="font-size:12px;color:var(--text-secondary)">${j.specialty}</span></td>
+                <td style="direction:ltr;text-align:right;font-size:12px">${j.budget}</td>
+                <td style="text-align:center">${j.applicants}</td>
+                <td><span class="status-badge ${j.status}">${j.status === 'open' ? 'مفتوح' : j.status === 'in-progress' ? 'قيد التنفيذ' : j.status === 'completed' ? 'مكتمل' : 'ملغي'}</span></td>
+                <td style="font-size:12px;color:var(--text-muted)">${j.date}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+      <div class="table-pagination">
+        <span>عرض ١-٨ من ٨</span>
+        <div class="pagination-btns"><button class="active">١</button></div>
+      </div>
+    </div>
+  `;
+}
+
+// ─── Payments ──────────────────────────────────────────────────────────────
+function renderPayments() {
+  return `
+    <div class="page-header">
+      <div>
+        <h1>المدفوعات</h1>
+        <p>إدارة جميع المعاملات المالية والدفعات</p>
+      </div>
+      <div class="page-actions">
+        <button class="btn btn-secondary"><i class="fas fa-download"></i> تصدير</button>
+        <button class="btn btn-primary"><i class="fas fa-plus"></i> دفعة جديدة</button>
+      </div>
+    </div>
+    <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr)">
+      ${kpiCard('إجمالي الإيرادات', '٤٫٨ م ج.م', '٢٣٪', 'up', 'fa-sack-dollar', '#16a34a', '#dcfce7')}
+      ${kpiCard('المدفوعات المعلقة', '٣٤٢,٠٠٠ ج.م', '١٢٪', 'up', 'fa-clock', '#d97706', '#fef3c7')}
+      ${kpiCard('عمولة المنصة', '٧٢٠,٠٠٠ ج.م', '١٨٪', 'up', 'fa-percent', '#9e3d18', '#fde4d7')}
+      ${kpiCard('المبالغ المستردة', '٢٨,٠٠٠ ج.م', '٥٪', 'down', 'fa-rotate-left', '#dc2626', '#fee2e2')}
+    </div>
+    <div class="charts-grid">
+      <div class="chart-card"><div class="chart-card-header"><h3>حركة الدفعات</h3></div><div class="chart-wrap"><canvas id="chartPayments"></canvas></div></div>
+      <div class="chart-card"><div class="chart-card-header"><h3>توزيع العمولة</h3></div><div class="chart-wrap"><canvas id="chartCommission"></canvas></div></div>
+    </div>
+  `;
+}
+
+// ─── Revenue ────────────────────────────────────────────────────────────────
+function renderRevenue() {
+  return `
+    <div class="page-header">
+      <div>
+        <h1>الإيرادات</h1>
+        <p>تحليل الإيرادات والأرباح</p>
+      </div>
+      <div class="page-actions">
+        <button class="btn btn-secondary"><i class="fas fa-download"></i> تقرير</button>
+      </div>
+    </div>
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-value" style="color:var(--brand)">٤٫٨٢ م</div><div class="stat-label">إيرادات الشهر</div></div>
+      <div class="stat-card"><div class="stat-value" style="color:#16a34a">٢٣٫٥٪</div><div class="stat-label">نمو سنوي</div></div>
+      <div class="stat-card"><div class="stat-value" style="color:#1d4ed8">١٥٪</div><div class="stat-label">هامش الربح</div></div>
+      <div class="stat-card"><div class="stat-value" style="color:#9333ea">٣٥,٤٠٠ ج.م</div><div class="stat-label">متوسط الصفقة</div></div>
+    </div>
+  `;
+}
+
+// ─── Reviews ────────────────────────────────────────────────────────────────
+function renderReviews() {
+  return `
+    <div class="page-header">
+      <div>
+        <h1>التقييمات</h1>
+        <p>إدارة التقييمات والمراجعات — تصفية، حذف، استعادة</p>
+      </div>
+      <div class="page-actions">
+        <button class="btn btn-secondary"><i class="fas fa-filter"></i> تصفية</button>
+      </div>
+    </div>
+    <div class="table-card">
+      <div class="table-header">
+        <h3>جميع التقييمات (٥ تحتاج مراجعة)</h3>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>المقاول</th><th>العميل</th><th>التقييم</th><th>التعليق</th><th>الحالة</th><th>التاريخ</th><th></th></tr></thead>
+          <tbody>
+            <tr><td>عمر الشريف</td><td>نورا سعيد</td><td style="color:#f59e0b">★★★★★</td><td style="color:var(--text-secondary);font-size:12px">شغل ممتاز والتزم بالمواعيد</td><td><span class="status-badge active">مقبول</span></td><td style="font-size:12px;color:var(--text-muted)">منذ يومين</td><td><button class="btn btn-sm btn-secondary"><i class="fas fa-ellipsis"></i></button></td></tr>
+            <tr><td>خالد علي</td><td>أحمد محمد</td><td style="color:#f59e0b">★★★★☆</td><td style="color:var(--text-secondary);font-size:12px">شغل كويس لكن تأخر شوية</td><td><span class="status-badge pending">تحت المراجعة</span></td><td style="font-size:12px;color:var(--text-muted)">منذ ٥ ساعات</td><td><button class="btn btn-sm btn-secondary"><i class="fas fa-ellipsis"></i></button></td></tr>
+            <tr><td>كريم عبدالعزيز</td><td>ليلى إبراهيم</td><td style="color:#f59e0b">★★★★★</td><td style="color:var(--text-secondary);font-size:12px">مقاول محترف جداً، أنصح بالتعامل</td><td><span class="status-badge pending">تحت المراجعة</span></td><td style="font-size:12px;color:var(--text-muted)">منذ يوم</td><td><button class="btn btn-sm btn-secondary"><i class="fas fa-ellipsis"></i></button></td></tr>
+            <tr><td>ياسر جمال</td><td>سارة عبدالله</td><td style="color:#f59e0b">★★★☆☆</td><td style="color:var(--text-secondary);font-size:12px">مقبول، فيه بعض الملاحظات على الدهانات</td><td><span class="status-badge rejected">مبلغ عنه</span></td><td style="font-size:12px;color:var(--text-muted)">منذ ٣ أيام</td><td><button class="btn btn-sm btn-secondary"><i class="fas fa-ellipsis"></i></button></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
+
+// ─── Verification ──────────────────────────────────────────────────────────
+function renderVerification() {
+  return `
+    <div class="page-header">
+      <div>
+        <h1>مركز التحقق</h1>
+        <p>مراجعة وتوثيق المقاولين — التحقق من الهوية، الرخصة، الشهادات</p>
+      </div>
+    </div>
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-value" style="color:#16a34a">٢٬١٥٦</div><div class="stat-label">موثقين</div></div>
+      <div class="stat-card"><div class="stat-value" style="color:#d97706">٣٤</div><div class="stat-label">في انتظار المراجعة</div></div>
+      <div class="stat-card"><div class="stat-value" style="color:#dc2626">١٢</div><div class="stat-label">مرفوض</div></div>
+      <div class="stat-card"><div class="stat-value">٥٦٪</div><div class="stat-label">نسبة التوثيق</div></div>
+    </div>
+    <div class="table-card">
+      <div class="table-header">
+        <h3>في انتظار المراجعة</h3>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>المقاول</th><th>البريد</th><th>المدينة</th><th>التخصص</th><th>المستندات</th><th>تاريخ الطلب</th><th>الإجراءات</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><div class="user-cell"><div class="user-avatar co">مح</div> محمود حسن</div></td>
+              <td style="color:var(--text-secondary);font-size:12px">mahmoud@example.com</td>
+              <td>المنصورة</td>
+              <td><span style="font-size:12px;color:var(--text-secondary)">سباكة، كهرباء</span></td>
+              <td><span style="color:#16a34a"><i class="fas fa-check-circle"></i> ٣/٥</span></td>
+              <td style="font-size:12px;color:var(--text-muted)">منذ يومين</td>
+              <td>
+                <button class="btn btn-sm btn-primary"><i class="fas fa-check"></i></button>
+                <button class="btn btn-sm btn-secondary" style="color:#dc2626"><i class="fas fa-times"></i></button>
+                <button class="btn btn-sm btn-secondary"><i class="fas fa-info"></i></button>
+              </td>
+            </tr>
+            <tr><td><div class="user-cell"><div class="user-avatar co">أش</div> أشرف كامل</div></td><td style="color:var(--text-secondary)">ashraf@example.com</td><td>القاهرة</td><td>دهانات</td><td><span style="color:#d97706"><i class="fas fa-clock"></i> ٢/٥</span></td><td>منذ ٥ أيام</td><td><button class="btn btn-sm btn-primary"><i class="fas fa-check"></i></button><button class="btn btn-sm btn-secondary" style="color:#dc2626"><i class="fas fa-times"></i></button><button class="btn btn-sm btn-secondary"><i class="fas fa-info"></i></button></td></tr>
+            <tr><td><div class="user-cell"><div class="user-avatar co">إب</div> إبراهيم نصر</div></td><td style="color:var(--text-secondary)">ibrahim@example.com</td><td>الإسكندرية</td><td>تشطيب</td><td><span style="color:#d97706"><i class="fas fa-clock"></i> ٤/٥</span></td><td>منذ أسبوع</td><td><button class="btn btn-sm btn-primary"><i class="fas fa-check"></i></button><button class="btn btn-sm btn-secondary" style="color:#dc2626"><i class="fas fa-times"></i></button><button class="btn btn-sm btn-secondary"><i class="fas fa-info"></i></button></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
+
+// ─── Disputes ──────────────────────────────────────────────────────────────
+function renderDisputes() {
+  return `
+    <div class="page-header">
+      <div>
+        <h1>النزاعات</h1>
+        <p>إدارة وحل النزاعات بين العملاء والمقاولين</p>
+      </div>
+    </div>
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-value" style="color:#d97706">٢</div><div class="stat-label">نشط</div></div>
+      <div class="stat-card"><div class="stat-value" style="color:#16a34a">١٢</div><div class="stat-label">تم الحل</div></div>
+      <div class="stat-card"><div class="stat-value" style="color:#dc2626">٢٫٣٪</div><div class="stat-label">معدل النزاعات</div></div>
+    </div>
+    <div class="table-card">
+      <div class="table-header"><h3>النزاعات النشطة</h3></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>#</th><th>المشروع</th><th>العميل</th><th>المقاول</th><th>السبب</th><th>المبلغ</th><th>الحالة</th><th>التاريخ</th></tr></thead>
+          <tbody>
+            <tr><td style="color:var(--text-muted)">DSP-001</td><td>تشطيب فيلا ٣٠٠م</td><td>يوسف رضوان</td><td>مقاول قيد التوثيق</td><td style="font-size:12px;color:var(--text-secondary)">تأخير في التسليم</td><td>٣٥٠,٠٠٠ ج.م</td><td><span class="status-badge pending">مفتوح</span></td><td>منذ ٣ أيام</td></tr>
+            <tr><td style="color:var(--text-muted)">DSP-002</td><td>دهانات شقة ١٠٠م</td><td>سارة عبدالله</td><td>أحمد السيد</td><td style="font-size:12px;color:var(--text-secondary)">جودة الدهان غير مطابقة</td><td>٢٥,٠٠٠ ج.م</td><td><span class="status-badge pending">قيد المراجعة</span></td><td>منذ ٥ أيام</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
+
+// ─── Support ───────────────────────────────────────────────────────────────
+function renderSupport() {
+  return `
+    <div class="page-header">
+      <div>
+        <h1>الدعم</h1>
+        <p>إدارة تذاكر الدعم وخدمة العملاء</p>
+      </div>
+    </div>
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-value" style="color:#d97706">٨</div><div class="stat-label">مفتوحة</div></div>
+      <div class="stat-card"><div class="stat-value" style="color:#16a34a">١٢٤</div><div class="stat-label">تم الحل هذا الشهر</div></div>
+      <div class="stat-card"><div class="stat-value" style="color:var(--brand)">٢٫٤ س</div><div class="stat-label">متوسط وقت الرد</div></div>
+      <div class="stat-card"><div class="stat-value" style="color:#9333ea">٩٢٪</div><div class="stat-label">رضا العملاء</div></div>
+    </div>
+    <div class="table-card">
+      <div class="table-header"><h3>التذاكر المفتوحة</h3></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>#</th><th>العميل</th><th>الموضوع</th><th>الأولوية</th><th>المسؤول</th><th>الحالة</th><th>منذ</th></tr></thead>
+          <tbody>
+            <tr><td style="color:var(--text-muted)">SUP-101</td><td>سارة عبدالله</td><td style="font-size:13px">مشكلة في الدفع</td><td><span style="color:#dc2626;font-weight:600">عالية</span></td><td>—</td><td><span class="status-badge pending">مفتوحة</span></td><td>ساعتين</td></tr>
+            <tr><td style="color:var(--text-muted)">SUP-102</td><td>نورا سعيد</td><td style="font-size:13px">طلب توثيق مستعجل</td><td><span style="color:#d97706;font-weight:600">متوسطة</span></td><td>أحمد المصري</td><td><span class="status-badge pending">قيد المعالجة</span></td><td>٥ ساعات</td></tr>
+            <tr><td style="color:var(--text-muted)">SUP-103</td><td>خالد علي</td><td style="font-size:13px">استفسار عن العمولة</td><td><span style="color:#16a34a;font-weight:600">منخفضة</span></td><td>—</td><td><span class="status-badge pending">مفتوحة</span></td><td>يوم</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
+
+// ─── Notifications Page ────────────────────────────────────────────────────
+function renderNotificationsPage() {
+  return `
+    <div class="page-header">
+      <div>
+        <h1>الإشعارات</h1>
+        <p>إدارة وإرسال الإشعارات للمستخدمين</p>
+      </div>
+      <div class="page-actions">
+        <button class="btn btn-primary"><i class="fas fa-plus"></i> إشعار جديد</button>
+      </div>
+    </div>
+    <div class="table-card">
+      <div class="table-header">
+        <h3>الإشعارات الأخيرة</h3>
+        <button class="btn btn-sm btn-secondary">تحديد الكل كمقروء</button>
+      </div>
+      <div id="notifFullList">
+        ${notifications.map((n, i) => `
+          <div class="activity-item${n.unread ? ' unread' : ''}">
+            <div style="width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--brand-100);color:var(--brand);flex-shrink:0"><i class="fas ${n.icon}" style="font-size:13px"></i></div>
+            <div class="activity-content">
+              <p>${n.text}</p>
+              <div class="time">${n.time}</div>
+            </div>
+            ${n.unread ? '<div style="width:8px;height:8px;border-radius:50%;background:var(--brand);margin-top:6px;flex-shrink:0"></div>' : ''}
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+}
+
+// ─── Content Management ────────────────────────────────────────────────────
+function renderContent() {
+  return `
+    <div class="page-header">
+      <div>
+        <h1>إدارة المحتوى</h1>
+        <p>إدارة التصنيفات، المدن، العروض، والإعلانات</p>
+      </div>
+      <div class="page-actions">
+        <button class="btn btn-primary"><i class="fas fa-plus"></i> إضافة</button>
+      </div>
+    </div>
+    <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr)">
+      <div class="stat-card"><div class="stat-value">١٢</div><div class="stat-label">تصنيف</div></div>
+      <div class="stat-card"><div class="stat-value">٢٨</div><div class="stat-label">مدينة</div></div>
+      <div class="stat-card"><div class="stat-value">٦</div><div class="stat-label">عرض نشط</div></div>
+    </div>
+  `;
+}
+
+// ─── Reports ───────────────────────────────────────────────────────────────
+function renderReports() {
+  return `
+    <div class="page-header">
+      <div>
+        <h1>التقارير</h1>
+        <p>بلاغات وإبلاغات المستخدمين — يتم فرزها حسب الأولوية تلقائياً</p>
+      </div>
+    </div>
+    <div class="stats-grid" style="grid-template-columns:repeat(4,1fr)">
+      <div class="stat-card"><div class="stat-value" style="color:#dc2626">٤</div><div class="stat-label">بلاغات جديدة</div></div>
+      <div class="stat-card"><div class="stat-value" style="color:#d97706">١٢</div><div class="stat-label">قيد المراجعة</div></div>
+      <div class="stat-card"><div class="stat-value" style="color:#16a34a">٨٧</div><div class="stat-label">تم المعالجة</div></div>
+      <div class="stat-card"><div class="stat-value">١٠٣</div><div class="stat-label">إجمالي البلاغات</div></div>
+    </div>
+    <div class="table-card">
+      <div class="table-header"><h3>بلاغات بحاجة للانتباه</h3></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>#</th><th>المبلغ</th><th>على</th><th>النوع</th><th>السبب</th><th>الأولوية</th><th>الحالة</th><th>الإجراءات</th></tr></thead>
+          <tbody>
+            <tr><td style="color:var(--text-muted)">RPT-001</td><td>سارة عبدالله</td><td>مقاول محمد السيد</td><td>احتيال</td><td style="font-size:12px;color:var(--text-secondary)">طلب دفعة مقدمة ولم يبدأ العمل</td><td><span style="color:#dc2626;font-weight:600">عالية</span></td><td><span class="status-badge pending">جديد</span></td><td><button class="btn btn-sm btn-primary">تحقق</button></td></tr>
+            <tr><td style="color:var(--text-muted)">RPT-002</td><td>نورا سعيد</td><td>عميل أحمد محمود</td><td>إلغاء متكرر</td><td style="font-size:12px;color:var(--text-secondary)">ألغى ٣ طلبات بعد قبول العروض</td><td><span style="color:#d97706;font-weight:600">متوسطة</span></td><td><span class="status-badge pending">جديد</span></td><td><button class="btn btn-sm btn-primary">تحقق</button></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
+
+// ─── System Health ─────────────────────────────────────────────────────────
+function renderHealth() {
+  return `
+    <div class="page-header">
+      <div>
+        <h1>صحة النظام</h1>
+        <p>مراقبة حالة الخوادم والخدمات</p>
+      </div>
+    </div>
+    <div class="stats-grid" style="grid-template-columns:repeat(4,1fr)">
+      <div class="stat-card"><div class="stat-value" style="color:#16a34a">✅</div><div class="stat-label">الخادم الرئيسي</div></div>
+      <div class="stat-card"><div class="stat-value" style="color:#16a34a">✅</div><div class="stat-label">قاعدة البيانات</div></div>
+      <div class="stat-card"><div class="stat-value" style="color:#16a34a">✅</div><div class="stat-label">التخزين</div></div>
+      <div class="stat-card"><div class="stat-value" style="color:#d97706">⚠️</div><div class="stat-label">SMS — تأخير ٢٫٣ث</div></div>
+    </div>
+    ${['الخادم الرئيسي', 'API', 'قاعدة البيانات', 'التخزين', 'وظائف الخلفية', 'قائمة الانتظار', 'الإشعارات', 'البريد الإلكتروني', 'SMS', 'مراقبة'].map(s => `
+      <div class="activity-item" style="border:1px solid var(--border-light);border-radius:var(--radius);margin-bottom:4px">
+        <div style="width:8px;height:8px;border-radius:50%;background:#16a34a;margin-top:6px"></div>
+        <div style="flex:1;display:flex;justify-content:space-between;align-items:center">
+          <span style="font-weight:500">${s}</span>
+          <span style="font-size:12px;color:#16a34a"><i class="fas fa-check-circle"></i> يعمل بشكل طبيعي</span>
+        </div>
+      </div>
+    `).join('')}
+  `;
+}
+
+// ─── Audit Log ─────────────────────────────────────────────────────────────
+function renderAudit() {
+  return `
+    <div class="page-header">
+      <div>
+        <h1>سجل التدقيق</h1>
+        <p>تتبع جميع إجراءات المسؤولين على المنصة</p>
+      </div>
+      <div class="page-actions">
+        <button class="btn btn-secondary"><i class="fas fa-download"></i> تصدير</button>
+      </div>
+    </div>
+    <div class="table-card">
+      <div class="table-header"><h3>آخر الإجراءات</h3></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>التوقيت</th><th>المسؤول</th><th>الإجراء</th><th>التفاصيل</th><th>IP</th></tr></thead>
+          <tbody>
+            <tr><td style="font-size:12px;color:var(--text-muted)">2025-06-29 ١٤:٣٢</td><td>أحمد المصري</td><td>توثيق مقاول</td><td style="font-size:12px;color:var(--text-secondary)">تم توثيق محمود حسن كمقاول معتمد</td><td style="direction:ltr;font-size:12px;font-family:monospace;color:var(--text-muted)">192.168.1.42</td></tr>
+            <tr><td style="font-size:12px;color:var(--text-muted)">2025-06-29 ١٣:١٥</td><td>أحمد المصري</td><td>حذف تقييم</td><td style="font-size:12px;color:var(--text-secondary)">تم حذف تقييم مسيء من صفحة عمر الشريف</td><td style="direction:ltr;font-size:12px;font-family:monospace;color:var(--text-muted)">192.168.1.42</td></tr>
+            <tr><td style="font-size:12px;color:var(--text-muted)">2025-06-29 ١١:٠٤</td><td>أحمد المصري</td><td>إيقاف مستخدم</td><td style="font-size:12px;color:var(--text-secondary)">تم إيقاف حساب دينا فهمي بسبب مخالفة الشروط</td><td style="direction:ltr;font-size:12px;font-family:monospace;color:var(--text-muted)">192.168.1.42</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
+
+// ─── Roles ─────────────────────────────────────────────────────────────────
+function renderRoles() {
+  return `
+    <div class="page-header">
+      <div>
+        <h1>الأدوار والصلاحيات</h1>
+        <p>إدارة أدوار المسؤولين والصلاحيات</p>
+      </div>
+      <div class="page-actions">
+        <button class="btn btn-primary"><i class="fas fa-plus"></i> دور جديد</button>
+      </div>
+    </div>
+    <div class="table-card">
+      <div class="table-header"><h3>الأدوار الحالية</h3></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>الدور</th><th>عدد المسؤولين</th><th>الوصف</th><th>تاريخ الإنشاء</th></tr></thead>
+          <tbody>
+            <tr><td><strong>مدير النظام</strong></td><td>١</td><td style="color:var(--text-secondary);font-size:12px">صلاحية كاملة على جميع أجزاء النظام</td><td style="font-size:12px;color:var(--text-muted)">٢٠٢٤-٠١-٠١</td></tr>
+            <tr><td><strong>عمليات</strong></td><td>٣</td><td style="color:var(--text-secondary);font-size:12px">إدارة المستخدمين، الطلبات، المدفوعات</td><td style="font-size:12px;color:var(--text-muted)">٢٠٢٤-٠٣-١٥</td></tr>
+            <tr><td><strong>دعم</strong></td><td>٥</td><td style="color:var(--text-secondary);font-size:12px">الوصول لتذاكر الدعم والتقييمات فقط</td><td style="font-size:12px;color:var(--text-muted)">٢٠٢٤-٠٦-٢٠</td></tr>
+            <tr><td><strong>مالية</strong></td><td>٢</td><td style="color:var(--text-secondary);font-size:12px">المدفوعات، العمولات، التقارير المالية</td><td style="font-size:12px;color:var(--text-muted)">٢٠٢٤-٠٩-٠١</td></tr>
+            <tr><td><strong>رقابة</strong></td><td>٢</td><td style="color:var(--text-secondary);font-size:12px">مراجعة المحتوى، التقارير، سجل التدقيق</td><td style="font-size:12px;color:var(--text-muted)">٢٠٢٥-٠١-١٠</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
+
+// ─── Settings ──────────────────────────────────────────────────────────────
+function renderSettings() {
+  return `
+    <div class="page-header">
+      <div>
+        <h1>الإعدادات</h1>
+        <p>إعدادات المنصة والمستخدم</p>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div class="chart-card">
+        <h3 style="font-size:15px;font-weight:600;margin-bottom:16px">الملف الشخصي</h3>
+        <div style="margin-bottom:12px">
+          <label style="font-size:12px;color:var(--text-secondary);display:block;margin-bottom:4px">الاسم</label>
+          <input type="text" value="أحمد المصري" style="width:100%;height:38px;padding:0 12px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);font-size:13px;outline:none">
+        </div>
+        <div style="margin-bottom:12px">
+          <label style="font-size:12px;color:var(--text-secondary);display:block;margin-bottom:4px">البريد الإلكتروني</label>
+          <input type="email" value="ahmed@shattab.app" style="width:100%;height:38px;padding:0 12px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);font-size:13px;outline:none">
+        </div>
+        <div style="margin-bottom:16px">
+          <label style="font-size:12px;color:var(--text-secondary);display:block;margin-bottom:4px">الدور</label>
+          <div style="font-size:13px;font-weight:500">مدير النظام</div>
+        </div>
+        <button class="btn btn-primary">حفظ التغييرات</button>
+      </div>
+      <div class="chart-card">
+        <h3 style="font-size:15px;font-weight:600;margin-bottom:16px">إعدادات المنصة</h3>
+        <div style="margin-bottom:12px;display:flex;justify-content:space-between;align-items:center">
+          <span style="font-size:13px">نسبة عمولة المنصة</span>
+          <span style="font-size:14px;font-weight:600">١٥٪</span>
+        </div>
+        <div style="margin-bottom:12px;display:flex;justify-content:space-between;align-items:center">
+          <span style="font-size:13px">الحد الأدنى للسحب</span>
+          <span style="font-size:14px;font-weight:600">٥٠٠ ج.م</span>
+        </div>
+        <div style="margin-bottom:12px;display:flex;justify-content:space-between;align-items:center">
+          <span style="font-size:13px">فترة الاحتفاظ بالبيانات</span>
+          <span style="font-size:14px;font-weight:600">٥ سنوات</span>
+        </div>
+        <div style="margin-bottom:12px;display:flex;justify-content:space-between;align-items:center">
+          <span style="font-size:13px">الوضع الليلي</span>
+          <label style="position:relative;display:inline-block;width:44px;height:24px;cursor:pointer">
+            <input type="checkbox" id="darkModeSwitch" onchange="toggleDarkMode()" style="opacity:0;width:0;height:0">
+            <span style="position:absolute;top:0;left:0;right:0;bottom:0;background:var(--border);border-radius:12px;transition:var(--transition)"></span>
+            <span style="position:absolute;top:2px;left:2px;width:20px;height:20px;background:white;border-radius:50%;transition:var(--transition)"></span>
+          </label>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// ─── Charts ────────────────────────────────────────────────────────────────
+function initPageCharts(page) {
+  // Destroy previous charts
+  Object.values(charts).forEach(c => { try { c.destroy(); } catch(e) {} });
+  charts = {};
+
+  if (page === 'dashboard') {
+    charts.revenue = new Chart(document.getElementById('chartRevenue'), {
+      type: 'line',
+      data: {
+        labels: ['١', '٥', '٩', '١٣', '١٧', '٢١', '٢٥', '٢٩'],
+        datasets: [{
+          label: 'الإيرادات',
+          data: [120, 145, 132, 168, 155, 178, 165, 192],
+          borderColor: '#9e3d18',
+          backgroundColor: 'rgba(158,61,24,0.08)',
+          fill: true,
+          tension: 0.4,
+          pointRadius: 3,
+          pointBackgroundColor: '#9e3d18',
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.04)' } },
+          x: { grid: { display: false } }
+        }
+      }
+    });
+    charts.users = new Chart(document.getElementById('chartUsers'), {
+      type: 'doughnut',
+      data: {
+        labels: ['عملاء', 'مقاولين', 'مسؤولين'],
+        datasets: [{
+          data: [21340, 3842, 45],
+          backgroundColor: ['#1d4ed8', '#9e3d18', '#5c614d'],
+          borderWidth: 0,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { position: 'bottom', labels: { font: {size:11}, padding:12 } } },
+        cutout: '65%',
+      }
+    });
+  }
+
+  if (page === 'analytics') {
+    charts.dailyUsers = new Chart(document.getElementById('chartDailyUsers'), {
+      type: 'bar',
+      data: {
+        labels: ['سبت', 'أحد', 'اثنين', 'ثلاثاء', 'أربعاء', 'خميس', 'جمعة'],
+        datasets: [{
+          label: 'زيارات',
+          data: [4200, 5100, 4800, 5300, 4900, 6200, 5500],
+          backgroundColor: '#9e3d18',
+          borderRadius: 4,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.04)' } },
+          x: { grid: { display: false } }
+        }
+      }
+    });
+    charts.revenueGrowth = new Chart(document.getElementById('chartRevenueGrowth'), {
+      type: 'line',
+      data: {
+        labels: ['يناير', 'فبراير', 'مارس', 'إبريل', 'مايو', 'يونيو'],
+        datasets: [{
+          label: 'الإيرادات',
+          data: [2.1, 2.4, 2.8, 3.2, 3.8, 4.8],
+          borderColor: '#16a34a',
+          backgroundColor: 'rgba(22,163,74,0.08)',
+          fill: true,
+          tension: 0.4,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.04)' }, ticks: { callback: v => v + 'م' } },
+          x: { grid: { display: false } }
+        }
+      }
+    });
+    charts.categoryDemand = new Chart(document.getElementById('chartCategoryDemand'), {
+      type: 'bar',
+      data: {
+        labels: ['تشطيب', 'دهانات', 'سباكة', 'كهرباء', 'سيراميك', 'مطابخ'],
+        datasets: [{
+          label: 'طلبات',
+          data: [45, 32, 28, 24, 18, 12],
+          backgroundColor: ['#9e3d18', '#d97706', '#1d4ed8', '#16a34a', '#9333ea', '#059669'],
+          borderRadius: 4,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        indexAxis: 'y',
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.04)' } },
+          y: { grid: { display: false } }
+        }
+      }
+    });
+    charts.cities = new Chart(document.getElementById('chartCities'), {
+      type: 'doughnut',
+      data: {
+        labels: ['القاهرة', 'الإسكندرية', 'الجيزة', 'الغردقة', 'طنطا'],
+        datasets: [{
+          data: [42, 18, 15, 8, 5],
+          backgroundColor: ['#9e3d18', '#d97706', '#1d4ed8', '#16a34a', '#9333ea'],
+          borderWidth: 0,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { position: 'bottom', labels: { font: {size:11}, padding:10 } } },
+        cutout: '60%',
+      }
+    });
+  }
+
+  if (page === 'payments') {
+    charts.payments = new Chart(document.getElementById('chartPayments'), {
+      type: 'line',
+      data: {
+        labels: ['١', '٥', '٩', '١٣', '١٧', '٢١', '٢٥', '٢٩'],
+        datasets: [{
+          label: 'المدفوعات',
+          data: [45, 52, 48, 62, 55, 58, 63, 72],
+          borderColor: '#16a34a',
+          backgroundColor: 'rgba(22,163,74,0.08)',
+          fill: true,
+          tension: 0.4,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.04)' } },
+          x: { grid: { display: false } }
+        }
+      }
+    });
+    charts.commission = new Chart(document.getElementById('chartCommission'), {
+      type: 'doughnut',
+      data: {
+        labels: ['عمولة المنصة', 'للمقاولين', 'الضرائب', 'مصاريف تشغيل'],
+        datasets: [{
+          data: [15, 70, 8, 7],
+          backgroundColor: ['#9e3d18', '#16a34a', '#d97706', '#1d4ed8'],
+          borderWidth: 0,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { position: 'bottom', labels: { font: {size:11}, padding:10 } } },
+        cutout: '60%',
+      }
+    });
+  }
+}
+
+// ─── Theme ──────────────────────────────────────────────────────────────────
+function toggleDarkMode() {
+  document.body.classList.toggle('dark');
+  const isDark = document.body.classList.contains('dark');
+  localStorage.setItem('theme', isDark ? 'dark' : 'light');
+  document.querySelector('#themeToggle i').className = isDark ? 'fas fa-sun' : 'fas fa-moon';
+  const sw = document.getElementById('darkModeSwitch');
+  if (sw) sw.checked = isDark;
+
+  // Update slider style
+  const slider = document.querySelector('#darkModeSwitch + span');
+  if (slider && isDark) {
+    slider.style.background = '#9e3d18';
+    slider.nextElementSibling.style.transform = 'translateX(20px)';
+  } else if (slider) {
+    slider.style.background = '';
+    slider.nextElementSibling.style.transform = '';
+  }
+}
+
+document.getElementById('themeToggle').addEventListener('click', toggleDarkMode);
+
+// Load saved theme
+const savedTheme = localStorage.getItem('theme');
+if (savedTheme === 'dark') {
+  document.body.classList.add('dark');
+  document.querySelector('#themeToggle i').className = 'fas fa-sun';
+}
+
+// ─── Sidebar Toggle ─────────────────────────────────────────────────────────
+document.getElementById('sidebarToggle').addEventListener('click', () => {
+  document.getElementById('sidebar').classList.toggle('collapsed');
+});
+
+// ─── Notifications ─────────────────────────────────────────────────────────
+document.getElementById('notifBtn').addEventListener('click', (e) => {
+  e.stopPropagation();
+  document.getElementById('notifPanel').classList.toggle('show');
+});
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.notif-btn') && !e.target.closest('.notif-panel')) {
+    closeNotifPanel();
+  }
+});
+
+// Populate notification panel
+document.getElementById('notifList').innerHTML = notifications.slice(0,4).map(n => `
+  <div class="notif-item${n.unread ? ' unread' : ''}">
+    <div class="notif-item-icon"><i class="fas ${n.icon}"></i></div>
+    <div class="notif-item-content">
+      <p>${n.text}</p>
+      <div class="time">${n.time}</div>
+    </div>
+  </div>
+`).join('');
+
+// ─── Init ───────────────────────────────────────────────────────────────────
+function scrollInsights() {
+  const el = document.getElementById('insightsScroll');
+  if (el) el.scrollBy({ left: 200, behavior: 'smooth' });
+}
+
+// Build sidebar and start
+buildSidebar();
+navigate('dashboard');
+</script>
+</body>
+</html>

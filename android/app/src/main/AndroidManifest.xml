@@ -1,4 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Required for Supabase/network in RELEASE builds. Flutter only injects
+         INTERNET into the debug/profile manifests, never the release one. -->
+    <uses-permission android:name="android.permission.INTERNET"/>
     <application
         android:label="Shattab"
         android:name="${applicationName}"

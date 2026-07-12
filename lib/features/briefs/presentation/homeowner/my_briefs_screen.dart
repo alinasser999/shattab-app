@@ -3,15 +3,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/l10n/strings.dart';
+import '../../../../core/utils/error_mapper.dart';
 import '../../../../core/router/routes.dart';
 import '../../../../core/theme/batsh_colors.dart';
 import '../../../../core/theme/batsh_spacing.dart';
 import '../../../../core/theme/batsh_typography.dart';
+import '../../../../core/widgets/batsh_button.dart';
 import '../../../../core/widgets/batsh_empty_state.dart';
 import '../../../../core/widgets/batsh_error.dart';
-import '../../../../core/widgets/batsh_loading.dart';
 import '../../../../core/widgets/batsh_scaffold.dart';
+import '../../../../core/widgets/batsh_shimmer.dart';
 import '../../../../core/widgets/brief_card.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../auth/presentation/sign_in_sheet.dart';
 import '../providers/briefs_providers.dart';
 
 class MyBriefsScreen extends ConsumerWidget {
@@ -20,6 +24,7 @@ class MyBriefsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(myBriefsProvider);
+    final isGuest = ref.watch(currentSessionProvider) == null;
 
     return BatshScaffold(
       title: S.tabRequests,
@@ -28,52 +33,67 @@ class MyBriefsScreen extends ConsumerWidget {
         backgroundColor: BatshColors.primary,
         foregroundColor: BatshColors.onPrimary,
         icon: const Icon(Icons.add),
-        label: const Text('اعمل بوست جديد'),
+        label: Text(S.createNewPostButton),
       ),
       body: async.when(
-        loading: () => const BatshLoading(),
+        loading: () => const BatshListSkeleton(),
         error: (e, _) => BatshError(
-            message: e.toString(),
+            message: ErrorMapper.map(e),
             onRetry: () => ref.invalidate(myBriefsProvider)),
         data: (list) {
-          if (list.isEmpty) {
-            return BatshEmptyState(
-              title: 'مفيش حاجة هنا لسه',
-              message:
-                  'ابعت طلب لمقاول معين من صفحته، أو اعمل بوست عام والمقاولين يتواصلوا معاك.',
-              icon: Icons.assignment_outlined,
-            );
-          }
           final posts = list.where((b) => b.isPost).toList();
           final direct = list.where((b) => !b.isPost).toList();
-          return ListView(
-            padding: const EdgeInsets.only(bottom: 80),
-            children: [
-              if (posts.isNotEmpty) ...[
-                const SizedBox(height: BatshSpacing.md),
-                _Section('بوستات مفتوحة'),
-                const SizedBox(height: BatshSpacing.sm),
-                for (final b in posts) ...[
-                  BriefCard(
-                      brief: b,
-                      onTap: () => context.push(
-                          Routes.homeownerBriefDetailPath(b.id))),
-                  const SizedBox(height: BatshSpacing.md),
-                ],
-              ],
-              if (direct.isNotEmpty) ...[
-                const SizedBox(height: BatshSpacing.md),
-                _Section('طلبات مباشرة'),
-                const SizedBox(height: BatshSpacing.sm),
-                for (final b in direct) ...[
-                  BriefCard(
-                      brief: b,
-                      onTap: () => context.push(
-                          Routes.homeownerBriefDetailPath(b.id))),
-                  const SizedBox(height: BatshSpacing.md),
-                ],
-              ],
-            ],
+          return RefreshIndicator(
+            onRefresh: () async => ref.invalidate(myBriefsProvider),
+            child: list.isEmpty
+                ? ListView(
+                    children: [
+                      isGuest
+                          ? BatshEmptyState(
+                              title: S.signInToSeeRequests,
+                              icon: Icons.assignment_outlined,
+                              action: BatshButton(
+                                label: S.signInSheetTitle,
+                                onPressed: () => showSignInSheet(context,
+                                    reason: S.signInToSeeRequests),
+                              ),
+                            )
+                          : BatshEmptyState(
+                              title: S.noBriefsHere,
+                              message: S.noBriefsHereMessage,
+                              icon: Icons.assignment_outlined,
+                            ),
+                    ],
+                  )
+                : ListView(
+                    padding: const EdgeInsets.only(bottom: 80),
+                    children: [
+                      if (posts.isNotEmpty) ...[
+                        const SizedBox(height: BatshSpacing.md),
+                        _Section(S.sectionOpenPosts),
+                        const SizedBox(height: BatshSpacing.sm),
+                        for (final b in posts) ...[
+                          BriefCard(
+                              brief: b,
+                              onTap: () => context.push(
+                                  Routes.homeownerBriefDetailPath(b.id))),
+                          const SizedBox(height: BatshSpacing.md),
+                        ],
+                      ],
+                      if (direct.isNotEmpty) ...[
+                        const SizedBox(height: BatshSpacing.md),
+                        _Section(S.sectionDirectRequests),
+                        const SizedBox(height: BatshSpacing.sm),
+                        for (final b in direct) ...[
+                          BriefCard(
+                              brief: b,
+                              onTap: () => context.push(
+                                  Routes.homeownerBriefDetailPath(b.id))),
+                          const SizedBox(height: BatshSpacing.md),
+                        ],
+                      ],
+                    ],
+                  ),
           );
         },
       ),

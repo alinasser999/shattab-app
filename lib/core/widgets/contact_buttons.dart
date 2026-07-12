@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../l10n/strings.dart';
@@ -14,22 +15,32 @@ class WhatsAppButton extends StatelessWidget {
   final String phone;
   final String? message;
 
-  Future<void> _open() async {
+  Future<void> _open(BuildContext context) async {
+    HapticFeedback.lightImpact();
     final cleaned = phone.replaceAll(RegExp(r'\D'), '');
     final uri = Uri.parse(
       'https://wa.me/$cleaned${message != null ? '?text=${Uri.encodeComponent(message!)}' : ''}',
     );
-    await launchUrl(uri, mode: LaunchMode.externalApplication);
+    var ok = false;
+    try {
+      ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (_) {
+      ok = false;
+    }
+    if (!ok && context.mounted) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(S.couldNotOpenApp)));
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: const Color(0xFF25D366),
+    return Semantics(button: true, label: S.contactViaWhatsApp, child: Material(
+      color: BatshColors.whatsApp,
       borderRadius: BatshRadius.brDefault,
       child: InkWell(
         borderRadius: BatshRadius.brDefault,
-        onTap: _open,
+        onTap: () => _open(context),
         child: Container(
           height: BatshSpacing.minHitArea,
           alignment: Alignment.center,
@@ -41,7 +52,7 @@ class WhatsAppButton extends StatelessWidget {
                   color: Colors.white, size: 20),
               const SizedBox(width: BatshSpacing.sm),
               Text(
-                'تواصل عبر واتساب',
+                S.contactViaWhatsApp,
                 style: BatshTypography.labelMd.copyWith(
                   color: Colors.white,
                   fontWeight: FontWeight.w600,
@@ -52,7 +63,7 @@ class WhatsAppButton extends StatelessWidget {
           ),
         ),
       ),
-    );
+    ));
   }
 }
 
@@ -62,23 +73,34 @@ class CallButton extends StatelessWidget {
 
   final String phone;
 
-  Future<void> _open() async {
+  Future<void> _open(BuildContext context) async {
+    HapticFeedback.lightImpact();
     final cleaned = phone.replaceAll(RegExp(r'[^\d+]'), '');
     final uri = Uri.parse('tel:$cleaned');
-    await launchUrl(uri);
+    var ok = false;
+    try {
+      ok = await launchUrl(uri);
+    } catch (_) {
+      ok = false;
+    }
+    if (!ok && context.mounted) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(S.couldNotOpenApp)));
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return OutlinedButton.icon(
-      onPressed: _open,
+    return Semantics(button: true, label: S.call, child: OutlinedButton.icon(
+      onPressed: () => _open(context),
       icon: const Icon(Icons.call_outlined, size: 20),
-      label: const Text('اتصل'),
+      label: Text(S.call),
       style: OutlinedButton.styleFrom(
+        foregroundColor: BatshColors.primary,
         side: const BorderSide(color: BatshColors.outline),
         minimumSize: const Size.fromHeight(BatshSpacing.minHitArea),
       ),
-    );
+    ));
   }
 }
 
@@ -91,7 +113,7 @@ class PhoneInline extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Text(
-      '${S.appName == 'شطب' ? 'تليفون' : 'Phone'}: $phone',
+      '${S.phone}: $phone',
       style: BatshTypography.bodyMd
           .copyWith(color: BatshColors.onSurfaceVariant),
     );

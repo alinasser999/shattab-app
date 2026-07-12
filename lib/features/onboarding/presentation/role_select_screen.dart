@@ -2,18 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:flutter_animate/flutter_animate.dart';
+
 import '../../../core/l10n/strings.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/batsh_colors.dart';
 import '../../../core/theme/batsh_spacing.dart';
 import '../../../core/theme/batsh_typography.dart';
-import '../../../core/utils/extensions.dart';
+import '../../../core/theme/batsh_motion.dart';
 import '../../../core/widgets/batsh_button.dart';
 import '../../../core/widgets/batsh_card.dart';
 import '../../../core/widgets/batsh_scaffold.dart';
 import '../../../core/widgets/batsh_text_field.dart';
 import '../../auth/domain/profile.dart';
 import 'providers/onboarding_provider.dart';
+import '../../../core/utils/error_mapper.dart';
 
 class RoleSelectScreen extends ConsumerStatefulWidget {
   const RoleSelectScreen({super.key});
@@ -38,7 +41,7 @@ class _RoleSelectScreenState extends ConsumerState<RoleSelectScreen> {
     if (_selectedRole == null) return;
     final name = _nameController.text.trim();
     if (name.length < 2) {
-      setState(() => _error = 'الاسم مش كافي');
+      setState(() => _error = S.nameNotEnough);
       return;
     }
     setState(() {
@@ -52,13 +55,13 @@ class _RoleSelectScreenState extends ConsumerState<RoleSelectScreen> {
           );
       if (!mounted) return;
       if (_selectedRole == UserRole.homeowner) {
-        context.go(Routes.onboardingHomeownerApartment);
+        context.go(Routes.onboardingHomeownerDetails);
       } else {
-        context.go(Routes.onboardingContractorBusiness);
+        context.go(Routes.onboardingContractorProfile);
       }
     } catch (e) {
       if (!mounted) return;
-      setState(() => _error = e.toString());
+      setState(() => _error = ErrorMapper.map(e));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -66,8 +69,6 @@ class _RoleSelectScreenState extends ConsumerState<RoleSelectScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isMobile = context.isMobile;
-
     return BatshScaffold(
       showAppBar: false,
       body: SingleChildScrollView(
@@ -78,9 +79,7 @@ class _RoleSelectScreenState extends ConsumerState<RoleSelectScreen> {
             children: [
               Text(
                 S.chooseRoleTitle,
-                style: isMobile
-                    ? BatshTypography.headlineLgMobile
-                    : BatshTypography.headlineLg,
+              style: BatshTypography.headlineLg,
               ),
               const SizedBox(height: BatshSpacing.sm),
               Text(
@@ -111,7 +110,7 @@ class _RoleSelectScreenState extends ConsumerState<RoleSelectScreen> {
               BatshTextField(
                 controller: _nameController,
                 label: S.displayNameLabel,
-                hint: 'مثال: أحمد علي',
+                hint: S.nameExample,
                 errorText: _error,
               ),
               const SizedBox(height: BatshSpacing.lg),
@@ -120,7 +119,14 @@ class _RoleSelectScreenState extends ConsumerState<RoleSelectScreen> {
                 onPressed: (_selectedRole == null || _busy) ? null : _continue,
                 isLoading: _busy,
               ),
-            ],
+            ].animate(interval: 60.ms).fadeIn(
+              duration: BatshMotion.slow,
+              curve: BatshMotion.easeOut,
+            ).slideY(
+              begin: 0.08,
+              end: 0,
+              curve: BatshMotion.easeOut,
+            ),
           ),
         ),
       ),

@@ -2,12 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:flutter_animate/flutter_animate.dart';
+
 import '../../../../core/l10n/strings.dart';
 import '../../../../core/router/routes.dart';
 import '../../../../core/theme/batsh_colors.dart';
 import '../../../../core/theme/batsh_spacing.dart';
 import '../../../../core/theme/batsh_typography.dart';
-import '../../../../core/utils/extensions.dart';
+import '../../../../core/theme/batsh_motion.dart';
+import '../../../../core/utils/error_mapper.dart';
 import '../../../../core/widgets/batsh_button.dart';
 import '../../../../core/widgets/batsh_chip.dart';
 import '../../../../core/widgets/batsh_scaffold.dart';
@@ -37,7 +40,16 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
             district: _selectedDistrict!,
           );
       if (!mounted) return;
-      context.go(Routes.onboardingHomeownerInterests);
+      await ref
+          .read(onboardingControllerProvider.notifier)
+          .markComplete();
+      if (!mounted) return;
+      context.go(Routes.homeownerDiscover);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(ErrorMapper.map(e))),
+      );
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -57,8 +69,6 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
     final existing = ref.watch(homeownerProfileProvider).value;
     _selectedCity ??= existing?.city;
     _selectedDistrict ??= existing?.district;
-    final isMobile = context.isMobile;
-
     return BatshScaffold(
       title: S.locationTitle,
       body: SingleChildScrollView(
@@ -68,9 +78,7 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
             const SizedBox(height: BatshSpacing.md),
             Text(
               S.locationTitle,
-              style: isMobile
-                  ? BatshTypography.headlineLgMobile
-                  : BatshTypography.headlineLg,
+              style: BatshTypography.headlineLg,
             ),
             const SizedBox(height: BatshSpacing.lg),
             Text(S.cityLabel,
@@ -124,7 +132,14 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
               isLoading: _busy,
             ),
             const SizedBox(height: BatshSpacing.lg),
-          ],
+          ].animate(interval: 60.ms).fadeIn(
+            duration: BatshMotion.slow,
+            curve: BatshMotion.easeOut,
+          ).slideY(
+            begin: 0.08,
+            end: 0,
+            curve: BatshMotion.easeOut,
+          ),
         ),
       ),
     );

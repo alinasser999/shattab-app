@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../theme/batsh_colors.dart';
+import '../theme/batsh_motion.dart';
 import '../theme/batsh_radius.dart';
 import '../theme/batsh_spacing.dart';
+import '../theme/batsh_typography.dart';
 
 enum BatshButtonStyle { primary, secondary, ghost }
 
@@ -15,6 +18,10 @@ class BatshButton extends StatelessWidget {
     this.isLoading = false,
     this.fullWidth = true,
     this.icon,
+    this.hapticOnPress = true,
+    this.animate = true,
+    this.backgroundColor,
+    this.foregroundColor,
   });
 
   final String label;
@@ -23,51 +30,133 @@ class BatshButton extends StatelessWidget {
   final bool isLoading;
   final bool fullWidth;
   final IconData? icon;
+  final bool hapticOnPress;
+  final bool animate;
+  final Color? backgroundColor;
+  final Color? foregroundColor;
 
   @override
   Widget build(BuildContext context) {
     final disabled = onPressed == null || isLoading;
+
     final child = isLoading
-        ? const SizedBox(
+        ? SizedBox(
             height: 20,
             width: 20,
-            child: CircularProgressIndicator(strokeWidth: 2),
+            child: CircularProgressIndicator(
+              strokeWidth: 2.5,
+              color: switch (style) {
+                BatshButtonStyle.primary => BatshColors.onPrimary,
+                BatshButtonStyle.secondary => BatshColors.primary,
+                BatshButtonStyle.ghost => BatshColors.onSurfaceVariant,
+              },
+            ),
           )
         : Row(
-            mainAxisSize: fullWidth ? MainAxisSize.max : MainAxisSize.min,
+            mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               if (icon != null) ...[
                 Icon(icon, size: 20),
                 const SizedBox(width: BatshSpacing.sm),
               ],
-              Text(label),
+              Text(label, style: BatshTypography.labelLg.copyWith(
+                fontWeight: FontWeight.w700,
+              )),
             ],
           );
 
-    final button = switch (style) {
+    Widget button = switch (style) {
       BatshButtonStyle.primary => ElevatedButton(
-          onPressed: disabled ? null : onPressed,
+          onPressed: disabled
+              ? null
+              : () {
+                  if (hapticOnPress) HapticFeedback.lightImpact();
+                  onPressed?.call();
+                },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: backgroundColor ?? BatshColors.primary,
+            foregroundColor: foregroundColor ?? BatshColors.onPrimary,
+            disabledBackgroundColor: BatshColors.surfaceContainerHigh,
+            disabledForegroundColor: BatshColors.onSurfaceVariant,
+            minimumSize: const Size.fromHeight(56),
+            padding: const EdgeInsets.symmetric(
+              horizontal: BatshSpacing.lg,
+              vertical: BatshSpacing.gutter,
+            ),
+            elevation: 0,
+            shadowColor: Colors.transparent,
+            surfaceTintColor: Colors.transparent,
+            shape: RoundedRectangleBorder(
+              borderRadius: BatshRadius.brDefault,
+            ),
+          ),
           child: child,
         ),
       BatshButtonStyle.secondary => OutlinedButton(
-          onPressed: disabled ? null : onPressed,
+          onPressed: disabled
+              ? null
+              : () {
+                  if (hapticOnPress) HapticFeedback.lightImpact();
+                  onPressed?.call();
+                },
           style: OutlinedButton.styleFrom(
-            side: const BorderSide(color: BatshColors.outline),
-            shape:
-                const RoundedRectangleBorder(borderRadius: BatshRadius.brDefault),
-            minimumSize: const Size.fromHeight(BatshSpacing.minHitArea),
+            foregroundColor: foregroundColor ?? BatshColors.primary,
+            backgroundColor: backgroundColor,
+            side: BorderSide(
+                color: BatshColors.outline.withValues(alpha: 0.5), width: 1.5),
+            disabledBackgroundColor: BatshColors.surfaceContainerHigh,
+            disabledForegroundColor: BatshColors.onSurfaceVariant,
+            minimumSize: const Size.fromHeight(56),
+            padding: const EdgeInsets.symmetric(
+              horizontal: BatshSpacing.lg,
+              vertical: BatshSpacing.gutter,
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BatshRadius.brDefault,
+            ),
           ),
           child: child,
         ),
       BatshButtonStyle.ghost => TextButton(
-          onPressed: disabled ? null : onPressed,
+          onPressed: disabled
+              ? null
+              : () {
+                  if (hapticOnPress) HapticFeedback.lightImpact();
+                  onPressed?.call();
+                },
+          style: TextButton.styleFrom(
+            foregroundColor: foregroundColor ?? BatshColors.onSurfaceVariant,
+            minimumSize: const Size(0, 48),
+            padding: const EdgeInsets.symmetric(
+              horizontal: BatshSpacing.gutter,
+              vertical: BatshSpacing.sm,
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BatshRadius.brDefault,
+            ),
+          ),
           child: child,
         ),
     };
 
-    return fullWidth
-        ? SizedBox(width: double.infinity, child: button)
-        : button;
+    if (fullWidth) {
+      button = SizedBox(width: double.infinity, child: button);
+    }
+
+    if (animate && !MediaQuery.of(context).disableAnimations) {
+      button = TweenAnimationBuilder<double>(
+        tween: Tween(begin: 0.96, end: 1.0),
+        duration: BatshMotion.normal,
+        curve: BatshMotion.easeOut,
+        builder: (context, scale, child) => Transform.scale(
+          scale: scale,
+          child: child,
+        ),
+        child: button,
+      );
+    }
+
+    return Semantics(button: true, label: label, child: button);
   }
 }

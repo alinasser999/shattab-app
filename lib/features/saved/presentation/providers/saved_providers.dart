@@ -41,7 +41,9 @@ class SavedController extends _$SavedController {
       await repo.save(
           homeownerId: session.user.id, contractorId: contractorId);
     }
-    ref.invalidate(savedContractorIdsProvider);
-    ref.invalidate(savedContractorsProvider);
+    if (ref.mounted) {
+      ref.invalidate(savedContractorIdsProvider);
+      ref.invalidate(savedContractorsProvider);
+    }
   }
 }

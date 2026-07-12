@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../theme/batsh_colors.dart';
+import '../theme/batsh_radius.dart';
 import '../theme/batsh_spacing.dart';
 import '../theme/batsh_typography.dart';
 
@@ -24,6 +25,7 @@ class BatshTextField extends StatelessWidget {
     this.initialValue,
     this.suffixIcon,
     this.enabled = true,
+    this.semanticLabel,
   });
 
   final TextEditingController? controller;
@@ -42,44 +44,101 @@ class BatshTextField extends StatelessWidget {
   final String? initialValue;
   final Widget? suffixIcon;
   final bool enabled;
+  final String? semanticLabel;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        if (label != null) ...[
-          Padding(
-            padding: const EdgeInsets.only(bottom: BatshSpacing.sm),
-            child: Text(
-              label!,
-              style: BatshTypography.labelMd
-                  .copyWith(color: BatshColors.onSurfaceVariant),
+    return Semantics(
+      label: semanticLabel ?? label,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (label != null) ...[
+            Padding(
+              padding: const EdgeInsets.only(bottom: BatshSpacing.sm),
+              child: Text(
+                label!,
+                style: BatshTypography.bodyMd.copyWith(
+                  color: BatshColors.onSurfaceVariant,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ],
+          TextFormField(
+            controller: controller,
+            initialValue: controller == null ? initialValue : null,
+            autofocus: autofocus,
+            enabled: enabled,
+            keyboardType: keyboardType,
+            textInputAction: textInputAction,
+            inputFormatters: inputFormatters,
+            maxLines: maxLines,
+            maxLength: maxLength,
+            onChanged: onChanged,
+            onFieldSubmitted: onSubmitted,
+            style: BatshTypography.bodyMd,
+            cursorColor: BatshColors.primary,
+            cursorWidth: 2,
+            decoration: InputDecoration(
+              hintText: hint,
+              helperText: helperText,
+              errorText: errorText,
+              suffixIcon: suffixIcon,
+              counterText: '',
+              hintStyle: BatshTypography.bodyMd.copyWith(
+                color: BatshColors.onSurfaceVariant.withValues(alpha: 0.6),
+              ),
+              errorStyle: BatshTypography.labelSm.copyWith(
+                color: BatshColors.error,
+              ),
+              filled: true,
+              fillColor: BatshColors.surfaceContainerLow,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: BatshSpacing.gutter,
+                vertical: BatshSpacing.md,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BatshRadius.brMd,
+                borderSide: BorderSide.none,
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BatshRadius.brMd,
+                borderSide: BorderSide(
+                  color: BatshColors.outlineVariant.withValues(alpha: 0.5),
+                ),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BatshRadius.brMd,
+                borderSide: const BorderSide(
+                  color: BatshColors.primary,
+                  width: 2,
+                ),
+              ),
+              errorBorder: OutlineInputBorder(
+                borderRadius: BatshRadius.brMd,
+                borderSide: const BorderSide(
+                  color: BatshColors.error,
+                  width: 1.5,
+                ),
+              ),
+              focusedErrorBorder: OutlineInputBorder(
+                borderRadius: BatshRadius.brMd,
+                borderSide: const BorderSide(
+                  color: BatshColors.error,
+                  width: 2,
+                ),
+              ),
+              disabledBorder: OutlineInputBorder(
+                borderRadius: BatshRadius.brMd,
+                borderSide: BorderSide(
+                  color: BatshColors.outlineVariant.withValues(alpha: 0.3),
+                ),
+              ),
             ),
           ),
         ],
-        TextFormField(
-          controller: controller,
-          initialValue: controller == null ? initialValue : null,
-          autofocus: autofocus,
-          enabled: enabled,
-          keyboardType: keyboardType,
-          textInputAction: textInputAction,
-          inputFormatters: inputFormatters,
-          maxLines: maxLines,
-          maxLength: maxLength,
-          onChanged: onChanged,
-          onFieldSubmitted: onSubmitted,
-          style: BatshTypography.bodyMd,
-          decoration: InputDecoration(
-            hintText: hint,
-            helperText: helperText,
-            errorText: errorText,
-            suffixIcon: suffixIcon,
-            counterText: '',
-          ),
-        ),
-      ],
+      ),
     );
   }
 }

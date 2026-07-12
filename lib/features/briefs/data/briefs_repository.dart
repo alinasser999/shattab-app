@@ -31,15 +31,39 @@ class BriefsRepository {
     return Brief.fromJson(row);
   }
 
-  /// Posts that match the calling contractor (RLS handles visibility).
+  /// Posts matching the calling contractor by specialty ∩ service_area.
   Future<List<Brief>> fetchOpportunitiesForContractor() async {
-    final rows = await _client
+    final profile = await _client
+        .from('contractor_profiles')
+        .select('specialties, service_areas')
+        .eq('profile_id', _uid)
+        .maybeSingle();
+
+    final specialties = (profile?['specialties'] as List?)?.cast<String>() ?? <String>[];
+    final serviceAreas = (profile?['service_areas'] as List?)?.cast<String>() ?? <String>[];
+
+    var query = _client
         .from('briefs')
         .select()
         .isFilter('target_contractor_id', null)
-        .eq('status', 'open')
-        .order('created_at', ascending: false);
+        .isFilter('hired_at', null) // hired jobs leave the feed (migration 0009)
+        .eq('status', 'open');
+
+    if (specialties.isNotEmpty) {
+      query = query.overlaps('target_specialties', specialties);
+    }
+    if (serviceAreas.isNotEmpty) {
+      query = query.inFilter('city', serviceAreas);
+    }
+
+    final rows = await query.order('created_at', ascending: false);
     return rows.map(Brief.fromJson).toList();
+  }
+
+  String get _uid {
+    final id = _client.auth.currentUser?.id;
+    if (id == null) throw StateError('No authenticated user.');
+    return id;
   }
 
   /// Direct briefs sent to the calling contractor.
@@ -47,7 +71,8 @@ class BriefsRepository {
     final rows = await _client
         .from('briefs')
         .select()
-        .not('target_contractor_id', 'is', null)
+        .not('target_contractor_id', 'is', 'null')
+        .eq('target_contractor_id', _uid)
         .order('created_at', ascending: false);
     return rows.map(Brief.fromJson).toList();
   }

@@ -47,6 +47,20 @@ class AuthRepository {
     return Profile.fromJson(row);
   }
 
+  Future<({String name, String phone})?> fetchProfileNameAndPhone(
+      String profileId) async {
+    final row = await _client
+        .from('profiles')
+        .select('full_name, phone')
+        .eq('id', profileId)
+        .maybeSingle();
+    if (row == null) return null;
+    return (
+      name: (row['full_name'] as String?) ?? '',
+      phone: (row['phone'] as String?) ?? '',
+    );
+  }
+
   Future<void> updateRole({
     required String userId,
     required UserRole role,
