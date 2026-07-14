@@ -53,9 +53,8 @@ class S {
       _t('مقاول؟ سجّل دخولك من هنا', 'Contractor? Sign in here');
 
   // Login redesign (M4)
-  static String get heroLine1 =>
-      _t('اعثر على أفضل المقاولين', 'Find the best contractors');
-  static String get heroLine2 => _t('في دقائق', 'In minutes');
+  static String get heroLine1 => _t('شطب بيتك', 'Finish your home');
+  static String get heroLine2 => _t('من غير وجع دماغ', 'without the headache');
   static String get heroSubtitle => _t(
       'اطلب الخدمة المناسبة واستقبل عروضًا من مقاولين موثقين.',
       'Request the right service and receive quotes from verified contractors.');
@@ -66,7 +65,25 @@ class S {
       _t('بياناتك آمنة ومشفرة', 'Your data is secure and encrypted');
   static String get loginPrompt => _t('لديك حساب بالفعل؟', 'Already have an account?');
   static String get loginAction => _t('تسجيل الدخول', 'Log in');
-  static String get taglineNew => _t('سوق المقاولات المصري', 'The Egyptian contracting marketplace');
+  // Phone + password auth
+  static String get passwordLabel => _t('كلمة السر', 'Password');
+  static String get passwordHint => _t('٦ حروف على الأقل', 'At least 6 characters');
+  static String get passwordTooShort =>
+      _t('كلمة السر لازم ٦ حروف على الأقل', 'Password must be at least 6 characters');
+  static String get signInAction => _t('دخول', 'Sign in');
+  static String get createAccountAction => _t('إنشاء حساب', 'Create account');
+  static String get noAccountPrompt => _t('معندكش حساب؟', 'No account?');
+  static String get haveAccountPrompt => _t('عندك حساب؟', 'Have an account?');
+  static String get forgotPassword => _t('نسيت كلمة السر؟', 'Forgot password?');
+  static String get continueWithGoogle =>
+      _t('المتابعة عبر Google', 'Continue with Google');
+  static String get orDivider => _t('أو', 'or');
+  // Homeowner profile dashboard (greetingMorning/greetingEvening already exist)
+  static String get quickActionsTitle => _t('إجراءات سريعة', 'Quick actions');
+  static String get accountSettingsTitle => _t('الإعدادات', 'Settings');
+  static String get resetViaSms =>
+      _t('هنبعتلك كود على رقمك عشان تدخل من جديد', 'We\'ll text you a code to sign back in');
+  static String get taglineNew => _t('من أول فكرة لآخر لمسة', 'From first idea to final touch');
   static String get otpHint => _t('كود من ٦ أرقام', 'A 6-digit code');
   static String get resendCode => _t('ابعت الكود تاني', 'Resend code');
   static String get resendInSeconds => _t('تقدر تعيد بعد %s ث', 'Resend in %s s');
@@ -256,6 +273,32 @@ class S {
   static String get viewContractorProfile =>
       _t('شوف الملف', 'View profile');
 
+  // ── Monetization: Pro / paywall ─────────────────────────────────────────
+  static String get proPlanName => _t('برو', 'Pro');
+  static String get freePlanName => _t('مجاني', 'Free');
+  static String get paywallTitle => _t('باقة برو', 'Pro Plan');
+  static String get paywallSubtitle =>
+      _t('وصّل شغلك لعملاء أكتر واكسب أكتر.', 'Reach more clients and win more work.');
+  static String get proRequiredToQuoteTitle =>
+      _t('اشترك في برو عشان تبعت عروض', 'Go Pro to send quotes');
+  static String get proRequiredToQuoteBody =>
+      _t('العملاء مستنيين عرضك. اشترك في برو عشان تبعت عروض أسعار وتشوف تفاصيل الطلبات.',
+          'Clients are waiting. Subscribe to Pro to send quotes and view request details.');
+  static String get proBenefitQuotes =>
+      _t('عروض أسعار غير محدودة', 'Unlimited quotes');
+  static String get proBenefitRequests =>
+      _t('شوف طلبات الشغل وبيانات التواصل', 'View job requests & contact details');
+  static String get proBenefitRanking =>
+      _t('ظهور أعلى في نتائج البحث', 'Higher ranking in search results');
+  static String get proBenefitPhotos =>
+      _t('صور أعمال أكتر في معرضك', 'More portfolio photos');
+  static String get upgradeToProCta => _t('اشترك دلوقتي', 'Subscribe now');
+  static String get upgradeToProShort => _t('اشترك في برو', 'Go Pro');
+  static String get perMonth => _t('/ شهر', '/mo');
+  static String get paymentComingSoon =>
+      _t('الدفع هيكون متاح قريب جداً.', 'Payment is coming very soon.');
+  static String get currentPlanLabel => _t('باقتك الحالية', 'Your current plan');
+
   // ── M3: Inbox ───────────────────────────────────────────────────────────
   static String get inboxTitle => _t('الطلبات المباشرة', 'Direct Requests');
   static String get inboxEmptyTitle => _t('مفيش طلبات مباشرة', 'No direct requests');
@@ -304,6 +347,10 @@ class S {
       _t('ابحث عن مقاول أو شركة…', 'Search for a contractor or company…');
   static String get featuredContractors =>
       _t('مقاولين مميزين', 'Featured Contractors');
+  static String get topRated => _t('الأعلى تقييمًا', 'Top Rated');
+  static String get nearYou => _t('قريبين منك', 'Near You');
+  static String nearYouIn(String city) => _t('قريبين منك في $city', 'Near you in $city');
+  static String get browseByCategory => _t('تصفّح بالتخصص', 'Browse by category');
   static String get trendingNearYou => _t('رائج بالقرب منك', 'Trending Near You');
   static String get viewAll => _t('عرض الكل', 'View All');
   static String get verified => _t('موثوق', 'Verified');

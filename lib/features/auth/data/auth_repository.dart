@@ -30,6 +30,30 @@ class AuthRepository {
   }) =>
       _client.auth.signInWithPassword(email: email, password: password);
 
+  /// Primary (free) auth: phone + password. Requires Supabase "Confirm phone"
+  /// to be OFF so no SMS is sent on sign-up.
+  Future<AuthResponse> signInWithPhonePassword({
+    required String phone,
+    required String password,
+  }) =>
+      _client.auth.signInWithPassword(phone: phone, password: password);
+
+  Future<AuthResponse> signUpWithPhonePassword({
+    required String phone,
+    required String password,
+  }) =>
+      _client.auth.signUp(phone: phone, password: password);
+
+  /// Sets a new password for the signed-in user (used after a forgot-password
+  /// SMS OTP restores the session).
+  Future<UserResponse> updatePassword(String newPassword) =>
+      _client.auth.updateUser(UserAttributes(password: newPassword));
+
+  /// Social sign-in (free, no SMS). On web this redirects the page to Google
+  /// and back; the session is restored from the return URL.
+  Future<bool> signInWithGoogle() =>
+      _client.auth.signInWithOAuth(OAuthProvider.google);
+
   Future<void> signOut() => _client.auth.signOut();
 
   Stream<AuthState> watchAuthState() => _client.auth.onAuthStateChange;

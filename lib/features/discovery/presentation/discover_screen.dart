@@ -23,6 +23,7 @@ import '../../../core/widgets/contractor_card.dart';
 import '../../../core/utils/error_mapper.dart';
 import '../../auth/presentation/sign_in_sheet.dart';
 import '../../onboarding/domain/onboarding_models.dart';
+import '../../onboarding/presentation/providers/onboarding_provider.dart';
 import '../../saved/presentation/providers/saved_providers.dart';
 import '../domain/contractor_listing.dart';
 import 'providers/discovery_providers.dart';
@@ -124,21 +125,76 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
             );
           }
 
-          // Featured shelf only when the catalog can fill both shelves —
-          // otherwise it swallows everyone and "all contractors" reads (0).
-          final featured = filters.isEmpty && list.length > 6
-              ? (List.of(list)
+          // Curated shelves only when the catalog can fill them — otherwise a
+          // shelf swallows everyone and "all contractors" reads (0). Frozen to
+          // the first page so paging in more on scroll can't reshuffle a shelf
+          // mid-scroll. (Keep ~ DiscoveryRepository.pageSize.)
+          const shelfPool = 20;
+          final showShelves = filters.isEmpty && list.length > 6;
+          final topRated = showShelves
+              ? (list.take(shelfPool).toList()
                     ..sort((a, b) =>
                         b.displayRating.compareTo(a.displayRating)))
                   .take(5)
                   .toList()
               : <ContractorListing>[];
-          // The "all" list drops whoever is already in the featured shelf so
-          // the same contractor never appears twice on one screen.
-          final featuredIds = featured.map((c) => c.id).toSet();
-          final rest = featuredIds.isEmpty
+          // "قريبين منك" — contractors serving the homeowner's city, best rated
+          // first. Client-side off the loaded pages; true cross-catalog ranking
+          // lands with the discover_contractors RPC. Hidden for guests (no city)
+          // and when too thin to fill a shelf.
+          final myCity = ref.watch(homeownerProfileProvider).value?.city;
+          final nearYou = (showShelves && myCity != null && myCity.isNotEmpty)
+              ? (list.where((c) => c.serviceAreas.contains(myCity)).toList()
+                    ..sort((a, b) => b.displayRating.compareTo(a.displayRating)))
+                  .take(8)
+                  .toList()
+              : <ContractorListing>[];
+          final showNearYou = nearYou.length >= 3;
+          // The "all" list drops whoever is already on the top-rated shelf so the
+          // same contractor never appears twice back-to-back.
+          final shelfIds = topRated.map((c) => c.id).toSet();
+          final rest = shelfIds.isEmpty
               ? list
-              : list.where((c) => !featuredIds.contains(c.id)).toList();
+              : list.where((c) => !shelfIds.contains(c.id)).toList();
+
+          // A horizontal "shelf": section header + rail of premium cards, each
+          // rising in on a short stagger (ease-out; reduced-motion is honored
+          // app-wide via the disableAnimations MediaQuery).
+          List<Widget> shelf(String title, List<ContractorListing> items) => [
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(BatshSpacing.marginMobile,
+                        BatshSpacing.lg, BatshSpacing.marginMobile, 0),
+                    child: _SectionHeader(title: title),
+                  ),
+                ),
+                SliverToBoxAdapter(
+                  child: SizedBox(
+                    height: 280,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: BatshSpacing.marginMobile),
+                      physics: const BouncingScrollPhysics(),
+                      itemCount: items.length,
+                      separatorBuilder: (_, _) =>
+                          const SizedBox(width: BatshSpacing.gutter),
+                      itemBuilder: (_, i) => _FeaturedPremiumCard(
+                        listing: items[i],
+                        onTap: () => context.push(
+                            Routes.homeownerContractorProfilePath(items[i].id)),
+                      )
+                          .animate()
+                          .fadeIn(
+                              delay: BatshMotion.staggerClamped(i),
+                              duration: BatshMotion.normal,
+                              curve: Curves.easeOut)
+                          .slideY(
+                              begin: 0.08, end: 0, curve: BatshMotion.easeOut),
+                    ),
+                  ),
+                ),
+              ];
 
           return RefreshIndicator(
             onRefresh: () async {
@@ -221,50 +277,16 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
                       ),
                     ),
                   ),
-                if (featured.isNotEmpty) ...[
+                if (filters.isEmpty)
                   SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(
-                        BatshSpacing.marginMobile,
-                        BatshSpacing.lg,
-                        BatshSpacing.marginMobile,
-                        0,
-                      ),
-                      child: _SectionHeader(
-                        title: S.featuredContractors,
-                        onViewAll: null,
-                      ),
+                    child: _CategoryStrip(
+                      onSelect: (key) => ref
+                          .read(discoveryFiltersControllerProvider.notifier)
+                          .setSpecialty(key),
                     ),
                   ),
-                  SliverToBoxAdapter(
-                    child: SizedBox(
-                      height: 280,
-                      child: ListView.separated(
-                        scrollDirection: Axis.horizontal,
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: BatshSpacing.marginMobile),
-                        physics: const BouncingScrollPhysics(),
-                        itemCount: featured.length,
-                        separatorBuilder: (_, _) =>
-                            const SizedBox(width: BatshSpacing.gutter),
-                        itemBuilder: (_, i) => _FeaturedPremiumCard(
-                          listing: featured[i],
-                          onTap: () => context.push(
-                              Routes.homeownerContractorProfilePath(
-                                  featured[i].id)),
-                        ).animate().fadeIn(
-                          delay: BatshMotion.staggerClamped(i),
-                          duration: BatshMotion.normal,
-                          curve: Curves.easeOut,
-                        ).slideY(
-                          begin: 0.08,
-                          end: 0,
-                          curve: BatshMotion.easeOut,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+                if (showNearYou) ...shelf(S.nearYouIn(myCity!), nearYou),
+                if (topRated.isNotEmpty) ...shelf(S.topRated, topRated),
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(
@@ -275,7 +297,6 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
                     ),
                     child: _SectionHeader(
                       title: '${S.allContractors} (${rest.length})',
-                      onViewAll: null,
                     ),
                   ),
                 ),
@@ -289,6 +310,15 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
                   sliver: SliverList(
                     delegate: SliverChildBuilderDelegate(
                       (context, i) {
+                        // Near the end → pull the next page. Notifier guards
+                        // against duplicate in-flight / exhausted fetches.
+                        if (i >= rest.length - 3) {
+                          WidgetsBinding.instance.addPostFrameCallback((_) {
+                            ref
+                                .read(discoverContractorsProvider.notifier)
+                                .loadMore();
+                          });
+                        }
                         final item = rest[i];
                         return Padding(
                           padding:
@@ -409,13 +439,9 @@ class _SearchBarState extends State<_SearchBar> {
 }
 
 class _SectionHeader extends StatelessWidget {
-  const _SectionHeader({
-    required this.title,
-    this.onViewAll,
-  });
+  const _SectionHeader({required this.title});
 
   final String title;
-  final VoidCallback? onViewAll;
 
   @override
   Widget build(BuildContext context) {
@@ -435,23 +461,88 @@ class _SectionHeader extends StatelessWidget {
               style: BatshTypography.titleLg
                   .copyWith(fontWeight: FontWeight.w700)),
         ),
-        if (onViewAll != null) ...[
-          GestureDetector(
-            onTap: onViewAll,
-            child: Row(
-              children: [
-                Text(S.viewAll,
-                    style: BatshTypography.labelMd.copyWith(
-                        color: BatshColors.primary,
-                        fontWeight: FontWeight.w600)),
-                const SizedBox(width: 2),
-                Icon(Icons.chevron_left_rounded,
-                    color: BatshColors.primary, size: 18),
-              ],
+      ],
+    );
+  }
+}
+
+/// Horizontal rail of specialty pills — turns the flat feed into one-tap
+/// browse. Each tap sets the specialty filter (same path as the filter sheet).
+class _CategoryStrip extends StatelessWidget {
+  const _CategoryStrip({required this.onSelect});
+
+  final ValueChanged<String> onSelect;
+
+  @override
+  Widget build(BuildContext context) {
+    final entries = OnboardingCatalog.specialtiesCatalog.entries.toList();
+    return Padding(
+      padding: const EdgeInsets.only(top: BatshSpacing.lg),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(
+                horizontal: BatshSpacing.marginMobile),
+            child: _SectionHeader(title: S.browseByCategory),
+          ),
+          const SizedBox(height: BatshSpacing.sm),
+          SizedBox(
+            height: 44,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(
+                  horizontal: BatshSpacing.marginMobile),
+              physics: const BouncingScrollPhysics(),
+              itemCount: entries.length,
+              separatorBuilder: (_, _) => const SizedBox(width: BatshSpacing.sm),
+              itemBuilder: (_, i) {
+                final e = entries[i];
+                return _CategoryChip(label: e.value, onTap: () => onSelect(e.key))
+                    .animate()
+                    .fadeIn(
+                        delay: BatshMotion.staggerClamped(i),
+                        duration: BatshMotion.fast,
+                        curve: Curves.easeOut)
+                    .slideX(begin: 0.15, end: 0, curve: BatshMotion.easeOut);
+              },
             ),
           ),
         ],
-      ],
+      ),
+    );
+  }
+}
+
+class _CategoryChip extends StatelessWidget {
+  const _CategoryChip({required this.label, required this.onTap});
+
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: BatshColors.surfaceContainerLowest,
+      borderRadius: BatshRadius.brFull,
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(
+              horizontal: BatshSpacing.md, vertical: BatshSpacing.sm),
+          decoration: BoxDecoration(
+            borderRadius: BatshRadius.brFull,
+            border: Border.all(color: BatshColors.outlineVariant),
+          ),
+          alignment: Alignment.center,
+          child: Text(
+            label,
+            style: BatshTypography.labelLg.copyWith(
+                color: BatshColors.onSurface, fontWeight: FontWeight.w600),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -474,7 +565,13 @@ class _FeaturedPremiumCard extends StatelessWidget {
 
     return SizedBox(
       width: 210,
-      child: Material(
+      child: DecoratedBox(
+        // Shadow must sit outside the clipped Material or it gets clipped away.
+        decoration: BoxDecoration(
+          borderRadius: BatshRadius.brLg,
+          boxShadow: BatshShadows.elevated,
+        ),
+        child: Material(
         color: BatshColors.surfaceContainerLowest,
         borderRadius: BatshRadius.brLg,
         clipBehavior: Clip.antiAlias,
@@ -483,7 +580,6 @@ class _FeaturedPremiumCard extends StatelessWidget {
           child: Container(
             decoration: BoxDecoration(
               borderRadius: BatshRadius.brLg,
-              boxShadow: BatshShadows.elevated,
             ),
             child: Stack(
               fit: StackFit.expand,
@@ -604,6 +700,7 @@ class _FeaturedPremiumCard extends StatelessWidget {
             ),
           ),
         ),
+      ),
       ),
     );
   }

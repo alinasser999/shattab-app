@@ -10,12 +10,12 @@ import '../../../../core/router/routes.dart';
 import '../../briefs/presentation/providers/briefs_providers.dart';
 import '../../../../core/theme/batsh_colors.dart';
 import '../../../../core/theme/batsh_radius.dart';
+import '../../../../core/theme/batsh_shadows.dart';
 import '../../../../core/theme/batsh_spacing.dart';
 import '../../../../core/theme/batsh_typography.dart';
 import '../../../../core/theme/motion_mode_provider.dart';
 import '../../../../core/theme/theme_mode_provider.dart';
 import '../../../../core/widgets/batsh_button.dart';
-import '../../../../core/widgets/batsh_card.dart';
 import '../../../../core/widgets/batsh_empty_state.dart';
 import '../../auth/presentation/sign_in_sheet.dart';
 import '../../../../core/widgets/batsh_error.dart';
@@ -143,7 +143,54 @@ class _ProfileFallback extends StatelessWidget {
       body: ListView(
         children: [
           const SizedBox(height: BatshSpacing.md),
-          _IdentityCard(name: profile.fullName, phone: profile.phone),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: BatshSpacing.lg),
+            child: Container(
+              padding: const EdgeInsets.all(BatshSpacing.lg),
+              decoration: BoxDecoration(
+                color: BatshColors.surfaceContainerLowest,
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: BatshShadows.soft,
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 60,
+                    height: 60,
+                    alignment: Alignment.center,
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: BatshColors.primaryContainer,
+                    ),
+                    child: Text(
+                      profile.fullName.isNotEmpty
+                          ? profile.fullName.characters.first
+                          : '',
+                      style: BatshTypography.headlineMd
+                          .copyWith(color: BatshColors.onPrimaryContainer),
+                    ),
+                  ),
+                  const SizedBox(width: BatshSpacing.lg),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          profile.fullName.isNotEmpty ? profile.fullName : '—',
+                          style: BatshTypography.titleLg
+                              .copyWith(fontWeight: FontWeight.w700),
+                        ),
+                        const SizedBox(height: BatshSpacing.xxs),
+                        Text(profile.phone,
+                            style: BatshTypography.bodyMd.copyWith(
+                                color: BatshColors.onSurfaceVariant)),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
           const SizedBox(height: BatshSpacing.gutter),
           BatshButton(
             label: S.editProfileButton,
@@ -183,194 +230,167 @@ class _HomeownerProfile extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final savedCount = ref.watch(savedContractorIdsProvider).value?.length ?? 0;
     final requestsCount = ref.watch(myBriefsProvider).value?.length ?? 0;
-
     final reduced = MediaQuery.of(context).disableAnimations;
+
     final items = <Widget>[
-      const SizedBox(height: BatshSpacing.lg),
-      _IdentityCard(
-        name: profile.fullName,
-        phone: profile.phone,
-        avatarUrl: profile.avatarUrl,
-      ),
-      const SizedBox(height: BatshSpacing.gutter),
-      BatshButton(
-        label: S.editProfileButton,
-        style: BatshButtonStyle.secondary,
-        onPressed: () => context.push(Routes.homeownerEditProfile),
+      const SizedBox(height: BatshSpacing.md),
+      _ProfileHero(
+        profile: profile,
+        onEdit: () => context.push(Routes.homeownerEditProfile),
       ),
       const SizedBox(height: BatshSpacing.lg),
-      _StatsRow(requestsCount: requestsCount, savedCount: savedCount),
-      const SizedBox(height: BatshSpacing.lg),
-      _ProfileTile(
-        icon: Icons.assignment_outlined,
-        label: S.myRequests,
-        onTap: () => context.go(Routes.homeownerRequests),
-      ),
-      const SizedBox(height: BatshSpacing.sm),
-      _ProfileTile(
-        icon: Icons.bookmark_outline,
-        label: S.mySaved,
-        onTap: () => context.go(Routes.homeownerSaved),
-      ),
-      const SizedBox(height: BatshSpacing.sm),
-      _ProfileTile(
-        icon: Icons.explore_outlined,
-        label: S.discoverContractors,
-        onTap: () => context.go(Routes.homeownerDiscover),
-      ),
-      const Divider(height: 24, thickness: 1, color: BatshColors.outlineVariant),
+      // Stats — real counts only, count up on load.
       Padding(
-        padding: const EdgeInsets.symmetric(horizontal: BatshSpacing.md),
-        child: Column(
+        padding: const EdgeInsets.symmetric(horizontal: BatshSpacing.lg),
+        child: Row(
           children: [
-            const _DarkModeTile(),
-            const SizedBox(height: BatshSpacing.sm),
-            const _MotionModeTile(),
-            const SizedBox(height: BatshSpacing.sm),
-            const _LanguageTile(),
+            Expanded(
+              child: _StatBig(
+                value: requestsCount,
+                label: S.myRequests,
+                icon: Icons.assignment_outlined,
+                reduced: reduced,
+              ),
+            ),
+            const SizedBox(width: BatshSpacing.md),
+            Expanded(
+              child: _StatBig(
+                value: savedCount,
+                label: S.mySaved,
+                icon: Icons.bookmark_outline,
+                reduced: reduced,
+              ),
+            ),
           ],
         ),
       ),
-      const SizedBox(height: BatshSpacing.xxl),
-      BatshButton(
-        label: S.signOutButton,
-        style: BatshButtonStyle.ghost,
-        onPressed: () => _confirmSignOut(context, ref),
+      const SizedBox(height: BatshSpacing.xl),
+      _SectionLabel(S.quickActionsTitle),
+      const SizedBox(height: BatshSpacing.md),
+      Padding(
+        padding: const EdgeInsets.symmetric(horizontal: BatshSpacing.lg),
+        child: Row(
+          children: [
+            Expanded(
+              child: _QuickAction(
+                icon: Icons.assignment_outlined,
+                label: S.myRequests,
+                onTap: () => context.go(Routes.homeownerRequests),
+              ),
+            ),
+            const SizedBox(width: BatshSpacing.md),
+            Expanded(
+              child: _QuickAction(
+                icon: Icons.bookmark_outline,
+                label: S.mySaved,
+                onTap: () => context.go(Routes.homeownerSaved),
+              ),
+            ),
+            const SizedBox(width: BatshSpacing.md),
+            Expanded(
+              child: _QuickAction(
+                icon: Icons.explore_outlined,
+                label: S.discoverContractors,
+                onTap: () => context.go(Routes.homeownerDiscover),
+              ),
+            ),
+          ],
+        ),
       ),
+      const SizedBox(height: BatshSpacing.xl),
+      _SectionLabel(S.accountSettingsTitle),
+      const SizedBox(height: BatshSpacing.md),
+      const Padding(
+        padding: EdgeInsets.symmetric(horizontal: BatshSpacing.lg),
+        child: _SettingsGroup(
+          children: [
+            _DarkModeTile(),
+            _MotionModeTile(),
+            _LanguageTile(),
+          ],
+        ),
+      ),
+      const SizedBox(height: BatshSpacing.xl),
+      Padding(
+        padding: const EdgeInsets.symmetric(horizontal: BatshSpacing.lg),
+        child: _LogoutRow(onTap: () => _confirmSignOut(context, ref)),
+      ),
+      const SizedBox(height: BatshSpacing.xxl),
     ];
+
     return BatshScaffold(
       title: S.profileTitle,
       animateEntrance: false,
       body: ListView(
         children: reduced
             ? items
-            : items.animate(interval: 60.ms).fadeIn(
-                  duration: 300.ms,
-                  curve: Curves.easeOut,
-                ).slideY(begin: 0.08, end: 0, curve: Curves.easeOutCubic),
+            : items
+                .animate(interval: 55.ms)
+                .fadeIn(duration: 300.ms, curve: Curves.easeOut)
+                .slideY(begin: 0.06, end: 0, curve: Curves.easeOutCubic),
       ),
     );
   }
 }
 
-class _IdentityCard extends StatelessWidget {
-  const _IdentityCard(
-      {required this.name, required this.phone, this.avatarUrl});
-  final String name;
-  final String phone;
-  final String? avatarUrl;
+String _greeting() =>
+    DateTime.now().hour < 17 ? S.greetingMorning : S.greetingEvening;
+
+class _ProfileHero extends StatelessWidget {
+  const _ProfileHero({required this.profile, required this.onEdit});
+  final Profile profile;
+  final VoidCallback onEdit;
 
   @override
   Widget build(BuildContext context) {
-    return BatshCard(
-      padding: const EdgeInsets.all(BatshSpacing.lg),
-      elevated: true,
-      child: Row(
-        children: [
-          ClipOval(
-            child: SizedBox(
-              width: 60,
-              height: 60,
-              child: avatarUrl != null
-                  ? CachedNetworkImage(
-                      imageUrl: avatarUrl!,
-                      fit: BoxFit.cover,
-                      width: 60,
-                      height: 60,
-                    )
-                  : Container(
-                      decoration: const BoxDecoration(
-                        color: BatshColors.primaryContainer,
-                      ),
-                      alignment: Alignment.center,
-                      child: Text(
-                        name.isNotEmpty ? name.characters.first : '',
-                        style: BatshTypography.headlineMd
-                            .copyWith(color: BatshColors.onPrimaryContainer),
-                      ),
-                    ),
-            ),
-          ),
-          const SizedBox(width: BatshSpacing.lg),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(name.isNotEmpty ? name : '—',
-                    style: BatshTypography.titleLg.copyWith(
-                      fontWeight: FontWeight.w600,
-                    )),
-                const SizedBox(height: BatshSpacing.xxs),
-                Text(
-                  phone,
-                  style: BatshTypography.bodyMd
-                      .copyWith(color: BatshColors.onSurfaceVariant),
-                ),
-              ],
-            ),
-          ),
-          Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              color: BatshColors.primaryFixed.withValues(alpha: 0.4),
-              borderRadius: BatshRadius.brFull,
-            ),
-            child: const Icon(Icons.edit_outlined,
-                size: 16, color: BatshColors.primary),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _StatsRow extends StatelessWidget {
-  const _StatsRow({required this.requestsCount, required this.savedCount});
-  final int requestsCount;
-  final int savedCount;
-
-  @override
-  Widget build(BuildContext context) {
+    final name = profile.fullName.isNotEmpty ? profile.fullName : '—';
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: BatshSpacing.lg),
-      child: Row(
-        children: [
-          _StatItem(value: '$requestsCount', label: S.myRequests),
-          const SizedBox(width: BatshSpacing.lg),
-          _StatItem(value: '$savedCount', label: S.mySaved),
-        ],
-      ),
-    );
-  }
-}
-
-class _StatItem extends StatelessWidget {
-  const _StatItem({required this.value, required this.label});
-  final String value;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
       child: Container(
-        padding: const EdgeInsets.symmetric(
-            vertical: BatshSpacing.md, horizontal: BatshSpacing.md),
+        padding: const EdgeInsets.all(BatshSpacing.lg),
         decoration: BoxDecoration(
-          color: BatshColors.surfaceContainerLow,
-          borderRadius: BatshRadius.brLg,
+          color: BatshColors.surfaceContainerLowest,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: BatshShadows.soft,
         ),
-        child: Column(
+        child: Row(
           children: [
-            Text(value,
-                style: BatshTypography.headlineMd.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: BatshColors.primary,
-                )),
-            const SizedBox(height: 2),
-            Text(label,
-                style: BatshTypography.labelMd.copyWith(
-                    color: BatshColors.onSurfaceVariant)),
+            _HeroAvatar(
+              name: name,
+              avatarUrl: profile.avatarUrl,
+              onEdit: onEdit,
+            ),
+            const SizedBox(width: BatshSpacing.lg),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(_greeting(),
+                      style: BatshTypography.labelMd
+                          .copyWith(color: BatshColors.onSurfaceVariant)),
+                  const SizedBox(height: 2),
+                  Text(name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: BatshTypography.headlineSm
+                          .copyWith(fontWeight: FontWeight.w700)),
+                  const SizedBox(height: BatshSpacing.xs),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: BatshSpacing.sm, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: BatshColors.primaryFixed.withValues(alpha: 0.4),
+                      borderRadius: BatshRadius.brFull,
+                    ),
+                    child: Text(S.roleHomeowner,
+                        style: BatshTypography.labelSm.copyWith(
+                          color: BatshColors.primary,
+                          fontWeight: FontWeight.w700,
+                        )),
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
       ),
@@ -378,50 +398,262 @@ class _StatItem extends StatelessWidget {
   }
 }
 
-class _ProfileTile extends StatelessWidget {
-  const _ProfileTile({
-    required this.icon,
+class _HeroAvatar extends StatelessWidget {
+  const _HeroAvatar(
+      {required this.name, required this.avatarUrl, required this.onEdit});
+  final String name;
+  final String? avatarUrl;
+  final VoidCallback onEdit;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 84,
+      height: 84,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Container(
+            width: 84,
+            height: 84,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: BatshColors.primaryContainer,
+              border: Border.all(
+                  color: BatshColors.onSurface.withValues(alpha: 0.06),
+                  width: 1),
+              boxShadow: BatshShadows.soft,
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: avatarUrl != null
+                ? CachedNetworkImage(imageUrl: avatarUrl!, fit: BoxFit.cover)
+                : Center(
+                    child: Text(
+                      name.isNotEmpty && name != '—' ? name.characters.first : '',
+                      style: BatshTypography.headlineMd
+                          .copyWith(color: BatshColors.onPrimaryContainer),
+                    ),
+                  ),
+          ),
+          Positioned(
+            bottom: -2,
+            right: -2,
+            child: Material(
+              color: BatshColors.primary,
+              shape: const CircleBorder(),
+              elevation: 0,
+              child: InkWell(
+                customBorder: const CircleBorder(),
+                onTap: onEdit,
+                child: Container(
+                  width: 30,
+                  height: 30,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                        color: BatshColors.surfaceContainerLowest, width: 2.5),
+                  ),
+                  child: const Icon(Icons.edit_outlined,
+                      size: 14, color: BatshColors.onPrimary),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SectionLabel extends StatelessWidget {
+  const _SectionLabel(this.text);
+  final String text;
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: BatshSpacing.lg),
+      child: Text(text,
+          style: BatshTypography.titleMd.copyWith(fontWeight: FontWeight.w700)),
+    );
+  }
+}
+
+class _StatBig extends StatelessWidget {
+  const _StatBig({
+    required this.value,
     required this.label,
-    required this.onTap,
+    required this.icon,
+    required this.reduced,
   });
+  final int value;
+  final String label;
+  final IconData icon;
+  final bool reduced;
+
+  @override
+  Widget build(BuildContext context) {
+    final number = reduced
+        ? Text('$value',
+            style: BatshTypography.displayMd
+                .copyWith(fontWeight: FontWeight.w700, color: BatshColors.onSurface))
+        : TweenAnimationBuilder<double>(
+            tween: Tween(begin: 0, end: value.toDouble()),
+            duration: const Duration(milliseconds: 900),
+            curve: Curves.easeOutCubic,
+            builder: (_, v, _) => Text('${v.round()}',
+                style: BatshTypography.displayMd.copyWith(
+                    fontWeight: FontWeight.w700, color: BatshColors.onSurface)),
+          );
+    return Container(
+      padding: const EdgeInsets.all(BatshSpacing.lg),
+      decoration: BoxDecoration(
+        color: BatshColors.surfaceContainerLowest,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: BatshShadows.soft,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 18, color: BatshColors.primary),
+          const SizedBox(height: BatshSpacing.md),
+          number,
+          const SizedBox(height: BatshSpacing.xxs),
+          Text(label,
+              style: BatshTypography.labelMd
+                  .copyWith(color: BatshColors.onSurfaceVariant)),
+        ],
+      ),
+    );
+  }
+}
+
+class _QuickAction extends StatelessWidget {
+  const _QuickAction(
+      {required this.icon, required this.label, required this.onTap});
   final IconData icon;
   final String label;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: BatshColors.surfaceContainerLowest,
-      borderRadius: BatshRadius.brLg,
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        highlightColor: BatshColors.primaryFixed.withValues(alpha: 0.2),
-        splashColor: BatshColors.primaryFixed.withValues(alpha: 0.1),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-              horizontal: BatshSpacing.lg, vertical: BatshSpacing.gutter),
-          child: Row(
-            children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: BatshColors.primaryFixed.withValues(alpha: 0.2),
-                  borderRadius: BatshRadius.brMd,
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: BatshShadows.soft,
+      ),
+      child: Material(
+        color: BatshColors.surfaceContainerLowest,
+        borderRadius: BorderRadius.circular(20),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+                vertical: BatshSpacing.lg, horizontal: BatshSpacing.sm),
+            child: Column(
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: BatshColors.primaryFixed.withValues(alpha: 0.35),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(icon, color: BatshColors.primary, size: 22),
                 ),
-                child: Icon(icon, color: BatshColors.primary, size: 22),
-              ),
-              const SizedBox(width: BatshSpacing.gutter),
-              Expanded(
-                child: Text(label,
-                    style: BatshTypography.bodyLg.copyWith(
-                      fontWeight: FontWeight.w500,
-                    )),
-              ),
-              const Icon(Icons.chevron_left,
-                  color: BatshColors.onSurfaceVariant, size: 20),
-            ],
+                const SizedBox(height: BatshSpacing.sm),
+                Text(label,
+                    textAlign: TextAlign.center,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: BatshTypography.labelMd
+                        .copyWith(fontWeight: FontWeight.w600)),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// iOS-style grouped settings: one soft card, hairline dividers between rows.
+class _SettingsGroup extends StatelessWidget {
+  const _SettingsGroup({required this.children});
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    final rows = <Widget>[];
+    for (var i = 0; i < children.length; i++) {
+      rows.add(children[i]);
+      if (i != children.length - 1) {
+        rows.add(const Divider(
+            height: 1, thickness: 1, indent: 64, color: BatshColors.outlineVariant));
+      }
+    }
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: BatshShadows.soft,
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: ColoredBox(
+          color: BatshColors.surfaceContainerLowest,
+          child: Column(children: rows),
+        ),
+      ),
+    );
+  }
+}
+
+class _LogoutRow extends StatelessWidget {
+  const _LogoutRow({required this.onTap});
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: BatshShadows.soft,
+      ),
+      child: Material(
+        color: BatshColors.surfaceContainerLowest,
+        borderRadius: BorderRadius.circular(20),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          splashColor: BatshColors.error.withValues(alpha: 0.08),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+                horizontal: BatshSpacing.lg, vertical: BatshSpacing.gutter),
+            child: Row(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: BatshColors.error.withValues(alpha: 0.1),
+                    borderRadius: BatshRadius.brMd,
+                  ),
+                  child: const Icon(Icons.logout,
+                      color: BatshColors.error, size: 20),
+                ),
+                const SizedBox(width: BatshSpacing.gutter),
+                Expanded(
+                  child: Text(S.signOutButton,
+                      style: BatshTypography.bodyLg.copyWith(
+                          color: BatshColors.error,
+                          fontWeight: FontWeight.w600)),
+                ),
+                const Icon(Icons.chevron_left,
+                    color: BatshColors.error, size: 20),
+              ],
+            ),
           ),
         ),
       ),

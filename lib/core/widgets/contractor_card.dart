@@ -35,7 +35,14 @@ class ContractorCard extends StatelessWidget {
     final topSpecialties = listing.specialties.take(3).toList();
     final firstAreas = listing.serviceAreas.take(2).toList();
 
-    return Material(
+    return DecoratedBox(
+      // Shadow lives on an outer box: a clipped Material clips its child's
+      // shadow away, so it must sit outside the clip to render at all.
+      decoration: BoxDecoration(
+        borderRadius: BatshRadius.brLg,
+        boxShadow: BatshShadows.soft,
+      ),
+      child: Material(
       color: BatshColors.surfaceContainerLowest,
       borderRadius: BatshRadius.brLg,
       clipBehavior: Clip.antiAlias,
@@ -44,7 +51,6 @@ class ContractorCard extends StatelessWidget {
         child: Container(
           decoration: BoxDecoration(
             borderRadius: BatshRadius.brLg,
-            boxShadow: BatshShadows.soft,
             border: Border.all(color: BatshColors.outlineVariant),
           ),
           child: Column(
@@ -117,6 +123,7 @@ class ContractorCard extends StatelessWidget {
           ),
         ),
       ),
+      ),
     );
   }
 }
@@ -145,6 +152,7 @@ class _CoverWithAvatar extends StatelessWidget {
               ? CachedNetworkImage(
                   imageUrl: listing.coverPhotoUrl!,
                   fit: BoxFit.cover,
+                  memCacheWidth: 800,
                   placeholder: (_, _) =>
                       const ColoredBox(color: BatshColors.surfaceContainer),
                   errorWidget: (_, _, _) => const _CoverFallback(),

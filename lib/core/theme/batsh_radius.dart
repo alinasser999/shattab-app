@@ -25,7 +25,7 @@ class BatshRadius {
   static const BorderRadius brXxl = BorderRadius.all(Radius.circular(xxl));
   static const BorderRadius brFull = BorderRadius.all(Radius.circular(full));
 
-  // Legacy alias
-  static const double defaultR = sm;
-  static const BorderRadius brDefault = brSm;
+  // Buttons / inputs / skeletons — 12px "pill-lite" per design tokens.
+  static const double defaultR = md;
+  static const BorderRadius brDefault = brMd;
 }

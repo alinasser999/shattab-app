@@ -42,16 +42,10 @@ class _PhoneEntryScreenState extends ConsumerState<PhoneEntryScreen> {
     super.dispose();
   }
 
-  String _normalizeToE164(String raw) {
-    var digits = raw.replaceAll(RegExp(r'\D'), '');
-    if (digits.startsWith('0020')) digits = digits.substring(4);
-    if (digits.startsWith('20')) digits = digits.substring(2);
-    if (digits.startsWith('0')) digits = digits.substring(1);
-    return '+20$digits';
-  }
-
-  Future<void> _submit() async {
-    final phone = _normalizeToE164(_controller.text);
+  /// Forgot-password: send an SMS OTP so the user can sign back in, then set a
+  /// new password. Only path that costs SMS — normal login is phone+password.
+  Future<void> _forgotPassword() async {
+    final phone = normalizeEgyptPhoneToE164(_controller.text);
     if (!Validators.isEgyptianPhone(phone)) {
       setState(() => _errorText = S.invalidPhone);
       return;
@@ -108,11 +102,11 @@ class _PhoneEntryScreenState extends ConsumerState<PhoneEntryScreen> {
                       _HeroSubtitle(disableMotion: disableMotion),
                       SizedBox(height: BatshSpacing.xl + 4),
                       _LoginCard(
-                        controller: _controller,
-                        focusNode: _phoneFocus,
-                        errorText: _errorText,
-                        state: state,
-                        onSubmit: _submit,
+                        phoneController: _controller,
+                        phoneFocus: _phoneFocus,
+                        phoneErrorText: _errorText,
+                        forgotState: state,
+                        onForgot: _forgotPassword,
                         disableMotion: disableMotion,
                       ),
                       SizedBox(height: BatshSpacing.gutter),
@@ -143,7 +137,7 @@ class _BackgroundLayer extends StatelessWidget {
     return Image.asset(
       'assets/images/login_bg.png',
       fit: BoxFit.cover,
-      alignment: Alignment.topRight,
+      alignment: Alignment.center,
     );
   }
 }
@@ -156,49 +150,46 @@ class _LogoTagline extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final child = Column(
+    final logo = Image.asset(
+      'assets/images/logo_wordmark.png',
+      height: 76,
+      fit: BoxFit.contain,
+    );
+    final tagline = Text(
+      S.taglineNew,
+      style: BatshTypography.labelMd.copyWith(
+        color: BatshColors.onSurfaceVariant,
+        letterSpacing: 0.8,
+      ),
+    );
+
+    if (disableMotion) {
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [logo, const SizedBox(height: BatshSpacing.sm), tagline],
+      );
+    }
+    return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Container(
-          width: 52,
-          height: 52,
-          decoration: BoxDecoration(
-            color: BatshColors.primaryFixed,
-            borderRadius: BorderRadius.circular(16),
-          ),
-          alignment: Alignment.center,
-          child: Text(
-            'ش',
-            style: BatshTypography.headlineLg.copyWith(
-              color: BatshColors.primary,
-              fontWeight: FontWeight.w800,
-              height: 1,
-            ),
-          ),
-        ),
+        // Logo settles in: soft fade + gentle scale-down, no bounce.
+        logo
+            .animate()
+            .fadeIn(duration: 600.ms, curve: Curves.easeOut)
+            .scale(
+              begin: const Offset(0.92, 0.92),
+              end: const Offset(1, 1),
+              duration: 700.ms,
+              curve: BatshMotion.heroEase,
+            )
+            .slideY(begin: -0.14, end: 0, duration: 700.ms, curve: BatshMotion.heroEase),
         const SizedBox(height: BatshSpacing.sm),
-        Text(
-          S.appName,
-          style: BatshTypography.titleLg.copyWith(
-            fontWeight: FontWeight.w700,
-            color: BatshColors.primary,
-          ),
-        ),
-        const SizedBox(height: 2),
-        Text(
-          S.taglineNew,
-          style: BatshTypography.labelMd.copyWith(
-            color: BatshColors.onSurfaceVariant,
-            letterSpacing: 1.2,
-          ),
-        ),
+        tagline
+            .animate()
+            .fadeIn(duration: 500.ms, delay: 320.ms, curve: Curves.easeOut)
+            .slideY(begin: 0.6, end: 0, duration: 500.ms, delay: 320.ms, curve: Curves.easeOut),
       ],
     );
-    if (disableMotion) return child;
-    return child
-        .animate()
-        .fadeIn(duration: 500.ms, curve: Curves.easeOutQuad)
-        .slideY(begin: -12, end: 0, duration: 500.ms, curve: Curves.easeOutQuad);
   }
 }
 
@@ -208,32 +199,93 @@ class _HeroHeadline extends StatelessWidget {
   const _HeroHeadline({required this.disableMotion});
   final bool disableMotion;
 
+  // Word-reveal cadence.
+  static const int _baseDelayMs = 420;
+  static const int _stepMs = 95;
+
   @override
   Widget build(BuildContext context) {
     final isMobile = MediaQuery.of(context).size.width < 480;
-    final child = RichText(
-      textAlign: TextAlign.center,
-      text: TextSpan(
-        style: isMobile
-            ? BatshTypography.headlineLg.copyWith(fontWeight: FontWeight.w800, height: 1.2)
-            : BatshTypography.displayMd.copyWith(fontWeight: FontWeight.w800, height: 1.2),
-        children: [
-          TextSpan(
-            text: '${S.heroLine1}\n',
-            style: TextStyle(color: BatshColors.onSurface),
-          ),
-          TextSpan(
-            text: S.heroLine2,
-            style: TextStyle(color: BatshColors.primary),
-          ),
-        ],
-      ),
+    final base = (isMobile ? BatshTypography.headlineLg : BatshTypography.displayMd)
+        .copyWith(fontWeight: FontWeight.w800, height: 1.18);
+
+    final line1 = S.heroLine1.split(' ');
+    final line2 = S.heroLine2.split(' ');
+    final line2Start = _baseDelayMs + line1.length * _stepMs + 140;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _WordLine(
+          words: line1,
+          style: base.copyWith(color: BatshColors.onSurface),
+          startMs: _baseDelayMs,
+          stepMs: _stepMs,
+          disableMotion: disableMotion,
+        ),
+        const SizedBox(height: 8),
+        _WordLine(
+          words: line2,
+          style: base.copyWith(color: BatshColors.primary),
+          startMs: line2Start,
+          stepMs: _stepMs,
+          disableMotion: disableMotion,
+        ),
+      ],
     );
-    if (disableMotion) return child;
-    return child
-        .animate()
-        .fadeIn(duration: 500.ms, delay: 150.ms, curve: Curves.easeOutQuad)
-        .slideY(begin: 12, end: 0, duration: 500.ms, delay: 150.ms, curve: Curves.easeOutQuad);
+  }
+}
+
+/// One headline line whose words fade + rise + sharpen in sequence,
+/// so the sentence reads itself in rather than popping as a block.
+class _WordLine extends StatelessWidget {
+  const _WordLine({
+    required this.words,
+    required this.style,
+    required this.startMs,
+    required this.stepMs,
+    required this.disableMotion,
+  });
+
+  final List<String> words;
+  final TextStyle style;
+  final int startMs;
+  final int stepMs;
+  final bool disableMotion;
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      alignment: WrapAlignment.center,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      spacing: 10,
+      children: [
+        for (var i = 0; i < words.length; i++)
+          disableMotion
+              ? Text(words[i], style: style)
+              : Text(words[i], style: style)
+                  .animate()
+                  .fadeIn(
+                    duration: 460.ms,
+                    delay: (startMs + i * stepMs).ms,
+                    curve: Curves.easeOut,
+                  )
+                  .slideY(
+                    begin: 0.7,
+                    end: 0,
+                    duration: 520.ms,
+                    delay: (startMs + i * stepMs).ms,
+                    curve: BatshMotion.heroEase,
+                  )
+                  .blurXY(
+                    begin: 6,
+                    end: 0,
+                    duration: 460.ms,
+                    delay: (startMs + i * stepMs).ms,
+                    curve: Curves.easeOut,
+                  ),
+      ],
+    );
   }
 }
 
@@ -259,60 +311,151 @@ class _HeroSubtitle extends StatelessWidget {
     if (disableMotion) return child;
     return child
         .animate()
-        .fadeIn(duration: 500.ms, delay: 250.ms, curve: Curves.easeOutQuad)
-        .slideY(begin: 12, end: 0, duration: 500.ms, delay: 250.ms, curve: Curves.easeOutQuad);
+        .fadeIn(duration: 500.ms, delay: 1080.ms, curve: Curves.easeOut)
+        .slideY(begin: 0.5, end: 0, duration: 500.ms, delay: 1080.ms, curve: Curves.easeOut);
   }
 }
 
 // ─── Login Card ──────────────────────────────────────────────────────────────
 
-class _LoginCard extends StatelessWidget {
+/// Normalises an Egyptian phone entry to E.164 (`+20xxxxxxxxxx`).
+String normalizeEgyptPhoneToE164(String raw) {
+  var digits = raw.replaceAll(RegExp(r'\D'), '');
+  if (digits.startsWith('0020')) digits = digits.substring(4);
+  if (digits.startsWith('20')) digits = digits.substring(2);
+  if (digits.startsWith('0')) digits = digits.substring(1);
+  return '+20$digits';
+}
+
+class _LoginCard extends ConsumerStatefulWidget {
   const _LoginCard({
-    required this.controller,
-    required this.focusNode,
-    required this.errorText,
-    required this.state,
-    required this.onSubmit,
+    required this.phoneController,
+    required this.phoneFocus,
+    required this.phoneErrorText,
+    required this.forgotState,
+    required this.onForgot,
     required this.disableMotion,
   });
-  final TextEditingController controller;
-  final FocusNode focusNode;
-  final String? errorText;
-  final OtpState state;
-  final VoidCallback onSubmit;
+  final TextEditingController phoneController;
+  final FocusNode phoneFocus;
+
+  /// Phone-level validation error surfaced by the parent (used by forgot flow).
+  final String? phoneErrorText;
+  final OtpState forgotState;
+  final VoidCallback onForgot;
   final bool disableMotion;
 
   @override
+  ConsumerState<_LoginCard> createState() => _LoginCardState();
+}
+
+class _LoginCardState extends ConsumerState<_LoginCard> {
+  final _passwordController = TextEditingController();
+  bool _isSignUp = false;
+  bool _obscure = true;
+  bool _busy = false;
+  String? _error;
+
+  @override
+  void dispose() {
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    final phone = normalizeEgyptPhoneToE164(widget.phoneController.text);
+    final password = _passwordController.text;
+    if (!Validators.isEgyptianPhone(phone)) {
+      setState(() => _error = S.invalidPhone);
+      return;
+    }
+    if (password.length < 6) {
+      setState(() => _error = S.passwordTooShort);
+      return;
+    }
+    setState(() {
+      _error = null;
+      _busy = true;
+    });
+    try {
+      final repo = ref.read(authRepositoryProvider);
+      if (_isSignUp) {
+        await repo.signUpWithPhonePassword(phone: phone, password: password);
+      } else {
+        await repo.signInWithPhonePassword(phone: phone, password: password);
+      }
+      // Session now exists → router redirect handles navigation; refresh so the
+      // freshly-created profile row is loaded.
+      await ref.read(currentProfileProvider.notifier).refresh();
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _error = ErrorMapper.map(e));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _google() async {
+    setState(() {
+      _error = null;
+      _busy = true;
+    });
+    try {
+      // On web this redirects the page; the finally below may not run before
+      // navigation, which is fine.
+      await ref.read(authRepositoryProvider).signInWithGoogle();
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _error = ErrorMapper.map(e));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final error = _error ?? widget.phoneErrorText;
+    final hasError = error != null;
+    final fieldFill = BatshColors.surfaceContainerLow;
+    final fieldRadius = BorderRadius.circular(16);
+
     final card = Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(BatshSpacing.lg),
+      padding: const EdgeInsets.symmetric(
+          horizontal: BatshSpacing.lg, vertical: BatshSpacing.lg),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(26),
-        boxShadow: BatshShadows.elevated,
+        borderRadius: BorderRadius.circular(22),
+        boxShadow: BatshShadows.soft,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Center(
-            child: Text(
-              S.phoneLabel,
-              style: BatshTypography.titleMd.copyWith(
-                fontWeight: FontWeight.w700,
-                color: BatshColors.onSurface,
+          // Google — fastest path, free, no SMS.
+          _GoogleButton(onPressed: _busy ? null : _google),
+          const SizedBox(height: BatshSpacing.md),
+          Row(
+            children: [
+              const Expanded(child: Divider(color: BatshColors.outlineVariant)),
+              Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: BatshSpacing.md),
+                child: Text(
+                  S.orDivider,
+                  style: BatshTypography.labelSm
+                      .copyWith(color: BatshColors.onSurfaceVariant),
+                ),
               ),
-            ),
+              const Expanded(child: Divider(color: BatshColors.outlineVariant)),
+            ],
           ),
-          const SizedBox(height: BatshSpacing.lg),
+          const SizedBox(height: BatshSpacing.md),
+          // Phone
           Container(
             decoration: BoxDecoration(
-              border: Border.all(
-                color: errorText != null
-                    ? BatshColors.error
-                    : BatshColors.outlineVariant,
-              ),
-              borderRadius: BorderRadius.circular(BatshRadius.md + 2),
+              color: fieldFill,
+              borderRadius: fieldRadius,
+              border: hasError ? Border.all(color: BatshColors.error) : null,
             ),
             child: Directionality(
               textDirection: TextDirection.ltr,
@@ -321,22 +464,14 @@ class _LoginCard extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 14),
                     height: 54,
-                    decoration: BoxDecoration(
+                    decoration: const BoxDecoration(
                       border: Border(
-                        right: BorderSide(
-                          color: errorText != null
-                              ? BatshColors.error
-                              : BatshColors.outlineVariant,
-                        ),
-                      ),
+                          right: BorderSide(color: BatshColors.outlineVariant)),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text(
-                          '🇪🇬',
-                          style: TextStyle(fontSize: 22),
-                        ),
+                        const Text('🇪🇬', style: TextStyle(fontSize: 22)),
                         const SizedBox(width: 8),
                         Text(
                           '+20',
@@ -346,37 +481,28 @@ class _LoginCard extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(width: 4),
-                        Icon(
-                          Icons.keyboard_arrow_down,
-                          size: 18,
-                          color: BatshColors.onSurfaceVariant,
-                        ),
+                        Icon(Icons.keyboard_arrow_down,
+                            size: 18, color: BatshColors.onSurfaceVariant),
                       ],
                     ),
                   ),
                   Expanded(
                     child: TextField(
-                      controller: controller,
-                      focusNode: focusNode,
+                      controller: widget.phoneController,
+                      focusNode: widget.phoneFocus,
                       keyboardType: TextInputType.phone,
-                      textInputAction: TextInputAction.done,
-                      onSubmitted: (_) => onSubmit(),
-                      style: BatshTypography.bodyLg.copyWith(
-                        color: BatshColors.onSurface,
-                        height: 1.4,
-                      ),
+                      textInputAction: TextInputAction.next,
+                      style: BatshTypography.bodyLg
+                          .copyWith(color: BatshColors.onSurface, height: 1.4),
                       decoration: InputDecoration(
                         hintText: S.phoneLocalHint,
                         hintStyle: BatshTypography.bodyLg.copyWith(
-                          color: BatshColors.onSurfaceVariant.withValues(alpha: 0.5),
+                          color: BatshColors.onSurfaceVariant
+                              .withValues(alpha: 0.5),
                         ),
                         border: InputBorder.none,
-                        filled: true,
-                        fillColor: Colors.transparent,
                         contentPadding: const EdgeInsets.symmetric(
-                          horizontal: BatshSpacing.md,
-                          vertical: 14,
-                        ),
+                            horizontal: BatshSpacing.md, vertical: 14),
                       ),
                       inputFormatters: [
                         FilteringTextInputFormatter.allow(RegExp(r'[\d]')),
@@ -388,34 +514,97 @@ class _LoginCard extends StatelessWidget {
               ),
             ),
           ),
-          if (errorText != null) ...[
+          const SizedBox(height: BatshSpacing.md),
+          // Password
+          Container(
+            decoration: BoxDecoration(
+              color: fieldFill,
+              borderRadius: fieldRadius,
+              border: hasError ? Border.all(color: BatshColors.error) : null,
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _passwordController,
+                    obscureText: _obscure,
+                    textInputAction: TextInputAction.done,
+                    onSubmitted: (_) => _busy ? null : _submit(),
+                    style: BatshTypography.bodyLg
+                        .copyWith(color: BatshColors.onSurface, height: 1.4),
+                    decoration: InputDecoration(
+                      hintText: S.passwordHint,
+                      hintStyle: BatshTypography.bodyLg.copyWith(
+                        color:
+                            BatshColors.onSurfaceVariant.withValues(alpha: 0.5),
+                      ),
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: BatshSpacing.md, vertical: 14),
+                    ),
+                  ),
+                ),
+                IconButton(
+                  onPressed: () => setState(() => _obscure = !_obscure),
+                  icon: Icon(
+                    _obscure ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                    size: 20,
+                    color: BatshColors.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (hasError) ...[
             const SizedBox(height: BatshSpacing.xs),
-            Padding(
-              padding: const EdgeInsets.only(right: BatshSpacing.sm),
-              child: Text(
-                errorText!,
-                style: BatshTypography.labelSm.copyWith(color: BatshColors.error),
-              ),
+            Text(
+              error,
+              style: BatshTypography.labelSm.copyWith(color: BatshColors.error),
             ),
           ],
           const SizedBox(height: BatshSpacing.lg),
           BatshButton(
-            label: S.continueLabel,
-            onPressed: state.isSending ? null : onSubmit,
-            isLoading: state.isSending,
+            label: _isSignUp ? S.createAccountAction : S.signInAction,
+            onPressed: _busy ? null : _submit,
+            isLoading: _busy,
           ),
-          const SizedBox(height: BatshSpacing.md),
+          const SizedBox(height: BatshSpacing.sm),
+          // Forgot password (sign-in mode only) — the sole SMS path.
+          if (!_isSignUp)
+            Center(
+              child: TextButton(
+                onPressed: widget.forgotState.isSending ? null : widget.onForgot,
+                child: Text(
+                  S.forgotPassword,
+                  style: BatshTypography.labelMd.copyWith(
+                    color: BatshColors.onSurfaceVariant,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+          const SizedBox(height: BatshSpacing.xs),
+          // Mode toggle
           Center(
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.lock_outline,
-                    size: 13, color: BatshColors.onSurfaceVariant),
-                const SizedBox(width: 6),
                 Text(
-                  S.verifyMessage,
-                  style: BatshTypography.labelSm.copyWith(
-                    color: BatshColors.onSurfaceVariant,
+                  '${_isSignUp ? S.haveAccountPrompt : S.noAccountPrompt} ',
+                  style: BatshTypography.bodyMd
+                      .copyWith(color: BatshColors.onSurfaceVariant),
+                ),
+                GestureDetector(
+                  onTap: () => setState(() {
+                    _isSignUp = !_isSignUp;
+                    _error = null;
+                  }),
+                  child: Text(
+                    _isSignUp ? S.signInAction : S.createAccountAction,
+                    style: BatshTypography.bodyMd.copyWith(
+                      color: BatshColors.primary,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
               ],
@@ -424,13 +613,63 @@ class _LoginCard extends StatelessWidget {
         ],
       ),
     );
-    if (disableMotion) return card;
+    if (widget.disableMotion) return card;
     return card
         .animate()
-        .fadeIn(duration: 500.ms, delay: 600.ms, curve: Curves.easeOutQuad)
-        .slideY(begin: 20, end: 0, duration: 500.ms, delay: 600.ms, curve: Curves.easeOutQuad)
+        .fadeIn(duration: 550.ms, delay: 1200.ms, curve: Curves.easeOut)
+        .slideY(begin: 0.12, end: 0, duration: 600.ms, delay: 1200.ms, curve: BatshMotion.heroEase)
         .scale(begin: const Offset(0.97, 0.97), end: const Offset(1, 1),
-            duration: 500.ms, delay: 600.ms, curve: BatshMotion.springTap);
+            duration: 600.ms, delay: 1200.ms, curve: BatshMotion.heroEase);
+  }
+}
+
+// ─── Google Button ───────────────────────────────────────────────────────────
+
+class _GoogleButton extends StatelessWidget {
+  const _GoogleButton({required this.onPressed});
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      height: 52,
+      child: Material(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(BatshRadius.md + 2),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onPressed,
+          child: Ink(
+            decoration: BoxDecoration(
+              border: Border.all(color: BatshColors.outlineVariant),
+              borderRadius: BorderRadius.circular(BatshRadius.md + 2),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Google 'G' — brand colour, exempt from the token palette.
+                Text(
+                  'G',
+                  style: BatshTypography.titleMd.copyWith(
+                    color: const Color(0xFF4285F4),
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(width: BatshSpacing.sm),
+                Text(
+                  S.continueWithGoogle,
+                  style: BatshTypography.labelLg.copyWith(
+                    color: BatshColors.onSurface,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -490,8 +729,8 @@ class _Footer extends StatelessWidget {
     if (disableMotion) return child;
     return child
         .animate()
-        .fadeIn(duration: 500.ms, delay: 900.ms, curve: Curves.easeOutQuad)
-        .slideY(begin: 12, end: 0, duration: 500.ms, delay: 900.ms, curve: Curves.easeOutQuad);
+        .fadeIn(duration: 500.ms, delay: 1420.ms, curve: Curves.easeOut)
+        .slideY(begin: 0.5, end: 0, duration: 500.ms, delay: 1420.ms, curve: Curves.easeOut);
   }
 }
 

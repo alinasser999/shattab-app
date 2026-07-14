@@ -98,6 +98,7 @@ class _QuoteSheetState extends ConsumerState<_QuoteSheet> {
             note: note,
           );
       if (!mounted) return;
+      HapticFeedback.mediumImpact();
       setState(() => _done = true);
       await Future<void>.delayed(const Duration(milliseconds: 950));
       if (!mounted) return;

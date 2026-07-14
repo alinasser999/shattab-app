@@ -228,17 +228,21 @@ class _CoverHero extends StatelessWidget {
           )
         else
           const _CoverFallback(),
+        // Neutral photographic scrim: a soft dark foot for depth + legibility,
+        // resolving into the page bg so the image blends seamlessly. No
+        // terracotta tint (was orange-veiling the architecture photo).
         DecoratedBox(
           decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
               colors: [
-                BatshColors.primary.withValues(alpha: 0.0),
-                BatshColors.primary.withValues(alpha: 0.45),
-                BatshColors.background.withValues(alpha: 0.95),
+                const Color(0x00000000),
+                const Color(0x1A000000),
+                BatshColors.background.withValues(alpha: 0.86),
+                BatshColors.background,
               ],
-              stops: const [0.0, 0.55, 1.0],
+              stops: const [0.0, 0.62, 0.92, 1.0],
             ),
           ),
         ),
@@ -262,19 +266,20 @@ class _AvatarRing extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 116,
-      height: 116,
+      width: 100,
+      height: 100,
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
         color: BatshColors.background,
         shape: BoxShape.circle,
-        boxShadow: BatshShadows.raised,
+        boxShadow: BatshShadows.elevated,
       ),
       child: Container(
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           color: BatshColors.surfaceContainer,
-          border: Border.all(color: BatshColors.primary, width: 3),
+          border: Border.all(
+              color: BatshColors.primary.withValues(alpha: 0.55), width: 2),
         ),
         clipBehavior: Clip.antiAlias,
         child: logoUrl != null
@@ -307,7 +312,7 @@ class _NameHeadline extends StatelessWidget {
         children: [
           Text(name,
               textAlign: TextAlign.center,
-              style: BatshTypography.headlineMd),
+              style: BatshTypography.headlineLgMobile),
           if (contractor.headline != null &&
               contractor.headline!.isNotEmpty) ...[
             const SizedBox(height: BatshSpacing.xs),
@@ -456,25 +461,40 @@ class _StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Count up integers on load; leave non-numeric values ("—") static.
+    final target = int.tryParse(value);
+    final reduced = MediaQuery.of(context).disableAnimations;
     return Container(
       padding: const EdgeInsets.symmetric(
-          vertical: BatshSpacing.md, horizontal: BatshSpacing.sm),
+          vertical: BatshSpacing.lg, horizontal: BatshSpacing.md),
       decoration: BoxDecoration(
         color: BatshColors.surfaceContainerLowest,
         borderRadius: BatshRadius.brLg,
-        border: Border.all(color: BatshColors.outlineVariant, width: 1),
+        boxShadow: BatshShadows.soft,
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: BatshColors.primary, size: 20),
-          const SizedBox(height: BatshSpacing.xs),
-          Text(value,
-              style: BatshTypography.titleLg.copyWith(
-                  color: BatshColors.onSurface, fontWeight: FontWeight.w700)),
-          const SizedBox(height: 2),
+          Icon(icon, color: BatshColors.primary, size: 18),
+          const SizedBox(height: BatshSpacing.md),
+          if (target == null || reduced)
+            Text(value,
+                style: BatshTypography.displayMd.copyWith(
+                    color: BatshColors.onSurface, fontWeight: FontWeight.w700))
+          else
+            TweenAnimationBuilder<double>(
+              tween: Tween(begin: 0, end: target.toDouble()),
+              duration: const Duration(milliseconds: 900),
+              curve: Curves.easeOutCubic,
+              builder: (_, v, _) => Text(
+                v.round().toString(),
+                style: BatshTypography.displayMd.copyWith(
+                    color: BatshColors.onSurface, fontWeight: FontWeight.w700),
+              ),
+            ),
+          const SizedBox(height: BatshSpacing.xxs),
           Text(label,
-              textAlign: TextAlign.center,
-              style: BatshTypography.labelSm
+              style: BatshTypography.labelMd
                   .copyWith(color: BatshColors.onSurfaceVariant)),
         ],
       ),
@@ -722,7 +742,12 @@ class _PortfolioTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox(
       width: 260,
-      child: Material(
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          borderRadius: BatshRadius.brLg,
+          boxShadow: BatshShadows.soft,
+        ),
+        child: Material(
         color: BatshColors.surfaceContainerLowest,
         borderRadius: BatshRadius.brLg,
         clipBehavior: Clip.antiAlias,
@@ -768,6 +793,7 @@ class _PortfolioTile extends StatelessWidget {
             ],
           ),
         ),
+      ),
       ),
     );
   }

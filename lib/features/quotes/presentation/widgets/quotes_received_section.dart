@@ -1,5 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -221,6 +222,7 @@ class _QuoteCard extends ConsumerWidget {
     try {
       await ref.read(quotesControllerProvider.notifier).setStatus(
           quoteId: quote.id, briefId: briefId, status: status);
+      if (status == QuoteStatus.accepted) HapticFeedback.mediumImpact();
     } catch (_) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

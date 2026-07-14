@@ -159,7 +159,7 @@ class _NavItemState extends State<_NavItem>
                     size: 22 + (_pillAnim.value * 4),
                     color: widget.isSelected
                         ? BatshColors.primary
-                        : BatshColors.onSurfaceVariant.withValues(alpha: 0.55),
+                        : BatshColors.onSurfaceVariant.withValues(alpha: 0.7),
                   ),
                 ],
               ),
@@ -170,7 +170,7 @@ class _NavItemState extends State<_NavItem>
               style: BatshTypography.labelSm.copyWith(
                 color: widget.isSelected
                     ? BatshColors.primary
-                    : BatshColors.onSurfaceVariant.withValues(alpha: 0.55),
+                    : BatshColors.onSurfaceVariant.withValues(alpha: 0.7),
                 fontWeight: widget.isSelected ? FontWeight.w600 : FontWeight.w500,
               ),
               child: Text(widget.item.label),

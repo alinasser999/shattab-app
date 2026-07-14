@@ -82,6 +82,8 @@ class ContractorProfile {
     this.specialties = const [],
     this.serviceAreas = const [],
     this.yearsExperience,
+    this.plan = 'free',
+    this.planExpiresAt,
   });
 
   final String profileId;
@@ -91,6 +93,16 @@ class ContractorProfile {
   final List<String> specialties;
   final List<String> serviceAreas;
   final int? yearsExperience;
+  final String plan;
+  final DateTime? planExpiresAt;
+
+  /// Active Pro = plan 'pro' and not expired. Drives the lead-gate: a free
+  /// contractor sees an upgrade CTA instead of the send-quote action, and the
+  /// DB rejects their quote inserts regardless.
+  bool get isPro =>
+      plan == 'pro' &&
+      planExpiresAt != null &&
+      planExpiresAt!.isAfter(DateTime.now());
 
   bool get hasBusinessName =>
       businessName != null && businessName!.trim().isNotEmpty;
@@ -105,6 +117,8 @@ class ContractorProfile {
     List<String>? specialties,
     List<String>? serviceAreas,
     int? yearsExperience,
+    String? plan,
+    DateTime? planExpiresAt,
   }) =>
       ContractorProfile(
         profileId: profileId,
@@ -114,6 +128,8 @@ class ContractorProfile {
         specialties: specialties ?? this.specialties,
         serviceAreas: serviceAreas ?? this.serviceAreas,
         yearsExperience: yearsExperience ?? this.yearsExperience,
+        plan: plan ?? this.plan,
+        planExpiresAt: planExpiresAt ?? this.planExpiresAt,
       );
 
   factory ContractorProfile.fromJson(Map<String, dynamic> json) =>
@@ -127,6 +143,10 @@ class ContractorProfile {
         serviceAreas:
             ((json['service_areas'] as List?) ?? const []).map((e) => e as String).toList(),
         yearsExperience: json['years_experience'] as int?,
+        plan: (json['plan'] as String?) ?? 'free',
+        planExpiresAt: json['plan_expires_at'] == null
+            ? null
+            : DateTime.parse(json['plan_expires_at'] as String),
       );
 }
 
