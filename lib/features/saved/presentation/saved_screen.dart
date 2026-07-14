@@ -39,24 +39,33 @@ class SavedScreen extends ConsumerWidget {
             onRefresh: () async =>
                 ref.invalidate(savedContractorsProvider),
             child: list.isEmpty
-                ? ListView(
-                    children: [
-                      isGuest
-                          ? BatshEmptyState(
-                              title: S.signInToSeeSaved,
-                              icon: Icons.bookmark_border,
-                              action: BatshButton(
-                                label: S.signInSheetTitle,
-                                onPressed: () => showSignInSheet(context,
-                                    reason: S.signInToSeeSaved),
-                              ),
-                            )
-                          : BatshEmptyState(
-                              title: S.noSavedContractors,
-                              message: S.noSavedContractorsMsg,
-                              icon: Icons.bookmark_border,
-                            ),
-                    ],
+                ? LayoutBuilder(
+                    builder: (context, constraints) => ListView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      children: [
+                        // Fill the viewport so BatshEmptyState's internal Center
+                        // truly centers instead of collapsing to the top.
+                        ConstrainedBox(
+                          constraints:
+                              BoxConstraints(minHeight: constraints.maxHeight),
+                          child: isGuest
+                              ? BatshEmptyState(
+                                  title: S.signInToSeeSaved,
+                                  icon: Icons.bookmark_border,
+                                  action: BatshButton(
+                                    label: S.signInSheetTitle,
+                                    onPressed: () => showSignInSheet(context,
+                                        reason: S.signInToSeeSaved),
+                                  ),
+                                )
+                              : BatshEmptyState(
+                                  title: S.noSavedContractors,
+                                  message: S.noSavedContractorsMsg,
+                                  icon: Icons.bookmark_border,
+                                ),
+                        ),
+                      ],
+                    ),
                   )
                 : ListView.separated(
                     padding: const EdgeInsets.symmetric(

@@ -25,14 +25,14 @@ class BatshEmptyState extends StatelessWidget {
 
     final iconWidget = ExcludeSemantics(
       child: Container(
-        width: 56,
-        height: 56,
+        width: 72,
+        height: 72,
         decoration: BoxDecoration(
           color: BatshColors.primaryFixed.withValues(alpha: 0.2),
           shape: BoxShape.circle,
         ),
         child: Icon(icon,
-            color: BatshColors.primary.withValues(alpha: 0.6), size: 48),
+            color: BatshColors.primary.withValues(alpha: 0.65), size: 34),
       ),
     );
 

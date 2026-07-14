@@ -258,7 +258,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
                           children: [
                             if (filters.specialty != null)
                               Padding(
-                                padding: const EdgeInsets.only(right: BatshSpacing.xs),
+                                padding: const EdgeInsetsDirectional.only(end: BatshSpacing.xs),
                                 child: BatshActiveFilterChip(
                                   label: OnboardingCatalog.specialtiesCatalog[filters.specialty] ?? filters.specialty!,
                                   onRemove: () => ref.read(discoveryFiltersControllerProvider.notifier).setSpecialty(null),
@@ -266,7 +266,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
                               ),
                             if (filters.city != null)
                               Padding(
-                                padding: const EdgeInsets.only(right: BatshSpacing.xs),
+                                padding: const EdgeInsetsDirectional.only(end: BatshSpacing.xs),
                                 child: BatshActiveFilterChip(
                                   label: filters.city!,
                                   onRemove: () => ref.read(discoveryFiltersControllerProvider.notifier).setCity(null),
