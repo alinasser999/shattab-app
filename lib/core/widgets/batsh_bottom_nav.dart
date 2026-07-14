@@ -20,6 +20,9 @@ class BatshBottomNavItem {
   final String label;
 }
 
+/// Floating premium bottom nav — detached stadium bar with soft elevation,
+/// an animated active pill, and spring icon scaling. Token-driven, RTL-safe
+/// (Row follows the ambient Directionality; no hardcoded left/right).
 class BatshBottomNav extends StatelessWidget {
   const BatshBottomNav({
     super.key,
@@ -34,29 +37,46 @@ class BatshBottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: BatshColors.surfaceContainerLow,
-        boxShadow: BatshShadows.raised,
-      ),
-      child: SafeArea(
-        top: false,
-        child: SizedBox(
-          height: 68,
-          child: Row(
-            children: [
-              for (var i = 0; i < items.length; i++)
-                Expanded(
-                  child: _NavItem(
-                    item: items[i],
-                    isSelected: currentIndex == i,
-                    onTap: () {
-                      HapticFeedback.selectionClick();
-                      onTap(i);
-                    },
-                  ),
-                ),
-            ],
+    return SafeArea(
+      top: false,
+      minimum: const EdgeInsets.only(bottom: BatshSpacing.xs),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(
+          BatshSpacing.ml,
+          BatshSpacing.xs,
+          BatshSpacing.ml,
+          0,
+        ),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: BatshColors.surfaceContainerLowest,
+            borderRadius: BatshRadius.brFull,
+            border: Border.all(
+              color: BatshColors.outlineVariant.withValues(alpha: 0.4),
+              width: 1,
+            ),
+            boxShadow: BatshShadows.floating,
+          ),
+          child: ClipRRect(
+            borderRadius: BatshRadius.brFull,
+            child: SizedBox(
+              height: 66,
+              child: Row(
+                children: [
+                  for (var i = 0; i < items.length; i++)
+                    Expanded(
+                      child: _NavItem(
+                        item: items[i],
+                        isSelected: currentIndex == i,
+                        onTap: () {
+                          HapticFeedback.selectionClick();
+                          onTap(i);
+                        },
+                      ),
+                    ),
+                ],
+              ),
+            ),
           ),
         ),
       ),
@@ -107,7 +127,10 @@ class _NavItemState extends State<_NavItem>
   void didUpdateWidget(_NavItem old) {
     super.didUpdateWidget(old);
     if (widget.isSelected != old.isSelected) {
-      if (widget.isSelected) {
+      // Respect the OS reduce-motion setting: snap instead of animate.
+      if (MediaQuery.maybeOf(context)?.disableAnimations ?? false) {
+        _controller.value = widget.isSelected ? 1.0 : 0.0;
+      } else if (widget.isSelected) {
         _controller.forward();
       } else {
         _controller.reverse();
@@ -129,53 +152,71 @@ class _NavItemState extends State<_NavItem>
       child: AnimatedBuilder(
         animation: _scaleAnim,
         builder: (_, child) => Transform.scale(
-          scale: 0.9 + (_scaleAnim.value * 0.1),
+          scale: 0.92 + (_scaleAnim.value * 0.08),
           child: child,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Spacer(),
             SizedBox(
-              height: 36,
-              width: 56,
+              height: 34,
+              width: 60,
               child: Stack(
                 alignment: Alignment.center,
                 children: [
+                  // Active pill — grows and fades in behind the icon.
                   AnimatedBuilder(
                     animation: _pillAnim,
-                    builder: (_, child) => Container(
-                      width: 24 + (_pillAnim.value * 32),
-                      height: 36,
+                    builder: (_, __) => Container(
+                      width: 30 + (_pillAnim.value * 26),
+                      height: 34,
                       decoration: BoxDecoration(
-                        color: BatshColors.primaryFixed
-                            .withValues(alpha: 0.35 + (_pillAnim.value * 0.25)),
+                        color: BatshColors.primaryContainer
+                            .withValues(alpha: _pillAnim.value),
                         borderRadius: BatshRadius.brFull,
                       ),
                     ),
                   ),
                   Icon(
-                    widget.isSelected ? widget.item.selectedIcon : widget.item.icon,
-                    size: 22 + (_pillAnim.value * 4),
-                    color: widget.isSelected
-                        ? BatshColors.primary
-                        : BatshColors.onSurfaceVariant.withValues(alpha: 0.7),
+                    widget.isSelected
+                        ? widget.item.selectedIcon
+                        : widget.item.icon,
+                    size: 22 + (_pillAnim.value * 3),
+                    color: Color.lerp(
+                      BatshColors.onSurfaceVariant.withValues(alpha: 0.75),
+                      BatshColors.primary,
+                      _pillAnim.value,
+                    ),
                   ),
                 ],
               ),
             ),
             const SizedBox(height: BatshSpacing.xxs),
-            AnimatedDefaultTextStyle(
-              duration: BatshMotion.fast,
-              style: BatshTypography.labelSm.copyWith(
-                color: widget.isSelected
-                    ? BatshColors.primary
-                    : BatshColors.onSurfaceVariant.withValues(alpha: 0.7),
-                fontWeight: widget.isSelected ? FontWeight.w600 : FontWeight.w500,
+            // Full-width bound so a long Arabic label ellipsizes instead of
+            // overflowing the item on narrow screens.
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: BatshSpacing.xxs),
+              child: SizedBox(
+                width: double.infinity,
+                child: AnimatedDefaultTextStyle(
+                  duration: BatshMotion.fast,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                  // Solid onSurfaceVariant (not alpha-dimmed) to clear the
+                  // 4.5:1 body-text contrast floor on the white bar.
+                  style: BatshTypography.labelSm.copyWith(
+                    color: widget.isSelected
+                        ? BatshColors.primary
+                        : BatshColors.onSurfaceVariant,
+                    fontWeight:
+                        widget.isSelected ? FontWeight.w700 : FontWeight.w500,
+                  ),
+                  child: Text(widget.item.label, textAlign: TextAlign.center),
+                ),
               ),
-              child: Text(widget.item.label),
             ),
-            const Spacer(),
           ],
         ),
       ),

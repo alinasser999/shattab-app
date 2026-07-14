@@ -18,7 +18,7 @@ class BatshStars extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Semantics(
-      label: '$rating من 5 نجوم',
+      label: '${rating.toStringAsFixed(1)} من 5 نجوم',
       child: Row(
       mainAxisSize: MainAxisSize.min,
       children: List.generate(5, (i) {
@@ -57,8 +57,10 @@ class BatshStarInput extends StatelessWidget {
         final active = star <= value;
         return IconButton(
           padding: const EdgeInsets.symmetric(horizontal: 2),
-          constraints: const BoxConstraints(),
+          // Keep the 48dp minimum tap target (WCAG / Material touch size).
+          constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
           iconSize: size,
+          tooltip: '$star',
           onPressed: () => onChanged(star),
           icon: Icon(
             active ? Icons.star : Icons.star_border,
