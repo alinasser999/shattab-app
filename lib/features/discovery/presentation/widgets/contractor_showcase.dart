@@ -13,6 +13,7 @@ import '../../../../core/theme/batsh_spacing.dart';
 import '../../../../core/theme/batsh_typography.dart';
 import '../../../../core/l10n/strings.dart';
 import '../../../../core/widgets/batsh_button.dart';
+import '../../../../core/widgets/batsh_pressable.dart';
 import '../../../../core/widgets/batsh_shimmer.dart';
 import '../../../../core/widgets/contact_buttons.dart';
 import '../../../auth/presentation/sign_in_sheet.dart';
@@ -747,12 +748,13 @@ class _PortfolioTile extends StatelessWidget {
           borderRadius: BatshRadius.brLg,
           boxShadow: BatshShadows.soft,
         ),
-        child: Material(
-        color: BatshColors.surfaceContainerLowest,
-        borderRadius: BatshRadius.brLg,
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
+        child: BatshPressable(
           onTap: onTap,
+          semanticLabel: project.title,
+          child: Material(
+          color: BatshColors.surfaceContainerLowest,
+          borderRadius: BatshRadius.brLg,
+          clipBehavior: Clip.antiAlias,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,

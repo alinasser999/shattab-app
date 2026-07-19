@@ -9,10 +9,13 @@ import '../theme/batsh_radius.dart';
 import '../theme/batsh_shadows.dart';
 import '../theme/batsh_spacing.dart';
 import '../theme/batsh_typography.dart';
+import 'batsh_pressable.dart';
 import 'batsh_shimmer.dart';
 
-/// Large editorial-style card for the discover feed. Cover image + avatar +
-/// name + headline + stats row + chips. LinkedIn-meets-Behance vibe.
+/// Large editorial-style card for the discover feed. Premium magazine layout:
+/// a tall cover with the logo, name, headline and rating composited directly
+/// onto the photo behind a legibility scrim, then a compact stats + chips strip
+/// underneath. Behance-meets-Airbnb.
 class ContractorCard extends StatelessWidget {
   const ContractorCard({
     super.key,
@@ -42,50 +45,27 @@ class ContractorCard extends StatelessWidget {
         borderRadius: BatshRadius.brLg,
         boxShadow: BatshShadows.soft,
       ),
-      child: Material(
-      color: BatshColors.surfaceContainerLowest,
-      borderRadius: BatshRadius.brLg,
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
+      child: BatshPressable(
         onTap: onTap,
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BatshRadius.brLg,
-            border: Border.all(color: BatshColors.outlineVariant),
-          ),
+        semanticLabel: name,
+        child: Material(
+          color: BatshColors.surfaceContainerLowest,
+          borderRadius: BatshRadius.brLg,
+          clipBehavior: Clip.antiAlias,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _CoverWithAvatar(
-                  listing: listing,
-                  isSaved: isSaved,
-                  onToggleSave: onToggleSave),
+              _EditorialCover(
+                listing: listing,
+                name: name,
+                isSaved: isSaved,
+                onToggleSave: onToggleSave,
+              ),
               Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  BatshSpacing.gutter,
-                  BatshSpacing.lg,
-                  BatshSpacing.gutter,
-                  BatshSpacing.gutter,
-                ),
+                padding: const EdgeInsets.all(BatshSpacing.gutter),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(name,
-                        style: BatshTypography.titleLg
-                            .copyWith(fontWeight: FontWeight.w700),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis),
-                    if (listing.headline != null) ...[
-                      const SizedBox(height: 2),
-                      Text(
-                        listing.headline!,
-                        style: BatshTypography.bodyMd.copyWith(
-                            color: BatshColors.onSurfaceVariant),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                    const SizedBox(height: BatshSpacing.md),
                     _MicroStats(listing: listing),
                     const SizedBox(height: BatshSpacing.md),
                     Wrap(
@@ -103,8 +83,7 @@ class ContractorCard extends StatelessWidget {
                       Row(
                         children: [
                           const Icon(Icons.place_outlined,
-                              size: 14,
-                              color: BatshColors.onSurfaceVariant),
+                              size: 14, color: BatshColors.onSurfaceVariant),
                           const SizedBox(width: 4),
                           Expanded(
                             child: Text(firstAreas.join(' · '),
@@ -123,113 +102,210 @@ class ContractorCard extends StatelessWidget {
           ),
         ),
       ),
-      ),
     );
   }
 }
 
-class _CoverWithAvatar extends StatelessWidget {
-  const _CoverWithAvatar({
+/// Tall cover photo with logo + name + headline + rating composited on top of a
+/// bottom-weighted scrim, plus a floating save control.
+class _EditorialCover extends StatelessWidget {
+  const _EditorialCover({
     required this.listing,
+    required this.name,
     required this.isSaved,
     required this.onToggleSave,
   });
 
   final ContractorListing listing;
+  final String name;
   final bool isSaved;
   final VoidCallback? onToggleSave;
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        // Cover hero
-        SizedBox(
-          height: 130,
-          width: double.infinity,
-          child: listing.coverPhotoUrl != null
-              ? CachedNetworkImage(
-                  imageUrl: listing.coverPhotoUrl!,
-                  fit: BoxFit.cover,
-                  memCacheWidth: 800,
-                  placeholder: (_, _) =>
-                      const ColoredBox(color: BatshColors.surfaceContainer),
-                  errorWidget: (_, _, _) => const _CoverFallback(),
-                )
-              : const _CoverFallback(),
-        ),
-        // Gradient overlay
-        Positioned.fill(
-          child: IgnorePointer(
+    return SizedBox(
+      height: 208,
+      width: double.infinity,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          // Photo
+          if (listing.coverPhotoUrl != null)
+            CachedNetworkImage(
+              imageUrl: listing.coverPhotoUrl!,
+              fit: BoxFit.cover,
+              memCacheWidth: 800,
+              placeholder: (_, _) =>
+                  const ColoredBox(color: BatshColors.surfaceContainer),
+              errorWidget: (_, _, _) => const _CoverFallback(),
+            )
+          else
+            const _CoverFallback(),
+          // Legibility scrim: clear at top, deep at the foot so the composited
+          // name/logo stay readable over any photo.
+          const IgnorePointer(
             child: DecoratedBox(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    Colors.black.withValues(alpha: 0),
-                    BatshColors.primary.withValues(alpha: 0.25),
+                    Color(0x00000000),
+                    Color(0x33000000),
+                    Color(0xD9000000),
                   ],
+                  stops: [0.0, 0.5, 1.0],
                 ),
               ),
             ),
           ),
-        ),
-        // Save heart top-right
-        if (onToggleSave != null)
-          Positioned(
+          // Rating / new badge, top-start.
+          PositionedDirectional(
             top: BatshSpacing.sm,
-            right: BatshSpacing.sm,
-            child: Material(
-              color: Colors.white.withValues(alpha: 0.92),
-              shape: const CircleBorder(),
-              child: IconButton(
-                tooltip: isSaved ? S.unsaveTooltip : S.saveTooltip,
-                icon: Icon(
-                  isSaved ? Icons.bookmark : Icons.bookmark_border,
-                  size: 18,
-                  color: isSaved
-                      ? BatshColors.primary
-                      : BatshColors.onSurfaceVariant,
+            start: BatshSpacing.sm,
+            child: _RatingBadge(listing: listing),
+          ),
+          // Save control, top-end.
+          if (onToggleSave != null)
+            PositionedDirectional(
+              top: BatshSpacing.sm,
+              end: BatshSpacing.sm,
+              child: Material(
+                color: Colors.white.withValues(alpha: 0.92),
+                shape: const CircleBorder(),
+                child: IconButton(
+                  tooltip: isSaved ? S.unsaveTooltip : S.saveTooltip,
+                  icon: Icon(
+                    isSaved ? Icons.bookmark : Icons.bookmark_border,
+                    size: 18,
+                    color: isSaved
+                        ? BatshColors.primary
+                        : BatshColors.onSurfaceVariant,
+                  ),
+                  onPressed: onToggleSave,
+                  constraints:
+                      const BoxConstraints(minWidth: 44, minHeight: 44),
+                  padding: EdgeInsets.zero,
+                  visualDensity: VisualDensity.compact,
                 ),
-                onPressed: onToggleSave,
-                constraints:
-                    const BoxConstraints(minWidth: 44, minHeight: 44),
-                padding: EdgeInsets.zero,
-                visualDensity: VisualDensity.compact,
               ),
             ),
-          ),
-        // Avatar peeking below
-        Positioned(
-          left: BatshSpacing.gutter,
-          bottom: -28,
-          child: Container(
-            width: 64,
-            height: 64,
-            padding: const EdgeInsets.all(3),
-            decoration: const BoxDecoration(
-              color: BatshColors.surfaceContainerLowest,
-              shape: BoxShape.circle,
+          // Logo + name + headline, composited at the foot.
+          PositionedDirectional(
+            start: BatshSpacing.gutter,
+            end: BatshSpacing.gutter,
+            bottom: BatshSpacing.gutter,
+            child: Row(
+              children: [
+                _LogoAvatar(logoUrl: listing.logoUrl),
+                const SizedBox(width: BatshSpacing.sm),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        name,
+                        style: BatshTypography.titleLg.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w700,
+                          height: 1.15,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      if (listing.headline != null &&
+                          listing.headline!.isNotEmpty) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          listing.headline!,
+                          style: BatshTypography.labelMd.copyWith(
+                            color: Colors.white.withValues(alpha: 0.88),
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ],
             ),
-            child: ClipOval(
-              child: Container(
-                color: BatshColors.surfaceContainer,
-                child: listing.logoUrl != null
-                    ? CachedNetworkImage(
-                        imageUrl: listing.logoUrl!,
-                        fit: BoxFit.cover,
-                        placeholder: (_, _) => const ColoredBox(
-                            color: BatshColors.surfaceContainer),
-                      )
-                    : const Icon(Icons.engineering_outlined,
-                        color: BatshColors.primary, size: 28),
-              ),
-            ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LogoAvatar extends StatelessWidget {
+  const _LogoAvatar({this.logoUrl});
+  final String? logoUrl;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 48,
+      height: 48,
+      padding: const EdgeInsets.all(2),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.9),
+        shape: BoxShape.circle,
+        boxShadow: BatshShadows.soft,
+      ),
+      child: ClipOval(
+        child: Container(
+          color: BatshColors.surfaceContainer,
+          child: logoUrl != null
+              ? CachedNetworkImage(
+                  imageUrl: logoUrl!,
+                  fit: BoxFit.cover,
+                  placeholder: (_, _) =>
+                      const ColoredBox(color: BatshColors.surfaceContainer),
+                )
+              : const Icon(Icons.engineering_outlined,
+                  color: BatshColors.primary, size: 24),
         ),
-      ],
+      ),
+    );
+  }
+}
+
+/// Rating pill (star + score) or a neutral "new" badge for cold-start
+/// contractors — icon + text, never colour alone.
+class _RatingBadge extends StatelessWidget {
+  const _RatingBadge({required this.listing});
+  final ContractorListing listing;
+
+  @override
+  Widget build(BuildContext context) {
+    final isNew = listing.reviewCount == 0;
+    return Container(
+      padding: const EdgeInsets.symmetric(
+          horizontal: BatshSpacing.sm, vertical: 5),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.92),
+        borderRadius: BatshRadius.brFull,
+        boxShadow: BatshShadows.soft,
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            isNew ? Icons.auto_awesome : Icons.star,
+            size: 14,
+            color: isNew ? BatshColors.secondary : BatshColors.tertiary,
+          ),
+          const SizedBox(width: 4),
+          Text(
+            isNew ? S.newBadge : listing.displayRating.toStringAsFixed(1),
+            style: BatshTypography.labelSm.copyWith(
+              color: BatshColors.onSurface,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -248,19 +324,8 @@ class _MicroStats extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isNew = listing.reviewCount == 0;
     return Row(
       children: [
-        isNew
-            ? _StatChip(
-                icon: Icons.auto_awesome,
-                iconColor: BatshColors.secondary,
-                label: S.newBadge)
-            : _StatChip(
-                icon: Icons.star,
-                iconColor: BatshColors.tertiary,
-                label: listing.displayRating.toStringAsFixed(1)),
-        const SizedBox(width: BatshSpacing.sm),
         _StatChip(
             icon: Icons.home_work_outlined,
             iconColor: BatshColors.primary,

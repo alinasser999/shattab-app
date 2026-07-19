@@ -28,7 +28,10 @@ Future<ContractorProfile?> contractorProfile(Ref ref) async {
       .fetchContractor(session.user.id);
 }
 
-@riverpod
+// keepAlive: methods await network calls after a bare `ref.read(...notifier)`;
+// autoDispose would tear the controller down mid-await and its next `ref` use
+// would throw "Cannot use the Ref ... after it has been disposed".
+@Riverpod(keepAlive: true)
 class OnboardingController extends _$OnboardingController {
   @override
   void build() {}
@@ -51,10 +54,17 @@ class OnboardingController extends _$OnboardingController {
     await ref.read(currentProfileProvider.notifier).refresh();
   }
 
-  Future<void> setApartmentType(ApartmentType type) async {
-    await ref
-        .read(onboardingRepositoryProvider)
-        .upsertHomeowner(profileId: _requireUserId(), apartmentType: type);
+  /// Saves apartment type + interests in one upsert: single failure point,
+  /// no half-written row between sequential calls.
+  Future<void> saveHomeownerDetails({
+    required ApartmentType apartmentType,
+    required List<String> interests,
+  }) async {
+    await ref.read(onboardingRepositoryProvider).upsertHomeowner(
+          profileId: _requireUserId(),
+          apartmentType: apartmentType,
+          renovationInterests: interests,
+        );
     ref.invalidate(homeownerProfileProvider);
   }
 
@@ -66,14 +76,6 @@ class OnboardingController extends _$OnboardingController {
           profileId: _requireUserId(),
           city: city,
           district: district,
-        );
-    ref.invalidate(homeownerProfileProvider);
-  }
-
-  Future<void> setHomeownerInterests(List<String> interests) async {
-    await ref.read(onboardingRepositoryProvider).upsertHomeowner(
-          profileId: _requireUserId(),
-          renovationInterests: interests,
         );
     ref.invalidate(homeownerProfileProvider);
   }
