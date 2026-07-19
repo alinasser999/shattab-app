@@ -95,17 +95,15 @@ class OnboardingController extends _$OnboardingController {
     await ref.read(currentProfileProvider.notifier).refresh();
   }
 
-  Future<void> setSpecialties(List<String> specialties) async {
+  /// Saves specialties + service areas in one upsert: single failure point,
+  /// no half-written row between sequential calls.
+  Future<void> saveContractorServices({
+    required List<String> specialties,
+    required List<String> serviceAreas,
+  }) async {
     await ref.read(onboardingRepositoryProvider).upsertContractor(
           profileId: _requireUserId(),
           specialties: specialties,
-        );
-    ref.invalidate(contractorProfileProvider);
-  }
-
-  Future<void> setServiceAreas(List<String> serviceAreas) async {
-    await ref.read(onboardingRepositoryProvider).upsertContractor(
-          profileId: _requireUserId(),
           serviceAreas: serviceAreas,
         );
     ref.invalidate(contractorProfileProvider);

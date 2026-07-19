@@ -8,7 +8,6 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../../../core/l10n/strings.dart';
 import '../../../../core/router/routes.dart';
 import '../../../../core/theme/batsh_spacing.dart';
-import '../../../../core/theme/batsh_typography.dart';
 import '../../../../core/theme/batsh_motion.dart';
 import '../../../../core/utils/error_mapper.dart';
 import '../../../../core/widgets/batsh_button.dart';
@@ -55,6 +54,7 @@ class _ExperienceScreenState extends ConsumerState<ExperienceScreen> {
       if (!mounted) return;
       context.go(Routes.contractorDashboard);
     } catch (e) {
+      if (!mounted) return;
       setState(() => _error = ErrorMapper.map(e));
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -64,7 +64,7 @@ class _ExperienceScreenState extends ConsumerState<ExperienceScreen> {
   @override
   Widget build(BuildContext context) {
     final existing = ref.watch(contractorProfileProvider).value;
-    if (!_hydrated && existing != null) {
+    if (!_hydrated && !_busy && existing != null) {
       if (existing.yearsExperience != null) {
         _yearsCtrl.text = '${existing.yearsExperience}';
       }
@@ -78,11 +78,6 @@ class _ExperienceScreenState extends ConsumerState<ExperienceScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const SizedBox(height: BatshSpacing.md),
-            Text(
-              S.experienceTitle,
-              style: BatshTypography.headlineLg,
-            ),
-            const SizedBox(height: BatshSpacing.lg),
             BatshTextField(
               controller: _yearsCtrl,
               label: S.yearsExperience,
