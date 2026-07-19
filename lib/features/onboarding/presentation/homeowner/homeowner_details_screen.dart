@@ -36,15 +36,25 @@ class _HomeownerDetailsScreenState
 
   Future<void> _next() async {
     if (_aptType == null || _interests.isEmpty) return;
+    // Snapshot inputs before any await: the upserts below invalidate
+    // homeownerProfileProvider, which reruns build() and re-hydrates state
+    // from a half-written row (wiping _interests mid-submit).
+    final aptType = _aptType!;
+    final interests = _interests.toList();
     setState(() => _busy = true);
     try {
       final ctrl = ref.read(onboardingControllerProvider.notifier);
-      await ctrl.setApartmentType(_aptType!);
-      await ctrl.setHomeownerInterests(_interests.toList());
+      await ctrl.saveHomeownerDetails(
+        apartmentType: aptType,
+        interests: interests,
+      );
       await ctrl.markComplete();
       if (!mounted) return;
       context.go(Routes.homeownerDiscover);
     } catch (e) {
+      // Surfaces the raw error in the browser/device console; the snackbar
+      // below only shows the mapped Arabic message.
+      debugPrint('homeowner onboarding submit failed: $e');
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(ErrorMapper.map(e))),
@@ -57,7 +67,7 @@ class _HomeownerDetailsScreenState
   @override
   Widget build(BuildContext context) {
     final existing = ref.watch(homeownerProfileProvider).value;
-    if (!_hydrated && existing != null) {
+    if (!_hydrated && !_busy && existing != null) {
       _aptType ??= existing.apartmentType;
       _interests = existing.renovationInterests.toSet();
       _hydrated = true;

@@ -10,7 +10,22 @@ class ErrorMapper {
   static String map(dynamic error) {
     final msg = error.toString().toLowerCase();
 
+    // Framework lifecycle errors (e.g. Riverpod "Cannot use the Ref ... after
+    // it has been disposed", whose hint text contains the word "invalidate").
+    // These are bugs, not user-data problems — never map them to errInvalidData.
+    if (msg.contains('disposed') || msg.contains('ref.mounted')) {
+      return S.errServerError;
+    }
+
     // Auth errors
+    if (msg.contains('signups') && msg.contains('disabled')) {
+      return S.errSignupDisabled;
+    }
+    if (msg.contains('already registered') ||
+        msg.contains('already been registered') ||
+        msg.contains('user already exists')) {
+      return S.errPhoneTaken;
+    }
     if (msg.contains('invalid login credentials') ||
         msg.contains('invalid credentials') ||
         msg.contains('email not confirmed')) {
