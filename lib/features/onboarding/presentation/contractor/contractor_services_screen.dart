@@ -33,13 +33,31 @@ class _ContractorServicesScreenState
   bool _hydrated = false;
   bool _busy = false;
 
+  static const Map<String, IconData> _specialtyIcons = {
+    'paint': Icons.format_paint_outlined,
+    'flooring': Icons.layers_outlined,
+    'kitchen': Icons.countertops_outlined,
+    'bathroom': Icons.bathtub_outlined,
+    'electrical': Icons.electrical_services_outlined,
+    'plumbing': Icons.plumbing_outlined,
+    'carpentry': Icons.carpenter_outlined,
+    'design': Icons.design_services_outlined,
+    'full_reno': Icons.home_repair_service_outlined,
+  };
+
   Future<void> _next() async {
     if (_specialties.isEmpty || _areas.isEmpty) return;
+    // Snapshot before any await: the upsert invalidates
+    // contractorProfileProvider, which reruns build() mid-submit.
+    final specialties = _specialties.toList();
+    final areas = _areas.toList();
     setState(() => _busy = true);
     try {
       final ctrl = ref.read(onboardingControllerProvider.notifier);
-      await ctrl.setSpecialties(_specialties.toList());
-      await ctrl.setServiceAreas(_areas.toList());
+      await ctrl.saveContractorServices(
+        specialties: specialties,
+        serviceAreas: areas,
+      );
       if (!mounted) return;
       context.go(Routes.onboardingContractorExperience);
     } catch (e) {
@@ -55,7 +73,7 @@ class _ContractorServicesScreenState
   @override
   Widget build(BuildContext context) {
     final existing = ref.watch(contractorProfileProvider).value;
-    if (!_hydrated && existing != null) {
+    if (!_hydrated && !_busy && existing != null) {
       _specialties = existing.specialties.toSet();
       _areas = existing.serviceAreas.toSet();
       _hydrated = true;
@@ -82,6 +100,7 @@ class _ContractorServicesScreenState
                   .map(
                     (e) => BatshChip(
                       label: e.value,
+                      icon: _specialtyIcons[e.key],
                       selected: _specialties.contains(e.key),
                       onTap: () => setState(() {
                         if (_specialties.contains(e.key)) {

@@ -81,6 +81,7 @@ class _CompanyProfileScreenState
       if (!mounted) return;
       context.go(Routes.onboardingContractorServices);
     } catch (e) {
+      if (!mounted) return;
       setState(() => _error = ErrorMapper.map(e));
     } finally {
       if (mounted) setState(() => _busy = false);
