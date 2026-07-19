@@ -351,14 +351,35 @@ class _LoginCard extends ConsumerStatefulWidget {
 
 class _LoginCardState extends ConsumerState<_LoginCard> {
   final _passwordController = TextEditingController();
+  final _passwordFocus = FocusNode();
   bool _isSignUp = false;
   bool _obscure = true;
   bool _busy = false;
+  bool _phoneFocused = false;
+  bool _passwordFocused = false;
   String? _error;
 
   @override
+  void initState() {
+    super.initState();
+    widget.phoneFocus.addListener(_onPhoneFocus);
+    _passwordFocus.addListener(_onPasswordFocus);
+  }
+
+  void _onPhoneFocus() {
+    if (mounted) setState(() => _phoneFocused = widget.phoneFocus.hasFocus);
+  }
+
+  void _onPasswordFocus() {
+    if (mounted) setState(() => _passwordFocused = _passwordFocus.hasFocus);
+  }
+
+  @override
   void dispose() {
+    widget.phoneFocus.removeListener(_onPhoneFocus);
+    _passwordFocus.removeListener(_onPasswordFocus);
     _passwordController.dispose();
+    _passwordFocus.dispose();
     super.dispose();
   }
 
@@ -416,8 +437,6 @@ class _LoginCardState extends ConsumerState<_LoginCard> {
   Widget build(BuildContext context) {
     final error = _error ?? widget.phoneErrorText;
     final hasError = error != null;
-    final fieldFill = BatshColors.surfaceContainerLow;
-    final fieldRadius = BorderRadius.circular(16);
 
     final card = Container(
       width: double.infinity,
@@ -425,12 +444,23 @@ class _LoginCardState extends ConsumerState<_LoginCard> {
           horizontal: BatshSpacing.lg, vertical: BatshSpacing.lg),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+            color: BatshColors.outlineVariant.withValues(alpha: 0.45)),
         boxShadow: BatshShadows.soft,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Mode switch — tactile segmented control up front, not a buried link.
+          _AuthSegment(
+            isSignUp: _isSignUp,
+            onChanged: (v) => setState(() {
+              _isSignUp = v;
+              _error = null;
+            }),
+          ),
+          const SizedBox(height: BatshSpacing.lg),
           // Google — fastest path, free, no SMS.
           _GoogleButton(onPressed: _busy ? null : _google),
           const SizedBox(height: BatshSpacing.md),
@@ -451,12 +481,9 @@ class _LoginCardState extends ConsumerState<_LoginCard> {
           ),
           const SizedBox(height: BatshSpacing.md),
           // Phone
-          Container(
-            decoration: BoxDecoration(
-              color: fieldFill,
-              borderRadius: fieldRadius,
-              border: hasError ? Border.all(color: BatshColors.error) : null,
-            ),
+          _FieldShell(
+            focused: _phoneFocused,
+            hasError: hasError,
             child: Directionality(
               textDirection: TextDirection.ltr,
               child: Row(
@@ -516,17 +543,19 @@ class _LoginCardState extends ConsumerState<_LoginCard> {
           ),
           const SizedBox(height: BatshSpacing.md),
           // Password
-          Container(
-            decoration: BoxDecoration(
-              color: fieldFill,
-              borderRadius: fieldRadius,
-              border: hasError ? Border.all(color: BatshColors.error) : null,
-            ),
+          _FieldShell(
+            focused: _passwordFocused,
+            hasError: hasError,
             child: Row(
               children: [
+                const SizedBox(width: BatshSpacing.md),
+                Icon(Icons.lock_outline,
+                    size: 20, color: BatshColors.onSurfaceVariant),
+                const SizedBox(width: BatshSpacing.sm),
                 Expanded(
                   child: TextField(
                     controller: _passwordController,
+                    focusNode: _passwordFocus,
                     obscureText: _obscure,
                     textInputAction: TextInputAction.done,
                     onSubmitted: (_) => _busy ? null : _submit(),
@@ -556,10 +585,19 @@ class _LoginCardState extends ConsumerState<_LoginCard> {
             ),
           ),
           if (hasError) ...[
-            const SizedBox(height: BatshSpacing.xs),
-            Text(
-              error,
-              style: BatshTypography.labelSm.copyWith(color: BatshColors.error),
+            const SizedBox(height: BatshSpacing.sm),
+            Row(
+              children: [
+                Icon(Icons.error_outline, size: 15, color: BatshColors.error),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    error,
+                    style: BatshTypography.labelMd
+                        .copyWith(color: BatshColors.error),
+                  ),
+                ),
+              ],
             ),
           ],
           const SizedBox(height: BatshSpacing.lg),
@@ -568,12 +606,13 @@ class _LoginCardState extends ConsumerState<_LoginCard> {
             onPressed: _busy ? null : _submit,
             isLoading: _busy,
           ),
-          const SizedBox(height: BatshSpacing.sm),
           // Forgot password (sign-in mode only) — the sole SMS path.
-          if (!_isSignUp)
+          if (!_isSignUp) ...[
+            const SizedBox(height: BatshSpacing.xs),
             Center(
               child: TextButton(
-                onPressed: widget.forgotState.isSending ? null : widget.onForgot,
+                onPressed:
+                    widget.forgotState.isSending ? null : widget.onForgot,
                 child: Text(
                   S.forgotPassword,
                   style: BatshTypography.labelMd.copyWith(
@@ -583,33 +622,7 @@ class _LoginCardState extends ConsumerState<_LoginCard> {
                 ),
               ),
             ),
-          const SizedBox(height: BatshSpacing.xs),
-          // Mode toggle
-          Center(
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  '${_isSignUp ? S.haveAccountPrompt : S.noAccountPrompt} ',
-                  style: BatshTypography.bodyMd
-                      .copyWith(color: BatshColors.onSurfaceVariant),
-                ),
-                GestureDetector(
-                  onTap: () => setState(() {
-                    _isSignUp = !_isSignUp;
-                    _error = null;
-                  }),
-                  child: Text(
-                    _isSignUp ? S.signInAction : S.createAccountAction,
-                    style: BatshTypography.bodyMd.copyWith(
-                      color: BatshColors.primary,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
+          ],
         ],
       ),
     );
@@ -620,6 +633,120 @@ class _LoginCardState extends ConsumerState<_LoginCard> {
         .slideY(begin: 0.12, end: 0, duration: 600.ms, delay: 1200.ms, curve: BatshMotion.heroEase)
         .scale(begin: const Offset(0.97, 0.97), end: const Offset(1, 1),
             duration: 600.ms, delay: 1200.ms, curve: BatshMotion.heroEase);
+  }
+}
+
+// ─── Auth Mode Segment ───────────────────────────────────────────────────────
+
+/// Two-cell segmented control (Sign in / Create account) with a sliding
+/// terracotta highlight. RTL-safe: the Row and directional alignment share the
+/// same start/end axis, so the pill tracks the active cell in either direction.
+class _AuthSegment extends StatelessWidget {
+  const _AuthSegment({required this.isSignUp, required this.onChanged});
+
+  final bool isSignUp;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 48,
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: BatshColors.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(15),
+      ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final cellWidth = (constraints.maxWidth - 8) / 2;
+          return Stack(
+            children: [
+              AnimatedAlign(
+                duration: BatshMotion.normal,
+                curve: BatshMotion.easeOut,
+                alignment: isSignUp
+                    ? AlignmentDirectional.centerEnd
+                    : AlignmentDirectional.centerStart,
+                child: Container(
+                  width: cellWidth,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: BatshColors.primary,
+                    borderRadius: BorderRadius.circular(11),
+                    boxShadow: BatshShadows.soft,
+                  ),
+                ),
+              ),
+              Row(
+                children: [
+                  _cell(S.signInAction, !isSignUp, () => onChanged(false)),
+                  _cell(S.createAccountAction, isSignUp, () => onChanged(true)),
+                ],
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _cell(String label, bool selected, VoidCallback onTap) {
+    return Expanded(
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onTap,
+        child: Center(
+          child: AnimatedDefaultTextStyle(
+            duration: BatshMotion.fast,
+            style: BatshTypography.labelLg.copyWith(
+              color:
+                  selected ? BatshColors.onPrimary : BatshColors.onSurfaceVariant,
+              fontWeight: FontWeight.w700,
+            ),
+            child: Text(label),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Field Shell ─────────────────────────────────────────────────────────────
+
+/// Filled input container with a hairline border that lifts to terracotta on
+/// focus and to error red when the form is invalid. Gives the plain fields a
+/// tactile, non-generic focus state.
+class _FieldShell extends StatelessWidget {
+  const _FieldShell({
+    required this.child,
+    required this.focused,
+    required this.hasError,
+  });
+
+  final Widget child;
+  final bool focused;
+  final bool hasError;
+
+  @override
+  Widget build(BuildContext context) {
+    final borderColor = hasError
+        ? BatshColors.error
+        : focused
+            ? BatshColors.primary
+            : BatshColors.outlineVariant.withValues(alpha: 0.7);
+    return AnimatedContainer(
+      duration: BatshMotion.fast,
+      curve: BatshMotion.easeOut,
+      decoration: BoxDecoration(
+        color: BatshColors.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: borderColor,
+          width: focused || hasError ? 1.6 : 1,
+        ),
+      ),
+      child: child,
+    );
   }
 }
 

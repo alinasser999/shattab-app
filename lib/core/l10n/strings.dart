@@ -793,6 +793,12 @@ class S {
       _t('حصل مشكلة في رفع الصور', 'Error uploading photos');
   static String get errInvalidData =>
       _t('البيانات مش صحيحة، تأكد منها', 'Invalid data, please check');
+  static String get errSignupDisabled => _t(
+      'إنشاء حساب بالرقم مش متاح دلوقتي، سجّل بجوجل',
+      'Phone sign-up is off right now, use Google');
+  static String get errPhoneTaken => _t(
+      'الرقم ده مسجّل قبل كده، سجّل دخول',
+      'This number is already registered, sign in');
 
   // ── Portfolio ────────────────────────────────────────────────────────────
   static String get portfolioAdd => _t('أضف عمل', 'Add Work');
