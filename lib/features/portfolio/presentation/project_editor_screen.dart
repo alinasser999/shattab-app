@@ -219,8 +219,8 @@ class _ProjectEditorScreenState extends ConsumerState<ProjectEditorScreen> {
       if (_coverError != null) ...[
         const SizedBox(height: BatshSpacing.sm),
         Text(_coverError!,
-            style: const TextStyle(
-                color: BatshColors.error, fontSize: 12)),
+            style: BatshTypography.labelSm
+                .copyWith(color: BatshColors.error)),
       ],
       const SizedBox(height: BatshSpacing.lg),
       BatshButton(

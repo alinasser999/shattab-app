@@ -14,6 +14,7 @@ import '../../../core/theme/batsh_typography.dart';
 import '../../../core/widgets/batsh_button.dart';
 import '../../../core/widgets/batsh_empty_state.dart';
 import '../../../core/widgets/batsh_error.dart';
+import '../../../core/widgets/batsh_pressable.dart';
 import '../../../core/widgets/batsh_scaffold.dart';
 import '../../../core/widgets/batsh_shimmer.dart';
 import '../../../core/utils/error_mapper.dart';
@@ -199,13 +200,14 @@ class _PortfolioTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: BatshColors.surfaceContainerLowest,
-      borderRadius: BatshRadius.brLg,
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        onLongPress: onLongPress,
+    return BatshPressable(
+      onTap: onTap,
+      onLongPress: onLongPress,
+      semanticLabel: project.title,
+      child: Material(
+        color: BatshColors.surfaceContainerLowest,
+        borderRadius: BatshRadius.brLg,
+        clipBehavior: Clip.antiAlias,
         child: Stack(
           fit: StackFit.expand,
           children: [
