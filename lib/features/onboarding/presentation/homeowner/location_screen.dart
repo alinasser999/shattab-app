@@ -28,6 +28,7 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
   String? _selectedCity;
   String? _selectedDistrict;
   bool _busy = false;
+  bool _hydrated = false;
 
   Future<void> _next() async {
     if (_selectedCity == null || _selectedDistrict == null) return;
@@ -67,8 +68,14 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
   @override
   Widget build(BuildContext context) {
     final existing = ref.watch(homeownerProfileProvider).value;
-    _selectedCity ??= existing?.city;
-    _selectedDistrict ??= existing?.district;
+    // Hydrate once: re-running `??=` every build resurrects the saved
+    // district after the user picks a new city (which clears it), letting a
+    // mismatched city/district pair pass validation.
+    if (!_hydrated && existing != null) {
+      _selectedCity ??= existing.city;
+      _selectedDistrict ??= existing.district;
+      _hydrated = true;
+    }
     return BatshScaffold(
       title: S.locationTitle,
       body: SingleChildScrollView(
@@ -76,11 +83,6 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const SizedBox(height: BatshSpacing.md),
-            Text(
-              S.locationTitle,
-              style: BatshTypography.headlineLg,
-            ),
-            const SizedBox(height: BatshSpacing.lg),
             Text(S.cityLabel,
                 style: BatshTypography.labelMd
                     .copyWith(color: BatshColors.onSurfaceVariant)),

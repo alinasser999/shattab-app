@@ -855,6 +855,9 @@ class S {
 
   // ── Profile & Company ───────────────────────────────────────────────────
   static String get yourData => _t('بياناتك', 'Your Data');
+  static String get homeownerDetailsHint => _t(
+      'عشان نرشّحلك أنسب المقاولين لبيتك',
+      'So we can match you with the right contractors');
   static String get apartmentType => _t('نوع الشقة', 'Apartment Type');
   static String get fillBothFields => _t('املا الحقلين', 'Fill both fields');
   static String get companyData => _t('بيانات الشركة', 'Company Data');
