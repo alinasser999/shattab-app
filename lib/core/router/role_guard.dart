@@ -47,7 +47,13 @@ String? roleGuard(Ref ref, GoRouterState state) {
   // the name inline and never routes here.
   if (profile.fullName.trim().isEmpty) {
     if (path == Routes.onboardingRoleSelect) return null;
-    if (path.startsWith('/login')) return Routes.onboardingRoleSelect;
+    // /login covers direct sign-ins; /splash covers fresh sign-ups (the
+    // profile resolves while the guard is parked on splash, so without this
+    // case a new account skips role/name selection entirely). Guests signing
+    // in mid-browse stay where they are — the sheet collects the name inline.
+    if (path.startsWith('/login') || path == Routes.splash) {
+      return Routes.onboardingRoleSelect;
+    }
   }
 
   if (!profile.onboardingComplete) {

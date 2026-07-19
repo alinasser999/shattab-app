@@ -189,6 +189,16 @@ class _RoleCard extends StatelessWidget {
               ],
             ),
           ),
+          AnimatedScale(
+            scale: selected ? 1 : 0,
+            duration: BatshMotion.fast,
+            curve: BatshMotion.easeOut,
+            child: const Icon(
+              Icons.check_circle_rounded,
+              size: 22,
+              color: BatshColors.primary,
+            ),
+          ),
         ],
       ),
     );
