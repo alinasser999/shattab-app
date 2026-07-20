@@ -12,6 +12,7 @@ import '../../../core/theme/batsh_motion.dart';
 import '../../../core/theme/batsh_radius.dart';
 import '../../../core/theme/batsh_shadows.dart';
 import '../../../core/theme/batsh_spacing.dart';
+import '../../../core/theme/batsh_theme.dart';
 import '../../../core/theme/batsh_typography.dart';
 import '../../../core/utils/extensions.dart';
 import '../../../core/utils/validators.dart';
@@ -20,6 +21,11 @@ import '../../auth/data/auth_repository.dart';
 import '../../auth/presentation/providers/auth_provider.dart';
 import '../../../core/utils/error_mapper.dart';
 import 'providers/otp_provider.dart';
+
+/// The cinematic intro plays once per app session. After the first mount the
+/// login card should appear instantly — a returning user shouldn't pay a ~1.4s
+/// choreography tax on every visit.
+bool _heroIntroSeen = false;
 
 class PhoneEntryScreen extends ConsumerStatefulWidget {
   const PhoneEntryScreen({super.key});
@@ -33,6 +39,14 @@ class _PhoneEntryScreenState extends ConsumerState<PhoneEntryScreen> {
   final FocusNode _phoneFocus = FocusNode();
   String? _errorText;
   final _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    // Latch after the first frame so this mount still animates, but any later
+    // return to the screen skips straight to the resting state.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _heroIntroSeen = true);
+  }
 
   @override
   void dispose() {
@@ -76,13 +90,22 @@ class _PhoneEntryScreenState extends ConsumerState<PhoneEntryScreen> {
   Widget build(BuildContext context) {
     final state = ref.watch(otpControllerProvider);
     final isMobile = context.isMobile;
-    final disableMotion = MediaQuery.of(context).disableAnimations;
+    // Suppress the intro once seen (or when the OS asks for reduced motion).
+    final disableMotion =
+        MediaQuery.of(context).disableAnimations || _heroIntroSeen;
     final isWide = MediaQuery.of(context).size.width > 480;
 
     return Scaffold(
-      body: Stack(
+      // Login is always a warm, light surface regardless of system theme.
+      // Without pinning, the inner TextFields inherit the dark
+      // InputDecorationTheme and render charcoal fills inside the white card,
+      // making typed input invisible on dark-mode phones.
+      body: Theme(
+        data: BatshTheme.light(),
+        child: Stack(
         children: [
           Positioned.fill(child: _BackgroundLayer()),
+          const Positioned.fill(child: _ScrimLayer()),
           SafeArea(
             child: SingleChildScrollView(
               controller: _scrollController,
@@ -98,7 +121,7 @@ class _PhoneEntryScreenState extends ConsumerState<PhoneEntryScreen> {
                       _LogoTagline(disableMotion: disableMotion),
                       SizedBox(height: isMobile ? 28 : 40),
                       _HeroHeadline(disableMotion: disableMotion),
-                      SizedBox(height: BatshSpacing.sm),
+                      SizedBox(height: BatshSpacing.md + 2),
                       _HeroSubtitle(disableMotion: disableMotion),
                       SizedBox(height: BatshSpacing.xl + 4),
                       _LoginCard(
@@ -124,6 +147,7 @@ class _PhoneEntryScreenState extends ConsumerState<PhoneEntryScreen> {
             ),
           ),
         ],
+        ),
       ),
     );
   }
@@ -142,6 +166,34 @@ class _BackgroundLayer extends StatelessWidget {
   }
 }
 
+/// Warm wash over the photo. Two jobs: a soft cream lift behind the headline so
+/// legibility is owned by the layout (not borrowed from whatever crop the image
+/// happens to show), and a stronger cream base that fuses the login card into
+/// the scene instead of leaving it a white rectangle pasted on a photo.
+class _ScrimLayer extends StatelessWidget {
+  const _ScrimLayer();
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          stops: const [0.0, 0.16, 0.44, 0.66, 1.0],
+          colors: [
+            BatshColors.surface.withValues(alpha: 0.0),
+            BatshColors.surface.withValues(alpha: 0.0),
+            BatshColors.surface.withValues(alpha: 0.32),
+            BatshColors.surface.withValues(alpha: 0.86),
+            BatshColors.surface,
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 // ─── Logo & Tagline ──────────────────────────────────────────────────────────
 
 class _LogoTagline extends StatelessWidget {
@@ -152,7 +204,7 @@ class _LogoTagline extends StatelessWidget {
   Widget build(BuildContext context) {
     final logo = Image.asset(
       'assets/images/logo_wordmark.png',
-      height: 76,
+      height: 88,
       fit: BoxFit.contain,
     );
     final tagline = Text(
@@ -297,8 +349,10 @@ class _HeroSubtitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final child = Padding(
-      padding: const EdgeInsets.symmetric(horizontal: BatshSpacing.md),
+    // Cap the measure so the subtitle reads as a set line, not text poured
+    // edge-to-edge under the headline.
+    final child = ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 340),
       child: Text(
         S.heroSubtitle,
         textAlign: TextAlign.center,
@@ -352,18 +406,27 @@ class _LoginCard extends ConsumerStatefulWidget {
 class _LoginCardState extends ConsumerState<_LoginCard> {
   final _passwordController = TextEditingController();
   final _passwordFocus = FocusNode();
+  final _confirmController = TextEditingController();
+  final _confirmFocus = FocusNode();
   bool _isSignUp = false;
   bool _obscure = true;
   bool _busy = false;
   bool _phoneFocused = false;
   bool _passwordFocused = false;
-  String? _error;
+  bool _confirmFocused = false;
+  // Errors are per-field so a wrong password never reddens the phone box.
+  // _formError holds auth/server failures that don't belong to one field.
+  String? _phoneError;
+  String? _passwordError;
+  String? _confirmError;
+  String? _formError;
 
   @override
   void initState() {
     super.initState();
     widget.phoneFocus.addListener(_onPhoneFocus);
     _passwordFocus.addListener(_onPasswordFocus);
+    _confirmFocus.addListener(_onConfirmFocus);
   }
 
   void _onPhoneFocus() {
@@ -374,30 +437,63 @@ class _LoginCardState extends ConsumerState<_LoginCard> {
     if (mounted) setState(() => _passwordFocused = _passwordFocus.hasFocus);
   }
 
+  void _onConfirmFocus() {
+    if (mounted) setState(() => _confirmFocused = _confirmFocus.hasFocus);
+  }
+
+  void _clearErrors() {
+    _phoneError = null;
+    _passwordError = null;
+    _confirmError = null;
+    _formError = null;
+  }
+
+  Widget _errorRow(String message) => Padding(
+        padding: const EdgeInsets.only(top: BatshSpacing.xs),
+        child: Row(
+          children: [
+            Icon(Icons.error_outline, size: 15, color: BatshColors.error),
+            const SizedBox(width: 6),
+            Expanded(
+              child: Text(message,
+                  style: BatshTypography.labelMd
+                      .copyWith(color: BatshColors.error)),
+            ),
+          ],
+        ),
+      );
+
   @override
   void dispose() {
     widget.phoneFocus.removeListener(_onPhoneFocus);
     _passwordFocus.removeListener(_onPasswordFocus);
+    _confirmFocus.removeListener(_onConfirmFocus);
     _passwordController.dispose();
     _passwordFocus.dispose();
+    _confirmController.dispose();
+    _confirmFocus.dispose();
     super.dispose();
   }
 
   Future<void> _submit() async {
     final phone = normalizeEgyptPhoneToE164(widget.phoneController.text);
     final password = _passwordController.text;
+    setState(_clearErrors);
     if (!Validators.isEgyptianPhone(phone)) {
-      setState(() => _error = S.invalidPhone);
+      setState(() => _phoneError = S.invalidPhone);
       return;
     }
     if (password.length < 6) {
-      setState(() => _error = S.passwordTooShort);
+      setState(() => _passwordError = S.passwordTooShort);
       return;
     }
-    setState(() {
-      _error = null;
-      _busy = true;
-    });
+    // Confirm-password guard only in sign-up. A typo here would otherwise lock
+    // the user out and push them to the SMS-costing forgot-password path.
+    if (_isSignUp && _confirmController.text != password) {
+      setState(() => _confirmError = S.passwordMismatch);
+      return;
+    }
+    setState(() => _busy = true);
     try {
       final repo = ref.read(authRepositoryProvider);
       if (_isSignUp) {
@@ -410,7 +506,7 @@ class _LoginCardState extends ConsumerState<_LoginCard> {
       await ref.read(currentProfileProvider.notifier).refresh();
     } catch (e) {
       if (!mounted) return;
-      setState(() => _error = ErrorMapper.map(e));
+      setState(() => _formError = ErrorMapper.map(e));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -418,7 +514,7 @@ class _LoginCardState extends ConsumerState<_LoginCard> {
 
   Future<void> _google() async {
     setState(() {
-      _error = null;
+      _clearErrors();
       _busy = true;
     });
     try {
@@ -427,7 +523,7 @@ class _LoginCardState extends ConsumerState<_LoginCard> {
       await ref.read(authRepositoryProvider).signInWithGoogle();
     } catch (e) {
       if (!mounted) return;
-      setState(() => _error = ErrorMapper.map(e));
+      setState(() => _formError = ErrorMapper.map(e));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -435,8 +531,8 @@ class _LoginCardState extends ConsumerState<_LoginCard> {
 
   @override
   Widget build(BuildContext context) {
-    final error = _error ?? widget.phoneErrorText;
-    final hasError = error != null;
+    // Parent surfaces phone-level errors from the forgot-password flow.
+    final phoneError = _phoneError ?? widget.phoneErrorText;
 
     final card = Container(
       width: double.infinity,
@@ -457,7 +553,7 @@ class _LoginCardState extends ConsumerState<_LoginCard> {
             isSignUp: _isSignUp,
             onChanged: (v) => setState(() {
               _isSignUp = v;
-              _error = null;
+              _clearErrors();
             }),
           ),
           const SizedBox(height: BatshSpacing.lg),
@@ -483,7 +579,7 @@ class _LoginCardState extends ConsumerState<_LoginCard> {
           // Phone
           _FieldShell(
             focused: _phoneFocused,
-            hasError: hasError,
+            hasError: phoneError != null,
             child: Directionality(
               textDirection: TextDirection.ltr,
               child: Row(
@@ -507,9 +603,6 @@ class _LoginCardState extends ConsumerState<_LoginCard> {
                             color: BatshColors.onSurface,
                           ),
                         ),
-                        const SizedBox(width: 4),
-                        Icon(Icons.keyboard_arrow_down,
-                            size: 18, color: BatshColors.onSurfaceVariant),
                       ],
                     ),
                   ),
@@ -519,6 +612,7 @@ class _LoginCardState extends ConsumerState<_LoginCard> {
                       focusNode: widget.phoneFocus,
                       keyboardType: TextInputType.phone,
                       textInputAction: TextInputAction.next,
+                      autofillHints: const [AutofillHints.telephoneNumber],
                       style: BatshTypography.bodyLg
                           .copyWith(color: BatshColors.onSurface, height: 1.4),
                       decoration: InputDecoration(
@@ -541,11 +635,12 @@ class _LoginCardState extends ConsumerState<_LoginCard> {
               ),
             ),
           ),
+          if (phoneError != null) _errorRow(phoneError),
           const SizedBox(height: BatshSpacing.md),
           // Password
           _FieldShell(
             focused: _passwordFocused,
-            hasError: hasError,
+            hasError: _passwordError != null,
             child: Row(
               children: [
                 const SizedBox(width: BatshSpacing.md),
@@ -557,8 +652,12 @@ class _LoginCardState extends ConsumerState<_LoginCard> {
                     controller: _passwordController,
                     focusNode: _passwordFocus,
                     obscureText: _obscure,
-                    textInputAction: TextInputAction.done,
+                    textInputAction:
+                        _isSignUp ? TextInputAction.next : TextInputAction.done,
                     onSubmitted: (_) => _busy ? null : _submit(),
+                    autofillHints: _isSignUp
+                        ? const [AutofillHints.newPassword]
+                        : const [AutofillHints.password],
                     style: BatshTypography.bodyLg
                         .copyWith(color: BatshColors.onSurface, height: 1.4),
                     decoration: InputDecoration(
@@ -584,21 +683,50 @@ class _LoginCardState extends ConsumerState<_LoginCard> {
               ],
             ),
           ),
-          if (hasError) ...[
-            const SizedBox(height: BatshSpacing.sm),
-            Row(
-              children: [
-                Icon(Icons.error_outline, size: 15, color: BatshColors.error),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: Text(
-                    error,
-                    style: BatshTypography.labelMd
-                        .copyWith(color: BatshColors.error),
+          if (_passwordError != null) _errorRow(_passwordError!),
+          // Confirm password — sign-up only. Catches a typo before it becomes a
+          // lockout that forces the SMS-costing forgot-password path.
+          if (_isSignUp) ...[
+            const SizedBox(height: BatshSpacing.md),
+            _FieldShell(
+              focused: _confirmFocused,
+              hasError: _confirmError != null,
+              child: Row(
+                children: [
+                  const SizedBox(width: BatshSpacing.md),
+                  Icon(Icons.lock_outline,
+                      size: 20, color: BatshColors.onSurfaceVariant),
+                  const SizedBox(width: BatshSpacing.sm),
+                  Expanded(
+                    child: TextField(
+                      controller: _confirmController,
+                      focusNode: _confirmFocus,
+                      obscureText: _obscure,
+                      textInputAction: TextInputAction.done,
+                      onSubmitted: (_) => _busy ? null : _submit(),
+                      autofillHints: const [AutofillHints.newPassword],
+                      style: BatshTypography.bodyLg.copyWith(
+                          color: BatshColors.onSurface, height: 1.4),
+                      decoration: InputDecoration(
+                        hintText: S.confirmPasswordHint,
+                        hintStyle: BatshTypography.bodyLg.copyWith(
+                          color: BatshColors.onSurfaceVariant
+                              .withValues(alpha: 0.5),
+                        ),
+                        border: InputBorder.none,
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: BatshSpacing.md, vertical: 14),
+                      ),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
+            if (_confirmError != null) _errorRow(_confirmError!),
+          ],
+          if (_formError != null) ...[
+            const SizedBox(height: BatshSpacing.sm),
+            _errorRow(_formError!),
           ],
           const SizedBox(height: BatshSpacing.lg),
           BatshButton(

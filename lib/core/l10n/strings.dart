@@ -68,6 +68,8 @@ class S {
   // Phone + password auth
   static String get passwordLabel => _t('كلمة السر', 'Password');
   static String get passwordHint => _t('٦ حروف على الأقل', 'At least 6 characters');
+  static String get confirmPasswordHint =>
+      _t('أكّد كلمة السر', 'Confirm password');
   static String get passwordTooShort =>
       _t('كلمة السر لازم ٦ حروف على الأقل', 'Password must be at least 6 characters');
   static String get signInAction => _t('دخول', 'Sign in');
