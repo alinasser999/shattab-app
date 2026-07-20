@@ -257,19 +257,22 @@ class _PostDetailContentState extends ConsumerState<_PostDetailContent> {
                         if (v == 'delete') {
                           showDialog(
                             context: context,
-                            builder: (_) => AlertDialog(
+                            // Pop with the dialog's own context: the screen's
+                            // context resolves to the shell branch navigator
+                            // and would pop the screen, not the dialog.
+                            builder: (ctx) => AlertDialog(
                               title: Text(S.deletePost),
                               content: Text(S.deletePostConfirm),
                               actions: [
                                 TextButton(
-                                  onPressed: () => Navigator.pop(context),
+                                  onPressed: () => Navigator.pop(ctx),
                                   child: Text(S.cancel),
                                 ),
                                 TextButton(
                                   onPressed: () {
                                     ref.read(postControllerProvider.notifier)
                                         .deletePost(post.id);
-                                    Navigator.pop(context);
+                                    Navigator.pop(ctx);
                                     context.pop();
                                   },
                                   child: Text(S.deletePost,

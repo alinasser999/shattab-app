@@ -31,15 +31,17 @@ class BriefDetailScreen extends ConsumerWidget {
   Future<bool> _cancel(BuildContext context, WidgetRef ref) async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (_) => AlertDialog(
+      // Pop with the dialog's own context: the screen's context resolves to
+      // the shell branch navigator and would pop the screen, not the dialog.
+      builder: (ctx) => AlertDialog(
         title: Text(S.cancelBriefTitle),
         content: Text(S.cancelBriefMessage),
         actions: [
           TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
+              onPressed: () => Navigator.of(ctx).pop(false),
               child: Text(S.cancelBriefNo)),
           TextButton(
-              onPressed: () => Navigator.of(context).pop(true),
+              onPressed: () => Navigator.of(ctx).pop(true),
               child: Text(S.cancelBriefYes)),
         ],
       ),

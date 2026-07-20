@@ -10,7 +10,9 @@ import '../../data/homeowner_profile_repository.dart';
 
 part 'homeowner_profile_providers.g.dart';
 
-@riverpod
+// keepAlive: called one-shot via ref.read(...notifier); autoDispose would
+// tear the controller down mid-await and its next ref use would throw.
+@Riverpod(keepAlive: true)
 class HomeownerProfileController extends _$HomeownerProfileController {
   @override
   void build() {}

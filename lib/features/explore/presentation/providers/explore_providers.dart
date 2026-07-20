@@ -63,7 +63,9 @@ class ExploreFeed extends _$ExploreFeed {
   }
 }
 
-@riverpod
+// keepAlive: called one-shot via ref.read(...notifier); autoDispose would
+// tear the controller down mid-await and its next ref use would throw.
+@Riverpod(keepAlive: true)
 class PostController extends _$PostController {
   @override
   AsyncValue<void> build() => const AsyncData(null);

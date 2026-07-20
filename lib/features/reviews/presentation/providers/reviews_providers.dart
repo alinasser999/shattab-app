@@ -17,7 +17,9 @@ Future<Review?> reviewForBrief(Ref ref, String briefId) =>
 Future<List<Review>> reviewsForContractor(Ref ref, String contractorId) =>
     ref.watch(reviewsRepositoryProvider).fetchForContractor(contractorId);
 
-@riverpod
+// keepAlive: called one-shot via ref.read(...notifier); autoDispose would
+// tear the controller down mid-await and its next ref use would throw.
+@Riverpod(keepAlive: true)
 class ReviewController extends _$ReviewController {
   @override
   void build() {}

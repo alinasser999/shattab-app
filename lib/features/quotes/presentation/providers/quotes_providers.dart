@@ -21,7 +21,9 @@ Future<Quote?> myQuoteForBrief(Ref ref, String briefId) =>
 Future<List<Quote>> myQuotes(Ref ref) =>
     ref.watch(quotesRepositoryProvider).fetchMine();
 
-@riverpod
+// keepAlive: called one-shot via ref.read(...notifier); autoDispose would
+// tear the controller down mid-await and its next ref use would throw.
+@Riverpod(keepAlive: true)
 class QuotesController extends _$QuotesController {
   @override
   void build() {}

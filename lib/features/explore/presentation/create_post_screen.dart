@@ -35,6 +35,13 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
   bool _uploading = false;
 
   @override
+  void initState() {
+    super.initState();
+    // Re-evaluate the header Post button's enabled state while typing.
+    _captionCtrl.addListener(() => setState(() {}));
+  }
+
+  @override
   void dispose() {
     _captionCtrl.dispose();
     super.dispose();
@@ -87,26 +94,33 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
         urls.add(url);
       }
 
+      // Role lives in the profiles table, not auth metadata.
+      final role = ref.read(currentProfileProvider).value?.role.name;
       await ref.read(postControllerProvider.notifier).createPost(
         authorId: session.user.id,
-        authorRole: session.user.userMetadata?['role'] as String? ?? 'homeowner',
+        authorRole: role ?? 'homeowner',
         postType: (_selectedType ?? PostType.renovationUpdate).dbValue,
         caption: caption,
         mediaUrls: urls,
       );
 
       if (mounted) {
-        Future.delayed(const Duration(milliseconds: 1500), () {
-          if (mounted) Navigator.of(context).pop();
-        });
         await showDialog<void>(
           context: context,
           barrierDismissible: false,
-          builder: (_) => Dialog(
-            backgroundColor: Colors.transparent,
-            elevation: 0,
-            child: BatshSuccessCheckmark(message: S.postCreated),
-          ),
+          builder: (dialogCtx) {
+            // Auto-close via the dialog's own context: the screen's context
+            // resolves to the shell branch navigator and would pop the
+            // screen instead, leaving the dialog stuck.
+            Future.delayed(const Duration(milliseconds: 1500), () {
+              if (dialogCtx.mounted) Navigator.of(dialogCtx).pop();
+            });
+            return Dialog(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              child: BatshSuccessCheckmark(message: S.postCreated),
+            );
+          },
         );
         if (mounted) context.pop();
       }
@@ -123,9 +137,8 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final session = ref.watch(currentSessionProvider);
-    final isContractor =
-        session?.user.userMetadata?['role'] == 'contractor';
+    final profile = ref.watch(currentProfileProvider).value;
+    final isContractor = profile?.role.name == 'contractor';
 
     return BatshScaffold(
       title: S.createPost,

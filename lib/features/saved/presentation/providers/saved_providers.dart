@@ -23,7 +23,9 @@ Future<List<ContractorListing>> savedContractors(Ref ref) async {
       .fetchSavedListings(session.user.id);
 }
 
-@riverpod
+// keepAlive: called one-shot via ref.read(...notifier); autoDispose would
+// tear the controller down mid-await and its next ref use would throw.
+@Riverpod(keepAlive: true)
 class SavedController extends _$SavedController {
   @override
   void build() {}
