@@ -9,6 +9,7 @@ import '../../../core/theme/batsh_spacing.dart';
 import '../../../core/theme/batsh_typography.dart';
 import '../../../core/widgets/batsh_button.dart';
 import '../pricing.dart';
+import 'payment_flow.dart';
 
 /// Shattab Pro subscription page. The one surface that earns a Committed /
 /// Drenched treatment (aspirational terracotta hero) inside an otherwise
@@ -25,10 +26,8 @@ class _ProScreenState extends State<ProScreen> {
   bool _annual = false;
 
   void _subscribe() {
-    // Phase 3: launch Paymob checkout. For now surface the pending notice.
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(S.paymentComingSoon)));
+    // Opens InstaPay (functional) / Apple Pay (pending processor) chooser.
+    showPaymentMethods(context, annual: _annual);
   }
 
   @override

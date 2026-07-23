@@ -17,4 +17,11 @@ class BatshPricing {
   /// Sponsored placement (EGP).
   static const int featuredWeekEgp = 199;
   static const int quoteBoostJobEgp = 49;
+
+  /// InstaPay handle contractors transfer to (manual-verify flow).
+  static const String instapayNumber = '01100216538';
+
+  /// Pro price for a given term.
+  static int proPrice({required bool annual}) =>
+      annual ? proAnnualEgp : proMonthlyEgp;
 }

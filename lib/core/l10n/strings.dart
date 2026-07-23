@@ -334,6 +334,52 @@ class S {
   static String proExpiresOn(String date) =>
       _t('بينتهي في $date', 'Renews on $date');
 
+  /// Format an EGP amount with localized digits + currency unit.
+  static String money(int v) {
+    if (egpUnit == 'EGP') return '$v $egpUnit';
+    const d = '٠١٢٣٤٥٦٧٨٩';
+    final s = v.toString().split('').map((c) {
+      final i = int.tryParse(c);
+      return i == null ? c : d[i];
+    }).join();
+    return '$s $egpUnit';
+  }
+
+  // ── Payment flow (InstaPay / Apple Pay) ─────────────────────────────────
+  static String get choosePaymentMethod =>
+      _t('اختار طريقة الدفع', 'Choose payment method');
+  static String get payInstapay => _t('انستا باي', 'InstaPay');
+  static String get payInstapaySub =>
+      _t('تحويل فوري من أي بنك أو محفظة', 'Instant transfer from any bank or wallet');
+  static String get payApplePay => _t('Apple Pay', 'Apple Pay');
+  static String get paySoonBadge => _t('قريب', 'Soon');
+  static String get payApplePaySub =>
+      _t('بالبطاقة أو المحفظة — قريب', 'Card or wallet — coming soon');
+  static String get instapayTitle =>
+      _t('الدفع عن طريق انستا باي', 'Pay via InstaPay');
+  static String get instapayAmountLabel => _t('المبلغ المطلوب', 'Amount due');
+  static String get instapayNumberLabel =>
+      _t('حوّل على رقم انستا باي ده', 'Transfer to this InstaPay number');
+  static String get copyAction => _t('نسخ', 'Copy');
+  static String get copiedToast => _t('اتنسخ', 'Copied');
+  static String get instapayUploadLabel =>
+      _t('ارفع صورة التحويل', 'Upload transfer screenshot');
+  static String get instapayRefLabel =>
+      _t('رقم العملية (اختياري)', 'Transfer reference (optional)');
+  static String get instapaySubmit => _t('ابعت للتأكيد', 'Send for confirmation');
+  static String get instapayProofRequired =>
+      _t('ارفع صورة التحويل الأول', 'Upload the transfer screenshot first');
+  static String get instapaySubmittedTitle =>
+      _t('طلبك تحت المراجعة', 'Request under review');
+  static String get instapaySubmittedBody => _t(
+      'استلمنا التحويل. هنفعّل باقة برو بعد التأكيد، عادة خلال ٢٤ ساعة.',
+      'We received your transfer. Pro activates after we confirm it, usually within 24 hours.');
+  static String get instapayDone => _t('تمام', 'Done');
+  static String get instapayError =>
+      _t('حصل خطأ، حاول تاني', 'Something went wrong, try again');
+  static String get applePaySoon =>
+      _t('Apple Pay هيكون متاح قريب', 'Apple Pay is coming soon');
+
   // ── M3: Inbox ───────────────────────────────────────────────────────────
   static String get inboxTitle => _t('الطلبات المباشرة', 'Direct Requests');
   static String get inboxEmptyTitle => _t('مفيش طلبات مباشرة', 'No direct requests');
