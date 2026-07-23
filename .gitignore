@@ -65,6 +65,10 @@ app.*.map.json
 # Stitch design tool refs
 .stitch-refs/
 
+# Design probes + throwaway preview entrypoints (dev-only)
+.probes/
+lib/preview_*.dart
+
 # opencode config (may contain API keys)
 opencode.json
 

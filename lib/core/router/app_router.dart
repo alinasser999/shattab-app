@@ -6,6 +6,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../features/auth/presentation/otp_screen.dart';
 import '../../features/auth/presentation/phone_entry_screen.dart';
 import '../../features/auth/presentation/providers/auth_provider.dart';
+import '../../features/billing/presentation/pro_screen.dart';
 import '../../features/briefs/presentation/contractor/job_opportunities_screen.dart';
 import '../../features/briefs/presentation/contractor/post_detail_screen.dart';
 import '../../features/briefs/presentation/homeowner/brief_detail_screen.dart';
@@ -100,6 +101,10 @@ GoRouter appRouter(Ref ref) {
         path: Routes.onboardingContractorExperience,
         pageBuilder: (_, state) =>
             slideUpPage(const ExperienceScreen(), state),
+      ),
+      GoRoute(
+        path: Routes.pro,
+        pageBuilder: (_, state) => slideUpPage(const ProScreen(), state),
       ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navShell) =>

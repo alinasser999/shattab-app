@@ -199,3 +199,129 @@ Add-on tuning (auction, dynamic caps) explicitly deferred.
 - Homeowner-side paid features.
 - Auction-based placement.
 - Automated (non-manual) verification.
+
+---
+
+## 12. Visual / UX design (impeccable shape brief)
+
+Design probes generated (higgsfield, 3 lanes: drenched terracotta / restrained
+cream / dark luxe). **Chosen: Hybrid** — Lane A drenched-terracotta aspirational
+hero + Lane B Free-vs-Pro clarity table. Pharaonic/hieroglyph texture rejected
+(tourist cliché, off "Modern Heritage"). Message reframed luxury → **contractor
+ROI** (leads = money). Probes archived under `.probes/` (dev-only, gitignored).
+
+**Register note:** the app is Restrained product UI; the Pro page is the one
+surface that earns a **Committed/Drenched** override (like an onboarding welcome
+or upsell). All other monetization surfaces (verify, sponsored, sheet) stay
+closer to Restrained with terracotta accents.
+
+**Tokens only** — `BatshColors` (primary terracotta `#9E3D18`, tertiary gold,
+secondary olive, surface cream), `BatshTypography` (Cairo display for
+price/headline, Tajawal body), `BatshRadius` (card 12–16, pill for chips/CTA),
+`BatshShadows`, `BatshMotion`. No raw hex. RTL-native, all copy in `strings.dart`.
+
+### 12.1 Pro subscription page (full screen, `/c/pro`)
+
+Top → bottom (RTL):
+
+1. **Hero band** (~38% height, drenched terracotta vertical gradient + soft
+   radial glow behind the medallion; NO hieroglyph texture). Back arrow top-start.
+   Gold premium medallion (crown/seal, `Icons.workspace_premium` styled or asset).
+   Headline "شطب برو". Value line "خلّي شغلك ما يوقفش — عروض بلا حدود".
+2. **Plan card** (cream, elevated, overlaps hero bottom edge):
+   - Segmented toggle **شهري / سنوي**; annual carries a "وفّر شهرين" pill.
+   - Price, tabular figures: "٢٩٩ ج" + "/شهر" (annual → "٢٩٩٠ ج/سنة").
+   - ROI line: "عرض واحد ممكن يرجّع اشتراك السنة كله".
+   - Benefit rows (gold check + label): عروض بلا حدود · ردّ على الطلبات المباشرة ·
+     ترتيب أعلى في البحث · معرض أعمال بلا حدود · إشعار "شاف عرضك".
+   - Primary CTA "ابدأ شهر مجاني" (trial) → checkout.
+   - Microcopy: "تقدر تلغي في أي وقت".
+3. **Free vs Pro table** (two columns الحالي / برو; rows with ✕ / ✓). Key row:
+   "٣ عروض/شهر" vs "بلا حدود".
+4. **Trust footer**: "الدفع عن طريق Paymob · آمن" + terms link (standalone label).
+
+**States:** default · annual-selected (price crossfades) · CTA loading (spinner,
+disabled) · payment error (inline row + "حاول تاني") · already-Pro ("أنت مشترك،
+بينتهي في {date}" + manage/renew) · reduced-motion (no medallion animation).
+
+### 12.2 Paywall sheet (bottom sheet, contextual) — replaces current stub
+
+Fires at the moment of pain (quota hit / tap a locked lead / onboarding upsell).
+- Reason line, context-specific: "خلصت الـ٣ عروض المجانية الشهر ده".
+- 3 top benefits (not the full list — this is a nudge, not the store).
+- Price + primary CTA "اشترك في برو" → opens checkout directly (keep momentum).
+- Secondary "مش دلوقتي" dismiss.
+Reuse the existing `paywall_sheet.dart` shell; swap inert button for checkout.
+
+### 12.3 Locked-lead treatment (the want-driver)
+
+On the opportunities feed for a free contractor at quota: matched leads render as
+**blurred cards with a lock** + count ribbon "١٢ شغل اتطابق معاك — اشترك تشوفهم"
+and, where known, an EGP value hint. This is the FOMO surface that feeds 12.2.
+Above quota-remaining: subtle "باقي لك عرضين الشهر ده" chip.
+
+### 12.4 Verified flow (`/c/verify`)
+
+- **Entry:** completion nudge on contractor profile ("وثّق حسابك — العملاء
+  بيثقوا في الموثّقين أكتر") + a "وثّق حسابك" row.
+- **Verify screen:** one-line benefit, then upload slots (tap → camera/gallery):
+  بطاقة (وش) · بطاقة (ضهر) · سيلفي وأنت ماسك البطاقة · [اختياري] رخصة/سجل. Submit CTA
+  "ابعت للمراجعة".
+- **States:** unverified (default) · pending ("قيد المراجعة، بنرد خلال ٤٨ ساعة") ·
+  approved (badge + brief success) · rejected (reason + "ظبّط وابعت تاني").
+- **Badge component** (new, reused everywhere): gold seal + check + "موثّق";
+  render on `contractor_card`, contractor profile header, and quote rows.
+  Unverified in discovery shows a muted "غير موثّق".
+
+### 12.5 Sponsored purchase (`/c/promote`)
+
+- **Gate:** must be Verified. If not → route to 12.4 first ("لازم توثّق حسابك
+  الأول").
+- Two products as tabs/cards: **ظهور مميّز** (Featured, top of discovery, per
+  week) and **تمييز العرض** (Quote-boost, per job).
+- Purchase sheet: pick duration (١ / ٢ / ٤ أسابيع for Featured), price, Paymob CTA.
+  Preview the "مموّل" label as it will appear.
+- **Active state:** "ظهورك المميّز شغّال لحد {date}".
+- Discovery render: sponsored cards top of list, always labeled "مموّل", rotated
+  among sponsored in-segment.
+
+### 12.6 Motion (flutter_animate; product register = 150–250 ms, restrained)
+
+- Hero medallion: scale + fade in once on entry (≤400 ms), reduced-motion → none.
+- Benefit list: stagger 30–50 ms per row, first open only.
+- Monthly/annual toggle: price crossfade (~200 ms).
+- CTA press: scale to 0.97.
+- Payment success: animated check.
+- No orchestrated full-page load sequence beyond the medallion. Every animation
+  has a reduced-motion path (`BatshMotion`).
+
+### 12.7 Accessibility (ui-ux-pro-max)
+
+- Touch targets ≥44 dp; 8 dp min spacing.
+- Semantic labels on icon-only controls (back, upload slots, medallion decorative
+  → excluded from semantics).
+- Contrast: white/cream text on terracotta hero ≥4.5:1; gold reserved for large
+  text / icons (≥3:1), never body. Price never color-only.
+- Reduced motion respected. RTL mirrored throughout.
+- Input: verified doc capture uses camera intent; no keyboard traps.
+
+### 12.8 New strings (additive to `strings.dart`, class `S`)
+
+Pro page (title/value/benefits/CTA/trial/ROI/annual-badge), plan toggle,
+Free-vs-Pro rows, paywall reason variants, locked-lead ribbon + quota chip,
+verify (entry/benefit/slot labels/pending/approved/rejected/reason), badge
+"موثّق"/"غير موثّق", sponsored (product names/duration/active/label/gate). All
+`_t(ar, en)`.
+
+### 12.9 New/changed files (UI layer)
+
+- New: `features/billing/presentation/pro_screen.dart`,
+  `plan_toggle.dart`, `free_vs_pro_table.dart`,
+  `features/verification/presentation/verify_screen.dart` (+ providers/repo),
+  `features/verification/presentation/widgets/verified_badge.dart`,
+  `features/promotion/presentation/promote_screen.dart` (+ purchase sheet).
+- Change: `paywall_sheet.dart` (checkout wiring), `contractor_card.dart` (badge +
+  sponsored label), opportunities feed (locked-lead + quota chip), discovery
+  (sponsored sort/label + "موثّق فقط" filter), routes.
+- Reuse: `BatshButton`, `BatshCard`, `BatshChip`, `BatshScaffold`, `PhotoPicker`,
+  `BatshShimmer`.

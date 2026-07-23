@@ -37,6 +37,9 @@ class Routes {
   static const String contractorProfile = '/c/profile';
   static const String contractorEditProfile = '/c/profile/edit';
 
+  // Monetization (full-screen, above the shell)
+  static const String pro = '/pro';
+
   // M2 nested routes
   static String homeownerContractorProfilePath(String id) =>
       '/h/discover/contractor/$id';

@@ -301,6 +301,39 @@ class S {
       _t('الدفع هيكون متاح قريب جداً.', 'Payment is coming very soon.');
   static String get currentPlanLabel => _t('باقتك الحالية', 'Your current plan');
 
+  // ── Pro subscription page ───────────────────────────────────────────────
+  static String get proScreenTitle => _t('شطب برو', 'Shattab Pro');
+  static String get proValueLine => _t(
+      'خلّي شغلك ما يوقفش، عروض بلا حدود', 'Keep the work coming, quotes without limits');
+  static String get proRoiLine => _t(
+      'عرض واحد ممكن يرجّع اشتراك السنة كله', 'One won job can cover the whole year');
+  static String get planMonthly => _t('شهري', 'Monthly');
+  static String get planAnnual => _t('سنوي', 'Annual');
+  static String get annualSaveBadge => _t('وفّر شهرين', 'Save 2 months');
+  static String get perYear => _t('/ سنة', '/yr');
+  static String get startFreeMonth => _t('ابدأ شهر مجاني', 'Start free month');
+  static String get cancelAnytime => _t('تقدر تلغي في أي وقت', 'Cancel anytime');
+  static String get proBenefitSeen =>
+      _t('إشعار لما العميل يشوف عرضك', 'Alert when a client views your quote');
+  static String get trustPaymob =>
+      _t('الدفع عن طريق Paymob · آمن', 'Payments by Paymob · secure');
+  static String get comparePlans => _t('المجاني وبرو', 'Free vs Pro');
+  static String get cmpQuotes => _t('عروض الأسعار', 'Quotes');
+  static String get cmpQuotesFree => _t('٣ في الشهر', '3 / month');
+  static String get cmpUnlimited => _t('بلا حدود', 'Unlimited');
+  static String get cmpRequests => _t('الطلبات المباشرة', 'Direct requests');
+  static String get cmpRequestsFree => _t('قراءة بس', 'Read only');
+  static String get cmpRequestsPro => _t('ردّ وابعت عرض', 'Reply & quote');
+  static String get cmpRanking => _t('الترتيب في البحث', 'Search ranking');
+  static String get cmpRankingFree => _t('عادي', 'Normal');
+  static String get cmpRankingPro => _t('أعلى', 'Higher');
+  static String get cmpPortfolio => _t('معرض الأعمال', 'Portfolio');
+  static String get cmpPortfolioFree => _t('٥ أعمال', '5 projects');
+  static String get cmpSeenRow => _t('إشعار «شاف عرضك»', '"Saw your quote" alert');
+  static String get alreadyPro => _t('أنت مشترك في برو', "You're on Pro");
+  static String proExpiresOn(String date) =>
+      _t('بينتهي في $date', 'Renews on $date');
+
   // ── M3: Inbox ───────────────────────────────────────────────────────────
   static String get inboxTitle => _t('الطلبات المباشرة', 'Direct Requests');
   static String get inboxEmptyTitle => _t('مفيش طلبات مباشرة', 'No direct requests');
