@@ -40,6 +40,7 @@ class ContractorShowcase extends ConsumerWidget {
     this.reviewCount,
     this.onEdit,
     this.onSignOut,
+    this.onGoPro,
     this.showInlineContact = true,
   });
 
@@ -59,6 +60,7 @@ class ContractorShowcase extends ConsumerWidget {
   /// Owner-mode callbacks.
   final VoidCallback? onEdit;
   final VoidCallback? onSignOut;
+  final VoidCallback? onGoPro;
 
   bool get _isOwner => mode == ShowcaseMode.owner;
 
@@ -133,9 +135,13 @@ class ContractorShowcase extends ConsumerWidget {
                 const SizedBox(height: BatshSpacing.lg),
                 _StatsRow(contractor: listing),
                 const SizedBox(height: BatshSpacing.lg),
-                if (_isOwner)
-                  _OwnerActions(onEdit: onEdit)
-                else if (showInlineContact)
+                if (_isOwner) ...[
+                  _OwnerActions(onEdit: onEdit),
+                  if (onGoPro != null) ...[
+                    const SizedBox(height: BatshSpacing.md),
+                    _GoProBanner(onTap: onGoPro!),
+                  ],
+                ] else if (showInlineContact)
                   _CtaBlock(contractor: listing),
                 const SizedBox(height: BatshSpacing.xl),
                 if (listing.bio != null && listing.bio!.isNotEmpty)
@@ -533,6 +539,80 @@ class _CtaBlock extends StatelessWidget {
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _GoProBanner extends StatelessWidget {
+  const _GoProBanner({required this.onTap});
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding:
+          const EdgeInsets.symmetric(horizontal: BatshSpacing.marginMobile),
+      child: Material(
+        borderRadius: BatshRadius.brLg,
+        clipBehavior: Clip.antiAlias,
+        child: Ink(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.centerRight,
+              end: Alignment.centerLeft,
+              colors: [
+                BatshColors.primary,
+                BatshColors.onPrimaryFixedVariant,
+              ],
+            ),
+          ),
+          child: InkWell(
+            onTap: onTap,
+            child: Padding(
+              padding: const EdgeInsets.all(BatshSpacing.md),
+              child: Row(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: LinearGradient(
+                        colors: [
+                          BatshColors.tertiaryContainer,
+                          BatshColors.tertiary,
+                        ],
+                      ),
+                    ),
+                    child: const Icon(Icons.workspace_premium_rounded,
+                        size: 22, color: BatshColors.onTertiaryContainer),
+                  ),
+                  const SizedBox(width: BatshSpacing.md),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(S.upgradeToProShort,
+                            style: BatshTypography.titleMd.copyWith(
+                                color: BatshColors.onPrimary,
+                                fontWeight: FontWeight.w700)),
+                        Text(S.proValueLine,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: BatshTypography.bodySm.copyWith(
+                                color: BatshColors.onPrimary
+                                    .withValues(alpha: 0.85))),
+                      ],
+                    ),
+                  ),
+                  Icon(Icons.chevron_left_rounded,
+                      color: BatshColors.onPrimary.withValues(alpha: 0.9)),
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

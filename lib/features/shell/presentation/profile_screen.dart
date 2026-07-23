@@ -123,6 +123,7 @@ class _ContractorProfile extends ConsumerWidget {
             listing: listing,
             mode: ShowcaseMode.owner,
             onEdit: () => context.push(Routes.contractorEditProfile),
+            onGoPro: () => context.push(Routes.pro),
             onSignOut: () => _confirmSignOut(context, ref),
           );
         },
