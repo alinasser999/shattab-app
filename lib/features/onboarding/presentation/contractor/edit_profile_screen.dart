@@ -16,6 +16,7 @@ import '../../../../core/widgets/batsh_button.dart';
 import '../../../../core/widgets/batsh_scaffold.dart';
 import '../../../../core/widgets/batsh_text_field.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../discovery/domain/contractor_listing.dart';
 import '../../../discovery/presentation/providers/discovery_providers.dart';
 import '../providers/onboarding_provider.dart';
 
@@ -32,6 +33,10 @@ class EditProfileScreen extends ConsumerStatefulWidget {
 class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   final _bizCtrl = TextEditingController();
   final _headlineCtrl = TextEditingController();
+
+  /// Selected professional identity. Defaults to `contractor` to match the
+  /// column default, and is replaced by the stored value once it loads.
+  ProviderKind _kind = ProviderKind.contractor;
   final _bioCtrl = TextEditingController();
   final _yearsCtrl = TextEditingController();
 
@@ -79,6 +84,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         headline: _headlineCtrl.text.trim(),
         bio: _bioCtrl.text.trim(),
         yearsExperience: years,
+        providerKind: _kind,
       );
       // Refresh the showcase + discover list so edits show immediately.
       ref.invalidate(contractorByIdProvider(myId));
@@ -104,6 +110,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       if (existing.yearsExperience != null) {
         _yearsCtrl.text = '${existing.yearsExperience}';
       }
+      _kind = existing.providerKind;
       _hydrated = true;
     }
 
@@ -146,6 +153,38 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
               ),
             ),
             const SizedBox(height: BatshSpacing.lg),
+            // Self-declared identity. First field after the images because it
+            // frames everything below it — and because being asked "what are
+            // you?" rather than being told is the whole point.
+            Align(
+              alignment: AlignmentDirectional.centerStart,
+              child:
+                  Text(S.providerKindQuestion, style: BatshTypography.labelLg),
+            ),
+            const SizedBox(height: BatshSpacing.xs),
+            Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: Text(
+                S.providerKindHelp,
+                style: BatshTypography.bodySm
+                    .copyWith(color: BatshColors.onSurfaceVariant),
+              ),
+            ),
+            const SizedBox(height: BatshSpacing.sm),
+            Wrap(
+              spacing: BatshSpacing.sm,
+              runSpacing: BatshSpacing.sm,
+              children: [
+                for (final kind in ProviderKind.values)
+                  ChoiceChip(
+                    avatar: Icon(kind.icon, size: 16),
+                    label: Text(kind.label),
+                    selected: _kind == kind,
+                    onSelected: (_) => setState(() => _kind = kind),
+                  ),
+              ],
+            ),
+            const SizedBox(height: BatshSpacing.gutter),
             BatshTextField(
               controller: _bizCtrl,
               label: S.businessNameTitle,

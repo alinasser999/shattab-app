@@ -5,6 +5,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/supabase/supabase_provider.dart';
+import '../../discovery/domain/contractor_listing.dart';
 import '../domain/onboarding_models.dart';
 
 part 'onboarding_repository.g.dart';
@@ -62,8 +63,12 @@ class OnboardingRepository {
     List<String>? specialties,
     List<String>? serviceAreas,
     int? yearsExperience,
+    ProviderKind? providerKind,
   }) async {
     final payload = <String, dynamic>{'profile_id': profileId};
+    // `.wire`, not `.name`: the enum is camelCase, the CHECK constraint in 0026
+    // expects snake_case.
+    if (providerKind != null) payload['provider_kind'] = providerKind.wire;
     if (businessName != null) payload['business_name'] = businessName;
     if (logoUrl != null) payload['logo_url'] = logoUrl;
     if (coverPhotoUrl != null) payload['cover_photo_url'] = coverPhotoUrl;

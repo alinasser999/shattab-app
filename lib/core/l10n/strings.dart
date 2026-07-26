@@ -1101,6 +1101,29 @@ class S {
   static String get continueWithApple =>
       _t('تسجيل الدخول باستخدام Apple', 'Sign in with Apple');
 
+  // ── Professional identity (0026) ────────────────────────────────────────
+  /// Umbrella term for the whole supply side. "مقاول" is a specific trade, not
+  /// a category — using it for engineers and firms reads as a demotion.
+  static String get professionals => _t('محترفين', 'Professionals');
+  static String get professionalSingular => _t('محترف', 'Professional');
+
+  static String get providerKindContractor => _t('مقاول', 'Contractor');
+  static String get providerKindEngineer => _t('مهندس', 'Engineer');
+  static String get providerKindEngineeringOffice =>
+      _t('مكتب هندسي', 'Engineering office');
+  static String get providerKindFinishingCompany =>
+      _t('شركة تشطيبات', 'Finishing company');
+  static String get providerKindInteriorDesigner =>
+      _t('مصمم داخلي', 'Interior designer');
+  static String get providerKindTradesman =>
+      _t('فني متخصص', 'Specialist tradesman');
+
+  static String get providerKindQuestion =>
+      _t('إنت إيه بالظبط؟', 'What describes you best?');
+  static String get providerKindHelp => _t(
+      'ده اللي هيظهر على ملفك. تقدر تغيّره في أي وقت.',
+      'This appears on your profile. You can change it any time.');
+
   // ── Free quote quota (0025) ─────────────────────────────────────────────
   /// Shown under the send-quote button while free quotes remain. Frames the
   /// cap as something you still have, not something you have lost.

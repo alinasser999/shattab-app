@@ -456,10 +456,19 @@ class _NameHeadline extends StatelessWidget {
           Text(name,
               textAlign: TextAlign.center,
               style: BatshTypography.headlineLgMobile),
-          if (contractor.verified) ...[
-            const SizedBox(height: BatshSpacing.sm),
-            const _VerifiedBadge(),
-          ],
+          const SizedBox(height: BatshSpacing.sm),
+          // Kind first, then verification: what they are, then whether we
+          // checked. Wrap so the pair reflows instead of overflowing at large
+          // text scales.
+          Wrap(
+            alignment: WrapAlignment.center,
+            spacing: BatshSpacing.xs,
+            runSpacing: BatshSpacing.xs,
+            children: [
+              _ProviderKindBadge(kind: contractor.providerKind),
+              if (contractor.verified) const _VerifiedBadge(),
+            ],
+          ),
           if (contractor.headline != null &&
               contractor.headline!.isNotEmpty) ...[
             const SizedBox(height: BatshSpacing.xs),
@@ -470,6 +479,41 @@ class _NameHeadline extends StatelessWidget {
                   .copyWith(color: BatshColors.onSurfaceVariant),
             ),
           ],
+        ],
+      ),
+    );
+  }
+}
+
+/// What the professional calls themselves — مقاول, مهندس, مكتب هندسي, and so
+/// on.
+///
+/// Styled as a neutral outline rather than a filled accent so it reads as a
+/// statement of fact, not an award. Verification is the award, and the two must
+/// not look alike.
+class _ProviderKindBadge extends StatelessWidget {
+  const _ProviderKindBadge({required this.kind});
+  final ProviderKind kind;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+          horizontal: BatshSpacing.md, vertical: 4),
+      decoration: BoxDecoration(
+        border: Border.all(color: BatshColors.outlineVariant),
+        borderRadius: BatshRadius.brFull,
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(kind.icon, size: 14, color: BatshColors.onSurfaceVariant),
+          const SizedBox(width: 4),
+          Text(
+            kind.label,
+            style: BatshTypography.labelSm
+                .copyWith(color: BatshColors.onSurfaceVariant),
+          ),
         ],
       ),
     );

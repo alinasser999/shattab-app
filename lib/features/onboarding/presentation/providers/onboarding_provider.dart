@@ -7,6 +7,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../auth/data/auth_repository.dart';
 import '../../../auth/domain/profile.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../discovery/domain/contractor_listing.dart';
 import '../../data/onboarding_repository.dart';
 import '../../domain/onboarding_models.dart';
 
@@ -138,6 +139,7 @@ class OnboardingController extends _$OnboardingController {
     String? headline,
     String? bio,
     int? yearsExperience,
+    ProviderKind? providerKind,
   }) async {
     await ref.read(onboardingRepositoryProvider).upsertContractor(
           profileId: _requireUserId(),
@@ -145,6 +147,7 @@ class OnboardingController extends _$OnboardingController {
           headline: headline,
           bio: bio,
           yearsExperience: yearsExperience,
+          providerKind: providerKind,
         );
     ref.invalidate(contractorProfileProvider);
   }

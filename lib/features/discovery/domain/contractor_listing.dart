@@ -1,3 +1,7 @@
+import 'package:flutter/material.dart';
+
+import '../../../core/l10n/strings.dart';
+
 /// Joined view of a contractor — `profiles` row + `contractor_profiles` row.
 class ContractorListing {
   const ContractorListing({
@@ -18,6 +22,7 @@ class ContractorListing {
     this.verified = false,
     this.plan = 'free',
     this.memberSince,
+    this.providerKind = ProviderKind.contractor,
   });
 
   final String id;
@@ -48,6 +53,14 @@ class ContractorListing {
 
   /// When the contractor profile was created — powers "member since".
   final DateTime? memberSince;
+
+  /// What this professional calls themselves.
+  ///
+  /// The account role is one thing technically; this is only the label. An
+  /// engineering office and a tradesman have identical capabilities in the app
+  /// — but calling both of them "مقاول" reads as a demotion to the former, and
+  /// the better-credentialled supply is exactly the supply worth keeping.
+  final ProviderKind providerKind;
 
   bool get isPro => plan == 'pro';
 
@@ -101,6 +114,7 @@ class ContractorListing {
       reviewAvg: reviewAvg,
       verified: (cp?['verified'] as bool?) ?? false,
       plan: (cp?['plan'] as String?) ?? 'free',
+      providerKind: ProviderKind.fromWire(cp?['provider_kind'] as String?),
       memberSince: switch (cp?['created_at']) {
         final String s => DateTime.tryParse(s),
         _ => null,
@@ -111,3 +125,60 @@ class ContractorListing {
 
 /// Trust tiers surfaced on the contractor's own account screen.
 enum ContractorTier { bronze, silver, gold }
+
+/// A professional's self-declared identity.
+///
+/// Wire values match the `provider_kind` CHECK constraint in 0026 exactly — the
+/// enum name *is* the stored string, so renaming a value here without a
+/// migration would start writing rows the database rejects.
+enum ProviderKind {
+  contractor,
+  engineer,
+  engineeringOffice,
+  finishingCompany,
+  interiorDesigner,
+  tradesman;
+
+  /// snake_case value as stored in Postgres.
+  String get wire => switch (this) {
+        ProviderKind.contractor => 'contractor',
+        ProviderKind.engineer => 'engineer',
+        ProviderKind.engineeringOffice => 'engineering_office',
+        ProviderKind.finishingCompany => 'finishing_company',
+        ProviderKind.interiorDesigner => 'interior_designer',
+        ProviderKind.tradesman => 'tradesman',
+      };
+
+  /// Unknown values fall back to `contractor` rather than throwing: a value
+  /// added to the CHECK by a newer migration must not crash an older client.
+  static ProviderKind fromWire(String? value) => switch (value) {
+        'engineer' => ProviderKind.engineer,
+        'engineering_office' => ProviderKind.engineeringOffice,
+        'finishing_company' => ProviderKind.finishingCompany,
+        'interior_designer' => ProviderKind.interiorDesigner,
+        'tradesman' => ProviderKind.tradesman,
+        _ => ProviderKind.contractor,
+      };
+
+  /// Localised label. Kept here so every surface that shows a kind reads the
+  /// same words.
+  String get label => switch (this) {
+        ProviderKind.contractor => S.providerKindContractor,
+        ProviderKind.engineer => S.providerKindEngineer,
+        ProviderKind.engineeringOffice => S.providerKindEngineeringOffice,
+        ProviderKind.finishingCompany => S.providerKindFinishingCompany,
+        ProviderKind.interiorDesigner => S.providerKindInteriorDesigner,
+        ProviderKind.tradesman => S.providerKindTradesman,
+      };
+
+  /// Icon paired with the label. Never rely on the icon alone — the pairing is
+  /// what keeps the badge readable in greyscale and to screen readers.
+  IconData get icon => switch (this) {
+        ProviderKind.contractor => Icons.construction_outlined,
+        ProviderKind.engineer => Icons.architecture_outlined,
+        ProviderKind.engineeringOffice => Icons.domain_outlined,
+        ProviderKind.finishingCompany => Icons.business_outlined,
+        ProviderKind.interiorDesigner => Icons.chair_outlined,
+        ProviderKind.tradesman => Icons.handyman_outlined,
+      };
+}
