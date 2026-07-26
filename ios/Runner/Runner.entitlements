@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Required for Sign in with Apple (App Store guideline 4.8). Without this
+	     entitlement the capability fails at runtime rather than at build time,
+	     so the button appears and then does nothing.
+
+	     This file only declares the entitlement. It must also be enabled for the
+	     App ID in the Apple Developer portal, added as a capability on the
+	     Runner target in Xcode, and configured as a provider in Supabase Auth.
+	     See docs/store-submission.md. -->
+	<key>com.apple.developer.applesignin</key>
+	<array>
+		<string>Default</string>
+	</array>
+</dict>
+</plist>

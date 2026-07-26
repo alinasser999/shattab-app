@@ -201,6 +201,16 @@ class _ContractorAccountView extends ConsumerWidget {
             _VerificationTile(verified: listing.verified),
             const _LanguageTile(),
             const _HelpTile(),
+            _LegalTile(
+              icon: Icons.privacy_tip_outlined,
+              label: S.privacyPolicy,
+              url: _privacyPolicyUrl,
+            ),
+            _LegalTile(
+              icon: Icons.description_outlined,
+              label: S.termsOfService,
+              url: _termsUrl,
+            ),
             const _DeleteAccountTile(),
           ],
         ),
@@ -819,14 +829,24 @@ class _HomeownerProfile extends ConsumerWidget {
       const SizedBox(height: BatshSpacing.xl),
       _SectionLabel(S.accountSettingsTitle),
       const SizedBox(height: BatshSpacing.md),
-      const Padding(
-        padding: EdgeInsets.symmetric(horizontal: BatshSpacing.lg),
+      Padding(
+        padding: const EdgeInsets.symmetric(horizontal: BatshSpacing.lg),
         child: _SettingsGroup(
           children: [
-            _DarkModeTile(),
-            _MotionModeTile(),
-            _LanguageTile(),
-            _DeleteAccountTile(),
+            const _DarkModeTile(),
+            const _MotionModeTile(),
+            const _LanguageTile(),
+            _LegalTile(
+              icon: Icons.privacy_tip_outlined,
+              label: S.privacyPolicy,
+              url: _privacyPolicyUrl,
+            ),
+            _LegalTile(
+              icon: Icons.description_outlined,
+              label: S.termsOfService,
+              url: _termsUrl,
+            ),
+            const _DeleteAccountTile(),
           ],
         ),
       ),
@@ -1354,6 +1374,15 @@ class _MotionModeTile extends ConsumerWidget {
 /// set this to the real Shattab support WhatsApp before launch.
 const String _supportPhone = '201000000000';
 
+/// Where the published legal documents live.
+///
+/// Both stores require a reachable privacy-policy URL, and App Store guideline
+/// 1.2 expects the terms (the EULA covering user-generated content) to be
+/// reachable from inside the app, not only from the store listing. The source
+/// documents are in `docs/legal/` — host them and point these at the result.
+const String _privacyPolicyUrl = 'https://shattab.app/privacy';
+const String _termsUrl = 'https://shattab.app/terms';
+
 class _HelpTile extends StatelessWidget {
   const _HelpTile();
 
@@ -1379,6 +1408,45 @@ class _HelpTile extends StatelessWidget {
       icon: Icons.support_agent_outlined,
       label: S.helpSupport,
       subtitle: S.helpSubtitle,
+      trailing: const Icon(Icons.chevron_left,
+          color: BatshColors.onSurfaceVariant, size: 20),
+      onTap: () => _open(context),
+    );
+  }
+}
+
+/// Opens a published legal document in the browser.
+class _LegalTile extends StatelessWidget {
+  const _LegalTile({
+    required this.icon,
+    required this.label,
+    required this.url,
+  });
+
+  final IconData icon;
+  final String label;
+  final String url;
+
+  Future<void> _open(BuildContext context) async {
+    var ok = false;
+    try {
+      ok = await launchUrl(Uri.parse(url),
+          mode: LaunchMode.externalApplication);
+    } catch (_) {
+      ok = false;
+    }
+    if (!ok && context.mounted) {
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text(S.couldNotOpenApp)));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return _SettingsTile(
+      icon: icon,
+      label: label,
       trailing: const Icon(Icons.chevron_left,
           color: BatshColors.onSurfaceVariant, size: 20),
       onTap: () => _open(context),

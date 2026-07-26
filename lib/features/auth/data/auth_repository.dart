@@ -54,6 +54,15 @@ class AuthRepository {
   Future<bool> signInWithGoogle() =>
       _client.auth.signInWithOAuth(OAuthProvider.google);
 
+  /// Sign in with Apple.
+  ///
+  /// Not optional on iOS: App Store guideline 4.8 requires an equivalent
+  /// privacy-preserving login option wherever a third-party social login is
+  /// offered, and this app offers Google. Shipping to the App Store without
+  /// this is a guaranteed rejection.
+  Future<bool> signInWithApple() =>
+      _client.auth.signInWithOAuth(OAuthProvider.apple);
+
   Future<void> signOut() => _client.auth.signOut();
 
   /// Permanently deletes the signed-in user and everything they own.

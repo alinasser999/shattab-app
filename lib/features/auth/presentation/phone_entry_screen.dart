@@ -529,6 +529,21 @@ class _LoginCardState extends ConsumerState<_LoginCard> {
     }
   }
 
+  Future<void> _apple() async {
+    setState(() {
+      _clearErrors();
+      _busy = true;
+    });
+    try {
+      await ref.read(authRepositoryProvider).signInWithApple();
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _formError = ErrorMapper.map(e));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     // Parent surfaces phone-level errors from the forgot-password flow.
@@ -557,6 +572,13 @@ class _LoginCardState extends ConsumerState<_LoginCard> {
             }),
           ),
           const SizedBox(height: BatshSpacing.lg),
+          // Apple first on Apple platforms: guideline 4.8 requires the
+          // privacy-preserving option to be presented no less prominently than
+          // the other third-party logins.
+          if (_isApplePlatform) ...[
+            _AppleButton(onPressed: _busy ? null : _apple),
+            const SizedBox(height: BatshSpacing.sm),
+          ],
           // Google — fastest path, free, no SMS.
           _GoogleButton(onPressed: _busy ? null : _google),
           const SizedBox(height: BatshSpacing.md),
@@ -879,6 +901,55 @@ class _FieldShell extends StatelessWidget {
 }
 
 // ─── Google Button ───────────────────────────────────────────────────────────
+
+/// Whether to offer Sign in with Apple.
+///
+/// Apple requires it on its own platforms; showing it on Android would send
+/// users through a web flow for no benefit when Google is already there.
+bool get _isApplePlatform =>
+    !kIsWeb &&
+    (defaultTargetPlatform == TargetPlatform.iOS ||
+        defaultTargetPlatform == TargetPlatform.macOS);
+
+/// Apple's brand guidelines are prescriptive here: black fill, white logo and
+/// text, full width, and the same corner radius as neighbouring buttons. A
+/// restyled version is itself grounds for rejection.
+class _AppleButton extends StatelessWidget {
+  const _AppleButton({required this.onPressed});
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      height: 52,
+      child: Material(
+        // Apple black, exempt from the token palette for the same reason the
+        // Google 'G' is.
+        color: Colors.black,
+        borderRadius: BorderRadius.circular(BatshRadius.md + 2),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onPressed,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.apple, color: Colors.white, size: 22),
+              const SizedBox(width: BatshSpacing.sm),
+              Text(
+                S.continueWithApple,
+                style: BatshTypography.labelLg.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
 
 class _GoogleButton extends StatelessWidget {
   const _GoogleButton({required this.onPressed});

@@ -1096,6 +1096,16 @@ class S {
   static String get projectsCompleted =>
       _t('المشاريع المنجزة', 'Projects Completed');
   static String get experienceYears => _t('سنين الخبرة', 'Years of Experience');
+  /// Apple's brand guidelines require the wording "Sign in with Apple" and
+  /// leave "Apple" untranslated.
+  static String get continueWithApple =>
+      _t('تسجيل الدخول باستخدام Apple', 'Sign in with Apple');
+
+  // ── Legal ───────────────────────────────────────────────────────────────
+  static String get privacyPolicy => _t('سياسة الخصوصية', 'Privacy policy');
+  static String get termsOfService => _t('الشروط والأحكام', 'Terms of service');
+  static String get legalSectionLabel => _t('قانوني', 'Legal');
+
   // ── Moderation (0024) ───────────────────────────────────────────────────
   static String get reportTitle => _t('إبلاغ', 'Report');
   static String get reportPostAction => _t('إبلاغ عن البوست', 'Report post');
