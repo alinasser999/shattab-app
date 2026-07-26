@@ -11,6 +11,7 @@ import '../../../core/theme/batsh_motion.dart';
 import '../../../core/theme/batsh_radius.dart';
 import '../../../core/theme/batsh_spacing.dart';
 import '../../../core/theme/batsh_typography.dart';
+import '../../../core/utils/image_url.dart';
 import '../../../core/widgets/batsh_button.dart';
 import '../../../core/widgets/batsh_empty_state.dart';
 import '../../../core/widgets/batsh_error.dart';
@@ -212,8 +213,9 @@ class _PortfolioTile extends StatelessWidget {
           fit: StackFit.expand,
           children: [
             CachedNetworkImage(
-              imageUrl: project.coverPhotoUrl,
+              imageUrl: sizedImageUrl(project.coverPhotoUrl, width: 480),
               fit: BoxFit.cover,
+              memCacheWidth: 480,
               errorWidget: (_, _, _) => Container(
                 color: BatshColors.surfaceContainer,
                 child: const Center(

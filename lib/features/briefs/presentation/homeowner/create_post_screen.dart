@@ -22,10 +22,18 @@ import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../auth/presentation/sign_in_sheet.dart';
 import '../../../onboarding/domain/onboarding_models.dart';
 import '../../../onboarding/presentation/providers/onboarding_provider.dart';
+import '../../domain/brief.dart';
 import '../providers/briefs_providers.dart';
 
 class CreatePostScreen extends ConsumerStatefulWidget {
-  const CreatePostScreen({super.key});
+  const CreatePostScreen({super.key, this.editing});
+
+  /// When set, the screen edits this brief instead of creating a new one.
+  /// Same form, same validation — only the destination differs, so the two
+  /// flows cannot drift apart.
+  final Brief? editing;
+
+  bool get isEditing => editing != null;
 
   @override
   ConsumerState<CreatePostScreen> createState() => _CreatePostScreenState();
@@ -41,6 +49,22 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
   bool _hydrated = false;
   bool _busy = false;
   String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    final editing = widget.editing;
+    if (editing == null) return;
+    // Prefilling here rather than in build's hydration path: that path seeds
+    // defaults from the homeowner's own profile, which would overwrite the
+    // brief's actual values.
+    _hydrated = true;
+    _descCtrl.text = editing.workDescription;
+    _apartmentType = editing.apartmentType;
+    _city = editing.city;
+    _district = editing.district;
+    _targetSpecialties.addAll(editing.targetSpecialties);
+  }
 
   @override
   void dispose() {
@@ -72,19 +96,40 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
       _error = null;
     });
     try {
-      await ref.read(briefsControllerProvider.notifier).createPost(
-            apartmentType: _apartmentType!,
-            city: _city!,
-            district: _district,
-            workDescription: desc,
-            targetSpecialties: _targetSpecialties.toList(),
-            photos: _photos,
-          );
+      final editing = widget.editing;
+      if (editing != null) {
+        // Photos are left alone on edit: replacing them would mean re-uploading
+        // images the homeowner never touched, and the picker starts empty.
+        await ref.read(briefsControllerProvider.notifier).updateBrief(
+              editing.id,
+              apartmentType: _apartmentType!,
+              city: _city!,
+              district: _district,
+              workDescription: desc,
+              targetSpecialties: _targetSpecialties.toList(),
+            );
+      } else {
+        await ref.read(briefsControllerProvider.notifier).createPost(
+              apartmentType: _apartmentType!,
+              city: _city!,
+              district: _district,
+              workDescription: desc,
+              targetSpecialties: _targetSpecialties.toList(),
+              photos: _photos,
+            );
+      }
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(S.postCreatedSuccess)),
+        SnackBar(
+            content: Text(widget.isEditing
+                ? S.changesSaved
+                : S.postCreatedSuccess)),
       );
-      context.go(Routes.homeownerRequests);
+      if (widget.isEditing) {
+        Navigator.of(context).maybePop();
+      } else {
+        context.go(Routes.homeownerRequests);
+      }
     } catch (e) {
       if (!mounted) return;
       setState(() => _error = ErrorMapper.map(e));
@@ -179,8 +224,12 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
             ],
           ),
           const SizedBox(height: BatshSpacing.gutter),
-          PhotoPicker(onChanged: (p) => _photos = p),
-          const SizedBox(height: BatshSpacing.md),
+          // Photo editing is not wired yet, so the picker is hidden rather than
+          // shown as a control whose changes would be silently dropped.
+          if (!widget.isEditing) ...[
+            PhotoPicker(onChanged: (p) => _photos = p),
+            const SizedBox(height: BatshSpacing.md),
+          ],
           Text(
             S.phoneVisibleContractors,
             style: BatshTypography.labelMd
@@ -188,13 +237,15 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
           ),
           const SizedBox(height: BatshSpacing.lg),
           if (_busy) const BatshLoading() else BatshButton(
-            label: S.createPostPublishButton,
+            label: widget.isEditing
+                ? S.saveChanges
+                : S.createPostPublishButton,
             onPressed: _submit,
           ),
           const SizedBox(height: BatshSpacing.lg),
         ];
     return BatshScaffold(
-      title: S.createPostTitle,
+      title: widget.isEditing ? S.editBriefTitle : S.createPostTitle,
       body: ListView(
         children: reduced
             ? items

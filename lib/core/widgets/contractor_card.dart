@@ -9,6 +9,7 @@ import '../theme/batsh_radius.dart';
 import '../theme/batsh_shadows.dart';
 import '../theme/batsh_spacing.dart';
 import '../theme/batsh_typography.dart';
+import '../utils/image_url.dart';
 import 'batsh_pressable.dart';
 import 'batsh_shimmer.dart';
 
@@ -132,7 +133,7 @@ class _EditorialCover extends StatelessWidget {
           // Photo
           if (listing.coverPhotoUrl != null)
             CachedNetworkImage(
-              imageUrl: listing.coverPhotoUrl!,
+              imageUrl: sizedImageUrl(listing.coverPhotoUrl!, width: 800),
               fit: BoxFit.cover,
               memCacheWidth: 800,
               placeholder: (_, _) =>
@@ -258,7 +259,7 @@ class _LogoAvatar extends StatelessWidget {
           color: BatshColors.surfaceContainer,
           child: logoUrl != null
               ? CachedNetworkImage(
-                  imageUrl: logoUrl!,
+                  imageUrl: sizedImageUrl(logoUrl!, width: 160),
                   fit: BoxFit.cover,
                   placeholder: (_, _) =>
                       const ColoredBox(color: BatshColors.surfaceContainer),
@@ -298,7 +299,7 @@ class _RatingBadge extends StatelessWidget {
           ),
           const SizedBox(width: 4),
           Text(
-            isNew ? S.newBadge : listing.displayRating.toStringAsFixed(1),
+            listing.rating?.toStringAsFixed(1) ?? S.newBadge,
             style: BatshTypography.labelSm.copyWith(
               color: BatshColors.onSurface,
               fontWeight: FontWeight.w700,

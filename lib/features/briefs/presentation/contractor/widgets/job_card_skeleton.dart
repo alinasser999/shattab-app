@@ -12,46 +12,52 @@ class JobCardSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(BatshSpacing.gutter),
       decoration: BoxDecoration(
         color: BatshColors.cardBackground,
-        borderRadius: BorderRadius.circular(BatshRadius.xl),
+        borderRadius: BatshRadius.brCard,
       ),
+      clipBehavior: Clip.antiAlias,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              _shimmerBox(width: 52, height: 22, radius: 20),
-              const Spacer(),
-              _shimmerBox(width: 22, height: 22, radius: 0),
-            ],
+          // Hero image block.
+          AspectRatio(
+            aspectRatio: 16 / 10,
+            child: _shimmerBox(
+                width: double.infinity, height: double.infinity, radius: 0),
           ),
-          const SizedBox(height: BatshSpacing.md),
-          _shimmerBox(width: 140, height: 28),
-          const SizedBox(height: BatshSpacing.sm),
-          _shimmerBox(width: double.infinity, height: 18),
-          const SizedBox(height: BatshSpacing.xs),
-          _shimmerBox(width: 180, height: 16),
-          const SizedBox(height: BatshSpacing.sm),
-          Row(
-            children: [
-              _shimmerBox(width: 60, height: 20, radius: 6),
-              const SizedBox(width: BatshSpacing.sm),
-              _shimmerBox(width: 40, height: 20, radius: 6),
-              const Spacer(),
-              _shimmerBox(width: 40, height: 14),
-            ],
-          ),
-          const SizedBox(height: BatshSpacing.md),
-          Row(
-            children: [
-              _shimmerBox(width: 80, height: 14),
-              const Spacer(),
-              _shimmerBox(width: 70, height: 30, radius: 20),
-              const SizedBox(width: BatshSpacing.sm),
-              _shimmerBox(width: 80, height: 30, radius: 20),
-            ],
+          Padding(
+            padding: const EdgeInsets.all(BatshSpacing.gutter),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _shimmerBox(width: double.infinity, height: 18),
+                const SizedBox(height: BatshSpacing.xs),
+                _shimmerBox(width: 180, height: 18),
+                const SizedBox(height: BatshSpacing.md),
+                Row(
+                  children: [
+                    _shimmerBox(width: 90, height: 14),
+                    const SizedBox(width: BatshSpacing.sm),
+                    _shimmerBox(width: 56, height: 20, radius: 999),
+                    const Spacer(),
+                    _shimmerBox(width: 40, height: 14),
+                  ],
+                ),
+                const SizedBox(height: BatshSpacing.md),
+                Row(
+                  children: [
+                    Expanded(
+                        child: _shimmerBox(
+                            width: double.infinity, height: 46, radius: 16)),
+                    const SizedBox(width: BatshSpacing.sm),
+                    Expanded(
+                        child: _shimmerBox(
+                            width: double.infinity, height: 46, radius: 16)),
+                  ],
+                ),
+              ],
+            ),
           ),
         ],
       ),

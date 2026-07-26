@@ -8,6 +8,7 @@ import '../theme/batsh_colors.dart';
 import '../theme/batsh_radius.dart';
 import '../theme/batsh_spacing.dart';
 import '../theme/batsh_typography.dart';
+import '../utils/image_url.dart';
 import 'batsh_card.dart';
 
 class BriefCard extends StatelessWidget {
@@ -100,7 +101,11 @@ class _Thumb extends StatelessWidget {
       ),
       clipBehavior: Clip.antiAlias,
       child: url != null
-          ? CachedNetworkImage(imageUrl: url!, fit: BoxFit.cover)
+          ? CachedNetworkImage(
+              imageUrl: sizedImageUrl(url!, width: 320),
+              fit: BoxFit.cover,
+              memCacheWidth: 320,
+            )
           : const Center(
               child: Icon(Icons.image_outlined,
                   color: BatshColors.onSurfaceVariant, size: 28)),

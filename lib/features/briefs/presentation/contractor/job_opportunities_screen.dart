@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -18,7 +20,9 @@ import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../../core/utils/error_mapper.dart';
 import '../../../quotes/presentation/quote_sheet.dart';
 import '../../../quotes/presentation/providers/quotes_providers.dart';
+import '../../../discovery/presentation/widgets/avatar_with_initials.dart';
 import '../../domain/brief.dart';
+import '../../domain/job_feed_filters.dart';
 import '../providers/briefs_providers.dart';
 import 'widgets/job_card.dart';
 import 'widgets/job_card_skeleton.dart';
@@ -34,29 +38,60 @@ class JobOpportunitiesScreen extends ConsumerStatefulWidget {
 class _JobOpportunitiesScreenState
     extends ConsumerState<JobOpportunitiesScreen> {
   final _scrollController = ScrollController();
+  final _searchController = TextEditingController();
   final Set<String> _activeFilters = {};
 
+  /// The field updates on every keystroke; the query only reaches the server
+  /// once typing settles.
+  Timer? _debounce;
+
+  /// Display label per stable filter key. Kept beside the sections so a new
+  /// option can't be added without a label.
+  static final Map<String, String> _filterLabels = {
+    SpecialtyFilter.painting.key: S.filterPainting,
+    SpecialtyFilter.electrical.key: S.filterElectrical,
+    SpecialtyFilter.plumbing.key: S.filterPlumbing,
+    SpecialtyFilter.finishing.key: S.filterFinishing,
+    SpecialtyFilter.bathrooms.key: S.filterBathrooms,
+    SpecialtyFilter.kitchens.key: S.filterKitchens,
+    RecencyFilter.today.key: S.filterToday,
+    RecencyFilter.thisWeek.key: S.filterThisWeek,
+    RecencyFilter.thisMonth.key: S.filterThisMonth,
+  };
+
+  // The "الترتيب" section that used to sit on top is gone: "الأقرب" needs
+  // coordinates the app never collects, "أعلى ميزانية" needs a budget column
+  // `briefs` does not have, and "الأحدث" is already the query's order. Three
+  // options, none of which did anything.
   static final _filterSections = [
-    BatshFilterSheetSection(
-      title: S.filterSort,
-      icon: Icons.swap_vert_rounded,
-      singleSelect: true,
-          options: [
-        FilterOption(value: S.filterNewestFirst, label: S.filterNewestFirst, icon: Icons.fiber_new_rounded),
-        FilterOption(value: S.filterNearest, label: S.filterNearest, icon: Icons.near_me_rounded),
-        FilterOption(value: S.filterHighestBudget, label: S.filterHighestBudget, icon: Icons.trending_up_rounded),
-      ],
-    ),
     BatshFilterSheetSection(
       title: S.filterCategory,
       icon: Icons.category_rounded,
       options: [
-        FilterOption(value: S.filterPainting, label: S.filterPainting, icon: Icons.format_paint),
-        FilterOption(value: S.filterElectrical, label: S.filterElectrical, icon: Icons.electrical_services),
-        FilterOption(value: S.filterPlumbing, label: S.filterPlumbing, icon: Icons.plumbing),
-        FilterOption(value: S.filterFinishing, label: S.filterFinishing, icon: Icons.build),
-        FilterOption(value: S.filterBathrooms, label: S.filterBathrooms, icon: Icons.bathtub_outlined),
-        FilterOption(value: S.filterKitchens, label: S.filterKitchens, icon: Icons.countertops_outlined),
+        FilterOption(
+            value: SpecialtyFilter.painting.key,
+            label: S.filterPainting,
+            icon: Icons.format_paint),
+        FilterOption(
+            value: SpecialtyFilter.electrical.key,
+            label: S.filterElectrical,
+            icon: Icons.electrical_services),
+        FilterOption(
+            value: SpecialtyFilter.plumbing.key,
+            label: S.filterPlumbing,
+            icon: Icons.plumbing),
+        FilterOption(
+            value: SpecialtyFilter.finishing.key,
+            label: S.filterFinishing,
+            icon: Icons.build),
+        FilterOption(
+            value: SpecialtyFilter.bathrooms.key,
+            label: S.filterBathrooms,
+            icon: Icons.bathtub_outlined),
+        FilterOption(
+            value: SpecialtyFilter.kitchens.key,
+            label: S.filterKitchens,
+            icon: Icons.countertops_outlined),
       ],
     ),
     BatshFilterSheetSection(
@@ -64,22 +99,51 @@ class _JobOpportunitiesScreenState
       icon: Icons.schedule_rounded,
       singleSelect: true,
       options: [
-        FilterOption(value: S.filterToday, label: S.filterToday, icon: Icons.today),
-        FilterOption(value: S.filterThisWeek, label: S.filterThisWeek, icon: Icons.date_range_rounded),
-        FilterOption(value: S.filterThisMonth, label: S.filterThisMonth, icon: Icons.calendar_month_rounded),
+        FilterOption(
+            value: RecencyFilter.today.key,
+            label: S.filterToday,
+            icon: Icons.today),
+        FilterOption(
+            value: RecencyFilter.thisWeek.key,
+            label: S.filterThisWeek,
+            icon: Icons.date_range_rounded),
+        FilterOption(
+            value: RecencyFilter.thisMonth.key,
+            label: S.filterThisMonth,
+            icon: Icons.calendar_month_rounded),
       ],
     ),
   ];
 
   @override
   void dispose() {
+    _debounce?.cancel();
+    _searchController.dispose();
     _scrollController.dispose();
     super.dispose();
+  }
+
+  void _onQueryChanged(String value) {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 300), () {
+      if (!mounted) return;
+      // Pushed into the provider, not local state: the query is part of the
+      // server query now, so a match on page 3 is found instead of only what
+      // happens to be loaded.
+      ref.read(opportunitySearchProvider.notifier).setQuery(value);
+    });
+  }
+
+  void _clearQuery() {
+    _debounce?.cancel();
+    _searchController.clear();
+    ref.read(opportunitySearchProvider.notifier).clear();
   }
 
   @override
   Widget build(BuildContext context) {
     final async = ref.watch(contractorOpportunitiesProvider);
+    final query = ref.watch(opportunitySearchProvider);
     final profile = ref.watch(currentProfileProvider);
     final name = profile.value?.fullName ?? '';
     final greeting = _greeting();
@@ -93,7 +157,14 @@ class _JobOpportunitiesScreenState
           child: CustomScrollView(
             controller: _scrollController,
             slivers: [
-            SliverToBoxAdapter(child: _PremiumAppBar(greeting: greeting, name: name)),
+            SliverToBoxAdapter(
+              child: _PremiumAppBar(
+                greeting: greeting,
+                name: name,
+                avatarUrl: profile.value?.avatarUrl,
+                onTap: () => context.go(Routes.contractorProfile),
+              ),
+            ),
             SliverToBoxAdapter(
               child: Padding(
                 padding: EdgeInsets.fromLTRB(
@@ -102,10 +173,9 @@ class _JobOpportunitiesScreenState
                   children: [
                     Expanded(
                       child: _SearchBar(
-                        onTap: () {
-                          _scrollController.animateTo(
-                            0, duration: BatshMotion.normal, curve: BatshMotion.easeOut);
-                        },
+                        controller: _searchController,
+                        onChanged: _onQueryChanged,
+                        onClear: _clearQuery,
                       ),
                     ),
                     const SizedBox(width: BatshSpacing.sm),
@@ -153,8 +223,11 @@ class _JobOpportunitiesScreenState
                         if (i < _activeFilters.length) {
                           final filter = _activeFilters.elementAt(i);
                           return BatshActiveFilterChip(
-                            label: filter,
-                            onRemove: () => setState(() => _activeFilters.remove(filter)),
+                            // Chips are keyed on stable values now, so the
+                            // label has to be resolved for display.
+                            label: _filterLabels[filter] ?? filter,
+                            onRemove: () =>
+                                setState(() => _activeFilters.remove(filter)),
                           );
                         }
                         return BatshActiveFilterChip(
@@ -192,15 +265,30 @@ class _JobOpportunitiesScreenState
                     );
                 final filtered = _filterJobs(list, _activeFilters);
                 if (filtered.isEmpty) {
+                  // "Nothing posted yet" and "nothing matched your words" need
+                  // different exits: refresh in the first case, clear the
+                  // search in the second.
                   return SliverFillRemaining(
-                    child: _EmptyJobsState(
-                      onRefresh: () => ref.invalidate(contractorOpportunitiesProvider),
-                    ),
+                    child: query.isEmpty
+                        ? _EmptyJobsState(
+                            onRefresh: () => ref
+                                .invalidate(contractorOpportunitiesProvider),
+                          )
+                        : _NoSearchMatchState(onClear: _clearQuery),
                   );
                 }
                   return SliverList(
                     delegate: SliverChildBuilderDelegate(
                       (context, i) {
+                        // Near the end → pull the next page. The notifier
+                        // guards against duplicate and exhausted fetches.
+                        if (i >= filtered.length - 3) {
+                          WidgetsBinding.instance.addPostFrameCallback((_) {
+                            ref
+                                .read(contractorOpportunitiesProvider.notifier)
+                                .loadMore();
+                          });
+                        }
                         final brief = filtered[i];
                         final job = JobCardData.fromBrief(brief);
                         final reduced = MediaQuery.of(context).disableAnimations;
@@ -271,43 +359,24 @@ class _JobOpportunitiesScreenState
     return S.greetingEvening;
   }
 
+  // Free-text search now runs in the query (BriefsRepository.
+  // fetchOpportunitiesForContractor). The client-side version could only match
+  // rows already downloaded, which silently became wrong the moment the feed
+  // was paginated.
+
   List<Brief> _filterJobs(List<Brief> jobs, Set<String> filters) {
     if (filters.isEmpty) return jobs;
-    var filtered = jobs;
 
-    final specialtyFilters = <String>{
-      S.filterPainting, S.filterElectrical, S.filterPlumbing,
-      S.filterFinishing, S.filterBathrooms, S.filterKitchens,
-    }.intersection(filters);
+    final specialties = SpecialtyFilter.selectedFrom(filters);
+    final recency = RecencyFilter.fromKeys(filters);
+    // One `now` for the whole pass, so a long list can't straddle the boundary.
+    final now = DateTime.now();
 
-    if (specialtyFilters.isNotEmpty) {
-      filtered = filtered.where((j) =>
-        j.targetSpecialties.any((s) {
-          if (specialtyFilters.contains(S.filterPainting)) return s.contains('paint') || s.contains('دهان');
-          if (specialtyFilters.contains(S.filterElectrical)) return s.contains('electrical') || s.contains('كهرب');
-          if (specialtyFilters.contains(S.filterPlumbing)) return s.contains('plumbing') || s.contains('سباك');
-          if (specialtyFilters.contains(S.filterFinishing)) return s.contains('full_reno') || s.contains('تشطيب');
-          if (specialtyFilters.contains(S.filterBathrooms)) return s.contains('bathroom') || s.contains('حمام');
-          if (specialtyFilters.contains(S.filterKitchens)) return s.contains('kitchen') || s.contains('مطب');
-          return false;
-        }),
-      ).toList();
-    }
-
-    if (filters.contains(S.filterToday)) {
-      filtered = filtered.where((j) =>
-        j.createdAt.isAfter(DateTime.now().subtract(const Duration(hours: 24)))).toList();
-    }
-    if (filters.contains(S.filterThisWeek)) {
-      filtered = filtered.where((j) =>
-        j.createdAt.isAfter(DateTime.now().subtract(const Duration(days: 7)))).toList();
-    }
-    if (filters.contains(S.filterThisMonth)) {
-      filtered = filtered.where((j) =>
-        j.createdAt.isAfter(DateTime.now().subtract(const Duration(days: 30)))).toList();
-    }
-
-    return filtered;
+    return jobs
+        .where((j) =>
+            matchesSpecialtyFilters(j.targetSpecialties, specialties) &&
+            matchesRecency(j.createdAt, recency, now))
+        .toList();
   }
 
   void _openQuote(BuildContext context, String briefId) {
@@ -318,9 +387,19 @@ class _JobOpportunitiesScreenState
 // ─── Premium App Bar ────────────────────────────────────────────────────────
 
 class _PremiumAppBar extends StatelessWidget {
-  const _PremiumAppBar({required this.greeting, required this.name});
+  const _PremiumAppBar({
+    required this.greeting,
+    required this.name,
+    this.avatarUrl,
+    this.onTap,
+  });
   final String greeting;
   final String name;
+
+  /// Profile photo. Falls back to initials when absent, which is what the
+  /// bubble always showed regardless of whether a photo existed.
+  final String? avatarUrl;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -329,20 +408,14 @@ class _PremiumAppBar extends StatelessWidget {
         BatshSpacing.gutter, BatshSpacing.md, BatshSpacing.gutter, BatshSpacing.md),
       child: Row(
         children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: BatshColors.primaryFixed.withValues(alpha: 0.4),
-              borderRadius: BatshRadius.brFull,
-            ),
-            alignment: Alignment.center,
-            child: Text(
-              name.isNotEmpty ? name.characters.first : '',
-              style: BatshTypography.titleMd.copyWith(
-                color: BatshColors.primary,
-                fontWeight: FontWeight.w700,
-              ),
+          // Tapping your own avatar to reach your profile is the convention
+          // everywhere else, so the bubble is a target, not an ornament.
+          GestureDetector(
+            onTap: onTap,
+            child: AvatarWithInitials(
+              imageUrl: avatarUrl,
+              name: name,
+              radius: 22,
             ),
           ),
           const SizedBox(width: BatshSpacing.sm),
@@ -363,33 +436,11 @@ class _PremiumAppBar extends StatelessWidget {
               ],
             ),
           ),
-          _IconButton(Icons.notifications_outlined, color: BatshColors.onSurfaceVariant),
-          const SizedBox(width: BatshSpacing.sm),
-          _IconButton(Icons.search, color: BatshColors.onSurfaceVariant),
+          // The notification bell and second search icon that used to sit here
+          // were both no-ops (`onPressed: () {}`). Notifications land in M4;
+          // search is the field directly below. A control that does nothing
+          // costs more trust than the empty space costs polish.
         ],
-      ),
-    );
-  }
-}
-
-class _IconButton extends StatelessWidget {
-  const _IconButton(this.icon, {required this.color});
-  final IconData icon;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 40,
-      height: 40,
-      decoration: BoxDecoration(
-        color: BatshColors.surfaceContainerLow,
-        borderRadius: BatshRadius.brFull,
-      ),
-      child: IconButton(
-        onPressed: () {},
-        icon: Icon(icon, size: 22, color: color),
-        padding: EdgeInsets.zero,
       ),
     );
   }
@@ -397,39 +448,133 @@ class _IconButton extends StatelessWidget {
 
 // ─── Search Bar ──────────────────────────────────────────────────────────────
 
-class _SearchBar extends StatelessWidget {
-  const _SearchBar({required this.onTap});
-  final VoidCallback onTap;
+/// Real search input. It used to be a button whose only effect was scrolling
+/// the list to the top, which read as search and did nothing of the kind.
+class _SearchBar extends StatefulWidget {
+  const _SearchBar({
+    required this.controller,
+    required this.onChanged,
+    required this.onClear,
+  });
+
+  final TextEditingController controller;
+  final ValueChanged<String> onChanged;
+  final VoidCallback onClear;
+
+  @override
+  State<_SearchBar> createState() => _SearchBarState();
+}
+
+class _SearchBarState extends State<_SearchBar> {
+  late final VoidCallback _listener;
+
+  @override
+  void initState() {
+    super.initState();
+    // Repaint for the clear button appearing/disappearing.
+    _listener = () => setState(() {});
+    widget.controller.addListener(_listener);
+  }
+
+  @override
+  void dispose() {
+    widget.controller.removeListener(_listener);
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: BatshColors.surfaceContainerLow,
-      borderRadius: BorderRadius.circular(26),
-      child: InkWell(
+    final hasText = widget.controller.text.isNotEmpty;
+    return Container(
+      height: 52,
+      padding: const EdgeInsetsDirectional.only(
+          start: BatshSpacing.gutter, end: BatshSpacing.sm),
+      decoration: BoxDecoration(
+        color: BatshColors.surfaceContainerLow,
         borderRadius: BorderRadius.circular(26),
-        onTap: onTap,
-        child: Container(
-          height: 52,
-          padding: const EdgeInsets.symmetric(horizontal: BatshSpacing.gutter),
-          decoration: BoxDecoration(
-            color: BatshColors.surfaceContainerLow,
-            borderRadius: BorderRadius.circular(26),
-            boxShadow: BatshShadows.subtle,
-          ),
-          child: Row(
-            children: [
-              Icon(Icons.search, size: 22, color: BatshColors.onSurfaceVariant),
-              const SizedBox(width: BatshSpacing.sm),
-              Text(
-                S.searchJobs,
-                style: BatshTypography.bodyMd.copyWith(
-                  color: BatshColors.onSurfaceVariant.withValues(alpha: 0.6),
-                ),
+        boxShadow: BatshShadows.subtle,
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.search, size: 22, color: BatshColors.onSurfaceVariant),
+          const SizedBox(width: BatshSpacing.sm),
+          Expanded(
+            child: TextField(
+              controller: widget.controller,
+              onChanged: widget.onChanged,
+              textInputAction: TextInputAction.search,
+              style: BatshTypography.bodyMd,
+              decoration: InputDecoration(
+                hintText: S.searchJobs,
+                border: InputBorder.none,
+                isDense: true,
+                contentPadding: EdgeInsets.zero,
+                hintStyle: BatshTypography.bodyMd
+                    .copyWith(color: BatshColors.onSurfaceVariant),
               ),
-            ],
+            ),
           ),
-        ),
+          if (hasText)
+            IconButton(
+              tooltip: S.clearSearch,
+              visualDensity: VisualDensity.compact,
+              onPressed: widget.onClear,
+              icon: Icon(Icons.close_rounded,
+                  size: 20, color: BatshColors.onSurfaceVariant),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Shown when the feed has jobs but none match the typed query. Distinct from
+/// [_EmptyJobsState] because the way out is different: clear the search.
+class _NoSearchMatchState extends StatelessWidget {
+  const _NoSearchMatchState({required this.onClear});
+  final VoidCallback onClear;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: BatshSpacing.gutter),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Spacer(),
+          Container(
+            width: 80,
+            height: 80,
+            decoration: BoxDecoration(
+              color: BatshColors.surfaceContainerLow,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(Icons.search_off_rounded,
+                size: 38, color: BatshColors.onSurfaceVariant),
+          ),
+          const SizedBox(height: BatshSpacing.lg),
+          Text(
+            S.noJobsMatchSearchTitle,
+            textAlign: TextAlign.center,
+            style: BatshTypography.titleLg.copyWith(fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: BatshSpacing.sm),
+          Text(
+            S.noJobsMatchSearchMessage,
+            textAlign: TextAlign.center,
+            style: BatshTypography.bodyMd
+                .copyWith(color: BatshColors.onSurfaceVariant),
+          ),
+          const SizedBox(height: BatshSpacing.lg),
+          BatshButton(
+            label: S.clearSearch,
+            icon: Icons.close_rounded,
+            fullWidth: false,
+            onPressed: onClear,
+          ),
+          const Spacer(),
+          const SizedBox(height: BatshSpacing.xl),
+        ],
       ),
     );
   }

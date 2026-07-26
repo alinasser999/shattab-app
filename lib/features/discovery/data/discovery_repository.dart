@@ -36,7 +36,7 @@ class DiscoveryRepository {
   // reviews_rollup trigger — reads two ints instead of embedding every review
   // row per card (fanout death at scale).
   static const String _joinedColumns =
-      'id, full_name, phone, contractor_profiles!inner(business_name, bio, logo_url, cover_photo_url, headline, specialties, service_areas, years_experience, projects_completed, response_rate, rating_avg, rating_count)';
+      'id, full_name, phone, contractor_profiles!inner(business_name, bio, logo_url, cover_photo_url, headline, specialties, service_areas, years_experience, projects_completed, response_rate, rating_avg, rating_count, verified, plan, created_at)';
 
   Future<List<ContractorListing>> fetchContractors(
     DiscoveryFilters filters, {

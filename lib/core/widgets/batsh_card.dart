@@ -110,7 +110,7 @@ class _BatshCardState extends State<BatshCard>
               padding: widget.padding,
               decoration: BoxDecoration(
                 color: bgColor,
-                borderRadius: BatshRadius.brLg,
+                borderRadius: BatshRadius.brCard,
                 border: border,
                 boxShadow: shadow,
               ),

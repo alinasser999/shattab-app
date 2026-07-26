@@ -301,6 +301,69 @@ class S {
       _t('الدفع هيكون متاح قريب جداً.', 'Payment is coming very soon.');
   static String get currentPlanLabel => _t('باقتك الحالية', 'Your current plan');
 
+  // ── Contractor account screen ───────────────────────────────────────────
+  static String get previewPublicProfile =>
+      _t('معاينة الملف', 'Preview profile');
+  static String get memberSinceLabel => _t('عضو منذ', 'Member since');
+  static String get proActiveLine =>
+      _t('اشتراك برو مفعّل', 'Pro subscription active');
+  static String get tierGold => _t('ذهبي', 'Gold');
+  static String get tierSilver => _t('فضي', 'Silver');
+  static String get tierBronze => _t('برونزي', 'Bronze');
+  static String get accountWelcome => _t('أهلاً بك', 'Welcome');
+  static String get ratingCaption => _t('تقييم العملاء', 'Client rating');
+  static String get statJobs => _t('عدد الأعمال', 'Jobs');
+  static String get statLevel => _t('مستوى', 'Level');
+  static String get proBannerSubtitle =>
+      _t('مميزات حصرية تنمّي شغلك', 'Exclusive features to grow your work');
+  static String get helpSupport => _t('المساعدة والدعم', 'Help & support');
+  static String get darkModeSubtitle =>
+      _t('مظهر داكن مريح للعين', 'Comfortable dark theme');
+  static String get verifySubtitle =>
+      _t('اكسب علامة موثّق الذهبية', 'Earn the gold verified badge');
+  static String get languageSubtitle =>
+      _t('العربية أو الإنجليزية', 'Arabic or English');
+  static String get helpSubtitle =>
+      _t('كلّمنا على واتساب', 'Message us on WhatsApp');
+
+  // ── Verification (free, earned badge) ───────────────────────────────────
+  static String get verifyTileLabel => _t('توثيق الحساب', 'Verification');
+  static String get verifyStateVerified => _t('موثّق', 'Verified');
+  static String get verifyTitle => _t('توثيق الحساب', 'Get verified');
+  static String get verifyHeadline => _t(
+      'وثّق حسابك وكسب ثقة العملاء', 'Verify your account, earn client trust');
+  static String get verifyBenefitTrust => _t('علامة موثّق ذهبية على ملفك',
+      'A verified badge on your profile');
+  static String get verifyBenefitRanking => _t(
+      'ظهور أعلى في نتائج البحث', 'Higher placement in search results');
+  static String get verifyBenefitFree =>
+      _t('مجاني تماماً، مرة واحدة', 'Completely free, one time');
+  static String get verifyUploadLabel =>
+      _t('ارفع صور المستندات', 'Upload your documents');
+  static String get verifyUploadHint => _t(
+      'بطاقة الرقم القومي، والسجل التجاري أو رخصة المهنة إن وجدت.',
+      'National ID, plus trade licence or professional permit if you have one.');
+  static String get verifyNoteLabel =>
+      _t('ملاحظة (اختياري)', 'Note (optional)');
+  static String get verifySubmit => _t('إرسال للمراجعة', 'Submit for review');
+  static String get verifyPrivacyNote => _t(
+      'مستنداتك سرية وتُستخدم للتحقق فقط.',
+      'Your documents are private and used only to verify you.');
+  static String get verifyDocsRequired =>
+      _t('ارفع صورة مستند واحدة على الأقل', 'Add at least one document photo');
+  static String get verifyError =>
+      _t('تعذّر الإرسال، حاول تاني', 'Could not submit, try again');
+  static String get verifyPendingTitle =>
+      _t('طلبك قيد المراجعة', 'Your request is under review');
+  static String get verifyPendingBody => _t(
+      'بنراجع مستنداتك وهنفعّل التوثيق خلال ٤٨ ساعة.',
+      'We are reviewing your documents and will verify you within 48 hours.');
+  static String get verifyApprovedTitle => _t('حسابك موثّق', 'You are verified');
+  static String get verifyApprovedBody => _t(
+      'علامة التوثيق ظاهرة على ملفك دلوقتي.',
+      'The verified badge now shows on your profile.');
+  static String get verifyDone => _t('تمام', 'Done');
+
   // ── Pro subscription page ───────────────────────────────────────────────
   static String get proScreenTitle => _t('شطب برو', 'Shattab Pro');
   static String get proValueLine => _t(
@@ -762,6 +825,74 @@ class S {
       'جرب تغير الفلاتر أو ارجع تاني بعدين. هتلاقي فرص جديدة باستمرار.',
       'Try changing the filters or come back later. New opportunities appear regularly.');
 
+  static String get noJobsMatchSearchTitle =>
+      _t('مفيش فرصة بالاسم ده', 'No job matches that search');
+  static String get noJobsMatchSearchMessage => _t(
+      'جرب كلمة تانية، أو امسح البحث وشوف كل الفرص المتاحة.',
+      'Try another word, or clear the search to see every open job.');
+  static String get clearSearch => _t('امسح البحث', 'Clear search');
+  static String get portfolioLoadFailed =>
+      _t('مقدرناش نحمل الأعمال السابقة', "Couldn't load previous work");
+
+  // ── Edit / delete own content (migration 0020) ──────────────────────────
+  // roleContractor / roleHomeowner / editPost / deletePost / postDeleted are
+  // already defined above and reused as-is.
+  static String get editedMarker => _t('تم التعديل', 'Edited');
+  static String get withdrawQuote => _t('اسحب العرض', 'Withdraw quote');
+  static String get quoteWithdrawn => _t('تم سحب العرض', 'Quote withdrawn');
+  static String get withdrawQuoteTitle =>
+      _t('تسحب العرض؟', 'Withdraw this quote?');
+  static String get withdrawQuoteBody => _t(
+      'صاحب البيت مش هيقدر يقبل العرض ده بعد ما تسحبه. تقدر تبعت عرض جديد بعدين.',
+      "The homeowner won't be able to accept it after you withdraw. You can send a new quote later.");
+  static String get deleteBriefTitle =>
+      _t('تمسح الطلب ده؟', 'Delete this request?');
+  static String get deleteBriefBody =>
+      _t('مش هينفع ترجع فيه.', "This can't be undone.");
+  static String get deleteBriefWithQuotesBody => _t(
+      'فيه مقاولين بعتوا عروض على الطلب ده، فهيتلغي بدل ما يتمسح عشان عروضهم ما تضيعش.',
+      "Contractors have already sent quotes, so it will be cancelled rather than deleted, to preserve their work.");
+  static String get briefDeleted => _t('تم مسح الطلب', 'Request deleted');
+  static String get briefCancelledInstead => _t('تم إلغاء الطلب',
+      'Request cancelled');
+  static String get editBriefTitle => _t('تعديل الطلب', 'Edit request');
+  static String get saveChanges => _t('احفظ التعديلات', 'Save changes');
+  static String get changesSaved => _t('اتحفظت التعديلات', 'Changes saved');
+  static String get cannotEditHired => _t(
+      'مش هينفع تعدل بعد ما اتعاقدت مع مقاول',
+      "You can't edit after hiring a contractor");
+
+  // ── Completion loop (migration 0019) ────────────────────────────────────
+  static String get errNotHiredYet => _t(
+      'الشغل ده لسه محدش اتعاقد عليه', 'Nobody has been hired for this job yet');
+  static String get markWorkDone => _t('خلصت الشغل', 'I finished the work');
+  static String get confirmWorkDone => _t('تم التنفيذ', 'Work completed');
+  static String get awaitingHomeownerConfirm =>
+      _t('في انتظار تأكيد صاحب البيت', 'Waiting for the homeowner to confirm');
+  static String get contractorSaysDone => _t(
+      'المقاول قال إنه خلص الشغل', 'The contractor says the work is finished');
+  static String get confirmCompletionTitle =>
+      _t('الشغل خلص فعلاً؟', 'Is the work really finished?');
+  static String get confirmCompletionBody => _t(
+      'لما تأكد، هيتسجل إن الشغل خلص وهتقدر تقيم المقاول. مش هينفع ترجع في ده.',
+      "Once you confirm, the job is recorded as finished and you can rate the contractor. This can't be undone.");
+  static String get workDoneRequested => _t(
+      'بلغنا صاحب البيت إنك خلصت', 'The homeowner has been told you finished');
+  static String get workCompletedNow =>
+      _t('تم تسجيل إن الشغل خلص', 'The job is now recorded as finished');
+  static String get completedLabel => _t('مكتمل', 'Completed');
+  static String get reviewAfterCompletionHint => _t(
+      'هتقدر تقيم المقاول بعد ما تأكد إن الشغل خلص',
+      'You can rate the contractor once you confirm the work is finished');
+
+  // ── Post detail spec tiles + photo viewer ───────────────────────────────
+  static String get workTypeSpecLabel => _t('نوع الشغل', 'Work type');
+  static String get publishedSpecLabel => _t('تم النشر', 'Posted');
+  static String get closePhotoViewer => _t('إغلاق الصورة', 'Close photo');
+  static String get openPhotoViewer => _t('افتح الصورة', 'Open photo');
+  static String photoIndexOf(int index, int total) => '$index / $total';
+  static String morePhotosCount(int count) => '+$count';
+
   // ── Debug / Demo login ───────────────────────────────────────────────────
   static String get debugMode => _t('وضع التجربة (Debug)', 'Debug Mode');
   static String get demoLoginHomeowner =>
@@ -965,6 +1096,55 @@ class S {
   static String get projectsCompleted =>
       _t('المشاريع المنجزة', 'Projects Completed');
   static String get experienceYears => _t('سنين الخبرة', 'Years of Experience');
+  // ── Moderation (0024) ───────────────────────────────────────────────────
+  static String get reportTitle => _t('إبلاغ', 'Report');
+  static String get reportPostAction => _t('إبلاغ عن البوست', 'Report post');
+  static String get reportSheetSubtitle => _t(
+      'اختار سبب البلاغ. كل بلاغ بيتراجع يدوي.',
+      'Pick a reason. Every report is reviewed by a human.');
+  static String get reportSent =>
+      _t('وصلنا بلاغك، شكراً', 'Report received — thank you');
+  static String get reportAlreadySent =>
+      _t('أنت مبلّغ عن ده قبل كده', 'You already reported this');
+  static String get reportReasonSpam => _t('سبام أو إعلانات', 'Spam or ads');
+  static String get reportReasonScam => _t('نصب أو احتيال', 'Scam or fraud');
+  static String get reportReasonOffensive =>
+      _t('محتوى مسيء', 'Offensive content');
+  static String get reportReasonSexual => _t('محتوى جنسي', 'Sexual content');
+  static String get reportReasonViolence => _t('عنف', 'Violence');
+  static String get reportReasonImpersonation =>
+      _t('انتحال شخصية', 'Impersonation');
+  static String get reportReasonOther => _t('سبب تاني', 'Something else');
+
+  static String get blockUser => _t('حظر', 'Block');
+  static String get blockUserTitle => _t('تحظر الحساب ده؟', 'Block this user?');
+  static String get blockUserBody => _t(
+      'مش هتشوف بوستاته وهو مش هيشوف بوستاتك. تقدر تلغي الحظر في أي وقت.',
+      'You will not see their posts and they will not see yours. '
+          'You can undo this at any time.');
+  static String get userBlocked => _t('تم الحظر', 'Blocked');
+  static String get unblockUser => _t('إلغاء الحظر', 'Unblock');
+
+  // ── Account deletion (0023) ─────────────────────────────────────────────
+  static String get deleteAccount => _t('حذف الحساب', 'Delete account');
+  static String get deleteAccountTitle =>
+      _t('تحذف حسابك نهائياً؟', 'Permanently delete your account?');
+  static String get deleteAccountBody => _t(
+      'ده هيمسح حسابك وكل بياناتك: بوستاتك، طلباتك، عروض الأسعار، الصور '
+          'والتقييمات. مفيش رجوع في ده.',
+      'This erases your account and everything in it: your posts, requests, '
+          'quotes, photos and reviews. This cannot be undone.');
+  static String get deleteAccountConfirmWord => _t('حذف', 'DELETE');
+  static String get deleteAccountConfirmHint =>
+      _t('اكتب "حذف" عشان تأكد', 'Type DELETE to confirm');
+  static String get accountDeleted =>
+      _t('تم حذف حسابك', 'Your account has been deleted');
+
+  static String get reviewsSheetTitle => _t('التقييمات', 'Reviews');
+  static String get noReviewsYet => _t('مفيش تقييمات لسه', 'No reviews yet');
+  static String get noReviewsYetSub => _t(
+      'أول تقييم بيجي بعد أول شغلانة تخلص',
+      'The first review arrives after the first finished job');
   static String get share => _t('مشاركة', 'Share');
   static String get copiedData =>
       _t('تم نسخ البيانات', 'Data copied');

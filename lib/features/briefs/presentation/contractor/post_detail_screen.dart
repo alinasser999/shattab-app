@@ -11,7 +11,9 @@ import '../../../../core/theme/batsh_spacing.dart';
 import '../../../../core/theme/batsh_typography.dart';
 import '../../../../core/widgets/batsh_button.dart';
 import '../../../../core/widgets/batsh_error.dart';
+import '../../../../core/widgets/batsh_photo_viewer.dart';
 import '../../../../core/widgets/batsh_scaffold.dart';
+import '../../../../core/widgets/batsh_section_header.dart';
 import '../../../../core/widgets/batsh_shimmer.dart';
 import '../../../../core/widgets/contact_buttons.dart';
 import '../../../../core/utils/error_mapper.dart';
@@ -113,38 +115,156 @@ class _PostDetailBody extends StatelessWidget {
           time: relativeTime,
           title: brief.workDescription,
         ),
-      _BriefInfoCard(brief: brief, apt: apt, place: place, time: relativeTime),
+      _BriefInfoCard(brief: brief, apt: apt, time: relativeTime),
       const SizedBox(height: BatshSpacing.gutter),
       _HomeownerCard(future: futureHomeowner),
-      const SizedBox(height: BatshSpacing.gutter),
-      Padding(
-        padding: const EdgeInsets.symmetric(horizontal: BatshSpacing.gutter),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            BatshButton(
-              label: S.sendQuoteButton,
-              icon: Icons.request_quote_outlined,
-              onPressed: onQuote,
-            ),
-          ],
+      if (brief.photoUrls.length > 1) ...[
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: BatshSpacing.gutter),
+          child: BatshSectionHeader(title: S.photos),
         ),
-      ),
+        _GallerySection(photoUrls: brief.photoUrls),
+      ],
       const SizedBox(height: BatshSpacing.md),
       _ContactSection(future: futureHomeowner),
-      const SizedBox(height: BatshSpacing.xl),
+      const SizedBox(height: BatshSpacing.md),
     ];
-    return ListView(
-      children: reduced
-          ? items
-          : items.animate(interval: BatshMotion.staggerBase).fadeIn(
-                duration: BatshMotion.normal,
-                curve: Curves.easeOutQuad,
-              ).slideY(
-                begin: 0.06,
-                end: 0,
-                curve: BatshMotion.easeOut,
+    return Column(
+      children: [
+        Expanded(
+          child: ListView(
+            padding: EdgeInsets.zero,
+            children: reduced
+                ? items
+                : items.animate(interval: BatshMotion.staggerBase).fadeIn(
+                      duration: BatshMotion.normal,
+                      curve: Curves.easeOutQuad,
+                    ).slideY(
+                      begin: 0.06,
+                      end: 0,
+                      curve: BatshMotion.easeOut,
+                    ),
+          ),
+        ),
+        _StickyQuoteBar(onQuote: onQuote),
+      ],
+    );
+  }
+}
+
+/// CTA docked to the bottom of the details screen, above the safe area.
+class _StickyQuoteBar extends StatelessWidget {
+  const _StickyQuoteBar({required this.onQuote});
+  final VoidCallback onQuote;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: BatshColors.cardBackground,
+        boxShadow: BatshShadows.raised,
+        border: Border(
+          top: BorderSide(
+            color: BatshColors.outlineVariant.withValues(alpha: 0.4),
+            width: 1,
+          ),
+        ),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(
+            BatshSpacing.gutter,
+            BatshSpacing.sm,
+            BatshSpacing.gutter,
+            BatshSpacing.sm,
+          ),
+          child: BatshButton(
+            label: S.sendQuoteButton,
+            icon: Icons.request_quote_outlined,
+            onPressed: onQuote,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Photo grid: at most one row of four tiles, the last carrying a "+N" count
+/// when there are more. Tapping any tile opens the full set in the viewer, so
+/// nothing is unreachable — a 12-photo brief used to render four rows of grid
+/// that pushed the description and contact CTA off-screen.
+class _GallerySection extends StatelessWidget {
+  const _GallerySection({required this.photoUrls});
+  final List<String> photoUrls;
+
+  static const _maxTiles = 4;
+
+  @override
+  Widget build(BuildContext context) {
+    final tileCount =
+        photoUrls.length <= _maxTiles ? photoUrls.length : _maxTiles;
+    final overflow = photoUrls.length - tileCount;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: BatshSpacing.gutter),
+      child: GridView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        padding: EdgeInsets.zero,
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: _maxTiles,
+          crossAxisSpacing: BatshSpacing.xs,
+          mainAxisSpacing: BatshSpacing.xs,
+        ),
+        itemCount: tileCount,
+        itemBuilder: (context, i) {
+          final isLastTile = i == tileCount - 1;
+          final showOverflow = isLastTile && overflow > 0;
+          return Semantics(
+            button: true,
+            label: S.openPhotoViewer,
+            child: GestureDetector(
+              onTap: () => BatshPhotoViewer.show(
+                context,
+                urls: photoUrls,
+                initialIndex: i,
               ),
+              child: ClipRRect(
+                borderRadius: BatshRadius.brMd,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    CachedNetworkImage(
+                      imageUrl: photoUrls[i],
+                      fit: BoxFit.cover,
+                      // Thumbnail tile — a quarter of the screen width.
+                      memCacheWidth: 320,
+                      placeholder: (_, _) =>
+                          Container(color: BatshColors.surfaceContainer),
+                      errorWidget: (_, _, _) =>
+                          Container(color: BatshColors.surfaceContainer),
+                    ),
+                    if (showOverflow)
+                      ColoredBox(
+                        color: BatshColors.scrim.withValues(alpha: 0.6),
+                        child: Center(
+                          child: Text(
+                            S.morePhotosCount(overflow),
+                            style: BatshTypography.titleMd.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      ),
     );
   }
 }
@@ -198,7 +318,10 @@ class _PostDetailSkeleton extends StatelessWidget {
   }
 }
 
-class _HeroImageSection extends StatelessWidget {
+/// Swipeable hero. The counter and dots track the live page, and a tap opens
+/// the same photos full-screen — the old version showed a static "1 / N" label
+/// on an image that could not be swiped.
+class _HeroImageSection extends StatefulWidget {
   const _HeroImageSection({
     required this.photoUrls,
     required this.location,
@@ -212,7 +335,25 @@ class _HeroImageSection extends StatelessWidget {
   final String title;
 
   @override
+  State<_HeroImageSection> createState() => _HeroImageSectionState();
+}
+
+class _HeroImageSectionState extends State<_HeroImageSection> {
+  final _controller = PageController();
+  int _index = 0;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final urls = widget.photoUrls;
+    const radius =
+        BorderRadius.vertical(bottom: Radius.circular(BatshRadius.xl));
+
     return SizedBox(
       height: 240,
       width: double.infinity,
@@ -220,30 +361,48 @@ class _HeroImageSection extends StatelessWidget {
         children: [
           Positioned.fill(
             child: ClipRRect(
-              borderRadius: const BorderRadius.vertical(
-                  bottom: Radius.circular(BatshRadius.xl)),
-              child: CachedNetworkImage(
-                  imageUrl: photoUrls.first,
-                  fit: BoxFit.cover,
-                  placeholder: (_, _) => Container(
-                      color: BatshColors.surfaceContainer),
-                  errorWidget: (_, _, _) => Container(
-                      color: BatshColors.surfaceContainer)),
+              borderRadius: radius,
+              child: PageView.builder(
+                controller: _controller,
+                itemCount: urls.length,
+                onPageChanged: (i) => setState(() => _index = i),
+                itemBuilder: (_, i) => Semantics(
+                  button: true,
+                  label: S.openPhotoViewer,
+                  child: GestureDetector(
+                    onTap: () => BatshPhotoViewer.show(
+                      context,
+                      urls: urls,
+                      initialIndex: i,
+                    ),
+                    child: CachedNetworkImage(
+                      imageUrl: urls[i],
+                      fit: BoxFit.cover,
+                      placeholder: (_, _) =>
+                          Container(color: BatshColors.surfaceContainer),
+                      errorWidget: (_, _, _) =>
+                          Container(color: BatshColors.surfaceContainer),
+                    ),
+                  ),
+                ),
+              ),
             ),
           ),
+          // Scrim sits above the pager but must not eat its swipes.
           Positioned.fill(
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.transparent,
-                    Colors.black.withValues(alpha: 0.7),
-                  ],
+            child: IgnorePointer(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.transparent,
+                      Colors.black.withValues(alpha: 0.7),
+                    ],
+                  ),
+                  borderRadius: radius,
                 ),
-                borderRadius: const BorderRadius.vertical(
-                    bottom: Radius.circular(BatshRadius.xl)),
               ),
             ),
           ),
@@ -251,44 +410,86 @@ class _HeroImageSection extends StatelessWidget {
             right: BatshSpacing.gutter,
             left: BatshSpacing.gutter,
             bottom: BatshSpacing.gutter,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  children: [
-                    _Pill(label: apartmentLabel,
-                        bgColor: Colors.white24, textColor: Colors.white),
-                    const SizedBox(width: BatshSpacing.sm),
-                    _Pill(label: location,
-                        bgColor: Colors.white24, textColor: Colors.white),
-                  ],
-                ),
-                const SizedBox(height: BatshSpacing.sm),
-                Text(
-                  title,
-                  style: BatshTypography.titleLg.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w700,
+            child: IgnorePointer(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    children: [
+                      _Pill(
+                          label: widget.apartmentLabel,
+                          bgColor: Colors.white24,
+                          textColor: Colors.white),
+                      const SizedBox(width: BatshSpacing.sm),
+                      Flexible(
+                        child: _Pill(
+                            label: widget.location,
+                            bgColor: Colors.white24,
+                            textColor: Colors.white),
+                      ),
+                    ],
                   ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
+                  const SizedBox(height: BatshSpacing.sm),
+                  Text(
+                    widget.title,
+                    style: BatshTypography.titleLg.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  if (urls.length > 1) ...[
+                    const SizedBox(height: BatshSpacing.sm),
+                    _PageDots(count: urls.length, index: _index),
+                  ],
+                ],
+              ),
             ),
           ),
-          if (photoUrls.length > 1)
-            Positioned(
+          if (urls.length > 1)
+            PositionedDirectional(
               top: BatshSpacing.md,
-              left: BatshSpacing.gutter,
-              child: _Pill(
-                label: '1 / ${photoUrls.length}',
-                bgColor: Colors.black38,
-                textColor: Colors.white,
+              end: BatshSpacing.gutter,
+              child: IgnorePointer(
+                child: _Pill(
+                  label: S.photoIndexOf(_index + 1, urls.length),
+                  bgColor: Colors.black38,
+                  textColor: Colors.white,
+                ),
               ),
             ),
         ],
       ),
+    );
+  }
+}
+
+/// Position indicator for the hero pager. Width, not colour alone, marks the
+/// active page so it survives a colour-blind / greyscale check.
+class _PageDots extends StatelessWidget {
+  const _PageDots({required this.count, required this.index});
+  final int count;
+  final int index;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        for (var i = 0; i < count; i++)
+          AnimatedContainer(
+            duration: BatshMotion.fast,
+            curve: BatshMotion.easeOut,
+            margin: const EdgeInsetsDirectional.only(end: 5),
+            width: i == index ? 18 : 6,
+            height: 6,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: i == index ? 0.95 : 0.45),
+              borderRadius: BatshRadius.brFull,
+            ),
+          ),
+      ],
     );
   }
 }
@@ -389,13 +590,11 @@ class _BriefInfoCard extends StatelessWidget {
   const _BriefInfoCard({
     required this.brief,
     required this.apt,
-    required this.place,
     required this.time,
   });
 
   final Brief brief;
   final String apt;
-  final String place;
   final String time;
 
   @override
@@ -411,23 +610,41 @@ class _BriefInfoCard extends StatelessWidget {
         padding: const EdgeInsets.all(BatshSpacing.gutter),
         decoration: BoxDecoration(
           color: BatshColors.cardBackground,
-          borderRadius: BorderRadius.circular(BatshRadius.lg),
+          borderRadius: BatshRadius.brCard,
           boxShadow: BatshShadows.soft,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // The three facts a contractor scans for before reading prose.
+            // Budget and required timeline belong here too, but `briefs` has no
+            // column for either yet — see the note in the section header below.
             Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                _InfoChip(
-                    icon: Icons.home_outlined,
-                    label: apt,
-                    color: BatshColors.primary),
+                Expanded(
+                  child: _SpecTile(
+                    icon: Icons.handyman_outlined,
+                    label: S.workTypeSpecLabel,
+                    value: _workTypeValue(brief.targetSpecialties),
+                  ),
+                ),
                 const SizedBox(width: BatshSpacing.sm),
-                _InfoChip(
-                    icon: Icons.place_outlined,
-                    label: place,
-                    color: BatshColors.secondary),
+                Expanded(
+                  child: _SpecTile(
+                    icon: Icons.home_outlined,
+                    label: S.apartmentTypeLabel,
+                    value: apt,
+                  ),
+                ),
+                const SizedBox(width: BatshSpacing.sm),
+                Expanded(
+                  child: _SpecTile(
+                    icon: Icons.schedule_outlined,
+                    label: S.publishedSpecLabel,
+                    value: time,
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: BatshSpacing.lg),
@@ -435,28 +652,8 @@ class _BriefInfoCard extends StatelessWidget {
                 style: BatshTypography.labelMd.copyWith(
                     color: BatshColors.onSurfaceVariant)),
             const SizedBox(height: BatshSpacing.sm),
-          Text(brief.workDescription,
+            Text(brief.workDescription,
                 style: BatshTypography.bodyLg.copyWith(height: 1.6)),
-            const SizedBox(height: BatshSpacing.lg),
-            Row(
-              children: [
-                Icon(Icons.access_time,
-                    size: 15, color: BatshColors.onSurfaceVariant),
-                const SizedBox(width: 4),
-                Text(time,
-                    style: BatshTypography.labelMd
-                        .copyWith(color: BatshColors.onSurfaceVariant)),
-                if (brief.photoUrls.isNotEmpty) ...[
-                  const Spacer(),
-                  Icon(Icons.photo_camera_outlined,
-                      size: 15, color: BatshColors.onSurfaceVariant),
-                  const SizedBox(width: 4),
-                  Text('${brief.photoUrls.length} ${S.photos}',
-                      style: BatshTypography.labelMd.copyWith(
-                          color: BatshColors.onSurfaceVariant)),
-                ],
-              ],
-            ),
           ],
         ),
       ),
@@ -464,38 +661,77 @@ class _BriefInfoCard extends StatelessWidget {
   }
 }
 
-class _InfoChip extends StatelessWidget {
-  const _InfoChip({
+/// One fact from the brief: muted label, then the value in the reading weight.
+/// Three of these sit in a row, so the value wraps to two lines rather than
+/// truncating — Arabic specialty names are long and a clipped word is worse
+/// than a taller tile.
+class _SpecTile extends StatelessWidget {
+  const _SpecTile({
     required this.icon,
     required this.label,
-    required this.color,
+    required this.value,
   });
 
   final IconData icon;
   final String label;
-  final Color color;
+  final String value;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: const EdgeInsets.symmetric(
+          horizontal: BatshSpacing.sm, vertical: BatshSpacing.md),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BatshRadius.brSm,
+        color: BatshColors.surfaceContainerLow,
+        borderRadius: BatshRadius.brMd,
+        border: Border.all(
+          color: BatshColors.outlineVariant.withValues(alpha: 0.6),
+        ),
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 14, color: color),
-          const SizedBox(width: 4),
-          Text(label,
-              maxLines: 1,
-              style: BatshTypography.labelSm.copyWith(
-                  color: color, fontWeight: FontWeight.w600)),
+          Row(
+            children: [
+              Icon(icon, size: 13, color: BatshColors.onSurfaceVariant),
+              const SizedBox(width: 4),
+              Flexible(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: BatshTypography.labelSm
+                      .copyWith(color: BatshColors.onSurfaceVariant),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: BatshSpacing.xs),
+          Text(
+            value,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: BatshTypography.labelLg.copyWith(
+              color: BatshColors.onSurface,
+              fontWeight: FontWeight.w700,
+              height: 1.35,
+            ),
+          ),
         ],
       ),
     );
   }
+}
+
+/// Arabic labels for the brief's target specialties, capped at two so the tile
+/// stays a glance and not a list. Falls back to an em-free dash when a brief
+/// carries no specialties (older rows, or a homeowner who skipped the field).
+String _workTypeValue(List<String> specialties) {
+  if (specialties.isEmpty) return '—';
+  return specialties
+      .take(2)
+      .map((s) => OnboardingCatalog.specialtiesCatalog[s] ?? s)
+      .join(' · ');
 }
 
 class _HomeownerCard extends StatelessWidget {

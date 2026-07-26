@@ -25,7 +25,15 @@ class BatshRadius {
   static const BorderRadius brXxl = BorderRadius.all(Radius.circular(xxl));
   static const BorderRadius brFull = BorderRadius.all(Radius.circular(full));
 
-  // Buttons / inputs / skeletons — 12px "pill-lite" per design tokens.
-  static const double defaultR = md;
-  static const BorderRadius brDefault = brMd;
+  // Buttons / inputs / skeletons — 16px per reference design.
+  static const double defaultR = lg;
+  static const BorderRadius brDefault = brLg;
+
+  // Cards — 24px per reference design (soft, premium).
+  static const double card = xxl;
+  static const BorderRadius brCard = brXxl;
+
+  // Images / media — 20px per reference design.
+  static const double image = xl;
+  static const BorderRadius brImage = brXl;
 }

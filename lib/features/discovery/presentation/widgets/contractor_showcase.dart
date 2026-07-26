@@ -1,9 +1,9 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../../../core/router/routes.dart';
 import '../../../../core/theme/batsh_colors.dart';
@@ -11,6 +11,7 @@ import '../../../../core/theme/batsh_radius.dart';
 import '../../../../core/theme/batsh_shadows.dart';
 import '../../../../core/theme/batsh_spacing.dart';
 import '../../../../core/theme/batsh_typography.dart';
+import '../../../../core/utils/image_url.dart';
 import '../../../../core/l10n/strings.dart';
 import '../../../../core/widgets/batsh_button.dart';
 import '../../../../core/widgets/batsh_pressable.dart';
@@ -20,6 +21,7 @@ import '../../../auth/presentation/sign_in_sheet.dart';
 import '../../../onboarding/domain/onboarding_models.dart';
 import '../../../portfolio/domain/portfolio_project.dart';
 import '../../../portfolio/presentation/providers/portfolio_providers.dart';
+import '../../../reviews/presentation/reviews_sheet.dart';
 import '../../../saved/presentation/providers/saved_providers.dart';
 import '../../domain/contractor_listing.dart';
 
@@ -28,9 +30,14 @@ import '../../domain/contractor_listing.dart';
 /// - [owner]: the contractor viewing their own profile (edit + sign out).
 enum ShowcaseMode { public, owner }
 
-/// The full LinkedIn-style contractor profile body, shared by the public
-/// discover screen and the contractor's own profile tab. Renders a
-/// [CustomScrollView]; the host supplies the [Scaffold].
+/// The full contractor profile body, shared by the public discover screen and
+/// the contractor's own profile tab. Renders a [CustomScrollView]; the host
+/// supplies the [Scaffold].
+///
+/// Section order is deliberate: identity, then **proof of work**, then
+/// credentials, then the long tail. Portfolio used to sit last, below the
+/// service-area chips, so a homeowner had to scroll past six blocks of metadata
+/// to reach the one thing that decides a hire.
 class ContractorShowcase extends ConsumerWidget {
   const ContractorShowcase({
     super.key,
@@ -47,13 +54,14 @@ class ContractorShowcase extends ConsumerWidget {
   final ContractorListing listing;
   final ShowcaseMode mode;
 
-  /// When false, the inline contact CTA block is omitted — the host screen is
-  /// expected to render a pinned (sticky) contact bar instead, so the primary
-  /// action stays reachable no matter how far the user scrolls.
+  /// When false, the inline contact block is omitted — the host renders a
+  /// pinned [ContractorContactBar] instead, so the primary action stays
+  /// reachable no matter how far the user scrolls. The body then reserves
+  /// trailing scroll space so nothing hides behind it.
   final bool showInlineContact;
 
-  /// Real average rating; falls back to [ContractorListing.computedRating]
-  /// until M4 reviews are wired in.
+  /// Override for the average rating. Null (here or on the listing) means
+  /// "not reviewed yet" and renders as a neutral "جديد" badge, never as stars.
   final double? rating;
   final int? reviewCount;
 
@@ -68,16 +76,23 @@ class ContractorShowcase extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final savedIds = ref.watch(savedContractorIdsProvider).value ?? const {};
     final isSaved = savedIds.contains(listing.id);
-    final portfolio =
-        ref.watch(portfolioForContractorProvider(listing.id)).value ??
-            const <PortfolioProject>[];
-    final effectiveRating = rating ?? listing.displayRating;
+    // A failed portfolio fetch used to be indistinguishable from "no projects":
+    // `.value ?? []` collapses error and empty into the same blank section, so
+    // a contractor with twelve projects looked like one with none. Keep the
+    // async state so the section can say which it is.
+    final portfolioAsync =
+        ref.watch(portfolioForContractorProvider(listing.id));
+    final portfolio = portfolioAsync.value ?? const <PortfolioProject>[];
+    final effectiveRating = rating ?? listing.rating;
     final effectiveCount = reviewCount ?? listing.reviewCount;
+
+    final hasPortfolio = portfolio.isNotEmpty || portfolioAsync.hasError;
+    final hasBio = listing.bio != null && listing.bio!.isNotEmpty;
 
     return CustomScrollView(
       slivers: [
         SliverAppBar(
-          expandedHeight: 240,
+          expandedHeight: 268,
           pinned: true,
           automaticallyImplyLeading: !_isOwner,
           backgroundColor: BatshColors.background,
@@ -112,65 +127,89 @@ class ContractorShowcase extends ConsumerWidget {
                   IconButton(
                     tooltip: S.share,
                     icon: const Icon(Icons.share_outlined),
-                    onPressed: () => _shareContractor(context, listing),
+                    onPressed: () => _shareContractor(listing),
                   ),
                 ],
-          flexibleSpace: FlexibleSpaceBar(
-            background: _CoverHero(coverUrl: listing.coverPhotoUrl),
+          // The avatar is anchored to the bottom of the hero rather than pulled
+          // up into the body with a negative offset. The previous version used
+          // `Transform.translate(-56)` plus a compensating trailing spacer: two
+          // magic numbers that had to agree with `expandedHeight` and the
+          // toolbar height, and silently misaligned at large text scales.
+          flexibleSpace: Stack(
+            fit: StackFit.expand,
+            children: [
+              FlexibleSpaceBar(
+                background: _CoverHero(coverUrl: listing.coverPhotoUrl),
+              ),
+              Align(
+                alignment: Alignment.bottomCenter,
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: BatshSpacing.md),
+                  child: _AvatarRing(logoUrl: listing.logoUrl),
+                ),
+              ),
+            ],
           ),
         ),
         SliverToBoxAdapter(
-          child: Transform.translate(
-            offset: const Offset(0, -56),
-            child: Column(
-              children: [
-                _AvatarRing(logoUrl: listing.logoUrl),
-                const SizedBox(height: BatshSpacing.md),
-                _NameHeadline(contractor: listing),
-                const SizedBox(height: BatshSpacing.md),
-                _RatingPill(
-                  rating: effectiveRating,
-                  reviewCount: effectiveCount,
-                ),
-                const SizedBox(height: BatshSpacing.lg),
-                _StatsRow(contractor: listing),
-                const SizedBox(height: BatshSpacing.lg),
-                if (_isOwner) ...[
-                  _OwnerActions(onEdit: onEdit),
-                  if (onGoPro != null) ...[
-                    const SizedBox(height: BatshSpacing.md),
-                    _GoProBanner(onTap: onGoPro!),
-                  ],
-                ] else if (showInlineContact)
-                  _CtaBlock(contractor: listing),
-                const SizedBox(height: BatshSpacing.xl),
-                if (listing.bio != null && listing.bio!.isNotEmpty)
-                  _BioSection(bio: listing.bio!),
-                const SizedBox(height: BatshSpacing.xl),
-                _ChipsSection(
-                  title: S.specialtiesLabel,
-                  labels: listing.specialties
-                      .map((s) => OnboardingCatalog.specialtiesCatalog[s] ?? s)
-                      .toList(),
-                ),
-                const SizedBox(height: BatshSpacing.lg),
-                _ChipsSection(
-                  title: S.worksIn,
-                  labels: listing.serviceAreas,
-                ),
+          child: Column(
+            children: [
+              const SizedBox(height: BatshSpacing.md),
+              _NameHeadline(contractor: listing),
+              const SizedBox(height: BatshSpacing.md),
+              _RatingPill(
+                rating: effectiveRating,
+                reviewCount: effectiveCount,
+                onTap: () => showReviewsSheet(context, listing.id),
+              ),
+              const SizedBox(height: BatshSpacing.lg),
+              if (_isOwner) ...[
+                _OwnerActions(onEdit: onEdit),
+                if (onGoPro != null) ...[
+                  const SizedBox(height: BatshSpacing.md),
+                  _GoProBanner(onTap: onGoPro!),
+                ],
+              ] else if (showInlineContact)
+                ContractorContactBar(listing: listing),
+
+              // Proof of work, immediately after identity.
+              if (hasPortfolio) ...[
                 const SizedBox(height: BatshSpacing.xl),
                 _PortfolioSection(
                   contractor: listing,
                   projects: portfolio,
                   isOwner: _isOwner,
+                  failed: portfolioAsync.hasError,
+                  onRetry: () => ref
+                      .invalidate(portfolioForContractorProvider(listing.id)),
                 ),
-                if (_isOwner && onSignOut != null) ...[
-                  const SizedBox(height: BatshSpacing.xl),
-                  _SignOutBlock(onSignOut: onSignOut!),
-                ],
-                const SizedBox(height: 96),
               ],
-            ),
+
+              // Credentials. Tiles with nothing to report are dropped rather
+              // than rendered as "0" / "—": a big elevated card announcing
+              // "0 مشروع منجز" is the same cold-start mistake as showing empty
+              // stars instead of the neutral "new" badge.
+              _StatsRow(contractor: listing),
+
+              if (hasBio) ...[
+                const SizedBox(height: BatshSpacing.xl),
+                _BioSection(bio: listing.bio!),
+              ],
+              if (listing.specialties.isNotEmpty) ...[
+                const SizedBox(height: BatshSpacing.xl),
+                _ServicesSection(specialtyKeys: listing.specialties),
+              ],
+              if (listing.serviceAreas.isNotEmpty) ...[
+                const SizedBox(height: BatshSpacing.lg),
+                _ChipsSection(title: S.worksIn, labels: listing.serviceAreas),
+              ],
+              if (_isOwner && onSignOut != null) ...[
+                const SizedBox(height: BatshSpacing.xl),
+                _SignOutBlock(onSignOut: onSignOut!),
+              ],
+              // Clearance for the host's pinned contact bar when there is one.
+              SizedBox(height: showInlineContact ? BatshSpacing.xl : 148),
+            ],
           ).animate().fadeIn(duration: 220.ms),
         ),
       ],
@@ -178,24 +217,114 @@ class ContractorShowcase extends ConsumerWidget {
   }
 }
 
-/// Shares the contractor. No public profile URL / deep link exists yet, so we
-/// copy a ready-to-send Arabic blurb to the clipboard and confirm via snackbar.
-/// Swap this for share_plus's native share sheet once deep links land.
-void _shareContractor(BuildContext context, ContractorListing listing) {
+/// Shares the contractor through the OS share sheet — the same path the feed's
+/// post card uses. This previously wrote to the clipboard and showed a
+/// "copied" snackbar, which meant the app had two different share behaviours
+/// depending on which screen you were on.
+///
+/// The blurb still carries no link: there is no public profile URL yet. Add one
+/// here the moment App Links / a web profile exist, since a shareable link is
+/// the whole point of the button.
+void _shareContractor(ContractorListing listing) {
   final name =
       listing.businessName.isNotEmpty ? listing.businessName : listing.fullName;
   final blurb = StringBuffer(S.seeOnShattab.replaceFirst('%s', name));
   if (listing.headline != null && listing.headline!.isNotEmpty) {
-    blurb.write(' — ${listing.headline}');
+    blurb.write(' - ${listing.headline}');
   }
   blurb.write('\n${S.forContact}: ${listing.phone}');
-  Clipboard.setData(ClipboardData(text: blurb.toString()));
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(
-      content: Text(S.copiedData),
-      behavior: SnackBarBehavior.floating,
-    ),
-  );
+  Share.share(blurb.toString(), subject: name);
+}
+
+/// Grows a fixed-height horizontal strip with the user's text scale.
+///
+/// `app.dart` clamps scaling at 1.5x, and at 1.5x a two-line Arabic label in an
+/// 84x96 tile clips. Only the label lines grow, so the base height is padded by
+/// the per-line delta instead of being multiplied wholesale.
+double _scaledStripHeight(BuildContext context, double base, int labelLines) {
+  const labelFontSize = 13.0; // BatshTypography.labelSm
+  final delta =
+      (MediaQuery.textScalerOf(context).scale(labelFontSize) - labelFontSize) *
+          labelLines;
+  return base + delta.clamp(0.0, 64.0);
+}
+
+/// Primary contact block: WhatsApp first.
+///
+/// Previously three near-equal filled CTAs competed for the same glance, and
+/// the block was defined twice — once here and once as a private sticky bar in
+/// the profile screen. One definition now, mounted inline (owner preview) or
+/// pinned (`sticky: true`).
+///
+/// WhatsApp leads because in Egypt it *is* the conversion; "send project
+/// details" stays reachable as the secondary that feeds the quote funnel.
+class ContractorContactBar extends StatelessWidget {
+  const ContractorContactBar({
+    super.key,
+    required this.listing,
+    this.sticky = false,
+  });
+
+  final ContractorListing listing;
+
+  /// Adds the surface, top border, shadow and safe-area inset needed when the
+  /// bar is pinned to the bottom of a [Scaffold].
+  final bool sticky;
+
+  @override
+  Widget build(BuildContext context) {
+    final content = Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        WhatsAppButton(phone: listing.phone, message: S.profileGreeting),
+        const SizedBox(height: BatshSpacing.sm),
+        Row(
+          children: [
+            Expanded(
+              child: BatshButton(
+                label: S.sendProjectDetails,
+                style: BatshButtonStyle.secondary,
+                onPressed: () =>
+                    context.push(Routes.homeownerSendBriefPath(listing.id)),
+              ),
+            ),
+            const SizedBox(width: BatshSpacing.sm),
+            Expanded(child: CallButton(phone: listing.phone)),
+          ],
+        ),
+      ],
+    );
+
+    if (!sticky) {
+      return Padding(
+        padding:
+            const EdgeInsets.symmetric(horizontal: BatshSpacing.marginMobile),
+        child: content,
+      );
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        color: BatshColors.surfaceContainerLowest,
+        border: const Border(
+          top: BorderSide(color: BatshColors.outlineVariant),
+        ),
+        boxShadow: BatshShadows.raised,
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(
+            BatshSpacing.marginMobile,
+            BatshSpacing.md,
+            BatshSpacing.marginMobile,
+            BatshSpacing.md,
+          ),
+          child: content,
+        ),
+      ),
+    );
+  }
 }
 
 class _BackButton extends StatelessWidget {
@@ -205,10 +334,14 @@ class _BackButton extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.all(8),
       child: Material(
-        color: Colors.white.withValues(alpha: 0.9),
+        // Was a raw `Colors.white` scrim, which also stayed white in dark mode.
+        color: BatshColors.surfaceContainerLowest.withValues(alpha: 0.9),
         shape: const CircleBorder(),
         child: IconButton(
-          icon: const Icon(Icons.arrow_forward, color: BatshColors.onSurface),
+          // `Icons.arrow_back` is declared with matchTextDirection, so it
+          // mirrors to point right in Arabic and left in English. The previous
+          // hardcoded `arrow_forward` was correct only in RTL.
+          icon: const Icon(Icons.arrow_back, color: BatshColors.onSurface),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
       ),
@@ -227,17 +360,20 @@ class _CoverHero extends StatelessWidget {
       children: [
         if (coverUrl != null)
           CachedNetworkImage(
-            imageUrl: coverUrl!,
+            imageUrl: sizedImageUrl(coverUrl!, width: 900),
             fit: BoxFit.cover,
+            memCacheWidth: 900,
             placeholder: (_, _) =>
                 const ColoredBox(color: BatshColors.surfaceContainer),
             errorWidget: (_, _, _) => const _CoverFallback(),
           )
         else
           const _CoverFallback(),
-        // Neutral photographic scrim: a soft dark foot for depth + legibility,
-        // resolving into the page bg so the image blends seamlessly. No
-        // terracotta tint (was orange-veiling the architecture photo).
+        // Neutral photographic scrim. The previous ramp reached the page
+        // background at 92% with 0.86 alpha, which erased the bottom third of
+        // the photo — a cover you cannot see reads as a rendering accident.
+        // This keeps the image legible under the avatar and stops short of
+        // painting over it.
         DecoratedBox(
           decoration: BoxDecoration(
             gradient: LinearGradient(
@@ -245,11 +381,10 @@ class _CoverHero extends StatelessWidget {
               end: Alignment.bottomCenter,
               colors: [
                 const Color(0x00000000),
-                const Color(0x1A000000),
-                BatshColors.background.withValues(alpha: 0.86),
-                BatshColors.background,
+                const Color(0x14000000),
+                BatshColors.background.withValues(alpha: 0.55),
               ],
-              stops: const [0.0, 0.62, 0.92, 1.0],
+              stops: const [0.0, 0.55, 1.0],
             ),
           ),
         ),
@@ -291,8 +426,9 @@ class _AvatarRing extends StatelessWidget {
         clipBehavior: Clip.antiAlias,
         child: logoUrl != null
             ? CachedNetworkImage(
-                imageUrl: logoUrl!,
+                imageUrl: sizedImageUrl(logoUrl!, width: 200),
                 fit: BoxFit.cover,
+                memCacheWidth: 200,
                 placeholder: (_, _) =>
                     const ColoredBox(color: BatshColors.surfaceContainer),
               )
@@ -320,6 +456,10 @@ class _NameHeadline extends StatelessWidget {
           Text(name,
               textAlign: TextAlign.center,
               style: BatshTypography.headlineLgMobile),
+          if (contractor.verified) ...[
+            const SizedBox(height: BatshSpacing.sm),
+            const _VerifiedBadge(),
+          ],
           if (contractor.headline != null &&
               contractor.headline!.isNotEmpty) ...[
             const SizedBox(height: BatshSpacing.xs),
@@ -336,10 +476,56 @@ class _NameHeadline extends StatelessWidget {
   }
 }
 
+/// Verification, labelled.
+///
+/// This was a bare 22px checkmark beside the name. Verification is the whole
+/// point of the request flow behind migration 0015, and an unlabelled glyph is
+/// the one form most users will not decode. Icon plus word, like `RoleBadge`,
+/// so it survives a greyscale read.
+class _VerifiedBadge extends StatelessWidget {
+  const _VerifiedBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding:
+          const EdgeInsets.symmetric(horizontal: BatshSpacing.md, vertical: 4),
+      decoration: BoxDecoration(
+        color: BatshColors.tertiaryContainer,
+        borderRadius: BatshRadius.brFull,
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.verified_rounded,
+              size: 15, color: BatshColors.onTertiaryContainer),
+          const SizedBox(width: 4),
+          Text(
+            S.verified,
+            style: BatshTypography.labelMd.copyWith(
+              color: BatshColors.onTertiaryContainer,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _RatingPill extends StatelessWidget {
-  const _RatingPill({required this.rating, this.reviewCount});
-  final double rating;
+  const _RatingPill({
+    required this.rating,
+    this.reviewCount,
+    this.onTap,
+  });
+
+  /// Null when unreviewed — the pill then shows the neutral "new" state.
+  final double? rating;
   final int? reviewCount;
+
+  /// Opens the review list.
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -347,7 +533,9 @@ class _RatingPill extends StatelessWidget {
     // "0.0" reads as *bad*; a neutral "جديد" badge reads as *new*. Same data,
     // opposite trust signal (Airbnb/Upwork pattern). Icon + text, not colour
     // alone, so it survives accessibility/colour-blind checks.
-    if (reviewCount == null || reviewCount == 0) {
+    // Local copy: a nullable field cannot be type-promoted by the null check.
+    final avg = rating;
+    if (avg == null || reviewCount == null || reviewCount == 0) {
       return Container(
         padding: const EdgeInsets.symmetric(
             horizontal: BatshSpacing.gutter, vertical: BatshSpacing.sm),
@@ -373,48 +561,51 @@ class _RatingPill extends StatelessWidget {
         ),
       );
     }
-    return Container(
-      padding: const EdgeInsets.symmetric(
-          horizontal: BatshSpacing.gutter, vertical: BatshSpacing.sm),
-      decoration: BoxDecoration(
-        color: BatshColors.tertiaryFixed,
+
+    // One star, the number, then the tappable count. The old pill encoded the
+    // same value three times — five 14px stars *and* "4.5" *and* "(12 تقييم)" —
+    // and the star row also rendered 4.9 as a half star, because a half was
+    // drawn whenever the fractional part cleared 0.4.
+    return Material(
+      color: BatshColors.tertiaryFixed,
+      borderRadius: BatshRadius.brFull,
+      child: InkWell(
         borderRadius: BatshRadius.brFull,
-        border: Border.all(color: BatshColors.tertiary, width: 1),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Row(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(
+              horizontal: BatshSpacing.gutter, vertical: BatshSpacing.sm),
+          decoration: BoxDecoration(
+            borderRadius: BatshRadius.brFull,
+            border: Border.all(color: BatshColors.tertiary, width: 1),
+          ),
+          child: Row(
             mainAxisSize: MainAxisSize.min,
-            children: List.generate(5, (i) {
-              final filled = i < rating.floor();
-              final half = !filled && i == rating.floor() && rating % 1 >= 0.4;
-              return Icon(
-                half ? Icons.star_half : Icons.star,
-                size: 14,
-                color: filled || half
-                    ? BatshColors.tertiary
-                    : BatshColors.surfaceContainerHigh,
-              );
-            }),
+            children: [
+              const Icon(Icons.star_rounded,
+                  size: 18, color: BatshColors.tertiary),
+              const SizedBox(width: BatshSpacing.xs),
+              Text(
+                avg.toStringAsFixed(1),
+                style: BatshTypography.labelMd.copyWith(
+                  color: BatshColors.onTertiaryContainer,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(width: BatshSpacing.xs),
+              Text(
+                '· $reviewCount ${S.reviewsCount}',
+                style: BatshTypography.labelSm
+                    .copyWith(color: BatshColors.onTertiaryContainer),
+              ),
+              if (onTap != null) ...[
+                const SizedBox(width: 2),
+                const Icon(Icons.arrow_forward_ios,
+                    size: 11, color: BatshColors.onTertiaryContainer),
+              ],
+            ],
           ),
-          const SizedBox(width: BatshSpacing.sm),
-          Text(
-            rating.toStringAsFixed(1),
-            style: BatshTypography.labelMd.copyWith(
-              color: BatshColors.onTertiaryContainer,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          if (reviewCount != null && reviewCount! > 0) ...[
-            const SizedBox(width: BatshSpacing.xs),
-            Text(
-              '($reviewCount ${S.reviewsCount})',
-              style: BatshTypography.labelSm
-                  .copyWith(color: BatshColors.onTertiaryContainer),
-            ),
-          ],
-        ],
+        ),
       ),
     );
   }
@@ -426,31 +617,40 @@ class _StatsRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Response-rate tile removed earlier — the value was a hardcoded default
+    // (100%) for everyone, never measured. The two survivors are only shown
+    // when they carry a number: `projects_completed` stays 0 until the
+    // completion trigger in migration 0019 writes to it, and years of
+    // experience is optional at onboarding.
+    final tiles = <Widget>[
+      if (contractor.projectsCompleted > 0)
+        _StatCard(
+          value: '${contractor.projectsCompleted}',
+          label: S.projectsCompleted,
+          icon: Icons.home_work_outlined,
+        ),
+      if (contractor.yearsExperience != null)
+        _StatCard(
+          value: '${contractor.yearsExperience}',
+          label: S.experienceYears,
+          icon: Icons.workspace_premium_outlined,
+        ),
+    ];
+    if (tiles.isEmpty) return const SizedBox.shrink();
+
     return Padding(
-      padding:
-          const EdgeInsets.symmetric(horizontal: BatshSpacing.marginMobile),
-      child: Row(
-        children: [
-          // Response-rate tile removed — the value was a hardcoded default
-          // (100%) for everyone, never measured. Bring back when tracked.
-          Expanded(
-            child: _StatCard(
-              value: '${contractor.projectsCompleted}',
-              label: S.projectsCompleted,
-              icon: Icons.home_work_outlined,
-            ),
-          ),
-          const SizedBox(width: BatshSpacing.sm),
-          Expanded(
-            child: _StatCard(
-              value: contractor.yearsExperience != null
-                  ? '${contractor.yearsExperience}'
-                  : '—',
-              label: S.experienceYears,
-              icon: Icons.workspace_premium_outlined,
-            ),
-          ),
-        ],
+      padding: const EdgeInsets.only(top: BatshSpacing.xl),
+      child: Padding(
+        padding:
+            const EdgeInsets.symmetric(horizontal: BatshSpacing.marginMobile),
+        child: Row(
+          children: [
+            for (var i = 0; i < tiles.length; i++) ...[
+              if (i > 0) const SizedBox(width: BatshSpacing.sm),
+              Expanded(child: tiles[i]),
+            ],
+          ],
+        ),
       ),
     );
   }
@@ -468,15 +668,12 @@ class _StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Count up integers on load; leave non-numeric values ("—") static.
-    final target = int.tryParse(value);
-    final reduced = MediaQuery.of(context).disableAnimations;
     return Container(
       padding: const EdgeInsets.symmetric(
           vertical: BatshSpacing.lg, horizontal: BatshSpacing.md),
       decoration: BoxDecoration(
         color: BatshColors.surfaceContainerLowest,
-        borderRadius: BatshRadius.brLg,
+        borderRadius: BatshRadius.brXl,
         boxShadow: BatshShadows.soft,
       ),
       child: Column(
@@ -484,60 +681,18 @@ class _StatCard extends StatelessWidget {
         children: [
           Icon(icon, color: BatshColors.primary, size: 18),
           const SizedBox(height: BatshSpacing.md),
-          if (target == null || reduced)
-            Text(value,
-                style: BatshTypography.displayMd.copyWith(
-                    color: BatshColors.onSurface, fontWeight: FontWeight.w700))
-          else
-            TweenAnimationBuilder<double>(
-              tween: Tween(begin: 0, end: target.toDouble()),
-              duration: const Duration(milliseconds: 900),
-              curve: Curves.easeOutCubic,
-              builder: (_, v, _) => Text(
-                v.round().toString(),
-                style: BatshTypography.displayMd.copyWith(
-                    color: BatshColors.onSurface, fontWeight: FontWeight.w700),
-              ),
-            ),
+          // Plain text, no count-up tween. The tween began at 0 on every build,
+          // and this widget's ancestor watches the saved-contractors provider —
+          // so tapping the bookmark made the stats visibly re-count from zero.
+          // Animating 0→3 was never worth that.
+          Text(value,
+              style: BatshTypography.displayMd.copyWith(
+                  color: BatshColors.onSurface, fontWeight: FontWeight.w700)),
           const SizedBox(height: BatshSpacing.xxs),
           Text(label,
+              maxLines: 2,
               style: BatshTypography.labelMd
                   .copyWith(color: BatshColors.onSurfaceVariant)),
-        ],
-      ),
-    );
-  }
-}
-
-class _CtaBlock extends StatelessWidget {
-  const _CtaBlock({required this.contractor});
-  final ContractorListing contractor;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding:
-          const EdgeInsets.symmetric(horizontal: BatshSpacing.marginMobile),
-      child: Column(
-        children: [
-          BatshButton(
-            label: S.sendProjectDetails,
-            onPressed: () =>
-                context.push(Routes.homeownerSendBriefPath(contractor.id)),
-          ),
-          const SizedBox(height: BatshSpacing.sm),
-          Row(
-            children: [
-              Expanded(
-                child: WhatsAppButton(
-                  phone: contractor.phone,
-                  message: S.profileGreeting,
-                ),
-              ),
-              const SizedBox(width: BatshSpacing.sm),
-              Expanded(child: CallButton(phone: contractor.phone)),
-            ],
-          ),
         ],
       ),
     );
@@ -554,7 +709,7 @@ class _GoProBanner extends StatelessWidget {
       padding:
           const EdgeInsets.symmetric(horizontal: BatshSpacing.marginMobile),
       child: Material(
-        borderRadius: BatshRadius.brLg,
+        borderRadius: BatshRadius.brCard,
         clipBehavior: Clip.antiAlias,
         child: Ink(
           decoration: const BoxDecoration(
@@ -606,7 +761,10 @@ class _GoProBanner extends StatelessWidget {
                       ],
                     ),
                   ),
-                  Icon(Icons.chevron_left_rounded,
+                  // Mirrors with text direction, unlike the previous hardcoded
+                  // `chevron_left_rounded`.
+                  Icon(Icons.arrow_forward_ios,
+                      size: 14,
                       color: BatshColors.onPrimary.withValues(alpha: 0.9)),
                 ],
               ),
@@ -686,7 +844,7 @@ class _BioSection extends StatelessWidget {
         padding: const EdgeInsets.all(BatshSpacing.gutter),
         decoration: BoxDecoration(
           color: BatshColors.surfaceContainerLow,
-          borderRadius: BatshRadius.brLg,
+          borderRadius: BatshRadius.brCard,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -700,6 +858,109 @@ class _BioSection extends StatelessWidget {
             Text(bio, style: BatshTypography.bodyLg),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Services as a scrollable row of icon tiles. Each specialty gets its own
+/// glyph, so the row is scannable before it is read — the previous flat text
+/// chips made "دهانات" and "سباكة" identical at a glance. Icon plus label, never
+/// icon alone: the glyph is a scanning aid, not the meaning.
+class _ServicesSection extends StatelessWidget {
+  const _ServicesSection({required this.specialtyKeys});
+
+  final List<String> specialtyKeys;
+
+  /// Specialty key → glyph. Same icon vocabulary as the opportunities filter
+  /// sheet, so a contractor sees one consistent language for "كهرباء" whether
+  /// they are filtering jobs or reading a profile.
+  static const _icons = <String, IconData>{
+    'paint': Icons.format_paint_outlined,
+    'flooring': Icons.grid_on_outlined,
+    'kitchen': Icons.countertops_outlined,
+    'bathroom': Icons.bathtub_outlined,
+    'electrical': Icons.electrical_services_outlined,
+    'plumbing': Icons.plumbing_outlined,
+    'carpentry': Icons.carpenter_outlined,
+    'design': Icons.architecture_outlined,
+    'full_reno': Icons.home_work_outlined,
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    if (specialtyKeys.isEmpty) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(
+              horizontal: BatshSpacing.marginMobile),
+          child: Text(S.specialtiesLabel,
+              style: BatshTypography.titleLg
+                  .copyWith(color: BatshColors.onSurface)),
+        ),
+        const SizedBox(height: BatshSpacing.sm),
+        SizedBox(
+          height: _scaledStripHeight(context, 96, 2),
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(
+                horizontal: BatshSpacing.marginMobile),
+            physics: const BouncingScrollPhysics(),
+            itemCount: specialtyKeys.length,
+            separatorBuilder: (_, _) => const SizedBox(width: BatshSpacing.sm),
+            itemBuilder: (_, i) {
+              final key = specialtyKeys[i];
+              return _ServiceTile(
+                icon: _icons[key] ?? Icons.handyman_outlined,
+                label: OnboardingCatalog.specialtiesCatalog[key] ?? key,
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ServiceTile extends StatelessWidget {
+  const _ServiceTile({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 84,
+      padding: const EdgeInsets.symmetric(
+          horizontal: BatshSpacing.xs, vertical: BatshSpacing.md),
+      decoration: BoxDecoration(
+        color: BatshColors.surfaceContainerLowest,
+        borderRadius: BatshRadius.brLg,
+        border: Border.all(color: BatshColors.outlineVariant),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, size: 24, color: BatshColors.primary),
+          const SizedBox(height: BatshSpacing.sm),
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 2,
+              textAlign: TextAlign.center,
+              overflow: TextOverflow.ellipsis,
+              style: BatshTypography.labelSm.copyWith(
+                color: BatshColors.onSurface,
+                fontWeight: FontWeight.w600,
+                height: 1.25,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -756,21 +1017,47 @@ class _PortfolioSection extends StatelessWidget {
     required this.contractor,
     required this.projects,
     required this.isOwner,
+    this.failed = false,
+    this.onRetry,
   });
   final ContractorListing contractor;
   final List<PortfolioProject> projects;
   final bool isOwner;
 
+  /// True when the fetch errored, as opposed to returning nothing.
+  final bool failed;
+  final VoidCallback? onRetry;
+
   @override
   Widget build(BuildContext context) {
+    if (projects.isEmpty && failed) {
+      return Padding(
+        padding:
+            const EdgeInsets.symmetric(horizontal: BatshSpacing.marginMobile),
+        child: Row(
+          children: [
+            const Icon(Icons.cloud_off_outlined,
+                size: 18, color: BatshColors.onSurfaceVariant),
+            const SizedBox(width: BatshSpacing.sm),
+            Expanded(
+              child: Text(S.portfolioLoadFailed,
+                  style: BatshTypography.bodySm
+                      .copyWith(color: BatshColors.onSurfaceVariant)),
+            ),
+            if (onRetry != null)
+              TextButton(onPressed: onRetry, child: Text(S.tryAgain)),
+          ],
+        ),
+      );
+    }
     if (projects.isEmpty) return const SizedBox.shrink();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding:
-              const EdgeInsets.symmetric(horizontal: BatshSpacing.marginMobile),
+          padding: const EdgeInsets.symmetric(
+              horizontal: BatshSpacing.marginMobile),
           child: Row(
             children: [
               Text(S.portfolioGalleryTitle,
@@ -789,7 +1076,7 @@ class _PortfolioSection extends StatelessWidget {
         ),
         const SizedBox(height: BatshSpacing.sm),
         SizedBox(
-          height: 234,
+          height: _scaledStripHeight(context, 234, 2),
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(
@@ -825,57 +1112,61 @@ class _PortfolioTile extends StatelessWidget {
       width: 260,
       child: DecoratedBox(
         decoration: BoxDecoration(
-          borderRadius: BatshRadius.brLg,
+          borderRadius: BatshRadius.brXl,
           boxShadow: BatshShadows.soft,
         ),
         child: BatshPressable(
           onTap: onTap,
           semanticLabel: project.title,
           child: Material(
-          color: BatshColors.surfaceContainerLowest,
-          borderRadius: BatshRadius.brLg,
-          clipBehavior: Clip.antiAlias,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              AspectRatio(
-                aspectRatio: 16 / 10,
-                child: CachedNetworkImage(
-                  imageUrl: project.coverPhotoUrl,
-                  fit: BoxFit.cover,
-                  placeholder: (_, _) =>
-                      const ColoredBox(color: BatshColors.surfaceContainer),
-                  errorWidget: (_, _, _) => Container(
-                      color: BatshColors.surfaceContainer,
-                      child: const Icon(Icons.image_outlined,
-                          color: BatshColors.onSurfaceVariant)),
+            color: BatshColors.surfaceContainerLowest,
+            borderRadius: BatshRadius.brXl,
+            clipBehavior: Clip.antiAlias,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                AspectRatio(
+                  aspectRatio: 16 / 10,
+                  child: CachedNetworkImage(
+                    imageUrl: sizedImageUrl(project.coverPhotoUrl, width: 520),
+                    fit: BoxFit.cover,
+                    // Tile is 260px wide.
+                    memCacheWidth: 520,
+                    placeholder: (_, _) =>
+                        const ColoredBox(color: BatshColors.surfaceContainer),
+                    errorWidget: (_, _, _) => Container(
+                        color: BatshColors.surfaceContainer,
+                        child: const Icon(Icons.image_outlined,
+                            color: BatshColors.onSurfaceVariant)),
+                  ),
                 ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(BatshSpacing.sm),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(project.title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: BatshTypography.labelMd
-                            .copyWith(fontWeight: FontWeight.w700)),
-                    if (project.category != null) ...[
-                      const SizedBox(height: 2),
-                      Text(project.category!,
-                          style: BatshTypography.labelSm.copyWith(
-                              color: BatshColors.onSurfaceVariant)),
+                Padding(
+                  padding: const EdgeInsets.all(BatshSpacing.sm),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(project.title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: BatshTypography.labelMd
+                              .copyWith(fontWeight: FontWeight.w700)),
+                      if (project.category != null) ...[
+                        const SizedBox(height: 2),
+                        Text(project.category!,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: BatshTypography.labelSm.copyWith(
+                                color: BatshColors.onSurfaceVariant)),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
-      ),
       ),
     );
   }

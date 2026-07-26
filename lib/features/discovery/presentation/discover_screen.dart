@@ -14,6 +14,7 @@ import '../../../core/theme/batsh_radius.dart';
 import '../../../core/theme/batsh_shadows.dart';
 import '../../../core/theme/batsh_spacing.dart';
 import '../../../core/theme/batsh_typography.dart';
+import '../../../core/utils/image_url.dart';
 import '../../../core/widgets/batsh_empty_state.dart';
 import '../../../core/widgets/batsh_error.dart';
 import '../../../core/widgets/batsh_filter_sheet.dart';
@@ -131,10 +132,20 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
           // mid-scroll. (Keep ~ DiscoveryRepository.pageSize.)
           const shelfPool = 20;
           final showShelves = filters.isEmpty && list.length > 6;
+          // "الأعلى تقييماً" must rank on reviews that exist. Sorting by
+          // displayRating fell back to ContractorListing.computedRating — a
+          // heuristic off responseRate (which defaults to 100 for everyone) —
+          // so the shelf ordered unreviewed contractors by a number nobody
+          // earned. Reviewed only, best average first, review count breaking
+          // ties so 5.0-from-one-review doesn't outrank 4.8-from-forty.
           final topRated = showShelves
-              ? (list.take(shelfPool).toList()
-                    ..sort((a, b) =>
-                        b.displayRating.compareTo(a.displayRating)))
+              ? (list.take(shelfPool).where((c) => c.hasReviews).toList()
+                    ..sort((a, b) {
+                      final byAvg = b.reviewAvg.compareTo(a.reviewAvg);
+                      return byAvg != 0
+                          ? byAvg
+                          : b.reviewCount.compareTo(a.reviewCount);
+                    }))
                   .take(5)
                   .toList()
               : <ContractorListing>[];
@@ -143,9 +154,20 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
           // lands with the discover_contractors RPC. Hidden for guests (no city)
           // and when too thin to fill a shelf.
           final myCity = ref.watch(homeownerProfileProvider).value?.city;
+          // Proximity shelf, so unreviewed locals still belong here — but they
+          // sort below reviewed ones rather than being interleaved by the
+          // computedRating heuristic. Track record breaks ties among the
+          // unreviewed.
           final nearYou = (showShelves && myCity != null && myCity.isNotEmpty)
               ? (list.where((c) => c.serviceAreas.contains(myCity)).toList()
-                    ..sort((a, b) => b.displayRating.compareTo(a.displayRating)))
+                    ..sort((a, b) {
+                      if (a.hasReviews != b.hasReviews) {
+                        return a.hasReviews ? -1 : 1;
+                      }
+                      final byAvg = b.reviewAvg.compareTo(a.reviewAvg);
+                      if (byAvg != 0) return byAvg;
+                      return b.projectsCompleted.compareTo(a.projectsCompleted);
+                    }))
                   .take(8)
                   .toList()
               : <ContractorListing>[];
@@ -588,8 +610,11 @@ class _FeaturedPremiumCard extends StatelessWidget {
                   borderRadius: BatshRadius.brLg,
                   child: listing.coverPhotoUrl != null
                       ? CachedNetworkImage(
-                          imageUrl: listing.coverPhotoUrl!,
+                          imageUrl:
+                              sizedImageUrl(listing.coverPhotoUrl!, width: 420),
                           fit: BoxFit.cover,
+                          // Tile is 210px wide; 2x for high-DPI is plenty.
+                          memCacheWidth: 420,
                           placeholder: (_, _) => const ColoredBox(
                               color: BatshColors.surfaceContainer),
                           errorWidget: (_, _, _) => const _FeaturedFallback(),
@@ -635,9 +660,7 @@ class _FeaturedPremiumCard extends StatelessWidget {
                             color: BatshColors.tertiaryFixed),
                         const SizedBox(width: 4),
                         Text(
-                            listing.reviewCount == 0
-                                ? S.newBadge
-                                : listing.displayRating.toStringAsFixed(1),
+                            listing.rating?.toStringAsFixed(1) ?? S.newBadge,
                             style: BatshTypography.labelSm.copyWith(
                                 color: Colors.white,
                                 fontWeight: FontWeight.w700)),

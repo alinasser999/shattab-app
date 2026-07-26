@@ -8,7 +8,6 @@ class ContractorListing {
     required this.specialties,
     required this.serviceAreas,
     required this.projectsCompleted,
-    required this.responseRate,
     this.bio,
     this.logoUrl,
     this.coverPhotoUrl,
@@ -16,6 +15,9 @@ class ContractorListing {
     this.yearsExperience,
     this.reviewCount = 0,
     this.reviewAvg = 0,
+    this.verified = false,
+    this.plan = 'free',
+    this.memberSince,
   });
 
   final String id;
@@ -25,7 +27,11 @@ class ContractorListing {
   final List<String> specialties;
   final List<String> serviceAreas;
   final int projectsCompleted;
-  final int responseRate;
+
+  // `response_rate` is intentionally not read. The column exists with a default
+  // of 100, so it is a constant dressed as a measurement. Add it back when a
+  // real brief-to-first-quote latency is tracked.
+
   final String? bio;
   final String? logoUrl;
   final String? coverPhotoUrl;
@@ -34,20 +40,39 @@ class ContractorListing {
   final int reviewCount;
   final double reviewAvg;
 
+  /// Verified badge — flipped by founder doc review (0015). Free, earned.
+  final bool verified;
+
+  /// Subscription plan: 'free' | 'pro'.
+  final String plan;
+
+  /// When the contractor profile was created — powers "member since".
+  final DateTime? memberSince;
+
+  bool get isPro => plan == 'pro';
+
+  /// Trust tier derived from real signals. Gold = verified + a track record;
+  /// silver = some jobs done; else bronze. No paid shortcut to gold.
+  ContractorTier get tier {
+    if (verified && (projectsCompleted >= 10 || reviewCount >= 5)) {
+      return ContractorTier.gold;
+    }
+    if (projectsCompleted >= 3 || verified) return ContractorTier.silver;
+    return ContractorTier.bronze;
+  }
+
   /// True once at least one real review exists.
   bool get hasReviews => reviewCount > 0;
 
-  /// Rating to display: the real average when reviews exist, else the
-  /// heuristic [computedRating].
-  double get displayRating => hasReviews ? reviewAvg : computedRating;
-
-  /// Computed star score in [0,5] derived from response rate + project volume.
-  /// Placeholder until real reviews land (M4).
-  double get computedRating {
-    final base = 4.4 + (responseRate - 90).clamp(0, 10) / 100;
-    final projectsBoost = (projectsCompleted / 200).clamp(0, 0.4);
-    return (base + projectsBoost).clamp(3.8, 5.0);
-  }
+  /// Average rating, or null when nobody has reviewed this contractor yet.
+  ///
+  /// Deliberately has no fallback. The previous `displayRating` fell back to a
+  /// `computedRating` heuristic seeded from `responseRate` (which defaulted to
+  /// 100 for every row) and project count, clamped to 3.8-5.0. Every call site
+  /// guarded the *display* of that number, but the discover shelf still sorted
+  /// by it, so "الأعلى تقييماً" ranked unreviewed contractors by fiction.
+  /// Nullable makes the absence a compile-time concern instead of a silent 4.4.
+  double? get rating => hasReviews ? reviewAvg : null;
 
   factory ContractorListing.fromJoined(Map<String, dynamic> json) {
     // PostgREST embeds a to-one relation as an object, a to-many as a list.
@@ -72,9 +97,17 @@ class ContractorListing {
       serviceAreas: ((cp?['service_areas'] as List?) ?? const []).cast<String>(),
       yearsExperience: cp?['years_experience'] as int?,
       projectsCompleted: (cp?['projects_completed'] as int?) ?? 0,
-      responseRate: (cp?['response_rate'] as int?) ?? 100,
       reviewCount: reviewCount,
       reviewAvg: reviewAvg,
+      verified: (cp?['verified'] as bool?) ?? false,
+      plan: (cp?['plan'] as String?) ?? 'free',
+      memberSince: switch (cp?['created_at']) {
+        final String s => DateTime.tryParse(s),
+        _ => null,
+      },
     );
   }
 }
+
+/// Trust tiers surfaced on the contractor's own account screen.
+enum ContractorTier { bronze, silver, gold }

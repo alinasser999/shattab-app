@@ -1,19 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../core/l10n/strings.dart';
 import '../../../core/utils/error_mapper.dart';
-import '../../../core/router/routes.dart';
 import '../../../core/theme/batsh_colors.dart';
-import '../../../core/theme/batsh_shadows.dart';
-import '../../../core/theme/batsh_spacing.dart';
-import '../../../core/widgets/batsh_button.dart';
 import '../../../core/widgets/batsh_empty_state.dart';
 import '../../../core/widgets/batsh_error.dart';
 import '../../../core/widgets/batsh_shimmer.dart';
-import '../../../core/widgets/contact_buttons.dart';
-import '../domain/contractor_listing.dart';
 import 'providers/discovery_providers.dart';
 import 'widgets/contractor_showcase.dart';
 
@@ -65,65 +58,10 @@ class ContractorProfileScreen extends ConsumerWidget {
               showInlineContact: false,
             ),
           ),
-          bottomNavigationBar: _StickyContactBar(listing: c),
+          // Same widget the showcase renders inline, so the two cannot drift.
+          bottomNavigationBar: ContractorContactBar(listing: c, sticky: true),
         );
       },
-    );
-  }
-}
-
-/// Pinned bottom contact bar — primary "send brief" CTA plus WhatsApp/Call.
-/// Sits above the gesture/safe area; the showcase reserves trailing scroll
-/// space so nothing is hidden behind it.
-class _StickyContactBar extends StatelessWidget {
-  const _StickyContactBar({required this.listing});
-
-  final ContractorListing listing;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: BatshColors.surfaceContainerLowest,
-        border: const Border(
-          top: BorderSide(color: BatshColors.outlineVariant),
-        ),
-        boxShadow: BatshShadows.raised,
-      ),
-      child: SafeArea(
-        top: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(
-            BatshSpacing.marginMobile,
-            BatshSpacing.md,
-            BatshSpacing.marginMobile,
-            BatshSpacing.md,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              BatshButton(
-                label: S.sendProjectDetails,
-                onPressed: () =>
-                    context.push(Routes.homeownerSendBriefPath(listing.id)),
-              ),
-              const SizedBox(height: BatshSpacing.sm),
-              Row(
-                children: [
-                  Expanded(
-                    child: WhatsAppButton(
-                      phone: listing.phone,
-                      message: S.profileGreeting,
-                    ),
-                  ),
-                  const SizedBox(width: BatshSpacing.sm),
-                  Expanded(child: CallButton(phone: listing.phone)),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 }

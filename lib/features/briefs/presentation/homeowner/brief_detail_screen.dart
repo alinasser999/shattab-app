@@ -18,9 +18,35 @@ import '../../../../core/widgets/photo_picker.dart';
 import '../../../../core/utils/error_mapper.dart';
 import '../../../../core/l10n/strings.dart';
 import '../../../onboarding/domain/onboarding_models.dart';
+import '../../../quotes/domain/quote.dart';
+import '../../../quotes/presentation/providers/quotes_providers.dart';
 import '../../../quotes/presentation/widgets/quotes_received_section.dart';
 import '../../domain/brief.dart';
 import '../providers/briefs_providers.dart';
+import '../widgets/completion_card.dart';
+import 'create_post_screen.dart';
+
+/// Resolves the hired contractor so confirming completion can open the review
+/// sheet for them immediately. Falls back to confirming without the prompt if
+/// the quotes have not loaded — completion must not depend on a second fetch.
+class _CompletionSection extends ConsumerWidget {
+  const _CompletionSection({required this.brief});
+
+  final Brief brief;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final quotes = ref.watch(quotesForBriefProvider(brief.id)).value;
+    final accepted = quotes
+        ?.where((q) => q.status == QuoteStatus.accepted)
+        .firstOrNull;
+    return CompletionCard(
+      brief: brief,
+      role: CompletionRole.homeowner,
+      acceptedContractorId: accepted?.contractorId,
+    );
+  }
+}
 
 class BriefDetailScreen extends ConsumerWidget {
   const BriefDetailScreen({super.key, required this.briefId});
@@ -137,6 +163,15 @@ class BriefDetailScreen extends ConsumerWidget {
           }
           children.addAll([
             const SizedBox(height: BatshSpacing.xl),
+            // Sits above the quotes: once someone is hired, closing out the job
+            // is the homeowner's next action, not re-reading offers.
+            if (brief.isHired)
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: BatshSpacing.gutter,
+                    vertical: BatshSpacing.sm),
+                child: _CompletionSection(brief: brief),
+              ),
             QuotesReceivedSection(briefId: brief.id, canAct: brief.isActive),
             const SizedBox(height: BatshSpacing.lg),
           ]);
@@ -218,12 +253,70 @@ class _BriefDetailSkeleton extends StatelessWidget {
   }
 }
 
-class _StatusRow extends StatelessWidget {
+class _StatusRow extends ConsumerWidget {
   const _StatusRow({required this.brief, required this.date});
   final Brief brief;
   final String date;
+
+  /// Removes the brief, or cancels it when contractors have already quoted.
+  /// The server decides which (migration 0020) — checking here and deleting
+  /// afterwards would race a quote arriving in between, and losing that race
+  /// destroys a contractor's work via the cascade.
+  Future<void> _delete(BuildContext context, WidgetRef ref) async {
+    final quotes = ref.read(quotesForBriefProvider(brief.id)).value;
+    final willCancel = (quotes?.isNotEmpty ?? false) || brief.isHired;
+
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(S.deleteBriefTitle),
+        content: Text(willCancel
+            ? S.deleteBriefWithQuotesBody
+            : S.deleteBriefBody),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(S.cancel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(S.deletePost,
+                style: const TextStyle(color: BatshColors.error)),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !context.mounted) return;
+
+    try {
+      final outcome = await ref
+          .read(briefsControllerProvider.notifier)
+          .deleteOrCancelBrief(brief.id);
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(
+          content: Text(outcome == 'deleted'
+              ? S.briefDeleted
+              : S.briefCancelledInstead),
+          behavior: SnackBarBehavior.floating,
+        ));
+      // The row is gone when it was truly deleted; stay put when cancelled so
+      // the homeowner can still see the quotes that survived.
+      if (outcome == 'deleted') Navigator.of(context).maybePop();
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(
+          content: Text(ErrorMapper.map(e)),
+          behavior: SnackBarBehavior.floating,
+        ));
+    }
+  }
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isPost = brief.isPost;
     final isCancelled = brief.status == BriefStatus.cancelled;
     final color = isCancelled
@@ -239,10 +332,65 @@ class _StatusRow extends StatelessWidget {
         Text(label,
             style: BatshTypography.labelMd
                 .copyWith(color: color, fontWeight: FontWeight.w700)),
+        if (brief.isEdited) ...[
+          const SizedBox(width: BatshSpacing.sm),
+          // Contractors see this too: a quote written against the original
+          // wording may no longer fit the scope.
+          Text('· ${S.editedMarker}',
+              style: BatshTypography.labelSm
+                  .copyWith(color: BatshColors.onSurfaceVariant)),
+        ],
         const Spacer(),
         Text(date,
             style: BatshTypography.labelMd
                 .copyWith(color: BatshColors.onSurfaceVariant)),
+        if (!isCancelled)
+          PopupMenuButton<String>(
+            tooltip: S.editPost,
+            icon: const Icon(Icons.more_horiz_rounded,
+                size: 20, color: BatshColors.onSurfaceVariant),
+            onSelected: (v) {
+              if (v == 'delete') {
+                _delete(context, ref);
+              } else if (v == 'edit') {
+                // Pushed rather than routed: the edit form is the create form
+                // with a brief attached, and it has no shareable URL of its own.
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => CreatePostScreen(editing: brief),
+                  ),
+                );
+              }
+            },
+            itemBuilder: (_) => [
+              // Editing is offered only while the scope can still change. The
+              // database rejects it after hiring, so hiding it here keeps the
+              // UI and the rule in agreement.
+              if (brief.canBeEdited)
+                PopupMenuItem(
+                  value: 'edit',
+                  child: Row(
+                    children: [
+                      const Icon(Icons.edit_outlined, size: 18),
+                      const SizedBox(width: BatshSpacing.sm),
+                      Text(S.editBriefTitle),
+                    ],
+                  ),
+                ),
+              PopupMenuItem(
+                value: 'delete',
+                child: Row(
+                  children: [
+                    const Icon(Icons.delete_outline,
+                        size: 18, color: BatshColors.error),
+                    const SizedBox(width: BatshSpacing.sm),
+                    Text(S.deletePost,
+                        style: const TextStyle(color: BatshColors.error)),
+                  ],
+                ),
+              ),
+            ],
+          ),
       ],
     );
   }

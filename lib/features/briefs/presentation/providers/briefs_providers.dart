@@ -20,9 +20,65 @@ Future<List<Brief>> myBriefs(Ref ref) async {
 Future<Brief?> briefById(Ref ref, String id) =>
     ref.watch(briefsRepositoryProvider).fetchById(id);
 
+/// Debounced search text for the opportunities feed. Held in a provider rather
+/// than screen state so the query is part of the fetch, not a filter applied to
+/// whatever page happens to be loaded.
 @riverpod
-Future<List<Brief>> contractorOpportunities(Ref ref) =>
-    ref.watch(briefsRepositoryProvider).fetchOpportunitiesForContractor();
+class OpportunitySearch extends _$OpportunitySearch {
+  @override
+  String build() => '';
+
+  void setQuery(String query) {
+    final next = query.trim();
+    if (next != state) state = next;
+  }
+
+  void clear() => setQuery('');
+}
+
+/// Paginated opportunities feed. Search and paging both run server-side; the
+/// previous version fetched every matching open brief in one unbounded query
+/// and filtered on the client.
+@riverpod
+class ContractorOpportunities extends _$ContractorOpportunities {
+  bool _hasMore = true;
+  bool _loadingMore = false;
+
+  /// Whether more pages may remain — false once a short page lands.
+  bool get hasMore => _hasMore;
+
+  @override
+  Future<List<Brief>> build() async {
+    final query = ref.watch(opportunitySearchProvider);
+    _loadingMore = false;
+    final page = await ref
+        .read(briefsRepositoryProvider)
+        .fetchOpportunitiesForContractor(searchQuery: query);
+    _hasMore = page.length == BriefsRepository.pageSize;
+    return page;
+  }
+
+  /// Fetch the next page and append. No-op while in flight or exhausted, so
+  /// scroll spam near the list end can't fire duplicate requests.
+  Future<void> loadMore() async {
+    if (_loadingMore || !_hasMore) return;
+    final current = state.value;
+    if (current == null || current.isEmpty) return;
+    _loadingMore = true;
+    try {
+      final next = await ref
+          .read(briefsRepositoryProvider)
+          .fetchOpportunitiesForContractor(
+            searchQuery: ref.read(opportunitySearchProvider),
+            after: BriefCursor.fromBrief(current.last),
+          );
+      _hasMore = next.length == BriefsRepository.pageSize;
+      if (next.isNotEmpty) state = AsyncData([...current, ...next]);
+    } finally {
+      _loadingMore = false;
+    }
+  }
+}
 
 @riverpod
 Future<List<Brief>> contractorDirectBriefs(Ref ref) =>
@@ -118,6 +174,53 @@ class BriefsController extends _$BriefsController {
 
     ref.invalidate(myBriefsProvider);
     return brief;
+  }
+
+  /// Homeowner: change a brief's scope. Photos are handled separately by
+  /// [BriefsRepository.setPhotoUrls], as on create.
+  Future<void> updateBrief(
+    String briefId, {
+    required ApartmentType apartmentType,
+    required String city,
+    String? district,
+    required String workDescription,
+    required List<String> targetSpecialties,
+  }) async {
+    await ref.read(briefsRepositoryProvider).updateBrief(
+          briefId,
+          apartmentType: apartmentType,
+          city: city,
+          district: district,
+          workDescription: workDescription,
+          targetSpecialties: targetSpecialties,
+        );
+    ref.invalidate(briefByIdProvider(briefId));
+    ref.invalidate(myBriefsProvider);
+  }
+
+  /// Homeowner: remove a brief. Returns `'deleted'` when it was actually
+  /// removed, or `'cancelled'` when contractors had already quoted and the
+  /// brief was kept so their work survives.
+  Future<String> deleteOrCancelBrief(String briefId) async {
+    final outcome =
+        await ref.read(briefsRepositoryProvider).deleteOrCancelBrief(briefId);
+    ref.invalidate(myBriefsProvider);
+    ref.invalidate(briefByIdProvider(briefId));
+    return outcome;
+  }
+
+  /// Contractor: signal the hired work is finished (migration 0019).
+  Future<void> requestCompletion(String briefId) async {
+    await ref.read(briefsRepositoryProvider).requestCompletion(briefId);
+    ref.invalidate(briefByIdProvider(briefId));
+  }
+
+  /// Homeowner: confirm the work is done. Unlocks reviews and increments the
+  /// contractor's projects_completed, so the brief list is invalidated too.
+  Future<void> confirmCompletion(String briefId) async {
+    await ref.read(briefsRepositoryProvider).confirmCompletion(briefId);
+    ref.invalidate(briefByIdProvider(briefId));
+    ref.invalidate(myBriefsProvider);
   }
 
   Future<void> cancel(String briefId) async {

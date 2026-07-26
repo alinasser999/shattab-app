@@ -6,6 +6,12 @@
       "runtimeExecutable": "node",
       "runtimeArgs": [".claude/static_server.js"],
       "port": 8765
+    },
+    {
+      "name": "remotion-app",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--prefix", "C:/Users/dell/remotion-app"],
+      "port": 3000
     }
   ]
 }

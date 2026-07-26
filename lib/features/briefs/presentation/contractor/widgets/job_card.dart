@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import '../../../../../core/l10n/strings.dart';
 import '../../../../../core/utils/time_format.dart';
@@ -7,6 +8,7 @@ import '../../../../../core/theme/batsh_radius.dart';
 import '../../../../../core/theme/batsh_shadows.dart';
 import '../../../../../core/theme/batsh_spacing.dart';
 import '../../../../../core/theme/batsh_typography.dart';
+import '../../../../../core/utils/image_url.dart';
 import '../../../../onboarding/domain/onboarding_models.dart';
 import '../../../domain/brief.dart';
 
@@ -38,6 +40,9 @@ class JobCardData {
   String get relativeTime => formatRelativeTime(createdAt);
 }
 
+/// Image-forward job card: hero photo with floating status badges, then
+/// title, meta, and a primary/secondary CTA pair. Public API unchanged so
+/// the opportunities screen wiring stays intact.
 class PremiumJobCard extends StatelessWidget {
   const PremiumJobCard({
     super.key,
@@ -62,18 +67,17 @@ class PremiumJobCard extends StatelessWidget {
   final double? clientRating;
 
   /// True when the contractor has already sent a quote on this brief — the
-  /// action chip becomes a passive "quote sent" marker (tap still edits).
+  /// primary CTA becomes a passive "quote sent" marker (tap still edits).
   final bool alreadyQuoted;
 
-  bool get _isNew =>
-      DateTime.now().difference(job.createdAt).inHours < 6;
+  bool get _isNew => DateTime.now().difference(job.createdAt).inHours < 6;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
         color: BatshColors.cardBackground,
-        borderRadius: BorderRadius.circular(BatshRadius.xl),
+        borderRadius: BatshRadius.brCard,
         boxShadow: BatshShadows.soft,
       ),
       clipBehavior: Clip.antiAlias,
@@ -81,86 +85,219 @@ class PremiumJobCard extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.all(BatshSpacing.gutter),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _TopRow(
-                  isNew: _isNew,
-                  isUrgent: isUrgent,
-                  isBookmarked: isBookmarked,
-                  time: job.relativeTime,
-                  onBookmark: onBookmark,
-                ),
-                const SizedBox(height: BatshSpacing.sm),
-                if (budgetLabel != null) ...[
-                  Text(
-                    budgetLabel!,
-                    style: BatshTypography.headlineMd.copyWith(
-                      fontWeight: FontWeight.w800,
-                      color: BatshColors.primary,
-                    ),
-                  ),
-                  const SizedBox(height: BatshSpacing.xs),
-                ],
-                Text(
-                  job.title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: BatshTypography.bodyLg.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: BatshSpacing.xs),
-                Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _Hero(
+                job: job,
+                isNew: _isNew,
+                isUrgent: isUrgent,
+                isBookmarked: isBookmarked,
+                onBookmark: onBookmark,
+                budgetLabel: budgetLabel,
+              ),
+              Padding(
+                padding: const EdgeInsets.all(BatshSpacing.gutter),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(Icons.place_outlined,
-                        size: 15, color: BatshColors.onSurfaceVariant),
-                    SizedBox(width: BatshSpacing.xxs),
-                    Expanded(
-                      child: Text(
-                        job.location,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: BatshTypography.bodySm.copyWith(
-                          color: BatshColors.onSurfaceVariant,
-                        ),
+                    Text(
+                      job.title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: BatshTypography.titleMd.copyWith(
+                        fontWeight: FontWeight.w700,
+                        height: 1.3,
                       ),
                     ),
-                    SizedBox(width: BatshSpacing.sm),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: BatshSpacing.sm, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: BatshColors.primaryFixed.withValues(alpha: 0.3),
-                        borderRadius: BatshRadius.brFull,
-                      ),
-                      child: Text(
-                        job.apartmentLabel,
-                        style: BatshTypography.labelSm.copyWith(
-                          color: BatshColors.primary,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 10,
-                        ),
-                      ),
+                    const SizedBox(height: BatshSpacing.sm),
+                    _MetaRow(job: job, clientRating: clientRating),
+                    const SizedBox(height: BatshSpacing.md),
+                    Divider(
+                      height: 1,
+                      thickness: 1,
+                      color: BatshColors.outlineVariant.withValues(alpha: 0.4),
+                    ),
+                    const SizedBox(height: BatshSpacing.md),
+                    _CtaRow(
+                      onTap: onTap,
+                      onQuote: onQuote,
+                      alreadyQuoted: alreadyQuoted,
                     ),
                   ],
                 ),
-                const SizedBox(height: BatshSpacing.sm),
-                _TrustRow(
-                  clientRating: clientRating,
-                  applicantCount: null,
-                  photoCount: job.photoCount,
-                ),
-                const SizedBox(height: BatshSpacing.md),
-                _BottomRow(
-                  time: job.relativeTime,
-                  onTap: onTap,
-                  onQuote: onQuote,
-                  alreadyQuoted: alreadyQuoted,
-                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Hero image ──────────────────────────────────────────────────────────────
+
+class _Hero extends StatelessWidget {
+  const _Hero({
+    required this.job,
+    required this.isNew,
+    required this.isUrgent,
+    required this.isBookmarked,
+    required this.onBookmark,
+    required this.budgetLabel,
+  });
+
+  final JobCardData job;
+  final bool isNew;
+  final bool isUrgent;
+  final bool isBookmarked;
+  final VoidCallback? onBookmark;
+  final String? budgetLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    return AspectRatio(
+      aspectRatio: 16 / 10,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          if (job.hasPhoto)
+            CachedNetworkImage(
+              imageUrl: sizedImageUrl(job.coverPhotoUrl!, width: 800),
+              fit: BoxFit.cover,
+              // Cap the decode size. Uploads are ~1600px wide; decoding that
+              // full-res for a card this size costs several times the memory it
+              // needs, and this list is the app's longest scroll on the
+              // cheapest Android hardware in the market.
+              memCacheWidth: 1000,
+              placeholder: (_, _) => const _HeroPlaceholder(loading: true),
+              errorWidget: (_, _, _) => const _HeroPlaceholder(),
+            )
+          else
+            const _HeroPlaceholder(),
+          // Bottom scrim so overlaid chips stay legible on bright photos.
+          const DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.bottomCenter,
+                end: Alignment.center,
+                colors: [Color(0x33000000), Color(0x00000000)],
+              ),
+            ),
+          ),
+          // Status badges — top-start (right in RTL).
+          PositionedDirectional(
+            top: BatshSpacing.sm,
+            start: BatshSpacing.sm,
+            child: Row(
+              children: [
+                if (isNew)
+                  const _Badge(
+                    resolveNew: true,
+                    bgColor: BatshColors.secondary,
+                    textColor: Colors.white,
+                  ),
+                if (isNew && isUrgent) const SizedBox(width: BatshSpacing.xs),
+                if (isUrgent)
+                  const _Badge(
+                    resolveUrgent: true,
+                    bgColor: BatshColors.tertiary,
+                    textColor: Colors.white,
+                  ),
               ],
+            ),
+          ),
+          // Bookmark — top-end (left in RTL).
+          if (onBookmark != null)
+            PositionedDirectional(
+              top: BatshSpacing.xs,
+              end: BatshSpacing.xs,
+              child: _BookmarkButton(
+                isBookmarked: isBookmarked,
+                onTap: onBookmark!,
+              ),
+            ),
+          // Budget — bottom-start pill when present.
+          if (budgetLabel != null)
+            PositionedDirectional(
+              bottom: BatshSpacing.sm,
+              start: BatshSpacing.sm,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: BatshSpacing.sm, vertical: 5),
+                decoration: BoxDecoration(
+                  color: BatshColors.primary,
+                  borderRadius: BatshRadius.brFull,
+                ),
+                child: Text(
+                  budgetLabel!,
+                  style: BatshTypography.labelMd.copyWith(
+                    color: BatshColors.onPrimary,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HeroPlaceholder extends StatelessWidget {
+  const _HeroPlaceholder({this.loading = false});
+  final bool loading;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: AlignmentDirectional.topStart,
+          end: AlignmentDirectional.bottomEnd,
+          colors: [
+            BatshColors.primaryFixed.withValues(alpha: 0.55),
+            BatshColors.surfaceContainer,
+          ],
+        ),
+      ),
+      child: loading
+          ? const SizedBox.shrink()
+          : Center(
+              child: Icon(
+                Icons.home_work_outlined,
+                size: 44,
+                color: BatshColors.primary.withValues(alpha: 0.35),
+              ),
+            ),
+    );
+  }
+}
+
+class _BookmarkButton extends StatelessWidget {
+  const _BookmarkButton({required this.isBookmarked, required this.onTap});
+  final bool isBookmarked;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white.withValues(alpha: 0.9),
+      shape: const CircleBorder(),
+      child: InkWell(
+        customBorder: const CircleBorder(),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(7),
+          child: AnimatedSwitcher(
+            duration: BatshMotion.fast,
+            child: Icon(
+              isBookmarked ? Icons.bookmark : Icons.bookmark_border,
+              key: ValueKey(isBookmarked),
+              size: 20,
+              color: isBookmarked
+                  ? BatshColors.primary
+                  : BatshColors.onSurfaceVariant,
             ),
           ),
         ),
@@ -169,72 +306,22 @@ class PremiumJobCard extends StatelessWidget {
   }
 }
 
-class _TopRow extends StatelessWidget {
-  const _TopRow({
-    required this.isNew,
-    required this.isUrgent,
-    required this.isBookmarked,
-    required this.time,
-    required this.onBookmark,
-  });
-
-  final bool isNew;
-  final bool isUrgent;
-  final bool isBookmarked;
-  final String time;
-  final VoidCallback? onBookmark;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        if (isNew)
-          _Badge(
-            label: S.newBadge,
-            bgColor: BatshColors.secondaryContainer,
-            textColor: BatshColors.onSecondaryContainer,
-          ),
-        if (isNew && isUrgent) const SizedBox(width: BatshSpacing.xs),
-        if (isUrgent)
-          _Badge(
-            label: S.urgentBadge,
-            bgColor: BatshColors.tertiaryContainer,
-            textColor: BatshColors.onTertiaryContainer,
-          ),
-        const Spacer(),
-        if (onBookmark != null)
-          GestureDetector(
-            onTap: onBookmark,
-            child: AnimatedSwitcher(
-              duration: BatshMotion.fast,
-              child: Icon(
-                isBookmarked ? Icons.bookmark : Icons.bookmark_border,
-                key: ValueKey(isBookmarked),
-                size: 22,
-                color: isBookmarked
-                    ? BatshColors.primary
-                    : BatshColors.onSurfaceVariant.withValues(alpha: 0.5),
-              ),
-            ),
-          ),
-      ],
-    );
-  }
-}
-
 class _Badge extends StatelessWidget {
   const _Badge({
-    required this.label,
     required this.bgColor,
     required this.textColor,
+    this.resolveNew = false,
+    this.resolveUrgent = false,
   });
 
-  final String label;
   final Color bgColor;
   final Color textColor;
+  final bool resolveNew;
+  final bool resolveUrgent;
 
   @override
   Widget build(BuildContext context) {
+    final text = resolveNew ? S.newBadge : (resolveUrgent ? S.urgentBadge : '');
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
@@ -242,7 +329,7 @@ class _Badge extends StatelessWidget {
         borderRadius: BatshRadius.brFull,
       ),
       child: Text(
-        label,
+        text,
         style: BatshTypography.labelSm.copyWith(
           color: textColor,
           fontWeight: FontWeight.w700,
@@ -252,58 +339,63 @@ class _Badge extends StatelessWidget {
   }
 }
 
-class _TrustRow extends StatelessWidget {
-  const _TrustRow({
-    this.clientRating,
-    this.applicantCount,
-    required this.photoCount,
-  });
+// ─── Meta row ────────────────────────────────────────────────────────────────
 
+class _MetaRow extends StatelessWidget {
+  const _MetaRow({required this.job, this.clientRating});
+  final JobCardData job;
   final double? clientRating;
-  final int? applicantCount;
-  final int photoCount;
 
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
-        // "موثوق" client chip removed — no verification process backs it yet.
-        if (clientRating != null) ...[
-          const SizedBox(width: BatshSpacing.sm),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                clientRating!.toStringAsFixed(1),
-                style: BatshTypography.labelSm.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: BatshColors.onSurface,
-                ),
-              ),
-              const SizedBox(width: 2),
-              Icon(Icons.star, size: 13, color: BatshColors.tertiary),
-            ],
-          ),
-        ],
-        if (applicantCount != null) ...[
-          const Spacer(),
-          Icon(Icons.people_outline,
-              size: 14, color: BatshColors.onSurfaceVariant),
-          const SizedBox(width: 4),
-          Text(
-            '$applicantCount',
-            style: BatshTypography.labelSm.copyWith(
+        Icon(Icons.place_outlined,
+            size: 16, color: BatshColors.onSurfaceVariant),
+        const SizedBox(width: BatshSpacing.xxs),
+        Flexible(
+          child: Text(
+            job.location,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: BatshTypography.bodySm.copyWith(
               color: BatshColors.onSurfaceVariant,
             ),
           ),
-        ],
-        if (photoCount > 0) ...[
-          const SizedBox(width: BatshSpacing.sm),
-          Icon(Icons.photo_camera_outlined,
-              size: 14, color: BatshColors.onSurfaceVariant),
-          const SizedBox(width: 4),
+        ),
+        const SizedBox(width: BatshSpacing.sm),
+        Container(
+          padding:
+              const EdgeInsets.symmetric(horizontal: BatshSpacing.sm, vertical: 3),
+          decoration: BoxDecoration(
+            color: BatshColors.primaryFixed.withValues(alpha: 0.3),
+            borderRadius: BatshRadius.brFull,
+          ),
+          child: Text(
+            job.apartmentLabel,
+            style: BatshTypography.labelSm.copyWith(
+              color: BatshColors.primary,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+        const Spacer(),
+        if (clientRating != null) ...[
+          Icon(Icons.star, size: 15, color: BatshColors.tertiary),
+          const SizedBox(width: BatshSpacing.xxs),
           Text(
-            '$photoCount',
+            clientRating!.toStringAsFixed(1),
+            style: BatshTypography.labelSm.copyWith(
+              color: BatshColors.onSurface,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ] else ...[
+          Icon(Icons.access_time,
+              size: 14, color: BatshColors.onSurfaceVariant),
+          const SizedBox(width: BatshSpacing.xxs),
+          Text(
+            job.relativeTime,
             style: BatshTypography.labelSm.copyWith(
               color: BatshColors.onSurfaceVariant,
             ),
@@ -314,15 +406,15 @@ class _TrustRow extends StatelessWidget {
   }
 }
 
-class _BottomRow extends StatelessWidget {
-  const _BottomRow({
-    required this.time,
+// ─── CTA row ─────────────────────────────────────────────────────────────────
+
+class _CtaRow extends StatelessWidget {
+  const _CtaRow({
     required this.onTap,
     required this.onQuote,
-    this.alreadyQuoted = false,
+    required this.alreadyQuoted,
   });
 
-  final String time;
   final VoidCallback onTap;
   final VoidCallback onQuote;
   final bool alreadyQuoted;
@@ -331,81 +423,88 @@ class _BottomRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Icon(Icons.access_time,
-            size: 13, color: BatshColors.onSurfaceVariant),
-        const SizedBox(width: 4),
-        Text(
-          time,
-          style: BatshTypography.labelSm.copyWith(
-            color: BatshColors.onSurfaceVariant,
+        Expanded(
+          child: _CtaButton(
+            label: S.postDetailTitle,
+            onTap: onTap,
+            filled: false,
           ),
-        ),
-        const Spacer(),
-        _ActionChip(
-          label: S.postDetailTitle,
-          onTap: onTap,
         ),
         const SizedBox(width: BatshSpacing.sm),
-        if (alreadyQuoted)
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.check_circle,
-                  size: 15, color: BatshColors.success),
-              const SizedBox(width: 4),
-              Text(
-                S.quoteSentShort,
-                style: BatshTypography.labelSm.copyWith(
-                  color: BatshColors.success,
-                  fontWeight: FontWeight.w700,
+        Expanded(
+          child: alreadyQuoted
+              ? _CtaButton(
+                  label: S.quoteSentShort,
+                  icon: Icons.check_circle,
+                  onTap: onQuote,
+                  filled: true,
+                  bgColor: BatshColors.successContainer,
+                  fgColor: BatshColors.onSecondaryContainer,
+                )
+              : _CtaButton(
+                  label: S.sendQuoteButton,
+                  onTap: onQuote,
+                  filled: true,
                 ),
-              ),
-            ],
-          )
-        else
-          _ActionChip(
-            label: S.sendQuoteButton,
-            onTap: onQuote,
-            isPrimary: true,
-          ),
+        ),
       ],
     );
   }
 }
 
-class _ActionChip extends StatelessWidget {
-  const _ActionChip({
+class _CtaButton extends StatelessWidget {
+  const _CtaButton({
     required this.label,
     required this.onTap,
-    this.isPrimary = false,
+    required this.filled,
+    this.icon,
+    this.bgColor,
+    this.fgColor,
   });
 
   final String label;
   final VoidCallback onTap;
-  final bool isPrimary;
+  final bool filled;
+  final IconData? icon;
+  final Color? bgColor;
+  final Color? fgColor;
 
   @override
   Widget build(BuildContext context) {
+    final fg = fgColor ??
+        (filled ? BatshColors.onPrimary : BatshColors.onSurface);
     return Material(
-      color: isPrimary ? BatshColors.primary : Colors.transparent,
-      borderRadius: BatshRadius.brFull,
+      color: filled ? (bgColor ?? BatshColors.primary) : Colors.transparent,
+      borderRadius: BatshRadius.brDefault,
       child: InkWell(
-        borderRadius: BatshRadius.brFull,
+        borderRadius: BatshRadius.brDefault,
         onTap: onTap,
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          height: 46,
+          alignment: Alignment.center,
           decoration: BoxDecoration(
-            borderRadius: BatshRadius.brFull,
-            border: isPrimary
+            borderRadius: BatshRadius.brDefault,
+            border: filled
                 ? null
-                : Border.all(color: BatshColors.outlineVariant),
+                : Border.all(
+                    color: BatshColors.outline.withValues(alpha: 0.5),
+                    width: 1.5),
           ),
-          child: Text(
-            label,
-            style: BatshTypography.labelSm.copyWith(
-              color: isPrimary ? BatshColors.onPrimary : BatshColors.onSurface,
-              fontWeight: FontWeight.w600,
-            ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (icon != null) ...[
+                Icon(icon, size: 17, color: fg),
+                const SizedBox(width: BatshSpacing.xs),
+              ],
+              Text(
+                label,
+                style: BatshTypography.labelLg.copyWith(
+                  color: fg,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
           ),
         ),
       ),
