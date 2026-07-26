@@ -50,6 +50,22 @@ class ErrorMapper {
       return S.errNetwork;
     }
 
+    // Bare error codes raised by our own RPCs (accept_quote in 0009,
+    // request_completion / confirm_completion in 0019). These must be matched
+    // before the generic checks below: the underscored forms never match the
+    // spaced ones, so `brief_not_found` was falling through to a generic
+    // server error instead of "not found", and `not_authorized` does not
+    // contain the substring "unauthorized".
+    if (msg.contains('not_hired')) {
+      return S.errNotHiredYet;
+    }
+    if (msg.contains('brief_not_found') || msg.contains('quote_not_found')) {
+      return S.errNotFound;
+    }
+    if (msg.contains('not_authorized')) {
+      return S.errPermissionDenied;
+    }
+
     // Permission errors
     if (msg.contains('permission') ||
         msg.contains('unauthorized') ||

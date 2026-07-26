@@ -27,13 +27,22 @@ class ReviewsRepository {
     return row == null ? null : Review.fromJson(row);
   }
 
-  /// Every review a contractor has received, newest first.
+  /// Cap on the reviews list.
+  ///
+  /// The sheet shows a scrollable list, and the headline average and count on
+  /// the profile come from the `review_count` / `review_avg` rollup (0012), not
+  /// from counting these rows. A contractor with 800 reviews should not
+  /// transfer all of them to render the first screenful.
+  static const int maxRows = 100;
+
+  /// The most recent reviews a contractor has received, newest first.
   Future<List<Review>> fetchForContractor(String contractorId) async {
     final rows = await _client
         .from('reviews')
         .select()
         .eq('contractor_id', contractorId)
-        .order('created_at', ascending: false);
+        .order('created_at', ascending: false)
+        .limit(maxRows);
     return rows.map(Review.fromJson).toList();
   }
 
