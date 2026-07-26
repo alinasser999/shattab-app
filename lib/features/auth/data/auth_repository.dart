@@ -56,6 +56,21 @@ class AuthRepository {
 
   Future<void> signOut() => _client.auth.signOut();
 
+  /// Permanently deletes the signed-in user and everything they own.
+  ///
+  /// All the work happens in the `delete_my_account` RPC (0023): a client
+  /// cannot delete its own `auth.users` row, and doing the cleanup in one
+  /// server-side transaction is what stops an account ending up half-deleted.
+  ///
+  /// The local sign-out afterwards is belt and braces — the session's user no
+  /// longer exists, so every later request would fail anyway, but clearing it
+  /// returns the app to the landing screen immediately instead of showing a
+  /// signed-in shell full of errors.
+  Future<void> deleteAccount() async {
+    await _client.rpc('delete_my_account');
+    await _client.auth.signOut();
+  }
+
   Stream<AuthState> watchAuthState() => _client.auth.onAuthStateChange;
 
   Session? get currentSession => _client.auth.currentSession;

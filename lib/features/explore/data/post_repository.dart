@@ -66,16 +66,21 @@ class PostRepository {
     );
   }
 
+  /// Keyset pagination (migration 0017): pass the last post the caller already
+  /// holds ([beforeCreatedAt] + [beforeId]) to get strictly older rows. Null
+  /// cursor = first page. Drift-free as new posts arrive mid-scroll.
   Future<List<Post>> fetchFeed({
     required String userId,
     int limit = 10,
-    int offset = 0,
+    DateTime? beforeCreatedAt,
+    String? beforeId,
   }) async {
     final rows = await _client.rpc('get_for_you_feed', params: {
       // Guests have no uuid — null keeps is_liked/is_saved false server-side.
       'p_user_id': userId.isEmpty ? null : userId,
       'p_limit': limit,
-      'p_offset': offset,
+      'p_before_created_at': beforeCreatedAt?.toIso8601String(),
+      'p_before_id': beforeId,
     });
     return (rows as List)
         .map((r) => Post.fromJson(r as Map<String, dynamic>))
@@ -130,10 +135,13 @@ class PostRepository {
 
   Future<void> toggleLike(String postId, String userId, bool liked) async {
     if (liked) {
-      await _client.from('post_likes').insert({
-        'post_id': postId,
-        'user_id': userId,
-      });
+      // Idempotent: a double-tap / rapid re-like hits the (post_id,user_id) PK.
+      // ignoreDuplicates makes the second insert a no-op instead of a 23505.
+      await _client.from('post_likes').upsert(
+        {'post_id': postId, 'user_id': userId},
+        onConflict: 'post_id,user_id',
+        ignoreDuplicates: true,
+      );
     } else {
       await _client
           .from('post_likes')
@@ -145,10 +153,12 @@ class PostRepository {
 
   Future<void> toggleSave(String postId, String userId, bool saved) async {
     if (saved) {
-      await _client.from('post_saves').insert({
-        'post_id': postId,
-        'user_id': userId,
-      });
+      // Idempotent for the same reason as toggleLike (see above).
+      await _client.from('post_saves').upsert(
+        {'post_id': postId, 'user_id': userId},
+        onConflict: 'post_id,user_id',
+        ignoreDuplicates: true,
+      );
     } else {
       await _client
           .from('post_saves')

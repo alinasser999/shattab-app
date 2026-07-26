@@ -13,6 +13,7 @@ import '../../../core/theme/batsh_spacing.dart';
 import '../../../core/theme/batsh_typography.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/widgets/batsh_card.dart';
+import '../../../core/widgets/role_badge.dart';
 import '../../../core/widgets/batsh_empty_state.dart';
 import '../../../core/widgets/batsh_loading.dart';
 import '../../../core/widgets/batsh_scaffold.dart';
@@ -246,10 +247,17 @@ class _PostDetailContentState extends ConsumerState<_PostDetailContent> {
             children: [
               Row(
                 children: [
-                  GestureDetector(
-                    onTap: () => _navigateToProfile(post),
-                    child: Text(post.authorName ?? '', style: BatshTypography.labelMd),
+                  Flexible(
+                    child: GestureDetector(
+                      onTap: () => _navigateToProfile(post),
+                      child: Text(post.authorName ?? '',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: BatshTypography.labelMd),
+                    ),
                   ),
+                  const SizedBox(width: BatshSpacing.xs),
+                  RoleBadge(role: post.authorRole, compact: true),
                   if (isOwner) ...[
                     const Spacer(),
                     PopupMenuButton<String>(

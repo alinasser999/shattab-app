@@ -1,7 +1,12 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
+
+import '../../../moderation/data/moderation_repository.dart';
+import '../../../moderation/presentation/report_sheet.dart';
+import '../providers/explore_providers.dart';
 
 import '../../../../core/l10n/strings.dart';
 import '../../../../core/theme/batsh_colors.dart';
@@ -9,7 +14,9 @@ import '../../../../core/theme/batsh_motion.dart';
 import '../../../../core/theme/batsh_radius.dart';
 import '../../../../core/theme/batsh_spacing.dart';
 import '../../../../core/theme/batsh_typography.dart';
+import '../../../../core/utils/image_url.dart';
 import '../../../../core/widgets/batsh_card.dart';
+import '../../../../core/widgets/role_badge.dart';
 import '../../../discovery/presentation/widgets/avatar_with_initials.dart';
 import '../../domain/post.dart';
 import 'post_type_icon.dart';
@@ -24,6 +31,9 @@ class PostCard extends StatelessWidget {
     this.onSave,
     this.onProfileTap,
     this.onCommentTap,
+    this.isOwner = false,
+    this.onEdit,
+    this.onDelete,
   });
 
   final Post post;
@@ -33,6 +43,12 @@ class PostCard extends StatelessWidget {
   final VoidCallback? onSave;
   final VoidCallback? onProfileTap;
   final VoidCallback? onCommentTap;
+
+  /// True when the signed-in user wrote this post. Controls the overflow menu —
+  /// the feed previously offered no way to fix a typo without opening the post.
+  final bool isOwner;
+  final VoidCallback? onEdit;
+  final VoidCallback? onDelete;
 
   String get _shareUrl => 'https://shattab.app/explore/post/${post.id}';
 
@@ -110,12 +126,25 @@ class PostCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                GestureDetector(
-                  onTap: onProfileTap,
-                  child: Text(
-                    post.authorName ?? '',
-                    style: BatshTypography.labelMd,
-                  ),
+                Row(
+                  children: [
+                    Flexible(
+                      child: GestureDetector(
+                        onTap: onProfileTap,
+                        child: Text(
+                          post.authorName ?? '',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: BatshTypography.labelMd,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: BatshSpacing.xs),
+                    // Sits beside the name, not under it: whether the author is
+                    // a contractor or a homeowner changes how the whole post
+                    // reads, so it has to arrive with the name.
+                    RoleBadge(role: post.authorRole, compact: true),
+                  ],
                 ),
                 const SizedBox(height: 2),
                 Row(
@@ -136,6 +165,12 @@ class PostCard extends StatelessWidget {
               ],
             ),
           ),
+          if (isOwner && (onEdit != null || onDelete != null))
+            _OwnerMenu(onEdit: onEdit, onDelete: onDelete)
+          else if (!isOwner)
+            // Every post someone else wrote needs a way out: report it, or stop
+            // seeing this person entirely.
+            _ModerationMenu(postId: post.id, authorId: post.authorId),
         ],
       ),
     );
@@ -146,7 +181,7 @@ class PostCard extends StatelessWidget {
       return ClipRRect(
         borderRadius: BatshRadius.brSm,
         child: CachedNetworkImage(
-          imageUrl: post.mediaUrls.first,
+          imageUrl: sizedImageUrl(post.mediaUrls.first, width: 900),
           width: double.infinity,
           height: 260,
           fit: BoxFit.cover,
@@ -171,7 +206,7 @@ class PostCard extends StatelessWidget {
         itemBuilder: (_, i) => ClipRRect(
           borderRadius: BatshRadius.brSm,
           child: CachedNetworkImage(
-            imageUrl: post.mediaUrls[i],
+            imageUrl: sizedImageUrl(post.mediaUrls[i], width: 800),
             width: double.infinity,
             fit: BoxFit.cover,
             memCacheWidth: 800,
@@ -232,6 +267,106 @@ class PostCard extends StatelessWidget {
       case PostType.milestone: return S.postTypeMilestone;
       case PostType.renovationUpdate: return S.postTypeRenovationUpdate;
     }
+  }
+}
+
+/// Overflow menu for someone else's post: report the content, or block the
+/// author. Blocking refreshes the feed, since the RPC filters blocked authors
+/// server-side and the post should disappear immediately rather than at the
+/// next pull-to-refresh.
+class _ModerationMenu extends ConsumerWidget {
+  const _ModerationMenu({required this.postId, required this.authorId});
+
+  final String postId;
+  final String authorId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return PopupMenuButton<String>(
+      tooltip: S.reportTitle,
+      icon: const Icon(Icons.more_horiz_rounded,
+          size: 20, color: BatshColors.onSurfaceVariant),
+      onSelected: (v) async {
+        if (v == 'report') {
+          showReportSheet(context,
+              target: ReportTarget.post, targetId: postId);
+        } else if (v == 'block') {
+          final blocked = await confirmAndBlock(context, ref, authorId);
+          if (blocked) ref.invalidate(exploreFeedProvider);
+        }
+      },
+      itemBuilder: (_) => [
+        PopupMenuItem(
+          value: 'report',
+          child: Row(
+            children: [
+              const Icon(Icons.flag_outlined, size: 18),
+              const SizedBox(width: BatshSpacing.sm),
+              Text(S.reportPostAction),
+            ],
+          ),
+        ),
+        PopupMenuItem(
+          value: 'block',
+          child: Row(
+            children: [
+              const Icon(Icons.block, size: 18, color: BatshColors.error),
+              const SizedBox(width: BatshSpacing.sm),
+              Text(S.blockUser,
+                  style: const TextStyle(color: BatshColors.error)),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Overflow menu for a post you wrote. Delete is styled as destructive and
+/// listed last, so the two entries can't be confused by muscle memory.
+class _OwnerMenu extends StatelessWidget {
+  const _OwnerMenu({this.onEdit, this.onDelete});
+
+  final VoidCallback? onEdit;
+  final VoidCallback? onDelete;
+
+  @override
+  Widget build(BuildContext context) {
+    return PopupMenuButton<String>(
+      tooltip: S.editPost,
+      icon: const Icon(Icons.more_horiz_rounded,
+          size: 20, color: BatshColors.onSurfaceVariant),
+      onSelected: (v) {
+        if (v == 'edit') onEdit?.call();
+        if (v == 'delete') onDelete?.call();
+      },
+      itemBuilder: (_) => [
+        if (onEdit != null)
+          PopupMenuItem(
+            value: 'edit',
+            child: Row(
+              children: [
+                const Icon(Icons.edit_outlined, size: 18),
+                const SizedBox(width: BatshSpacing.sm),
+                Text(S.editPost),
+              ],
+            ),
+          ),
+        if (onDelete != null)
+          PopupMenuItem(
+            value: 'delete',
+            child: Row(
+              children: [
+                const Icon(Icons.delete_outline,
+                    size: 18, color: BatshColors.error),
+                const SizedBox(width: BatshSpacing.sm),
+                Text(S.deletePost,
+                    style: const TextStyle(color: BatshColors.error)),
+              ],
+            ),
+          ),
+      ],
+    );
   }
 }
 

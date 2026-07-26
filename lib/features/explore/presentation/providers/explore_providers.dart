@@ -18,37 +18,43 @@ class ExploreFeed extends _$ExploreFeed {
 
   @override
   AsyncValue<List<Post>> build() {
-    _fetchPage(0);
+    _fetchPage();
     return const AsyncLoading();
   }
 
-  Future<void> _fetchPage(int offset) async {
+  /// Keyset pagination (migration 0017): [cursor] is the last post already
+  /// loaded; null fetches the first page. Deterministic — no offset drift.
+  Future<void> _fetchPage({Post? cursor}) async {
     try {
       final userId = ref.read(currentSessionProvider)?.user.id ?? '';
       final repo = ref.read(postRepositoryProvider);
-      final posts =
-          await repo.fetchFeed(userId: userId, limit: _pageSize, offset: offset);
+      final posts = await repo.fetchFeed(
+        userId: userId,
+        limit: _pageSize,
+        beforeCreatedAt: cursor?.createdAt,
+        beforeId: cursor?.id,
+      );
       _hasMore = posts.length == _pageSize;
-      state = AsyncData(offset == 0 ? posts : [...?state.value, ...posts]);
+      state = AsyncData(cursor == null ? posts : [...?state.value, ...posts]);
     } catch (e, st) {
       // Only surface a fresh-load failure. A page>0 failure keeps the list
       // the user already has so a flaky scroll doesn't wipe the feed.
-      if (offset == 0) state = AsyncError(e, st);
+      if (cursor == null) state = AsyncError(e, st);
     }
   }
 
   Future<void> refresh() async {
     _hasMore = true;
     state = const AsyncLoading();
-    await _fetchPage(0);
+    await _fetchPage();
   }
 
   Future<void> loadMore() async {
     if (_loading || !_hasMore) return;
     final current = state.value;
-    if (current == null) return;
+    if (current == null || current.isEmpty) return;
     _loading = true;
-    await _fetchPage(current.length);
+    await _fetchPage(cursor: current.last);
     _loading = false;
   }
 

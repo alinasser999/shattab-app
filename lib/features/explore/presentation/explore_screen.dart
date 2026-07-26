@@ -4,7 +4,9 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/l10n/strings.dart';
 import '../../../core/router/routes.dart';
+import '../../../core/theme/batsh_colors.dart';
 import '../../../core/theme/batsh_spacing.dart';
+import '../../../core/utils/error_mapper.dart';
 import '../../../core/widgets/batsh_button.dart';
 import '../../../core/widgets/batsh_empty_state.dart';
 import '../../../core/widgets/batsh_loading.dart';
@@ -57,6 +59,50 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
       action();
     } else {
       runSignedIn(context, ref, reason: S.signInToPost, action: action);
+    }
+  }
+
+  /// Confirms before deleting, because a post cannot be recovered. Pops with
+  /// the dialog's own context: the screen's context resolves to the shell
+  /// branch navigator and would dismiss the screen instead of the dialog.
+  Future<void> _confirmDeletePost(BuildContext context, String postId) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(S.deletePost),
+        content: Text(S.deletePostConfirm),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(S.cancel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(S.deletePost,
+                style: const TextStyle(color: BatshColors.error)),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !context.mounted) return;
+
+    try {
+      await ref.read(postControllerProvider.notifier).deletePost(postId);
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(
+          content: Text(S.postDeleted),
+          behavior: SnackBarBehavior.floating,
+        ));
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(
+          content: Text(ErrorMapper.map(e)),
+          behavior: SnackBarBehavior.floating,
+        ));
     }
   }
 
@@ -143,6 +189,11 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                   },
                   onCommentTap: () =>
                       context.push('${_explorePrefix()}/post/${posts[i].id}'),
+                  // Fixing your own post shouldn't require opening it first.
+                  isOwner: session?.user.id == posts[i].authorId,
+                  onEdit: () =>
+                      context.push('${_explorePrefix()}/post/${posts[i].id}'),
+                  onDelete: () => _confirmDeletePost(context, posts[i].id),
                 );
               },
             );
