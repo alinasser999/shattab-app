@@ -1101,6 +1101,18 @@ class S {
   static String get continueWithApple =>
       _t('تسجيل الدخول باستخدام Apple', 'Sign in with Apple');
 
+  // ── Free quote quota (0025) ─────────────────────────────────────────────
+  /// Shown under the send-quote button while free quotes remain. Frames the
+  /// cap as something you still have, not something you have lost.
+  static String quotesLeftThisMonth(int remaining) => _t(
+      'باقي لك $remaining عروض مجانية الشهر ده',
+      '$remaining free quotes left this month');
+  static String get quotaReachedTitle =>
+      _t('خلصت عروضك المجانية', 'You have used your free quotes');
+  static String quotaReachedBody(int quota) => _t(
+      'بتقدر تبعت $quota عروض مجانية كل شهر. اشترك في برو عشان تبعت عروض من غير حدود.',
+      'You get $quota free quotes a month. Go Pro to send unlimited quotes.');
+
   // ── Legal ───────────────────────────────────────────────────────────────
   static String get privacyPolicy => _t('سياسة الخصوصية', 'Privacy policy');
   static String get termsOfService => _t('الشروط والأحكام', 'Terms of service');

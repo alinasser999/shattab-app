@@ -77,6 +77,26 @@ class QuotesRepository {
     }).toList();
   }
 
+  /// How many free quotes this contractor has left this month.
+  ///
+  /// Comes from the `my_quote_quota` RPC (0025) rather than being counted
+  /// client-side, so the number shown in the UI and the number the RLS policy
+  /// enforces come from one definition and cannot disagree.
+  Future<({bool isPro, int used, int quota})> fetchQuota() async {
+    final rows = await _client.rpc('my_quote_quota') as List<dynamic>;
+    if (rows.isEmpty) {
+      // No row means no contractor profile — treat as no allowance rather than
+      // guessing generously.
+      return (isPro: false, used: 0, quota: 0);
+    }
+    final row = rows.first as Map<String, dynamic>;
+    return (
+      isPro: row['is_pro'] as bool? ?? false,
+      used: row['used'] as int? ?? 0,
+      quota: row['quota'] as int? ?? 0,
+    );
+  }
+
   /// Contractor view — my quote on a single brief, or null if none yet.
   Future<Quote?> fetchMineForBrief(String briefId) async {
     final row = await _client

@@ -22,6 +22,14 @@ Future<Quote?> myQuoteForBrief(Ref ref, String briefId) =>
 Future<List<Quote>> myQuotes(Ref ref) =>
     ref.watch(quotesRepositoryProvider).fetchMine();
 
+/// Contractor — free-quote allowance for this month.
+///
+/// Drives the send-quote CTA: Pro sends without limit, a free contractor sends
+/// until the quota is spent and only then sees the paywall.
+@riverpod
+Future<({bool isPro, int used, int quota})> myQuoteQuota(Ref ref) =>
+    ref.watch(quotesRepositoryProvider).fetchQuota();
+
 /// Contractor — my quotes with each brief already joined on.
 ///
 /// Backs the quotes screen, which needs the brief for the row title and the
@@ -56,6 +64,8 @@ class QuotesController extends _$QuotesController {
     ref.invalidate(quotesForBriefProvider(briefId));
     ref.invalidate(myQuotesProvider);
     ref.invalidate(myQuotesWithBriefsProvider);
+    // Sending or withdrawing a quote moves the free-quota counter.
+    ref.invalidate(myQuoteQuotaProvider);
   }
 
   Future<void> setStatus({
@@ -68,5 +78,7 @@ class QuotesController extends _$QuotesController {
     ref.invalidate(myQuoteForBriefProvider(briefId));
     ref.invalidate(myQuotesProvider);
     ref.invalidate(myQuotesWithBriefsProvider);
+    // Sending or withdrawing a quote moves the free-quota counter.
+    ref.invalidate(myQuoteQuotaProvider);
   }
 }

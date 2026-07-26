@@ -9,7 +9,6 @@ import '../../../../core/widgets/batsh_button.dart';
 import '../../../../core/widgets/batsh_card.dart';
 import '../../../../core/widgets/batsh_shimmer.dart';
 import '../../../billing/presentation/paywall_sheet.dart';
-import '../../../onboarding/presentation/providers/onboarding_provider.dart';
 import '../../domain/quote.dart';
 import '../providers/quotes_providers.dart';
 import '../quote_format.dart';
@@ -25,21 +24,45 @@ class ContractorQuoteCta extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(myQuoteForBriefProvider(briefId));
-    // Lead-gate: only active-Pro contractors get the send-quote action; free
-    // ones get the paywall CTA. The DB also rejects their inserts (RLS), so
-    // this is UX, not the security boundary.
-    final isPro = ref.watch(contractorProfileProvider).value?.isPro ?? false;
-    Widget sendCta() => isPro
-        ? BatshButton(
-            label: S.sendQuote,
-            icon: Icons.request_quote_outlined,
-            onPressed: () => showQuoteSheet(context, briefId: briefId),
-          )
-        : BatshButton(
-            label: S.upgradeToProShort,
-            icon: Icons.workspace_premium_outlined,
-            onPressed: () => showPaywallSheet(context),
-          );
+    // Free contractors can quote up to a monthly cap (0025); only a spent quota
+    // shows the paywall. The same rule is enforced in RLS — this is UX, not the
+    // security boundary. While the quota is still loading, assume the quote can
+    // be sent: briefly flashing the paywall at a paying contractor is worse
+    // than a rejected insert, which the sheet already reports.
+    final quota = ref.watch(myQuoteQuotaProvider).value;
+    final remaining =
+        quota == null ? null : (quota.quota - quota.used).clamp(0, 9999);
+    final canSend = quota == null || quota.isPro || remaining! > 0;
+
+    Widget sendCta() {
+      if (!canSend) {
+        return BatshButton(
+          label: S.upgradeToProShort,
+          icon: Icons.workspace_premium_outlined,
+          onPressed: () => showPaywallSheet(context),
+        );
+      }
+      final button = BatshButton(
+        label: S.sendQuote,
+        icon: Icons.request_quote_outlined,
+        onPressed: () => showQuoteSheet(context, briefId: briefId),
+      );
+      // Only free contractors see a counter.
+      if (quota == null || quota.isPro) return button;
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          button,
+          const SizedBox(height: BatshSpacing.xs),
+          Text(
+            S.quotesLeftThisMonth(remaining!),
+            textAlign: TextAlign.center,
+            style: BatshTypography.labelSm
+                .copyWith(color: BatshColors.onSurfaceVariant),
+          ),
+        ],
+      );
+    }
 
     return async.when(
       loading: () => const BatshShimmerBox(
