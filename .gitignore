@@ -72,3 +72,6 @@ lib/preview_*.dart
 # opencode config (may contain API keys)
 opencode.json
 
+
+# Local tooling output (design critiques) — not part of the project.
+.impeccable/

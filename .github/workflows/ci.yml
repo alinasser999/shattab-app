@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  # A new push to the same branch supersedes the run in flight.
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Analyze & test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - run: flutter pub get
+
+      - run: flutter analyze
+
+      - run: flutter test --reporter=github
+
+# Deliberately not gated here:
+# - `dart format`: 124 of 174 files are not format-clean today, so the gate
+#   would fail on arrival. Run `dart format lib test` as its own commit, then
+#   add the check.
+# - build_runner freshness: generated .g.dart files are committed, and a
+#   generator-version bump on the runner would fail the build for reasons
+#   unrelated to the change under review.
