@@ -14,13 +14,19 @@ class PortfolioRepository {
   PortfolioRepository(this._client);
   final SupabaseClient _client;
 
+  /// Cap on a contractor's project list. The gallery is a scrollable grid
+  /// rather than a paginated view, so this bounds the payload without changing
+  /// behaviour for any realistic portfolio.
+  static const int maxRows = 100;
+
   Future<List<PortfolioProject>> fetchForContractor(String contractorId) async {
     final rows = await _client
         .from('portfolio_projects')
         .select()
         .eq('contractor_id', contractorId)
         .order('position', ascending: false)
-        .order('created_at', ascending: false);
+        .order('created_at', ascending: false)
+        .limit(maxRows);
     return rows.map(PortfolioProject.fromJson).toList();
   }
 
@@ -71,6 +77,10 @@ class PortfolioRepository {
     String? location,
     int? yearCompleted,
   }) async {
+    // Photos the edit dropped must not linger in storage. Diff old vs new
+    // before writing (delete() already does this for the whole project).
+    final old = await fetchById(projectId);
+
     final row = await _client
         .from('portfolio_projects')
         .update({
@@ -85,6 +95,16 @@ class PortfolioRepository {
         .eq('id', projectId)
         .select()
         .single();
+
+    if (old != null) {
+      final kept = {...photoUrls, coverPhotoUrl};
+      final dropped = [
+        ...old.photoUrls,
+        old.coverPhotoUrl,
+      ].where((u) => !kept.contains(u)).toList();
+      if (dropped.isNotEmpty) await _removeStoragePhotos(dropped);
+    }
+
     return PortfolioProject.fromJson(row);
   }
 

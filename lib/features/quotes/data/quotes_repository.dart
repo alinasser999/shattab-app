@@ -3,6 +3,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/supabase/supabase_provider.dart';
+import '../../briefs/domain/brief.dart';
 import '../domain/quote.dart';
 
 part 'quotes_repository.g.dart';
@@ -17,13 +18,22 @@ class QuotesRepository {
     return id;
   }
 
+  /// Upper bound on any list read here.
+  ///
+  /// These queries were previously unbounded. A contractor two years in would
+  /// download their entire quote history every time they opened the tab, and a
+  /// popular brief would return every offer ever made on it. Neither list has a
+  /// UI that can use more than a screenful.
+  static const int maxRows = 100;
+
   /// Homeowner view — all quotes on a brief they own (RLS: homeowner_read).
   Future<List<Quote>> fetchForBrief(String briefId) async {
     final rows = await _client
         .from('quotes')
         .select()
         .eq('brief_id', briefId)
-        .order('created_at', ascending: true);
+        .order('created_at', ascending: true)
+        .limit(maxRows);
     return rows.map(Quote.fromJson).toList();
   }
 
@@ -33,8 +43,38 @@ class QuotesRepository {
         .from('quotes')
         .select()
         .eq('contractor_id', _uid)
-        .order('created_at', ascending: false);
+        .order('created_at', ascending: false)
+        .limit(maxRows);
     return rows.map(Quote.fromJson).toList();
+  }
+
+  /// Contractor view — my quotes with their brief already attached.
+  ///
+  /// The quotes list needs each quote's brief for the title and the completion
+  /// card. Resolving that per row (a `briefById` watch inside the list item
+  /// builder) meant N sequential HTTP requests: 50 quotes was 50 round trips,
+  /// which on mobile latency is several seconds of spinner while the database
+  /// sits idle. PostgREST can embed the parent through the `brief_id` foreign
+  /// key, so this is one request regardless of list length.
+  ///
+  /// The brief is nullable: RLS may hide it (cancelled, or filtered server-side)
+  /// even when the quote itself is still readable.
+  Future<List<({Quote quote, Brief? brief})>> fetchMineWithBriefs() async {
+    final rows = await _client
+        .from('quotes')
+        .select('*, briefs(*)')
+        .eq('contractor_id', _uid)
+        .order('created_at', ascending: false)
+        .limit(maxRows);
+
+    return rows.map((row) {
+      final embedded = row['briefs'];
+      return (
+        quote: Quote.fromJson(row),
+        brief:
+            embedded is Map<String, dynamic> ? Brief.fromJson(embedded) : null,
+      );
+    }).toList();
   }
 
   /// Contractor view — my quote on a single brief, or null if none yet.

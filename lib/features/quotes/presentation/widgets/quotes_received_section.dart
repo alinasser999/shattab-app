@@ -18,6 +18,7 @@ import '../../../../core/widgets/batsh_shimmer.dart';
 import '../../../../core/widgets/batsh_stars.dart';
 import '../../../../core/widgets/contact_buttons.dart';
 import '../../../../core/utils/error_mapper.dart';
+import '../../../briefs/presentation/providers/briefs_providers.dart';
 import '../../../discovery/presentation/providers/discovery_providers.dart';
 import '../../../reviews/presentation/providers/reviews_providers.dart';
 import '../../../reviews/presentation/write_review_sheet.dart';
@@ -372,6 +373,29 @@ class _ReviewBlock extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final existing = ref.watch(reviewForBriefProvider(briefId)).value;
     if (existing == null) {
+      // Migration 0019 requires briefs.completed_at for the review insert, so
+      // offering the button before completion would show a form the database
+      // rejects. Reviews follow finished work, not hiring.
+      final brief = ref.watch(briefByIdProvider(briefId)).value;
+      if (brief == null || !brief.canBeReviewed) {
+        return Padding(
+          padding: const EdgeInsets.only(top: BatshSpacing.sm),
+          child: Row(
+            children: [
+              Icon(Icons.info_outline,
+                  size: 15, color: BatshColors.onSurfaceVariant),
+              const SizedBox(width: BatshSpacing.xs),
+              Expanded(
+                child: Text(
+                  S.reviewAfterCompletionHint,
+                  style: BatshTypography.labelSm
+                      .copyWith(color: BatshColors.onSurfaceVariant),
+                ),
+              ),
+            ],
+          ),
+        );
+      }
       return Padding(
         padding: const EdgeInsets.only(top: BatshSpacing.sm),
         child: BatshButton(

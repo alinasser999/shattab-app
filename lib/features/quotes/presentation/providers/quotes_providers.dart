@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../../briefs/domain/brief.dart';
 import '../../data/quotes_repository.dart';
 import '../../domain/quote.dart';
 
@@ -20,6 +21,15 @@ Future<Quote?> myQuoteForBrief(Ref ref, String briefId) =>
 @riverpod
 Future<List<Quote>> myQuotes(Ref ref) =>
     ref.watch(quotesRepositoryProvider).fetchMine();
+
+/// Contractor — my quotes with each brief already joined on.
+///
+/// Backs the quotes screen, which needs the brief for the row title and the
+/// completion card. Fetching them together is one request; resolving the brief
+/// per row was one request per quote.
+@riverpod
+Future<List<({Quote quote, Brief? brief})>> myQuotesWithBriefs(Ref ref) =>
+    ref.watch(quotesRepositoryProvider).fetchMineWithBriefs();
 
 // keepAlive: called one-shot via ref.read(...notifier); autoDispose would
 // tear the controller down mid-await and its next ref use would throw.
@@ -45,6 +55,7 @@ class QuotesController extends _$QuotesController {
     ref.invalidate(myQuoteForBriefProvider(briefId));
     ref.invalidate(quotesForBriefProvider(briefId));
     ref.invalidate(myQuotesProvider);
+    ref.invalidate(myQuotesWithBriefsProvider);
   }
 
   Future<void> setStatus({
@@ -56,5 +67,6 @@ class QuotesController extends _$QuotesController {
     ref.invalidate(quotesForBriefProvider(briefId));
     ref.invalidate(myQuoteForBriefProvider(briefId));
     ref.invalidate(myQuotesProvider);
+    ref.invalidate(myQuotesWithBriefsProvider);
   }
 }
