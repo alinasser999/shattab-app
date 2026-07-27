@@ -17,6 +17,7 @@ import '../../../../core/widgets/batsh_button.dart';
 import '../../../../core/widgets/batsh_pressable.dart';
 import '../../../../core/widgets/batsh_shimmer.dart';
 import '../../../../core/widgets/contact_buttons.dart';
+import '../../../../core/widgets/tier_badge.dart';
 import '../../../auth/presentation/sign_in_sheet.dart';
 import '../../../onboarding/domain/onboarding_models.dart';
 import '../../../portfolio/domain/portfolio_project.dart';
@@ -457,9 +458,9 @@ class _NameHeadline extends StatelessWidget {
               textAlign: TextAlign.center,
               style: BatshTypography.headlineLgMobile),
           const SizedBox(height: BatshSpacing.sm),
-          // Kind first, then verification: what they are, then whether we
-          // checked. Wrap so the pair reflows instead of overflowing at large
-          // text scales.
+          // Kind first, then verification, then the earned level: what they
+          // are, whether we checked, and what the work record says. Wrap so
+          // the set reflows instead of overflowing at large text scales.
           Wrap(
             alignment: WrapAlignment.center,
             spacing: BatshSpacing.xs,
@@ -467,6 +468,9 @@ class _NameHeadline extends StatelessWidget {
             children: [
               _ProviderKindBadge(kind: contractor.providerKind),
               if (contractor.verified) const _VerifiedBadge(),
+              // Tappable here because this is where a homeowner is actually
+              // deciding, and an unexplained rank is just another glyph.
+              TierBadge(tier: contractor.tier, explainOnTap: true),
             ],
           ),
           if (contractor.headline != null &&
@@ -595,7 +599,7 @@ class _RatingPill extends StatelessWidget {
                 size: 16, color: BatshColors.onSecondaryContainer),
             const SizedBox(width: BatshSpacing.xs),
             Text(
-              S.newContractor,
+              S.newProfessional,
               style: BatshTypography.labelMd.copyWith(
                 color: BatshColors.onSecondaryContainer,
                 fontWeight: FontWeight.w700,
@@ -893,7 +897,7 @@ class _BioSection extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(S.aboutContractor,
+            Text(S.aboutProfessional,
                 style: BatshTypography.labelMd.copyWith(
                   color: BatshColors.onSurfaceVariant,
                   fontWeight: FontWeight.w700,

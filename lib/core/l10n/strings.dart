@@ -13,7 +13,7 @@ class S {
   static String get appName => _t('شطب', 'Shattab');
   static String get appNameLatin => 'Shattab';
   static String get appTagline =>
-      _t('مقاولين وعملاء، في مكان واحد', 'Contractors & clients, in one place');
+      _t('محترفين وعملاء، في مكان واحد', 'Professionals & clients, in one place');
 
   // Auth
   static String get enterPhone => _t('ادخل رقم تليفونك', 'Enter your phone number');
@@ -25,7 +25,7 @@ class S {
   // Sign-in sheet (guest browse -> gated action)
   static String get signInSheetTitle => _t('سجّل دخولك للمتابعة', 'Sign in to continue');
   static String get signInToSave =>
-      _t('سجّل دخولك لحفظ هذا المقاول', 'Sign in to save this contractor');
+      _t('سجّل دخولك لحفظ هذا المحترف', 'Sign in to save this Professional');
   static String get signInToSendRequest =>
       _t('سجّل دخولك لإرسال طلبك', 'Sign in to send your request');
   static String get signInToPost =>
@@ -43,20 +43,20 @@ class S {
       'العروض اللي هتبعتها للطلبات هتظهر هنا',
       'Quotes you send on jobs will show up here');
   static String get signInToSeeSaved => _t(
-      'سجّل دخولك لرؤية المقاولين المحفوظين', 'Sign in to see your saved contractors');
+      'سجّل دخولك لرؤية المحترفين المحفوظين', 'Sign in to see your saved Professionals');
   static String get signInToSeeRequests =>
       _t('سجّل دخولك لرؤية طلباتك', 'Sign in to see your requests');
   static String get signInOrCreateAccount =>
       _t('سجّل دخولك أو أنشئ حساب', 'Sign in or create an account');
   static String get whatsYourName => _t('إيه اسمك؟', "What's your name?");
   static String get contractorSignInLink =>
-      _t('مقاول؟ سجّل دخولك من هنا', 'Contractor? Sign in here');
+      _t('محترف؟ سجّل دخولك من هنا', 'Professional? Sign in here');
 
   // Login redesign (M4)
   static String get heroLine1 => _t('شطب بيتك', 'Finish your home');
   static String get heroLine2 => _t('من غير وجع دماغ', 'without the headache');
   static String get heroSubtitle => _t(
-      'اطلب الخدمة المناسبة واستقبل عروضًا من مقاولين موثقين.',
+      'اطلب الخدمة المناسبة واستقبل عروضًا من محترفين موثقين.',
       'Request the right service and receive quotes from verified contractors.');
   static String get phoneLabel => _t('رقم التليفون', 'Phone number');
   static String get verifyMessage =>
@@ -105,8 +105,8 @@ class S {
           'Choose what fits you so we can tailor the experience');
   static String get roleHomeowner => _t('صاحب شقة', 'Homeowner');
   static String get roleHomeownerSub =>
-      _t('بدور على مقاول يجدّد عندي', 'Looking for a contractor to renovate');
-  static String get roleContractor => _t('مقاول', 'Contractor');
+      _t('بدور على محترف يجدّد عندي', 'Looking for a Professional to renovate');
+  static String get roleProfessional => _t('محترف', 'Professional');
   static String get roleContractorSub =>
       _t('بدور على شغل وعملاء جداد', 'Looking for jobs and new clients');
 
@@ -310,6 +310,23 @@ class S {
   static String get tierGold => _t('ذهبي', 'Gold');
   static String get tierSilver => _t('فضي', 'Silver');
   static String get tierBronze => _t('برونزي', 'Bronze');
+
+  /// Prefix on the public tier badge. Without it "ذهبي" alone reads like the
+  /// name of a subscription; "مستوى ذهبي" reads like a rank that was climbed.
+  static String get tierLevelPrefix => _t('مستوى', 'Level');
+  static String get tierHowTitle =>
+      _t('إزاي بتتحسب المستويات؟', 'How levels are earned');
+  static String get tierHowGold => _t(
+      'ذهبي: حساب موثّق + ١٠ مشاريع منجزة أو ٥ تقييمات.',
+      'Gold: verified account + 10 completed projects or 5 reviews.');
+  static String get tierHowSilver => _t('فضي: ٣ مشاريع منجزة أو حساب موثّق.',
+      'Silver: 3 completed projects or a verified account.');
+
+  /// The ethics line, shown verbatim in the explainer: the tier is the one
+  /// badge in the app that money cannot move.
+  static String get tierNotForSale => _t(
+      'المستوى بيتكسب بالشغل المنجز — مش بيتباع ومش جزء من اشتراك برو.',
+      'Levels are earned through completed work — never bought, not part of Pro.');
   static String get accountWelcome => _t('أهلاً بك', 'Welcome');
   static String get ratingCaption => _t('تقييم العملاء', 'Client rating');
   static String get statJobs => _t('عدد الأعمال', 'Jobs');
@@ -488,9 +505,9 @@ class S {
 
   // ── Discover ─────────────────────────────────────────────────────────────
   static String get searchHint =>
-      _t('ابحث عن مقاول أو شركة…', 'Search for a contractor or company…');
+      _t('ابحث عن محترف أو شركة…', 'Search for a Professional or company…');
   static String get featuredContractors =>
-      _t('مقاولين مميزين', 'Featured Contractors');
+      _t('محترفين مميزين', 'Featured Professionals');
   static String get topRated => _t('الأعلى تقييمًا', 'Top Rated');
   static String get nearYou => _t('قريبين منك', 'Near You');
   static String nearYouIn(String city) => _t('قريبين منك في $city', 'Near you in $city');
@@ -498,9 +515,9 @@ class S {
   static String get trendingNearYou => _t('رائج بالقرب منك', 'Trending Near You');
   static String get viewAll => _t('عرض الكل', 'View All');
   static String get verified => _t('موثوق', 'Verified');
-  static String get allContractors => _t('كل المقاولين', 'All Contractors');
+  static String get allProfessionals => _t('كل المحترفين', 'All Professionals');
   static String get noContractorsTitle =>
-      _t('مفيش مقاولين بالشروط دي', 'No contractors matching these criteria');
+      _t('مفيش محترفين بالشروط دي', 'No Professionals matching these criteria');
   static String get noContractorsMessage =>
       _t('جرّب تغيّر التخصص أو المحافظة', 'Try changing the specialty or city');
 
@@ -539,7 +556,7 @@ class S {
   static String get myRequests => _t('طلباتي', 'My Requests');
   static String get mySaved => _t('المحفوظات', 'Saved');
   static String get discoverContractors =>
-      _t('اكتشف المقاولين', 'Discover Contractors');
+      _t('اكتشف المحترفين', 'Discover Professionals');
   static String get darkModeTitle => _t('الوضع الليلي', 'Dark Mode');
   static String get lightModeTitle => _t('الوضع النهاري', 'Light Mode');
   static String get motionLabel => _t('الحركة', 'Motion');
@@ -574,10 +591,10 @@ class S {
   static String get briefSentTitle =>
       _t('تم إرسال طلبك!', 'Your request has been sent!');
   static String get briefSentMessage =>
-      _t('المقاول هيتلقى طلبك ويرد عليك خلال ٢٤ ساعة.',
+      _t('المحترف هيتلقى طلبك ويرد عليك خلال ٢٤ ساعة.',
           'The contractor will receive your request and reply within 24 hours.');
   static String get briefSentMessageNew => _t(
-      'المقاول استلم تفاصيل مشروعك وهيتواصل معاك قريب.\nتقدر تكلّمه دلوقتي على واتساب لو حابب تستعجل.',
+      'المحترف استلم تفاصيل مشروعك وهيتواصل معاك قريب.\nتقدر تكلّمه دلوقتي على واتساب لو حابب تستعجل.',
       'The contractor received your project details and will contact you soon.\nYou can call them on WhatsApp now if you want to speed things up.');
   static String get whatsappBriefGreeting =>
       _t('السلام عليكم، أنا بعتلك طلب على شطب',
@@ -585,16 +602,16 @@ class S {
   static String get doneBackToDiscover =>
       _t('تمام، رجوع للاكتشاف', 'Done, back to Discover');
   static String get briefSentWhatsApp =>
-      _t('تواصل مع المقاول على واتساب', 'Contact contractor on WhatsApp');
+      _t('تواصل مع المحترف على واتساب', 'Contact Professional on WhatsApp');
   static String get briefSentCall =>
-      _t('اتصل بالمقاول', 'Call the contractor');
+      _t('اتصل بالمحترف', 'Call the Professional');
   static String get briefSentBackToRequests =>
       _t('رجوع لطلباتي', 'Back to my requests');
 
   // ── Create Post ─────────────────────────────────────────────────────────
   static String get createPostTitle => _t('عمل بوست جديد', 'New Post');
   static String get createPostSubtitle =>
-      _t('اشتغل مع مقاولين من كل المحافظات', 'Work with contractors from all cities');
+      _t('اشتغل مع محترفين من كل المحافظات', 'Work with Professionals from all cities');
   static String get workTypeLabel => _t('نوع الشغل', 'Work type');
   static String get workTypeHint =>
       _t('مثال: تشطيب حمام', 'Example: Bathroom renovation');
@@ -612,7 +629,7 @@ class S {
   static String get writeWhatYouNeed =>
       _t('اكتب اللي محتاجه', 'Write what you need');
   static String get contractorsWillSeeMatched => _t(
-      'المقاولين اللي بتخصصاتهم وأماكنهم تطابق هيشوفوا البوست.',
+      'المحترفين اللي بتخصصاتهم وأماكنهم تطابق هيشوفوا البوست.',
       'Contractors whose specialties and areas match will see the post.');
   static String get descriptionWorkHint =>
       _t('مثال: محتاج حد يدهن الشقة كاملة…',
@@ -620,7 +637,7 @@ class S {
   static String get sectionLookingForWho =>
       _t('بدور على مين؟', 'Who are you looking for?');
   static String get phoneVisibleContractors => _t(
-      'رقم تليفونك هيظهر للمقاولين اللي يشوفوا البوست.',
+      'رقم تليفونك هيظهر للمحترفين اللي يشوفوا البوست.',
       'Your phone number will be visible to contractors who see the post.');
   static String get errorWriteMoreDetails =>
       _t('اكتب تفاصيل أكتر', 'Write more details');
@@ -636,7 +653,7 @@ class S {
   static String get sendBriefTitle =>
       _t('ابعث طلب مباشر', 'Send Direct Request');
   static String get sendBriefSubtitle =>
-      _t('اطلب عرض سعر من مقاول معين', 'Request a quote from a specific contractor');
+      _t('اطلب عرض سعر من محترف معين', 'Request a quote from a specific Professional');
   static String get sendBriefDescriptionLabel =>
       _t('تفاصيل الشغل', 'Work details');
   static String get sendBriefDescriptionHint =>
@@ -651,14 +668,14 @@ class S {
   static String get sendBriefProjectDetails =>
       _t('تفاصيل مشروعك', 'Your project details');
   static String get sendBriefAllDetailsHint =>
-      _t('ابعت كل التفاصيل اللي محتاج المقاول يعرفها',
+      _t('ابعت كل التفاصيل اللي محتاج المحترف يعرفها',
           'Send all the details the contractor needs to know');
   static String get sendBriefWorkDescLabel =>
       _t('وصف الشغل المطلوب', 'Work description');
   static String get sendBriefWorkDescHint =>
       _t('مثال: محتاج تشطيب كامل…', 'Example: Need full finishing…');
   static String get phoneVisibleContractor => _t(
-      'رقم تليفونك هيظهر للمقاول لما يستلم الطلب.',
+      'رقم تليفونك هيظهر للمحترف لما يستلم الطلب.',
       'Your phone number will be visible to the contractor when they receive the request.');
 
   // ── My Briefs ───────────────────────────────────────────────────────────
@@ -671,7 +688,7 @@ class S {
       _t('اعمل بوست جديد', 'Create New Post');
   static String get noBriefsHere => _t('مفيش حاجة هنا لسه', 'Nothing here yet');
   static String get noBriefsHereMessage => _t(
-      'ابعت طلب لمقاول معين من صفحته، أو اعمل بوست عام والمقاولين يتواصلوا معاك.',
+      'ابعت طلب لمحترف معين من صفحته، أو اعمل بوست عام والمحترفين يتواصلوا معاك.',
       'Send a request to a specific contractor from their page, or create a public post.');
   static String get sectionOpenPosts => _t('بوستات مفتوحة', 'Open Posts');
   static String get sectionDirectRequests =>
@@ -714,7 +731,7 @@ class S {
   static String get noWorksTitle =>
       _t('مفيش أعمال متضافة لسه', 'No works added yet');
   static String get noWorksMessage =>
-      _t('المقاول هيضيف شغله هنا قريب.', 'The contractor will add their work here soon.');
+      _t('المحترف هيضيف شغله هنا قريب.', 'The Professional will add their work here soon.');
 
   // ── Project Detail ──────────────────────────────────────────────────────
   static String get projectDetailTitle =>
@@ -728,7 +745,7 @@ class S {
 
   // ── Contractor Profile ──────────────────────────────────────────────────
   static String get contractorProfileTitle =>
-      _t('ملف المقاول', 'Contractor Profile');
+      _t('ملف المحترف', 'Professional Profile');
   static String get ratingLabel => _t('التقييم', 'Rating');
   static String get reviewsCount => _t('تقييم', 'Review');
   static String get specialtiesLabel => _t('التخصصات', 'Specialties');
@@ -748,7 +765,7 @@ class S {
       _t('مثال: شغل ممتاز', 'Example: Great work');
   static String get reviewBodyLabel => _t('التفاصيل', 'Details');
   static String get reviewBodyHint =>
-      _t('اكتب تجربتك مع المقاول...', 'Write about your experience...');
+      _t('اكتب تجربتك مع المحترف...', 'Write about your experience...');
   static String get reviewSubmit =>
       _t('انشر التقييم', 'Submit Review');
   static String get reviewRequired =>
@@ -756,10 +773,10 @@ class S {
   static String get reviewSuccess =>
       _t('اتباع التقييم بنجاح', 'Review submitted successfully');
   static String get rateContractor =>
-      _t('قيّم المقاول', 'Rate Contractor');
+      _t('قيّم المحترف', 'Rate Professional');
   static String get yourReview => _t('رأيك (اختياري)', 'Your review (optional)');
   static String get yourReviewHint =>
-      _t('احكي تجربتك مع المقاول', 'Tell us about your experience');
+      _t('احكي تجربتك مع المحترف', 'Tell us about your experience');
   static String get submitReview => _t('إرسال التقييم', 'Submit Review');
   static String get selectStarsFirst =>
       _t('اختار تقييم بالنجوم الأول', 'Select a star rating first');
@@ -850,7 +867,7 @@ class S {
   static String get deleteBriefBody =>
       _t('مش هينفع ترجع فيه.', "This can't be undone.");
   static String get deleteBriefWithQuotesBody => _t(
-      'فيه مقاولين بعتوا عروض على الطلب ده، فهيتلغي بدل ما يتمسح عشان عروضهم ما تضيعش.',
+      'فيه محترفين بعتوا عروض على الطلب ده، فهيتلغي بدل ما يتمسح عشان عروضهم ما تضيعش.',
       "Contractors have already sent quotes, so it will be cancelled rather than deleted, to preserve their work.");
   static String get briefDeleted => _t('تم مسح الطلب', 'Request deleted');
   static String get briefCancelledInstead => _t('تم إلغاء الطلب',
@@ -859,7 +876,7 @@ class S {
   static String get saveChanges => _t('احفظ التعديلات', 'Save changes');
   static String get changesSaved => _t('اتحفظت التعديلات', 'Changes saved');
   static String get cannotEditHired => _t(
-      'مش هينفع تعدل بعد ما اتعاقدت مع مقاول',
+      'مش هينفع تعدل بعد ما اتعاقدت مع محترف',
       "You can't edit after hiring a contractor");
 
   // ── Completion loop (migration 0019) ────────────────────────────────────
@@ -870,11 +887,11 @@ class S {
   static String get awaitingHomeownerConfirm =>
       _t('في انتظار تأكيد صاحب البيت', 'Waiting for the homeowner to confirm');
   static String get contractorSaysDone => _t(
-      'المقاول قال إنه خلص الشغل', 'The contractor says the work is finished');
+      'المحترف قال إنه خلص الشغل', 'The Professional says the work is finished');
   static String get confirmCompletionTitle =>
       _t('الشغل خلص فعلاً؟', 'Is the work really finished?');
   static String get confirmCompletionBody => _t(
-      'لما تأكد، هيتسجل إن الشغل خلص وهتقدر تقيم المقاول. مش هينفع ترجع في ده.',
+      'لما تأكد، هيتسجل إن الشغل خلص وهتقدر تقيم المحترف. مش هينفع ترجع في ده.',
       "Once you confirm, the job is recorded as finished and you can rate the contractor. This can't be undone.");
   static String get workDoneRequested => _t(
       'بلغنا صاحب البيت إنك خلصت', 'The homeowner has been told you finished');
@@ -882,7 +899,7 @@ class S {
       _t('تم تسجيل إن الشغل خلص', 'The job is now recorded as finished');
   static String get completedLabel => _t('مكتمل', 'Completed');
   static String get reviewAfterCompletionHint => _t(
-      'هتقدر تقيم المقاول بعد ما تأكد إن الشغل خلص',
+      'هتقدر تقيم المحترف بعد ما تأكد إن الشغل خلص',
       'You can rate the contractor once you confirm the work is finished');
 
   // ── Post detail spec tiles + photo viewer ───────────────────────────────
@@ -898,7 +915,7 @@ class S {
   static String get demoLoginHomeowner =>
       _t('دخول كصاحب شقة', 'Login as Homeowner');
   static String get demoLoginContractor =>
-      _t('دخول كمقاول', 'Login as Contractor');
+      _t('دخول كمحترف', 'Login as Professional');
 
   // ── Misc / Missing Strings ────────────────────────────────────────────────
   static String get networkError =>
@@ -912,12 +929,12 @@ class S {
   static String get yearsExperienceInvalid =>
       _t('سنين خبرة غير صحيحة', 'Invalid years of experience');
   static String get noSavedContractors =>
-      _t('مفيش مقاولين محفوظين لسه', 'No saved contractors yet');
+      _t('مفيش محترفين محفوظين لسه', 'No saved Professionals yet');
   static String get noSavedContractorsMsg =>
       _t('اضغط على علامة الحفظ عشان تقدر ترجع تاني',
           'Tap the save icon to come back later');
   static String get contractorNotFound =>
-      _t('المقاول مش موجود', 'Contractor not found');
+      _t('المحترف مش موجود', 'Professional not found');
   static String get contractorNotFoundMsg =>
       _t('يمكن يكون شال الحساب أو اتلغى', 'Account may have been deleted');
   static String get projectDetails =>
@@ -933,13 +950,13 @@ class S {
   static String get year => _t('سنة', 'Year');
   static String get photos => _t('صور', 'Photos');
   static String get saveTooltip =>
-      _t('حفظ المقاول', 'Save contractor');
+      _t('حفظ المحترف', 'Save Professional');
   static String get unsaveTooltip =>
       _t('إزالة من المحفوظات', 'Remove from saved');
   static String get allSpecialties =>
       _t('كل التخصصات', 'All Specialties');
   static String get allCities => _t('كل المحافظات', 'All Cities');
-  static String get foundContractors => _t('مقاول', 'Contractors');
+  static String get foundProfessionals => _t('محترف', 'Professionals');
   static String get editLabel => _t('تعديل', 'Edit');
   static String get deleteLabel => _t('حذف', 'Delete');
   static String get confirmDelete => _t('تأكيد الحذف', 'Confirm Delete');
@@ -1068,13 +1085,13 @@ class S {
   // ── Profile & Company ───────────────────────────────────────────────────
   static String get yourData => _t('بياناتك', 'Your Data');
   static String get homeownerDetailsHint => _t(
-      'عشان نرشّحلك أنسب المقاولين لبيتك',
+      'عشان نرشّحلك أنسب المحترفين لبيتك',
       'So we can match you with the right contractors');
   static String get apartmentType => _t('نوع الشقة', 'Apartment Type');
   static String get fillBothFields => _t('املا الحقلين', 'Fill both fields');
   static String get companyData => _t('بيانات الشركة', 'Company Data');
   static String get companyName =>
-      _t('اسم الشركة / المقاول', 'Company / Contractor Name');
+      _t('اسم الشركة / المحترف', 'Company / Professional Name');
   static String get logo => _t('الشعار', 'Logo');
   static String get professionalTitle =>
       _t('العنوان المهني', 'Professional Title');
@@ -1089,9 +1106,9 @@ class S {
   static String get profileGreeting => _t(
       'السلام عليكم، شفت بروفايلك على شطب وحبيت أكلمك',
       'Hello, I saw your profile on Shattab and wanted to reach out');
-  static String get aboutContractor => _t('عن المقاول', 'About');
+  static String get aboutProfessional => _t('عن المحترف', 'About');
   static String get worksIn => _t('بيشتغل في', 'Works in');
-  static String get newContractor => _t('مقاول جديد', 'New Contractor');
+  static String get newProfessional => _t('محترف جديد', 'New Professional');
   static String get responseRate => _t('معدل الرد', 'Response Rate');
   static String get projectsCompleted =>
       _t('المشاريع المنجزة', 'Projects Completed');
@@ -1204,8 +1221,7 @@ class S {
       _t('قلنا عن نفسك', 'Tell us about yourself');
   static String get fullNameHint => _t('الاسم بالكامل', 'Full name');
   static String get chooseRole => _t('اختر نوع الحساب', 'Choose account type');
-  static String get homeownerRole => _t('صاحب شقة', 'Homeowner');
-  static String get contractorRole => _t('مقاول', 'Contractor');
+  // Role labels live at `roleHomeowner` / `roleProfessional` above.
 
   // ── Time formatting helpers ─────────────────────────────────────────────
   static String minAgo(int n) => _t('منذ $n دقيقة', '$n min ago');

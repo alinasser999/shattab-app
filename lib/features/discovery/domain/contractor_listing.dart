@@ -123,8 +123,29 @@ class ContractorListing {
   }
 }
 
-/// Trust tiers surfaced on the contractor's own account screen.
-enum ContractorTier { bronze, silver, gold }
+/// Trust tiers derived from completed work, reviews and verification.
+///
+/// Earned only — there is no purchase path to any tier, which is why the badge
+/// that renders them (`TierBadge`) deliberately shares no visual language with
+/// the paid Pro badge.
+enum ContractorTier {
+  bronze,
+  silver,
+  gold;
+
+  String get label => switch (this) {
+        ContractorTier.gold => S.tierGold,
+        ContractorTier.silver => S.tierSilver,
+        ContractorTier.bronze => S.tierBronze,
+      };
+
+  /// Whether the tier is worth showing to a homeowner.
+  ///
+  /// Bronze is the starting state of every account, so publishing it says
+  /// nothing except "lowest of three" — the same cold-start mistake the rating
+  /// pill already avoids with its neutral "جديد" state.
+  bool get isPublic => this != ContractorTier.bronze;
+}
 
 /// A professional's self-declared identity.
 ///

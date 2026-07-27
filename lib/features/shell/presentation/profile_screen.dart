@@ -333,7 +333,7 @@ class _AccountHero extends StatelessWidget {
                         const Icon(Icons.auto_awesome,
                             size: 15, color: BatshColors.secondary),
                         const SizedBox(width: 4),
-                        Text(S.newContractor,
+                        Text(S.newProfessional,
                             style: BatshTypography.labelSm.copyWith(
                                 color: BatshColors.onSurfaceVariant)),
                       ],
@@ -411,11 +411,9 @@ class _StatStrip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final since = listing.memberSince?.year;
-    final tierLabel = switch (listing.tier) {
-      ContractorTier.gold => S.tierGold,
-      ContractorTier.silver => S.tierSilver,
-      ContractorTier.bronze => S.tierBronze,
-    };
+    // Same getter the public badge reads, so the owner never sees a different
+    // word for their level than a homeowner does.
+    final tierLabel = listing.tier.label;
     final cells = <Widget>[
       _StatCell(
           icon: Icons.event_outlined,

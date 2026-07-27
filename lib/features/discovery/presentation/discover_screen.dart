@@ -318,7 +318,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
                       0,
                     ),
                     child: _SectionHeader(
-                      title: '${S.allContractors} (${rest.length})',
+                      title: '${S.allProfessionals} (${rest.length})',
                     ),
                   ),
                 ),

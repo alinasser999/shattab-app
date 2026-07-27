@@ -32,7 +32,7 @@ class RoleBadge extends StatelessWidget {
     final background = _isContractor
         ? BatshColors.primaryFixed.withValues(alpha: 0.35)
         : BatshColors.secondaryContainer;
-    final label = _isContractor ? S.roleContractor : S.roleHomeowner;
+    final label = _isContractor ? S.roleProfessional : S.roleHomeowner;
     final icon = _isContractor ? Icons.engineering_rounded : Icons.home_rounded;
 
     return Container(

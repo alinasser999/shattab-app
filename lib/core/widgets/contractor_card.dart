@@ -12,6 +12,7 @@ import '../theme/batsh_typography.dart';
 import '../utils/image_url.dart';
 import 'batsh_pressable.dart';
 import 'batsh_shimmer.dart';
+import 'tier_badge.dart';
 
 /// Large editorial-style card for the discover feed. Premium magazine layout:
 /// a tall cover with the logo, name, headline and rating composited directly
@@ -160,11 +161,23 @@ class _EditorialCover extends StatelessWidget {
               ),
             ),
           ),
-          // Rating / new badge, top-start.
+          // Rating / new badge, top-start, with the earned level under it.
+          // The level is not tappable here — the card itself is the tap
+          // target, and the explainer is one tap further in, on the profile.
           PositionedDirectional(
             top: BatshSpacing.sm,
             start: BatshSpacing.sm,
-            child: _RatingBadge(listing: listing),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _RatingBadge(listing: listing),
+                if (listing.tier.isPublic) ...[
+                  const SizedBox(height: BatshSpacing.xxs),
+                  TierBadge(tier: listing.tier),
+                ],
+              ],
+            ),
           ),
           // Save control, top-end.
           if (onToggleSave != null)

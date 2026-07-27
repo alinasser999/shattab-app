@@ -99,7 +99,7 @@ class _RoleSelectScreenState extends ConsumerState<RoleSelectScreen> {
               const SizedBox(height: BatshSpacing.gutter),
               _RoleCard(
                 role: UserRole.contractor,
-                title: S.roleContractor,
+                title: S.roleProfessional,
                 subtitle: S.roleContractorSub,
                 icon: Icons.engineering_outlined,
                 selected: _selectedRole == UserRole.contractor,
