@@ -12,6 +12,7 @@ import 'core/theme/motion_mode_provider.dart';
 import 'core/theme/theme_mode_provider.dart';
 import 'features/auth/domain/profile.dart';
 import 'features/auth/presentation/providers/auth_provider.dart';
+import 'core/theme/batsh_colors.dart';
 
 class BatshApp extends ConsumerWidget {
   const BatshApp({super.key});
@@ -31,11 +32,7 @@ class BatshApp extends ConsumerWidget {
       themeMode: themeMode,
       routerConfig: router,
       locale: locale,
-      supportedLocales: const [
-        Locale('ar', 'EG'),
-        Locale('ar'),
-        Locale('en'),
-      ],
+      supportedLocales: const [Locale('ar', 'EG'), Locale('ar'), Locale('en')],
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
@@ -63,7 +60,11 @@ class BatshApp extends ConsumerWidget {
           result = Stack(
             children: [
               result,
-              const Positioned(top: 0, right: 0, child: SafeArea(child: _DebugBanner())),
+              const Positioned(
+                top: 0,
+                right: 0,
+                child: SafeArea(child: _DebugBanner()),
+              ),
             ],
           );
         }
@@ -116,11 +117,17 @@ class _DebugBanner extends ConsumerWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
         decoration: BoxDecoration(
-          color: active ? const Color(0xFF9e3d18) : Colors.white24,
+          color: active ? BatshColors.primary : Colors.white24,
           borderRadius: BorderRadius.circular(5),
         ),
-        child: Text(label,
-            style: const TextStyle(color: Colors.white, fontSize: 10, fontFamily: 'sans-serif')),
+        child: Text(
+          label,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 10,
+            fontFamily: 'sans-serif',
+          ),
+        ),
       ),
     );
   }
