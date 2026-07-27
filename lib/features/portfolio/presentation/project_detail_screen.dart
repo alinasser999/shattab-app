@@ -8,7 +8,7 @@ import '../../../core/theme/batsh_radius.dart';
 import '../../../core/theme/batsh_spacing.dart';
 import '../../../core/theme/batsh_typography.dart';
 import '../../../core/widgets/batsh_error.dart';
-import '../../../core/widgets/batsh_loading.dart';
+import '../../../core/widgets/batsh_shimmer.dart';
 import '../../../core/utils/error_mapper.dart';
 import 'providers/portfolio_providers.dart';
 import '../../../core/theme/batsh_icon_size.dart';
@@ -25,11 +25,11 @@ class ProjectDetailScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: BatshColors.background,
       body: async.when(
-        loading: () => const BatshLoading(),
+        loading: () => const BatshHeroDetailSkeleton(),
         error: (e, _) => BatshError(
-              message: ErrorMapper.map(e),
-              onRetry: () => ref.invalidate(portfolioProjectProvider(projectId)),
-            ),
+          message: ErrorMapper.map(e),
+          onRetry: () => ref.invalidate(portfolioProjectProvider(projectId)),
+        ),
         data: (project) {
           if (project == null) {
             return BatshError(message: S.projectNotFound);
@@ -75,19 +75,19 @@ class ProjectDetailScreen extends ConsumerWidget {
                 sliver: SliverList.list(
                   children: [
                     if (project.category != null)
-                      Text(project.category!.toUpperCase(),
-                          style: BatshTypography.labelSm.copyWith(
-                            color: BatshColors.primary,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 1.2,
-                          )),
+                      Text(
+                        project.category!.toUpperCase(),
+                        style: BatshTypography.labelSm.copyWith(
+                          color: BatshColors.primary,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 1.2,
+                        ),
+                      ),
                     const SizedBox(height: BatshSpacing.xs),
-                    Text(project.title,
-                        style: BatshTypography.headlineLg),
+                    Text(project.title, style: BatshTypography.headlineLg),
                     const SizedBox(height: BatshSpacing.md),
                     if (project.description != null)
-                      Text(project.description!,
-                          style: BatshTypography.bodyLg),
+                      Text(project.description!, style: BatshTypography.bodyLg),
                     const SizedBox(height: BatshSpacing.lg),
                     Container(
                       padding: const EdgeInsets.all(BatshSpacing.gutter),
@@ -101,35 +101,41 @@ class ProjectDetailScreen extends ConsumerWidget {
                         children: [
                           if (project.location != null)
                             _MetaItem(
-                                icon: Icons.place_outlined,
-                                label: S.projectLocationLabel,
-                                value: project.location!),
+                              icon: Icons.place_outlined,
+                              label: S.projectLocationLabel,
+                              value: project.location!,
+                            ),
                           if (project.yearCompleted != null)
                             _MetaItem(
-                                icon: Icons.event_outlined,
-                                label: S.projectYearLabel,
-                                value: '${project.yearCompleted}'),
+                              icon: Icons.event_outlined,
+                              label: S.projectYearLabel,
+                              value: '${project.yearCompleted}',
+                            ),
                           if (project.apartmentType != null)
                             _MetaItem(
-                                icon: Icons.home_outlined,
-                                label: S.apartmentTypeLabel,
-                                value: project.apartmentType!),
+                              icon: Icons.home_outlined,
+                              label: S.apartmentTypeLabel,
+                              value: project.apartmentType!,
+                            ),
                         ],
                       ),
                     ),
                     const SizedBox(height: BatshSpacing.xl),
                     if (project.photoUrls.isNotEmpty)
-                      ...project.photoUrls.map((url) => Padding(
-                            padding: const EdgeInsets.only(
-                                bottom: BatshSpacing.md),
-                            child: ClipRRect(
-                              borderRadius: BatshRadius.brLg,
-                              child: CachedNetworkImage(
-                                imageUrl: url,
-                                fit: BoxFit.cover,
-                              ),
+                      ...project.photoUrls.map(
+                        (url) => Padding(
+                          padding: const EdgeInsets.only(
+                            bottom: BatshSpacing.md,
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BatshRadius.brLg,
+                            child: CachedNetworkImage(
+                              imageUrl: url,
+                              fit: BoxFit.cover,
                             ),
-                          )),
+                          ),
+                        ),
+                      ),
                   ],
                 ),
               ),
@@ -142,8 +148,11 @@ class ProjectDetailScreen extends ConsumerWidget {
 }
 
 class _MetaItem extends StatelessWidget {
-  const _MetaItem(
-      {required this.icon, required this.label, required this.value});
+  const _MetaItem({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
   final IconData icon;
   final String label;
   final String value;
@@ -158,12 +167,18 @@ class _MetaItem extends StatelessWidget {
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(label,
-                style: BatshTypography.labelSm.copyWith(
-                    color: BatshColors.onSurfaceVariant)),
-            Text(value,
-                style: BatshTypography.labelMd
-                    .copyWith(fontWeight: FontWeight.w700)),
+            Text(
+              label,
+              style: BatshTypography.labelSm.copyWith(
+                color: BatshColors.onSurfaceVariant,
+              ),
+            ),
+            Text(
+              value,
+              style: BatshTypography.labelMd.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
           ],
         ),
       ],

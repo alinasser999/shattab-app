@@ -16,7 +16,7 @@ import '../../../core/widgets/batsh_card.dart';
 import '../../../core/widgets/role_badge.dart';
 import '../../../core/widgets/batsh_empty_state.dart';
 import '../../../core/widgets/batsh_error.dart';
-import '../../../core/widgets/batsh_loading.dart';
+import '../../../core/widgets/batsh_shimmer.dart';
 import '../../../core/widgets/batsh_scaffold.dart';
 import '../../../core/widgets/contact_buttons.dart';
 import '../../auth/presentation/providers/auth_provider.dart';
@@ -41,7 +41,7 @@ class PostDetailScreen extends ConsumerWidget {
     return BatshScaffold(
       title: S.exploreTitle,
       body: postAsync.when(
-        loading: () => const BatshLoading(),
+        loading: () => const BatshPostSkeleton(),
         error: (e, _) =>
             BatshError(onRetry: () => ref.invalidate(postByIdProvider(postId))),
         data: (post) {
@@ -55,7 +55,14 @@ class PostDetailScreen extends ConsumerWidget {
             );
           }
           return commentsAsync.when(
-            loading: () => const BatshLoading(),
+            // The post is already loaded. Blocking the whole screen on its
+            // comments hid content the user could have been reading — the
+            // error branch below never did that, and neither does this now.
+            loading: () => _PostDetailContent(
+              post: post,
+              comments: const [],
+              commentsLoading: true,
+            ),
             // Comments failing shouldn't hide the post — show it with none.
             error: (_, __) =>
                 _PostDetailContent(post: post, comments: const []),
@@ -69,10 +76,18 @@ class PostDetailScreen extends ConsumerWidget {
 }
 
 class _PostDetailContent extends ConsumerStatefulWidget {
-  const _PostDetailContent({required this.post, required this.comments});
+  const _PostDetailContent({
+    required this.post,
+    required this.comments,
+    this.commentsLoading = false,
+  });
 
   final Post post;
   final List<PostComment> comments;
+
+  /// Comments are still in flight. The post itself is already here, so only
+  /// the comment list is stood in for.
+  final bool commentsLoading;
 
   @override
   ConsumerState<_PostDetailContent> createState() => _PostDetailContentState();
@@ -212,7 +227,9 @@ class _PostDetailContentState extends ConsumerState<_PostDetailContent> {
               const SizedBox(height: BatshSpacing.gutter),
               Text(S.commentsTitle, style: BatshTypography.labelMd),
               const SizedBox(height: BatshSpacing.sm),
-              if (widget.comments.isEmpty)
+              if (widget.commentsLoading)
+                const BatshCommentsSkeleton()
+              else if (widget.comments.isEmpty)
                 Padding(
                   padding: const EdgeInsets.symmetric(
                     vertical: BatshSpacing.gutter,
