@@ -28,6 +28,7 @@ import '../providers/briefs_providers.dart';
 import 'widgets/job_card.dart';
 import 'widgets/job_card_skeleton.dart';
 import '../../../../core/theme/batsh_icon_size.dart';
+import '../../../../core/widgets/batsh_search_bar.dart';
 
 class JobOpportunitiesScreen extends ConsumerStatefulWidget {
   const JobOpportunitiesScreen({super.key});
@@ -187,7 +188,8 @@ class _JobOpportunitiesScreenState
                   child: Row(
                     children: [
                       Expanded(
-                        child: _SearchBar(
+                        child: BatshSearchBar(
+                          hintText: S.searchJobs,
                           controller: _searchController,
                           onChanged: _onQueryChanged,
                           onClear: _clearQuery,
@@ -511,90 +513,3 @@ class _PremiumAppBar extends StatelessWidget {
 
 /// Real search input. It used to be a button whose only effect was scrolling
 /// the list to the top, which read as search and did nothing of the kind.
-class _SearchBar extends StatefulWidget {
-  const _SearchBar({
-    required this.controller,
-    required this.onChanged,
-    required this.onClear,
-  });
-
-  final TextEditingController controller;
-  final ValueChanged<String> onChanged;
-  final VoidCallback onClear;
-
-  @override
-  State<_SearchBar> createState() => _SearchBarState();
-}
-
-class _SearchBarState extends State<_SearchBar> {
-  late final VoidCallback _listener;
-
-  @override
-  void initState() {
-    super.initState();
-    // Repaint for the clear button appearing/disappearing.
-    _listener = () => setState(() {});
-    widget.controller.addListener(_listener);
-  }
-
-  @override
-  void dispose() {
-    widget.controller.removeListener(_listener);
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final hasText = widget.controller.text.isNotEmpty;
-    return Container(
-      height: 52,
-      padding: const EdgeInsetsDirectional.only(
-        start: BatshSpacing.gutter,
-        end: BatshSpacing.sm,
-      ),
-      decoration: BoxDecoration(
-        color: BatshColors.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(26),
-        boxShadow: BatshShadows.subtle,
-      ),
-      child: Row(
-        children: [
-          Icon(
-            Icons.search,
-            size: BatshIconSize.md,
-            color: BatshColors.onSurfaceVariant,
-          ),
-          const SizedBox(width: BatshSpacing.sm),
-          Expanded(
-            child: TextField(
-              controller: widget.controller,
-              onChanged: widget.onChanged,
-              textInputAction: TextInputAction.search,
-              style: BatshTypography.bodyMd,
-              decoration: InputDecoration(
-                hintText: S.searchJobs,
-                border: InputBorder.none,
-                isDense: true,
-                contentPadding: EdgeInsets.zero,
-                hintStyle: BatshTypography.bodyMd.copyWith(
-                  color: BatshColors.onSurfaceVariant,
-                ),
-              ),
-            ),
-          ),
-          if (hasText)
-            IconButton(
-              tooltip: S.clearSearch,
-              visualDensity: VisualDensity.compact,
-              onPressed: widget.onClear,
-              icon: Icon(
-                Icons.close_rounded,
-                size: BatshIconSize.md,
-                color: BatshColors.onSurfaceVariant,
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-}

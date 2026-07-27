@@ -29,6 +29,7 @@ import '../../saved/presentation/providers/saved_providers.dart';
 import '../domain/contractor_listing.dart';
 import 'providers/discovery_providers.dart';
 import '../../../core/theme/batsh_icon_size.dart';
+import '../../../core/widgets/batsh_search_bar.dart';
 
 class DiscoverScreen extends ConsumerStatefulWidget {
   const DiscoverScreen({super.key});
@@ -49,15 +50,31 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
   Future<void> _openFilterSheet(BuildContext context) async {
     final filters = ref.read(discoveryFiltersControllerProvider);
     final initial = <String>{};
-    if (filters.specialty != null) initial.add('specialty:${filters.specialty}');
-    if (filters.city != null) initial.add('city:${filters.city}');
+    if (filters.specialty != null) {
+      initial.add('specialty:${filters.specialty}');
+    }
+    if (filters.city != null) {
+      initial.add('city:${filters.city}');
+    }
 
-    final specialties = OnboardingCatalog.specialtiesCatalog.entries.map(
-      (e) => FilterOption(value: 'specialty:${e.key}', label: e.value, icon: Icons.category_rounded),
-    ).toList();
-    final cities = OnboardingCatalog.citiesAndDistricts.map(
-      (c) => FilterOption(value: 'city:${c.city}', label: c.city, icon: Icons.location_on_rounded),
-    ).toList();
+    final specialties = OnboardingCatalog.specialtiesCatalog.entries
+        .map(
+          (e) => FilterOption(
+            value: 'specialty:${e.key}',
+            label: e.value,
+            icon: Icons.category_rounded,
+          ),
+        )
+        .toList();
+    final cities = OnboardingCatalog.citiesAndDistricts
+        .map(
+          (c) => FilterOption(
+            value: 'city:${c.city}',
+            label: c.city,
+            icon: Icons.location_on_rounded,
+          ),
+        )
+        .toList();
 
     final sections = [
       BatshFilterSheetSection(
@@ -90,8 +107,14 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
         (v) => v.startsWith('city:'),
         orElse: () => '',
       );
-      ctrl.setSpecialty(specialtyKey.isNotEmpty ? specialtyKey.replaceFirst('specialty:', '') : null);
-      ctrl.setCity(cityKey.isNotEmpty ? cityKey.replaceFirst('city:', '') : null);
+      ctrl.setSpecialty(
+        specialtyKey.isNotEmpty
+            ? specialtyKey.replaceFirst('specialty:', '')
+            : null,
+      );
+      ctrl.setCity(
+        cityKey.isNotEmpty ? cityKey.replaceFirst('city:', '') : null,
+      );
     }
   }
 
@@ -114,8 +137,9 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
       body: contractorsAsync.when(
         loading: () => const _DiscoverSkeleton(),
         error: (e, _) => BatshError(
-            message: ErrorMapper.map(e),
-            onRetry: () => ref.invalidate(discoverContractorsProvider)),
+          message: ErrorMapper.map(e),
+          onRetry: () => ref.invalidate(discoverContractorsProvider),
+        ),
         data: (list) {
           if (list.isEmpty) {
             return Center(
@@ -141,14 +165,14 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
           // ties so 5.0-from-one-review doesn't outrank 4.8-from-forty.
           final topRated = showShelves
               ? (list.take(shelfPool).where((c) => c.hasReviews).toList()
-                    ..sort((a, b) {
-                      final byAvg = b.reviewAvg.compareTo(a.reviewAvg);
-                      return byAvg != 0
-                          ? byAvg
-                          : b.reviewCount.compareTo(a.reviewCount);
-                    }))
-                  .take(5)
-                  .toList()
+                      ..sort((a, b) {
+                        final byAvg = b.reviewAvg.compareTo(a.reviewAvg);
+                        return byAvg != 0
+                            ? byAvg
+                            : b.reviewCount.compareTo(a.reviewCount);
+                      }))
+                    .take(5)
+                    .toList()
               : <ContractorListing>[];
           // "قريبين منك" — contractors serving the homeowner's city, best rated
           // first. Client-side off the loaded pages; true cross-catalog ranking
@@ -161,16 +185,18 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
           // unreviewed.
           final nearYou = (showShelves && myCity != null && myCity.isNotEmpty)
               ? (list.where((c) => c.serviceAreas.contains(myCity)).toList()
-                    ..sort((a, b) {
-                      if (a.hasReviews != b.hasReviews) {
-                        return a.hasReviews ? -1 : 1;
-                      }
-                      final byAvg = b.reviewAvg.compareTo(a.reviewAvg);
-                      if (byAvg != 0) return byAvg;
-                      return b.projectsCompleted.compareTo(a.projectsCompleted);
-                    }))
-                  .take(8)
-                  .toList()
+                      ..sort((a, b) {
+                        if (a.hasReviews != b.hasReviews) {
+                          return a.hasReviews ? -1 : 1;
+                        }
+                        final byAvg = b.reviewAvg.compareTo(a.reviewAvg);
+                        if (byAvg != 0) return byAvg;
+                        return b.projectsCompleted.compareTo(
+                          a.projectsCompleted,
+                        );
+                      }))
+                    .take(8)
+                    .toList()
               : <ContractorListing>[];
           final showNearYou = nearYou.length >= 3;
           // The "all" list drops whoever is already on the top-rated shelf so the
@@ -184,40 +210,53 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
           // rising in on a short stagger (ease-out; reduced-motion is honored
           // app-wide via the disableAnimations MediaQuery).
           List<Widget> shelf(String title, List<ContractorListing> items) => [
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(BatshSpacing.marginMobile,
-                        BatshSpacing.lg, BatshSpacing.marginMobile, 0),
-                    child: _SectionHeader(title: title),
-                  ),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  BatshSpacing.marginMobile,
+                  BatshSpacing.lg,
+                  BatshSpacing.marginMobile,
+                  0,
                 ),
-                SliverToBoxAdapter(
-                  child: SizedBox(
-                    height: 280,
-                    child: ListView.separated(
-                      scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: BatshSpacing.marginMobile),
-                      physics: const BouncingScrollPhysics(),
-                      itemCount: items.length,
-                      separatorBuilder: (_, _) =>
-                          const SizedBox(width: BatshSpacing.gutter),
-                      itemBuilder: (_, i) => _FeaturedPremiumCard(
-                        listing: items[i],
-                        onTap: () => context.push(
-                            Routes.homeownerContractorProfilePath(items[i].id)),
-                      )
+                child: _SectionHeader(title: title),
+              ),
+            ),
+            SliverToBoxAdapter(
+              child: SizedBox(
+                height: 280,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: BatshSpacing.marginMobile,
+                  ),
+                  physics: const BouncingScrollPhysics(),
+                  itemCount: items.length,
+                  separatorBuilder: (_, _) =>
+                      const SizedBox(width: BatshSpacing.gutter),
+                  itemBuilder: (_, i) =>
+                      _FeaturedPremiumCard(
+                            listing: items[i],
+                            onTap: () => context.push(
+                              Routes.homeownerContractorProfilePath(
+                                items[i].id,
+                              ),
+                            ),
+                          )
                           .animate()
                           .fadeIn(
-                              delay: BatshMotion.staggerClamped(i),
-                              duration: BatshMotion.normal,
-                              curve: Curves.easeOut)
+                            delay: BatshMotion.staggerClamped(i),
+                            duration: BatshMotion.normal,
+                            curve: Curves.easeOut,
+                          )
                           .slideY(
-                              begin: 0.08, end: 0, curve: BatshMotion.easeOut),
-                    ),
-                  ),
+                            begin: 0.08,
+                            end: 0,
+                            curve: BatshMotion.easeOut,
+                          ),
                 ),
-              ];
+              ),
+            ),
+          ];
 
           return RefreshIndicator(
             onRefresh: () async {
@@ -238,20 +277,29 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
                     child: Row(
                       children: [
                         Expanded(
-                          child: _SearchBar(
+                          child: BatshSearchBar(
+                            hintText: S.searchHint,
                             controller: _searchCtrl,
                             onChanged: (v) {
                               _debounce?.cancel();
-                              _debounce = Timer(const Duration(milliseconds: 300), () {
-                                ref
-                                    .read(discoveryFiltersControllerProvider.notifier)
-                                    .setSearch(v);
-                              });
+                              _debounce = Timer(
+                                const Duration(milliseconds: 300),
+                                () {
+                                  ref
+                                      .read(
+                                        discoveryFiltersControllerProvider
+                                            .notifier,
+                                      )
+                                      .setSearch(v);
+                                },
+                              );
                             },
                             onClear: () {
                               _searchCtrl.clear();
                               ref
-                                  .read(discoveryFiltersControllerProvider.notifier)
+                                  .read(
+                                    discoveryFiltersControllerProvider.notifier,
+                                  )
                                   .setSearch(null);
                             },
                           ),
@@ -281,18 +329,36 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
                           children: [
                             if (filters.specialty != null)
                               Padding(
-                                padding: const EdgeInsetsDirectional.only(end: BatshSpacing.xs),
+                                padding: const EdgeInsetsDirectional.only(
+                                  end: BatshSpacing.xs,
+                                ),
                                 child: BatshActiveFilterChip(
-                                  label: OnboardingCatalog.specialtiesCatalog[filters.specialty] ?? filters.specialty!,
-                                  onRemove: () => ref.read(discoveryFiltersControllerProvider.notifier).setSpecialty(null),
+                                  label:
+                                      OnboardingCatalog
+                                          .specialtiesCatalog[filters
+                                          .specialty] ??
+                                      filters.specialty!,
+                                  onRemove: () => ref
+                                      .read(
+                                        discoveryFiltersControllerProvider
+                                            .notifier,
+                                      )
+                                      .setSpecialty(null),
                                 ),
                               ),
                             if (filters.city != null)
                               Padding(
-                                padding: const EdgeInsetsDirectional.only(end: BatshSpacing.xs),
+                                padding: const EdgeInsetsDirectional.only(
+                                  end: BatshSpacing.xs,
+                                ),
                                 child: BatshActiveFilterChip(
                                   label: filters.city!,
-                                  onRemove: () => ref.read(discoveryFiltersControllerProvider.notifier).setCity(null),
+                                  onRemove: () => ref
+                                      .read(
+                                        discoveryFiltersControllerProvider
+                                            .notifier,
+                                      )
+                                      .setCity(null),
                                 ),
                               ),
                           ],
@@ -331,131 +397,56 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
                     BatshSpacing.xl,
                   ),
                   sliver: SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (context, i) {
-                        // Near the end → pull the next page. Notifier guards
-                        // against duplicate in-flight / exhausted fetches.
-                        if (i >= rest.length - 3) {
-                          WidgetsBinding.instance.addPostFrameCallback((_) {
-                            ref
-                                .read(discoverContractorsProvider.notifier)
-                                .loadMore();
-                          });
-                        }
-                        final item = rest[i];
-                        return Padding(
-                          padding:
-                              const EdgeInsets.only(bottom: BatshSpacing.md),
-                          child: ContractorCard(
-                            listing: item,
-                            isSaved: savedIds.contains(item.id),
-                            onToggleSave: () => runSignedIn(
-                              context,
-                              ref,
-                              reason: S.signInToSave,
-                              action: () => ref
-                                  .read(savedControllerProvider.notifier)
-                                  .toggle(item.id),
-                            ),
-                            onTap: () => context.push(
-                                Routes.homeownerContractorProfilePath(
-                                    item.id)),
-                          )
-                              .animate()
-                              .fadeIn(
+                    delegate: SliverChildBuilderDelegate((context, i) {
+                      // Near the end → pull the next page. Notifier guards
+                      // against duplicate in-flight / exhausted fetches.
+                      if (i >= rest.length - 3) {
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          ref
+                              .read(discoverContractorsProvider.notifier)
+                              .loadMore();
+                        });
+                      }
+                      final item = rest[i];
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: BatshSpacing.md),
+                        child:
+                            ContractorCard(
+                                  listing: item,
+                                  isSaved: savedIds.contains(item.id),
+                                  onToggleSave: () => runSignedIn(
+                                    context,
+                                    ref,
+                                    reason: S.signInToSave,
+                                    action: () => ref
+                                        .read(savedControllerProvider.notifier)
+                                        .toggle(item.id),
+                                  ),
+                                  onTap: () => context.push(
+                                    Routes.homeownerContractorProfilePath(
+                                      item.id,
+                                    ),
+                                  ),
+                                )
+                                .animate()
+                                .fadeIn(
                                   delay: (60 * i.clamp(0, 8)).ms,
                                   duration: BatshMotion.normal,
-                                  curve: Curves.easeOut)
-                              .slideY(
+                                  curve: Curves.easeOut,
+                                )
+                                .slideY(
                                   begin: 0.06,
                                   end: 0,
-                                  curve: BatshMotion.easeOut),
-                        );
-                      },
-                      childCount: rest.length,
-                    ),
+                                  curve: BatshMotion.easeOut,
+                                ),
+                      );
+                    }, childCount: rest.length),
                   ),
                 ),
               ],
             ),
           );
         },
-      ),
-    );
-  }
-}
-
-class _SearchBar extends StatefulWidget {
-  const _SearchBar({
-    required this.controller,
-    required this.onChanged,
-    required this.onClear,
-  });
-
-  final TextEditingController controller;
-  final ValueChanged<String> onChanged;
-  final VoidCallback onClear;
-
-  @override
-  State<_SearchBar> createState() => _SearchBarState();
-}
-
-class _SearchBarState extends State<_SearchBar> {
-  late final VoidCallback _listener;
-
-  @override
-  void initState() {
-    super.initState();
-    _listener = () => setState(() {});
-    widget.controller.addListener(_listener);
-  }
-
-  @override
-  void dispose() {
-    widget.controller.removeListener(_listener);
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final hasText = widget.controller.text.isNotEmpty;
-    return Container(
-      height: 52,
-      decoration: BoxDecoration(
-        color: BatshColors.cardBackground,
-        borderRadius: BatshRadius.brXxl,
-        boxShadow: BatshShadows.soft,
-      ),
-      child: Row(
-        children: [
-          const SizedBox(width: BatshSpacing.gutter),
-          Icon(Icons.search_rounded,
-              color: BatshColors.onSurfaceVariant, size: BatshIconSize.md),
-          const SizedBox(width: BatshSpacing.sm),
-          Expanded(
-            child: TextField(
-              controller: widget.controller,
-              onChanged: widget.onChanged,
-              decoration: InputDecoration(
-                hintText: S.searchHint,
-                border: InputBorder.none,
-                isDense: true,
-                contentPadding: EdgeInsets.zero,
-              ),
-              style: BatshTypography.bodyMd,
-            ),
-          ),
-          if (hasText)
-            GestureDetector(
-              onTap: widget.onClear,
-              child: Padding(
-                padding: const EdgeInsets.all(BatshSpacing.xs),
-                child: Icon(Icons.close_rounded,
-                    color: BatshColors.onSurfaceVariant, size: BatshIconSize.md),
-              ),
-            ),
-          const SizedBox(width: BatshSpacing.gutter),
-        ],
       ),
     );
   }
@@ -480,9 +471,12 @@ class _SectionHeader extends StatelessWidget {
         ),
         const SizedBox(width: BatshSpacing.sm),
         Expanded(
-          child: Text(title,
-              style: BatshTypography.titleLg
-                  .copyWith(fontWeight: FontWeight.w700)),
+          child: Text(
+            title,
+            style: BatshTypography.titleLg.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
         ),
       ],
     );
@@ -506,7 +500,8 @@ class _CategoryStrip extends StatelessWidget {
         children: [
           Padding(
             padding: const EdgeInsets.symmetric(
-                horizontal: BatshSpacing.marginMobile),
+              horizontal: BatshSpacing.marginMobile,
+            ),
             child: _SectionHeader(title: S.browseByCategory),
           ),
           const SizedBox(height: BatshSpacing.sm),
@@ -515,18 +510,24 @@ class _CategoryStrip extends StatelessWidget {
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(
-                  horizontal: BatshSpacing.marginMobile),
+                horizontal: BatshSpacing.marginMobile,
+              ),
               physics: const BouncingScrollPhysics(),
               itemCount: entries.length,
-              separatorBuilder: (_, _) => const SizedBox(width: BatshSpacing.sm),
+              separatorBuilder: (_, _) =>
+                  const SizedBox(width: BatshSpacing.sm),
               itemBuilder: (_, i) {
                 final e = entries[i];
-                return _CategoryChip(label: e.value, onTap: () => onSelect(e.key))
+                return _CategoryChip(
+                      label: e.value,
+                      onTap: () => onSelect(e.key),
+                    )
                     .animate()
                     .fadeIn(
-                        delay: BatshMotion.staggerClamped(i),
-                        duration: BatshMotion.fast,
-                        curve: Curves.easeOut)
+                      delay: BatshMotion.staggerClamped(i),
+                      duration: BatshMotion.fast,
+                      curve: Curves.easeOut,
+                    )
                     .slideX(begin: 0.15, end: 0, curve: BatshMotion.easeOut);
               },
             ),
@@ -553,7 +554,9 @@ class _CategoryChip extends StatelessWidget {
         onTap: onTap,
         child: Container(
           padding: const EdgeInsets.symmetric(
-              horizontal: BatshSpacing.md, vertical: BatshSpacing.sm),
+            horizontal: BatshSpacing.md,
+            vertical: BatshSpacing.sm,
+          ),
           decoration: BoxDecoration(
             borderRadius: BatshRadius.brFull,
             border: Border.all(color: BatshColors.outlineVariant),
@@ -562,7 +565,9 @@ class _CategoryChip extends StatelessWidget {
           child: Text(
             label,
             style: BatshTypography.labelLg.copyWith(
-                color: BatshColors.onSurface, fontWeight: FontWeight.w600),
+              color: BatshColors.onSurface,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ),
       ),
@@ -571,10 +576,7 @@ class _CategoryChip extends StatelessWidget {
 }
 
 class _FeaturedPremiumCard extends StatelessWidget {
-  const _FeaturedPremiumCard({
-    required this.listing,
-    required this.onTap,
-  });
+  const _FeaturedPremiumCard({required this.listing, required this.onTap});
 
   final ContractorListing listing;
   final VoidCallback onTap;
@@ -595,136 +597,148 @@ class _FeaturedPremiumCard extends StatelessWidget {
           boxShadow: BatshShadows.elevated,
         ),
         child: Material(
-        color: BatshColors.surfaceContainerLowest,
-        borderRadius: BatshRadius.brLg,
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: onTap,
-          child: Container(
-            decoration: BoxDecoration(
-              borderRadius: BatshRadius.brLg,
-            ),
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                ClipRRect(
-                  borderRadius: BatshRadius.brLg,
-                  child: listing.coverPhotoUrl != null
-                      ? CachedNetworkImage(
-                          imageUrl:
-                              sizedImageUrl(listing.coverPhotoUrl!, width: 420),
-                          fit: BoxFit.cover,
-                          // Tile is 210px wide; 2x for high-DPI is plenty.
-                          memCacheWidth: 420,
-                          placeholder: (_, _) => const ColoredBox(
-                              color: BatshColors.surfaceContainer),
-                          errorWidget: (_, _, _) => const _FeaturedFallback(),
-                        )
-                      : const _FeaturedFallback(),
-                ),
-                Positioned.fill(
-                  child: IgnorePointer(
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            Colors.black.withValues(alpha: 0.0),
-                            Colors.black.withValues(alpha: 0.75),
-                          ],
-                          stops: const [0.35, 1.0],
+          color: BatshColors.surfaceContainerLowest,
+          borderRadius: BatshRadius.brLg,
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: onTap,
+            child: Container(
+              decoration: BoxDecoration(borderRadius: BatshRadius.brLg),
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  ClipRRect(
+                    borderRadius: BatshRadius.brLg,
+                    child: listing.coverPhotoUrl != null
+                        ? CachedNetworkImage(
+                            imageUrl: sizedImageUrl(
+                              listing.coverPhotoUrl!,
+                              width: 420,
+                            ),
+                            fit: BoxFit.cover,
+                            // Tile is 210px wide; 2x for high-DPI is plenty.
+                            memCacheWidth: 420,
+                            placeholder: (_, _) => const ColoredBox(
+                              color: BatshColors.surfaceContainer,
+                            ),
+                            errorWidget: (_, _, _) => const _FeaturedFallback(),
+                          )
+                        : const _FeaturedFallback(),
+                  ),
+                  Positioned.fill(
+                    child: IgnorePointer(
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              Colors.black.withValues(alpha: 0.0),
+                              Colors.black.withValues(alpha: 0.75),
+                            ],
+                            stops: const [0.35, 1.0],
+                          ),
                         ),
                       ),
                     ),
                   ),
-                ),
-                // "موثوق" chip removed — no verification process backs it yet.
-                Positioned(
-                  top: BatshSpacing.sm,
-                  left: BatshSpacing.sm,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: BatshSpacing.sm, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.55),
-                      borderRadius: BatshRadius.brFull,
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
+                  // "موثوق" chip removed — no verification process backs it yet.
+                  Positioned(
+                    top: BatshSpacing.sm,
+                    left: BatshSpacing.sm,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: BatshSpacing.sm,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.55),
+                        borderRadius: BatshRadius.brFull,
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
                             listing.reviewCount == 0
                                 ? Icons.auto_awesome
                                 : Icons.star,
                             size: BatshIconSize.xs,
-                            color: BatshColors.tertiaryFixed),
-                        const SizedBox(width: 4),
-                        Text(
+                            color: BatshColors.tertiaryFixed,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
                             listing.rating?.toStringAsFixed(1) ?? S.newBadge,
                             style: BatshTypography.labelSm.copyWith(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w700)),
-                      ],
+                              color: Colors.white,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-                Positioned(
-                  left: BatshSpacing.gutter,
-                  right: BatshSpacing.gutter,
-                  bottom: BatshSpacing.gutter,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(name,
+                  Positioned(
+                    left: BatshSpacing.gutter,
+                    right: BatshSpacing.gutter,
+                    bottom: BatshSpacing.gutter,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          name,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: BatshTypography.titleMd.copyWith(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w700)),
-                      const SizedBox(height: BatshSpacing.xs),
-                      if (listing.headline != null) ...[
-                        Text(
-                          listing.headline!,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: BatshTypography.bodySm.copyWith(
-                            color: Colors.white.withValues(alpha: 0.9),
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
-                      ],
-                      if (topSpecialties.isNotEmpty) ...[
-                        const SizedBox(height: BatshSpacing.sm),
-                        Wrap(
-                          spacing: BatshSpacing.xs,
-                          children: [
-                            for (final s in topSpecialties)
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: BatshSpacing.sm, vertical: 3),
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withValues(alpha: 0.2),
-                                  borderRadius: BatshRadius.brFull,
-                                ),
-                                child: Text(
-                                    OnboardingCatalog
-                                            .specialtiesCatalog[s] ??
+                        const SizedBox(height: BatshSpacing.xs),
+                        if (listing.headline != null) ...[
+                          Text(
+                            listing.headline!,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: BatshTypography.bodySm.copyWith(
+                              color: Colors.white.withValues(alpha: 0.9),
+                            ),
+                          ),
+                        ],
+                        if (topSpecialties.isNotEmpty) ...[
+                          const SizedBox(height: BatshSpacing.sm),
+                          Wrap(
+                            spacing: BatshSpacing.xs,
+                            children: [
+                              for (final s in topSpecialties)
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: BatshSpacing.sm,
+                                    vertical: 3,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withValues(alpha: 0.2),
+                                    borderRadius: BatshRadius.brFull,
+                                  ),
+                                  child: Text(
+                                    OnboardingCatalog.specialtiesCatalog[s] ??
                                         s,
                                     style: BatshTypography.labelSm.copyWith(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.w600)),
-                              ),
-                          ],
-                        ),
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ],
                       ],
-                    ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
-      ),
       ),
     );
   }
@@ -753,10 +767,7 @@ class _DiscoverSkeleton extends StatelessWidget {
         BatshSpacing.xl,
       ),
       children: [
-        BatshShimmerBox(
-          height: 52,
-          borderRadius: BatshRadius.brXxl,
-        ),
+        BatshShimmerBox(height: 52, borderRadius: BatshRadius.brXxl),
         const SizedBox(height: BatshSpacing.md),
         Row(
           children: [
@@ -820,15 +831,16 @@ class _DiscoverSkeleton extends StatelessWidget {
             itemCount: 3,
             separatorBuilder: (_, _) =>
                 const SizedBox(width: BatshSpacing.gutter),
-            itemBuilder: (_, i) => BatshShimmerBox(
-              width: 210,
-              height: 280,
-              borderRadius: BatshRadius.brLg,
-            ).animate().fadeIn(
-              duration: BatshMotion.normal,
-              delay: BatshMotion.staggerClamped(i),
-              curve: Curves.easeOut,
-            ),
+            itemBuilder: (_, i) =>
+                BatshShimmerBox(
+                  width: 210,
+                  height: 280,
+                  borderRadius: BatshRadius.brLg,
+                ).animate().fadeIn(
+                  duration: BatshMotion.normal,
+                  delay: BatshMotion.staggerClamped(i),
+                  curve: Curves.easeOut,
+                ),
           ),
         ),
         const SizedBox(height: BatshSpacing.lg),
@@ -854,17 +866,17 @@ class _DiscoverSkeleton extends StatelessWidget {
             scrollDirection: Axis.horizontal,
             physics: const NeverScrollableScrollPhysics(),
             itemCount: 3,
-            separatorBuilder: (_, _) =>
-                const SizedBox(width: BatshSpacing.sm),
-            itemBuilder: (_, i) => BatshShimmerBox(
-              width: 210,
-              height: 140,
-              borderRadius: BatshRadius.brLg,
-            ).animate().fadeIn(
-              duration: BatshMotion.normal,
-              delay: BatshMotion.staggerClamped(i + 3),
-              curve: Curves.easeOut,
-            ),
+            separatorBuilder: (_, _) => const SizedBox(width: BatshSpacing.sm),
+            itemBuilder: (_, i) =>
+                BatshShimmerBox(
+                  width: 210,
+                  height: 140,
+                  borderRadius: BatshRadius.brLg,
+                ).animate().fadeIn(
+                  duration: BatshMotion.normal,
+                  delay: BatshMotion.staggerClamped(i + 3),
+                  curve: Curves.easeOut,
+                ),
           ),
         ),
         const SizedBox(height: BatshSpacing.lg),
