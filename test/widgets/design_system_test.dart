@@ -8,6 +8,8 @@ import 'package:batsh/core/widgets/batsh_sheet.dart';
 import 'package:batsh/core/widgets/batsh_snack.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:batsh/core/router/transitions.dart';
+import 'package:go_router/go_router.dart';
 
 /// WCAG 2.x contrast ratio between two opaque colours.
 double _contrast(Color a, Color b) {
@@ -289,6 +291,69 @@ void main() {
       );
       await tester.pumpAndSettle();
       expect(medallionOf(tester), isNot(nothingYet));
+    });
+  });
+
+  group('page transitions', () {
+    testWidgets('reduced motion keeps the fade and drops the travel', (
+      tester,
+    ) async {
+      // The app guards its inline animations behind disableAnimations but used
+      // to slide and zoom on every navigation regardless, which is the one
+      // motion a vestibular user cannot opt out of by not scrolling.
+      Future<Set<Type>> transitionTypesWith(bool disableAnimations) async {
+        await tester.pumpWidget(
+          MaterialApp.router(
+            // Injected via builder, not around MaterialApp: MaterialApp
+            // installs its own MediaQuery from the view, so an outer one is
+            // shadowed before the transition ever reads it.
+            builder: (context, child) => MediaQuery(
+              data: MediaQuery.of(
+                context,
+              ).copyWith(disableAnimations: disableAnimations),
+              child: child!,
+            ),
+            routerConfig: GoRouter(
+              routes: [
+                GoRoute(
+                  path: '/',
+                  builder: (_, _) => const Scaffold(body: Text('home')),
+                  routes: [
+                    GoRoute(
+                      path: 'next',
+                      pageBuilder: (_, state) => fadeSlidePage(
+                        const Scaffold(body: Text('next')),
+                        state,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+        GoRouter.of(tester.element(find.text('home'))).go('/next');
+        await tester.pump();
+        // Sample mid-flight: once settled the transition widgets are gone.
+        // Scoped to ancestors of the incoming page, because the outgoing route
+        // runs its own Material transition and would otherwise be counted.
+        await tester.pump(const Duration(milliseconds: 60));
+        bool wraps(Type t) => find
+            .ancestor(of: find.text('next'), matching: find.byType(t))
+            .evaluate()
+            .isNotEmpty;
+        final types = <Type>{
+          if (wraps(SlideTransition)) SlideTransition,
+          if (wraps(FadeTransition)) FadeTransition,
+        };
+        await tester.pumpAndSettle();
+        return types;
+      }
+
+      expect(await transitionTypesWith(false), contains(SlideTransition));
+      expect(await transitionTypesWith(true), isNot(contains(SlideTransition)));
+      expect(await transitionTypesWith(true), contains(FadeTransition));
     });
   });
 

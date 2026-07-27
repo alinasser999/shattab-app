@@ -80,7 +80,7 @@ class SavedScreen extends ConsumerWidget {
                         const SizedBox(height: BatshSpacing.md),
                     itemBuilder: (context, i) {
                       final c = list[i];
-                      final reduced = MediaQuery.of(context).disableAnimations;
+                      final reduced = MediaQuery.disableAnimationsOf(context);
                       final card = ContractorCard(
                         listing: c,
                         isSaved: true,

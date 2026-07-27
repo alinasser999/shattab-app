@@ -40,7 +40,7 @@ class _BatshPressableState extends State<BatshPressable>
     value: 0.0,
   );
 
-  bool get _reduced => MediaQuery.of(context).disableAnimations;
+  bool get _reduced => MediaQuery.disableAnimationsOf(context);
   bool get _interactive => widget.onTap != null || widget.onLongPress != null;
 
   void _onTapDown(_) {

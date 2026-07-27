@@ -69,7 +69,9 @@ class _SendBriefScreenState extends ConsumerState<SendBriefScreen> {
       _error = null;
     });
     try {
-      await ref.read(briefsControllerProvider.notifier).createDirectRequest(
+      await ref
+          .read(briefsControllerProvider.notifier)
+          .createDirectRequest(
             contractorId: widget.contractorId,
             apartmentType: _apartmentType!,
             city: _city!,
@@ -90,8 +92,9 @@ class _SendBriefScreenState extends ConsumerState<SendBriefScreen> {
   @override
   Widget build(BuildContext context) {
     final ho = ref.watch(homeownerProfileProvider).value;
-    final contractor =
-        ref.watch(contractorByIdProvider(widget.contractorId)).value;
+    final contractor = ref
+        .watch(contractorByIdProvider(widget.contractorId))
+        .value;
 
     if (!_hydrated && ho != null) {
       _apartmentType = ho.apartmentType;
@@ -100,15 +103,17 @@ class _SendBriefScreenState extends ConsumerState<SendBriefScreen> {
       _hydrated = true;
     }
 
-    final reduced = MediaQuery.of(context).disableAnimations;
+    final reduced = MediaQuery.disableAnimationsOf(context);
     final items = <Widget>[
       const SizedBox(height: BatshSpacing.md),
-      Text(S.sendBriefProjectDetails,
-          style: BatshTypography.headlineMd),
+      Text(S.sendBriefProjectDetails, style: BatshTypography.headlineMd),
       const SizedBox(height: BatshSpacing.xs),
-      Text(S.sendBriefAllDetailsHint,
-          style: BatshTypography.bodyMd.copyWith(
-              color: BatshColors.onSurfaceVariant)),
+      Text(
+        S.sendBriefAllDetailsHint,
+        style: BatshTypography.bodyMd.copyWith(
+          color: BatshColors.onSurfaceVariant,
+        ),
+      ),
       const SizedBox(height: BatshSpacing.lg),
       _ApartmentTypeRow(
         selected: _apartmentType,
@@ -132,20 +137,19 @@ class _SendBriefScreenState extends ConsumerState<SendBriefScreen> {
         errorText: _error,
       ),
       const SizedBox(height: BatshSpacing.gutter),
-      PhotoPicker(
-        onChanged: (p) => _photos = p,
-      ),
+      PhotoPicker(onChanged: (p) => _photos = p),
       const SizedBox(height: BatshSpacing.md),
       Text(
         S.phoneVisibleContractor,
-        style: BatshTypography.labelMd
-            .copyWith(color: BatshColors.onSurfaceVariant),
+        style: BatshTypography.labelMd.copyWith(
+          color: BatshColors.onSurfaceVariant,
+        ),
       ),
       const SizedBox(height: BatshSpacing.lg),
-      if (_busy) const BatshLoading() else BatshButton(
-        label: S.sendBriefButton,
-        onPressed: _submit,
-      ),
+      if (_busy)
+        const BatshLoading()
+      else
+        BatshButton(label: S.sendBriefButton, onPressed: _submit),
       const SizedBox(height: BatshSpacing.lg),
     ];
     return BatshScaffold(
@@ -153,13 +157,10 @@ class _SendBriefScreenState extends ConsumerState<SendBriefScreen> {
       body: ListView(
         children: reduced
             ? items
-            : items.animate(interval: BatshMotion.staggerBase).fadeIn(
-                  duration: BatshMotion.normal,
-                ).slideY(
-                  begin: 0.06,
-                  end: 0,
-                  curve: BatshMotion.easeOut,
-                ),
+            : items
+                  .animate(interval: BatshMotion.staggerBase)
+                  .fadeIn(duration: BatshMotion.normal)
+                  .slideY(begin: 0.06, end: 0, curve: BatshMotion.easeOut),
       ),
     );
   }
@@ -175,9 +176,12 @@ class _ApartmentTypeRow extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(S.apartmentTypeLabel,
-            style: BatshTypography.labelMd
-                .copyWith(color: BatshColors.onSurfaceVariant)),
+        Text(
+          S.apartmentTypeLabel,
+          style: BatshTypography.labelMd.copyWith(
+            color: BatshColors.onSurfaceVariant,
+          ),
+        ),
         const SizedBox(height: BatshSpacing.sm),
         Wrap(
           spacing: BatshSpacing.sm,
@@ -206,9 +210,12 @@ class _CityRow extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(S.cityLabel,
-            style: BatshTypography.labelMd
-                .copyWith(color: BatshColors.onSurfaceVariant)),
+        Text(
+          S.cityLabel,
+          style: BatshTypography.labelMd.copyWith(
+            color: BatshColors.onSurfaceVariant,
+          ),
+        ),
         const SizedBox(height: BatshSpacing.sm),
         Wrap(
           spacing: BatshSpacing.sm,

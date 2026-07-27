@@ -17,6 +17,13 @@ Page<T> fadeSlidePage<T>(Widget child, GoRouterState state) =>
           curve: BatshMotion.easeOut,
           reverseCurve: BatshMotion.easeIn,
         );
+        // Reduced motion strips the movement, not the transition. Opacity is
+        // not what triggers vestibular symptoms; translation and zoom are, so
+        // the fade stays and the travel goes. Returning the child bare would
+        // also drop the only cue that the screen changed.
+        if (MediaQuery.disableAnimationsOf(context)) {
+          return FadeTransition(opacity: curved, child: child);
+        }
         return FadeTransition(
           opacity: curved,
           child: SlideTransition(
@@ -44,15 +51,19 @@ Page<T> slideUpPage<T>(Widget child, GoRouterState state) =>
           curve: BatshMotion.easeOut,
           reverseCurve: BatshMotion.easeIn,
         );
+        // Reduced motion strips the movement, not the transition. Opacity is
+        // not what triggers vestibular symptoms; translation and zoom are, so
+        // the fade stays and the travel goes. Returning the child bare would
+        // also drop the only cue that the screen changed.
+        if (MediaQuery.disableAnimationsOf(context)) {
+          return FadeTransition(opacity: curved, child: child);
+        }
         return SlideTransition(
           position: Tween<Offset>(
             begin: const Offset(0.0, 0.08),
             end: Offset.zero,
           ).animate(curved),
-          child: FadeTransition(
-            opacity: curved,
-            child: child,
-          ),
+          child: FadeTransition(opacity: curved, child: child),
         );
       },
     );
@@ -71,6 +82,13 @@ Page<T> zoomInPage<T>(Widget child, GoRouterState state) =>
           curve: BatshMotion.easeOut,
           reverseCurve: BatshMotion.easeIn,
         );
+        // Reduced motion strips the movement, not the transition. Opacity is
+        // not what triggers vestibular symptoms; translation and zoom are, so
+        // the fade stays and the travel goes. Returning the child bare would
+        // also drop the only cue that the screen changed.
+        if (MediaQuery.disableAnimationsOf(context)) {
+          return FadeTransition(opacity: curved, child: child);
+        }
         return FadeTransition(
           opacity: curved,
           child: ScaleTransition(

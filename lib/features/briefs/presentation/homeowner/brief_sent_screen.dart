@@ -22,10 +22,9 @@ class BriefSentScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final contractor =
-        ref.watch(contractorByIdProvider(contractorId)).value;
+    final contractor = ref.watch(contractorByIdProvider(contractorId)).value;
 
-    final reduced = MediaQuery.of(context).disableAnimations;
+    final reduced = MediaQuery.disableAnimationsOf(context);
     final items = <Widget>[
       const SizedBox(height: BatshSpacing.md),
       BatshSuccessCheckmark(size: 64, message: S.briefSentTitle),
@@ -33,8 +32,9 @@ class BriefSentScreen extends ConsumerWidget {
       Text(
         S.briefSentMessageNew,
         textAlign: TextAlign.center,
-        style: BatshTypography.bodyMd
-            .copyWith(color: BatshColors.onSurfaceVariant),
+        style: BatshTypography.bodyMd.copyWith(
+          color: BatshColors.onSurfaceVariant,
+        ),
       ),
       const SizedBox(height: BatshSpacing.xl),
       if (contractor != null) ...[
@@ -58,13 +58,10 @@ class BriefSentScreen extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: reduced
               ? items
-              : items.animate(interval: BatshMotion.staggerBase).fadeIn(
-                    duration: BatshMotion.normal,
-                  ).slideY(
-                    begin: 0.08,
-                    end: 0,
-                    curve: BatshMotion.easeOut,
-                  ),
+              : items
+                    .animate(interval: BatshMotion.staggerBase)
+                    .fadeIn(duration: BatshMotion.normal)
+                    .slideY(begin: 0.08, end: 0, curve: BatshMotion.easeOut),
         ),
       ),
     );

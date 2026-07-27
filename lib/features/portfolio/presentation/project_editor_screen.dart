@@ -89,7 +89,9 @@ class _ProjectEditorScreenState extends ConsumerState<ProjectEditorScreen> {
       _coverError = null;
     });
     try {
-      await ref.read(portfolioControllerProvider.notifier).save(
+      await ref
+          .read(portfolioControllerProvider.notifier)
+          .save(
             projectId: widget.projectId,
             title: title,
             description: _nullIfEmpty(_descCtrl.text),
@@ -117,8 +119,7 @@ class _ProjectEditorScreenState extends ConsumerState<ProjectEditorScreen> {
   @override
   Widget build(BuildContext context) {
     if (widget.isEditing) {
-      final projAsync =
-          ref.watch(portfolioProjectProvider(widget.projectId!));
+      final projAsync = ref.watch(portfolioProjectProvider(widget.projectId!));
       return projAsync.when(
         loading: () => BatshScaffold(
           title: S.editWorkTitle,
@@ -151,7 +152,7 @@ class _ProjectEditorScreenState extends ConsumerState<ProjectEditorScreen> {
   }
 
   Widget _form(String title) {
-    final reduced = MediaQuery.of(context).disableAnimations;
+    final reduced = MediaQuery.disableAnimationsOf(context);
     final items = <Widget>[
       const SizedBox(height: BatshSpacing.md),
       BatshTextField(
@@ -212,14 +213,16 @@ class _ProjectEditorScreenState extends ConsumerState<ProjectEditorScreen> {
       const SizedBox(height: BatshSpacing.sm),
       Text(
         S.coverPhotoHint,
-        style: BatshTypography.labelSm
-            .copyWith(color: BatshColors.onSurfaceVariant),
+        style: BatshTypography.labelSm.copyWith(
+          color: BatshColors.onSurfaceVariant,
+        ),
       ),
       if (_coverError != null) ...[
         const SizedBox(height: BatshSpacing.sm),
-        Text(_coverError!,
-            style: BatshTypography.labelSm
-                .copyWith(color: BatshColors.error)),
+        Text(
+          _coverError!,
+          style: BatshTypography.labelSm.copyWith(color: BatshColors.error),
+        ),
       ],
       const SizedBox(height: BatshSpacing.lg),
       BatshButton(
@@ -235,13 +238,10 @@ class _ProjectEditorScreenState extends ConsumerState<ProjectEditorScreen> {
       body: ListView(
         children: reduced
             ? items
-            : items.animate(interval: BatshMotion.staggerBase).fadeIn(
-                  duration: BatshMotion.normal,
-                ).slideY(
-                  begin: 0.06,
-                  end: 0,
-                  curve: BatshMotion.easeOut,
-                ),
+            : items
+                  .animate(interval: BatshMotion.staggerBase)
+                  .fadeIn(duration: BatshMotion.normal)
+                  .slideY(begin: 0.06, end: 0, curve: BatshMotion.easeOut),
       ),
     );
   }
@@ -256,38 +256,70 @@ class _EditorSkeleton extends StatelessWidget {
         const SizedBox(height: BatshSpacing.md),
         const Padding(
           padding: EdgeInsets.symmetric(horizontal: BatshSpacing.gutter),
-          child: BatshShimmerBox(width: double.infinity, height: 56, borderRadius: BatshRadius.brMd),
+          child: BatshShimmerBox(
+            width: double.infinity,
+            height: 56,
+            borderRadius: BatshRadius.brMd,
+          ),
         ),
         const SizedBox(height: BatshSpacing.gutter),
         const Padding(
           padding: EdgeInsets.symmetric(horizontal: BatshSpacing.gutter),
-          child: BatshShimmerBox(width: double.infinity, height: 56, borderRadius: BatshRadius.brMd),
+          child: BatshShimmerBox(
+            width: double.infinity,
+            height: 56,
+            borderRadius: BatshRadius.brMd,
+          ),
         ),
         const SizedBox(height: BatshSpacing.gutter),
         const Padding(
           padding: EdgeInsets.symmetric(horizontal: BatshSpacing.gutter),
           child: Row(
             children: [
-              Expanded(child: BatshShimmerBox(width: double.infinity, height: 56, borderRadius: BatshRadius.brMd)),
+              Expanded(
+                child: BatshShimmerBox(
+                  width: double.infinity,
+                  height: 56,
+                  borderRadius: BatshRadius.brMd,
+                ),
+              ),
               SizedBox(width: BatshSpacing.gutter),
-              Expanded(child: BatshShimmerBox(width: double.infinity, height: 56, borderRadius: BatshRadius.brMd)),
+              Expanded(
+                child: BatshShimmerBox(
+                  width: double.infinity,
+                  height: 56,
+                  borderRadius: BatshRadius.brMd,
+                ),
+              ),
             ],
           ),
         ),
         const SizedBox(height: BatshSpacing.gutter),
         const Padding(
           padding: EdgeInsets.symmetric(horizontal: BatshSpacing.gutter),
-          child: BatshShimmerBox(width: double.infinity, height: 140, borderRadius: BatshRadius.brMd),
+          child: BatshShimmerBox(
+            width: double.infinity,
+            height: 140,
+            borderRadius: BatshRadius.brMd,
+          ),
         ),
         const SizedBox(height: BatshSpacing.gutter),
         const Padding(
           padding: EdgeInsets.symmetric(horizontal: BatshSpacing.gutter),
-          child: BatshShimmerBox(width: double.infinity, height: 120, borderRadius: BatshRadius.brLg),
+          child: BatshShimmerBox(
+            width: double.infinity,
+            height: 120,
+            borderRadius: BatshRadius.brLg,
+          ),
         ),
         const SizedBox(height: BatshSpacing.lg),
         const Padding(
           padding: EdgeInsets.symmetric(horizontal: BatshSpacing.gutter),
-          child: BatshShimmerBox(width: double.infinity, height: 48, borderRadius: BatshRadius.brMd),
+          child: BatshShimmerBox(
+            width: double.infinity,
+            height: 48,
+            borderRadius: BatshRadius.brMd,
+          ),
         ),
       ],
     );

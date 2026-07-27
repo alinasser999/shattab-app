@@ -63,7 +63,7 @@ class BatshEmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final reduced = MediaQuery.of(context).disableAnimations;
+    final reduced = MediaQuery.disableAnimationsOf(context);
 
     // nothingYet is an invitation, so it takes brand colour. noResults is a
     // dead end the user created themselves, so it stays neutral — colouring it

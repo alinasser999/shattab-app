@@ -11,10 +11,10 @@ class MotionModeNotifier extends Notifier<MotionMode> {
 
   void set(MotionMode mode) => state = mode;
   String get label => switch (state) {
-        MotionMode.full => S.motionFull,
-        MotionMode.reduced => S.motionReduced,
-        MotionMode.off => S.motionOff,
-      };
+    MotionMode.full => S.motionFull,
+    MotionMode.reduced => S.motionReduced,
+    MotionMode.off => S.motionOff,
+  };
   void toggle() {
     state = switch (state) {
       MotionMode.full => MotionMode.reduced,
@@ -30,5 +30,5 @@ final motionModeProvider = NotifierProvider<MotionModeNotifier, MotionMode>(
 
 /// Check system-level reduced motion preference.
 extension MotionContext on BuildContext {
-  bool get systemMotionReduced => MediaQuery.of(this).disableAnimations;
+  bool get systemMotionReduced => MediaQuery.disableAnimationsOf(this);
 }

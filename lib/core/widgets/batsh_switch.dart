@@ -19,7 +19,7 @@ class BatshSwitch extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final reduced = MediaQuery.of(context).disableAnimations;
+    final reduced = MediaQuery.disableAnimationsOf(context);
     final d = reduced ? Duration.zero : const Duration(milliseconds: 200);
     return Semantics(
       toggled: value,
@@ -49,8 +49,7 @@ class BatshSwitch extends StatelessWidget {
               child: AnimatedAlign(
                 duration: d,
                 curve: Curves.easeOutCubic,
-                alignment:
-                    value ? Alignment.centerRight : Alignment.centerLeft,
+                alignment: value ? Alignment.centerRight : Alignment.centerLeft,
                 child: Container(
                   width: _thumb,
                   height: _thumb,

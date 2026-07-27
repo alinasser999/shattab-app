@@ -200,7 +200,7 @@ class BriefDetailScreen extends ConsumerWidget {
           }
           children.add(const SizedBox(height: BatshSpacing.lg));
 
-          final reduced = MediaQuery.of(context).disableAnimations;
+          final reduced = MediaQuery.disableAnimationsOf(context);
           return RefreshIndicator(
             onRefresh: () async => ref.invalidate(briefByIdProvider(briefId)),
             child: ListView(

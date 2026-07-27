@@ -134,7 +134,7 @@ class QuotesReceivedSection extends ConsumerWidget {
 Widget _animatedQuoteCard(Widget card, int index) {
   return Builder(
     builder: (context) {
-      if (MediaQuery.of(context).disableAnimations) return card;
+      if (MediaQuery.disableAnimationsOf(context)) return card;
       return card
           .animate()
           .fadeIn(delay: (80 * index.clamp(0, 6)).ms, duration: 280.ms)

@@ -61,99 +61,96 @@ class BatshButton extends StatelessWidget {
                 Icon(icon, size: BatshIconSize.md),
                 const SizedBox(width: BatshSpacing.sm),
               ],
-              Text(label, style: BatshTypography.labelLg.copyWith(
-                fontWeight: FontWeight.w700,
-              )),
+              Text(
+                label,
+                style: BatshTypography.labelLg.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
             ],
           );
 
     Widget button = switch (style) {
       BatshButtonStyle.primary => ElevatedButton(
-          onPressed: disabled
-              ? null
-              : () {
-                  if (hapticOnPress) HapticFeedback.lightImpact();
-                  onPressed?.call();
-                },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: backgroundColor ?? BatshColors.primary,
-            foregroundColor: foregroundColor ?? BatshColors.onPrimary,
-            disabledBackgroundColor: BatshColors.surfaceContainerHigh,
-            disabledForegroundColor: BatshColors.onSurfaceVariant,
-            minimumSize: const Size.fromHeight(56),
-            padding: const EdgeInsets.symmetric(
-              horizontal: BatshSpacing.lg,
-              vertical: BatshSpacing.gutter,
-            ),
-            elevation: 0,
-            shadowColor: Colors.transparent,
-            surfaceTintColor: Colors.transparent,
-            shape: RoundedRectangleBorder(
-              borderRadius: BatshRadius.brDefault,
-            ),
+        onPressed: disabled
+            ? null
+            : () {
+                if (hapticOnPress) HapticFeedback.lightImpact();
+                onPressed?.call();
+              },
+        style: ElevatedButton.styleFrom(
+          backgroundColor: backgroundColor ?? BatshColors.primary,
+          foregroundColor: foregroundColor ?? BatshColors.onPrimary,
+          disabledBackgroundColor: BatshColors.surfaceContainerHigh,
+          disabledForegroundColor: BatshColors.onSurfaceVariant,
+          minimumSize: const Size.fromHeight(56),
+          padding: const EdgeInsets.symmetric(
+            horizontal: BatshSpacing.lg,
+            vertical: BatshSpacing.gutter,
           ),
-          child: child,
+          elevation: 0,
+          shadowColor: Colors.transparent,
+          surfaceTintColor: Colors.transparent,
+          shape: RoundedRectangleBorder(borderRadius: BatshRadius.brDefault),
         ),
+        child: child,
+      ),
       BatshButtonStyle.secondary => OutlinedButton(
-          onPressed: disabled
-              ? null
-              : () {
-                  if (hapticOnPress) HapticFeedback.lightImpact();
-                  onPressed?.call();
-                },
-          style: OutlinedButton.styleFrom(
-            foregroundColor: foregroundColor ?? BatshColors.primary,
-            backgroundColor: backgroundColor,
-            side: BorderSide(
-                color: BatshColors.outline.withValues(alpha: 0.5), width: 1.5),
-            disabledBackgroundColor: BatshColors.surfaceContainerHigh,
-            disabledForegroundColor: BatshColors.onSurfaceVariant,
-            minimumSize: const Size.fromHeight(56),
-            padding: const EdgeInsets.symmetric(
-              horizontal: BatshSpacing.lg,
-              vertical: BatshSpacing.gutter,
-            ),
-            shape: RoundedRectangleBorder(
-              borderRadius: BatshRadius.brDefault,
-            ),
+        onPressed: disabled
+            ? null
+            : () {
+                if (hapticOnPress) HapticFeedback.lightImpact();
+                onPressed?.call();
+              },
+        style: OutlinedButton.styleFrom(
+          foregroundColor: foregroundColor ?? BatshColors.primary,
+          backgroundColor: backgroundColor,
+          side: BorderSide(
+            color: BatshColors.outline.withValues(alpha: 0.5),
+            width: 1.5,
           ),
-          child: child,
+          disabledBackgroundColor: BatshColors.surfaceContainerHigh,
+          disabledForegroundColor: BatshColors.onSurfaceVariant,
+          minimumSize: const Size.fromHeight(56),
+          padding: const EdgeInsets.symmetric(
+            horizontal: BatshSpacing.lg,
+            vertical: BatshSpacing.gutter,
+          ),
+          shape: RoundedRectangleBorder(borderRadius: BatshRadius.brDefault),
         ),
+        child: child,
+      ),
       BatshButtonStyle.ghost => TextButton(
-          onPressed: disabled
-              ? null
-              : () {
-                  if (hapticOnPress) HapticFeedback.lightImpact();
-                  onPressed?.call();
-                },
-          style: TextButton.styleFrom(
-            foregroundColor: foregroundColor ?? BatshColors.onSurfaceVariant,
-            minimumSize: const Size(0, 48),
-            padding: const EdgeInsets.symmetric(
-              horizontal: BatshSpacing.gutter,
-              vertical: BatshSpacing.sm,
-            ),
-            shape: RoundedRectangleBorder(
-              borderRadius: BatshRadius.brDefault,
-            ),
+        onPressed: disabled
+            ? null
+            : () {
+                if (hapticOnPress) HapticFeedback.lightImpact();
+                onPressed?.call();
+              },
+        style: TextButton.styleFrom(
+          foregroundColor: foregroundColor ?? BatshColors.onSurfaceVariant,
+          minimumSize: const Size(0, 48),
+          padding: const EdgeInsets.symmetric(
+            horizontal: BatshSpacing.gutter,
+            vertical: BatshSpacing.sm,
           ),
-          child: child,
+          shape: RoundedRectangleBorder(borderRadius: BatshRadius.brDefault),
         ),
+        child: child,
+      ),
     };
 
     if (fullWidth) {
       button = SizedBox(width: double.infinity, child: button);
     }
 
-    if (animate && !MediaQuery.of(context).disableAnimations) {
+    if (animate && !MediaQuery.disableAnimationsOf(context)) {
       button = TweenAnimationBuilder<double>(
         tween: Tween(begin: 0.96, end: 1.0),
         duration: BatshMotion.normal,
         curve: BatshMotion.easeOut,
-        builder: (context, scale, child) => Transform.scale(
-          scale: scale,
-          child: child,
-        ),
+        builder: (context, scale, child) =>
+            Transform.scale(scale: scale, child: child),
         child: button,
       );
     }

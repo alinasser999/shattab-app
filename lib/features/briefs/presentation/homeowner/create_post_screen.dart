@@ -101,7 +101,9 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
       if (editing != null) {
         // Photos are left alone on edit: replacing them would mean re-uploading
         // images the homeowner never touched, and the picker starts empty.
-        await ref.read(briefsControllerProvider.notifier).updateBrief(
+        await ref
+            .read(briefsControllerProvider.notifier)
+            .updateBrief(
               editing.id,
               apartmentType: _apartmentType!,
               city: _city!,
@@ -110,7 +112,9 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
               targetSpecialties: _targetSpecialties.toList(),
             );
       } else {
-        await ref.read(briefsControllerProvider.notifier).createPost(
+        await ref
+            .read(briefsControllerProvider.notifier)
+            .createPost(
               apartmentType: _apartmentType!,
               city: _city!,
               district: _district,
@@ -121,7 +125,9 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
       }
       if (!mounted) return;
       BatshSnack.success(
-        context, widget.isEditing ? S.changesSaved : S.postCreatedSuccess);
+        context,
+        widget.isEditing ? S.changesSaved : S.postCreatedSuccess,
+      );
       if (widget.isEditing) {
         Navigator.of(context).maybePop();
       } else {
@@ -145,117 +151,125 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
       _hydrated = true;
     }
 
-    final reduced = MediaQuery.of(context).disableAnimations;
+    final reduced = MediaQuery.disableAnimationsOf(context);
     final items = <Widget>[
-          const SizedBox(height: BatshSpacing.md),
-          Text(S.writeWhatYouNeed,
-              style: BatshTypography.headlineMd),
-          const SizedBox(height: BatshSpacing.xs),
-          Text(S.contractorsWillSeeMatched,
-              style: BatshTypography.bodyMd
-                  .copyWith(color: BatshColors.onSurfaceVariant)),
-          const SizedBox(height: BatshSpacing.lg),
-          BatshTextField(
-            controller: _descCtrl,
-            label: S.descriptionLabel,
-            hint: S.descriptionWorkHint,
-            maxLines: 6,
-            maxLength: 2000,
-            errorText: _error,
-          ),
-          const SizedBox(height: BatshSpacing.gutter),
-          Text('${S.sectionLookingForWho} *',
-              style: BatshTypography.labelMd
-                  .copyWith(color: BatshColors.onSurfaceVariant)),
-          const SizedBox(height: BatshSpacing.sm),
-          Wrap(
-            spacing: BatshSpacing.sm,
-            runSpacing: BatshSpacing.sm,
-            children: [
-              for (final e in OnboardingCatalog.specialtiesCatalog.entries)
-                BatshChip(
-                  label: e.value,
-                  selected: _targetSpecialties.contains(e.key),
-                  onTap: () => setState(() {
-                    if (_targetSpecialties.contains(e.key)) {
-                      _targetSpecialties.remove(e.key);
-                    } else {
-                      _targetSpecialties.add(e.key);
-                    }
-                  }),
-                ),
-            ],
-          ),
-          const SizedBox(height: BatshSpacing.gutter),
-          Text('${S.apartmentTypeLabel} *',
-              style: BatshTypography.labelMd
-                  .copyWith(color: BatshColors.onSurfaceVariant)),
-          const SizedBox(height: BatshSpacing.sm),
-          Wrap(
-            spacing: BatshSpacing.sm,
-            runSpacing: BatshSpacing.sm,
-            children: [
-              for (final t in ApartmentType.values)
-                BatshChip(
-                  label: OnboardingCatalog.apartmentLabels[t] ?? t.name,
-                  selected: _apartmentType == t,
-                  onTap: () => setState(() => _apartmentType = t),
-                ),
-            ],
-          ),
-          const SizedBox(height: BatshSpacing.gutter),
-          Text('${S.cityLabel} *',
-              style: BatshTypography.labelMd
-                  .copyWith(color: BatshColors.onSurfaceVariant)),
-          const SizedBox(height: BatshSpacing.sm),
-          Wrap(
-            spacing: BatshSpacing.sm,
-            runSpacing: BatshSpacing.sm,
-            children: [
-              for (final c in OnboardingCatalog.citiesAndDistricts)
-                BatshChip(
-                  label: c.city,
-                  selected: _city == c.city,
-                  onTap: () => setState(() => _city = c.city),
-                ),
-            ],
-          ),
-          const SizedBox(height: BatshSpacing.gutter),
-          // Photo editing is not wired yet, so the picker is hidden rather than
-          // shown as a control whose changes would be silently dropped.
-          if (!widget.isEditing) ...[
-            PhotoPicker(onChanged: (p) => _photos = p),
-            const SizedBox(height: BatshSpacing.md),
-          ],
-          Text(
-            S.phoneVisibleContractors,
-            style: BatshTypography.labelMd
-                .copyWith(color: BatshColors.onSurfaceVariant),
-          ),
-          const SizedBox(height: BatshSpacing.lg),
-          if (_busy) const BatshLoading() else BatshButton(
-            label: widget.isEditing
-                ? S.saveChanges
-                : S.createPostPublishButton,
-            onPressed: _submit,
-          ),
-          const SizedBox(height: BatshSpacing.lg),
-        ];
+      const SizedBox(height: BatshSpacing.md),
+      Text(S.writeWhatYouNeed, style: BatshTypography.headlineMd),
+      const SizedBox(height: BatshSpacing.xs),
+      Text(
+        S.contractorsWillSeeMatched,
+        style: BatshTypography.bodyMd.copyWith(
+          color: BatshColors.onSurfaceVariant,
+        ),
+      ),
+      const SizedBox(height: BatshSpacing.lg),
+      BatshTextField(
+        controller: _descCtrl,
+        label: S.descriptionLabel,
+        hint: S.descriptionWorkHint,
+        maxLines: 6,
+        maxLength: 2000,
+        errorText: _error,
+      ),
+      const SizedBox(height: BatshSpacing.gutter),
+      Text(
+        '${S.sectionLookingForWho} *',
+        style: BatshTypography.labelMd.copyWith(
+          color: BatshColors.onSurfaceVariant,
+        ),
+      ),
+      const SizedBox(height: BatshSpacing.sm),
+      Wrap(
+        spacing: BatshSpacing.sm,
+        runSpacing: BatshSpacing.sm,
+        children: [
+          for (final e in OnboardingCatalog.specialtiesCatalog.entries)
+            BatshChip(
+              label: e.value,
+              selected: _targetSpecialties.contains(e.key),
+              onTap: () => setState(() {
+                if (_targetSpecialties.contains(e.key)) {
+                  _targetSpecialties.remove(e.key);
+                } else {
+                  _targetSpecialties.add(e.key);
+                }
+              }),
+            ),
+        ],
+      ),
+      const SizedBox(height: BatshSpacing.gutter),
+      Text(
+        '${S.apartmentTypeLabel} *',
+        style: BatshTypography.labelMd.copyWith(
+          color: BatshColors.onSurfaceVariant,
+        ),
+      ),
+      const SizedBox(height: BatshSpacing.sm),
+      Wrap(
+        spacing: BatshSpacing.sm,
+        runSpacing: BatshSpacing.sm,
+        children: [
+          for (final t in ApartmentType.values)
+            BatshChip(
+              label: OnboardingCatalog.apartmentLabels[t] ?? t.name,
+              selected: _apartmentType == t,
+              onTap: () => setState(() => _apartmentType = t),
+            ),
+        ],
+      ),
+      const SizedBox(height: BatshSpacing.gutter),
+      Text(
+        '${S.cityLabel} *',
+        style: BatshTypography.labelMd.copyWith(
+          color: BatshColors.onSurfaceVariant,
+        ),
+      ),
+      const SizedBox(height: BatshSpacing.sm),
+      Wrap(
+        spacing: BatshSpacing.sm,
+        runSpacing: BatshSpacing.sm,
+        children: [
+          for (final c in OnboardingCatalog.citiesAndDistricts)
+            BatshChip(
+              label: c.city,
+              selected: _city == c.city,
+              onTap: () => setState(() => _city = c.city),
+            ),
+        ],
+      ),
+      const SizedBox(height: BatshSpacing.gutter),
+      // Photo editing is not wired yet, so the picker is hidden rather than
+      // shown as a control whose changes would be silently dropped.
+      if (!widget.isEditing) ...[
+        PhotoPicker(onChanged: (p) => _photos = p),
+        const SizedBox(height: BatshSpacing.md),
+      ],
+      Text(
+        S.phoneVisibleContractors,
+        style: BatshTypography.labelMd.copyWith(
+          color: BatshColors.onSurfaceVariant,
+        ),
+      ),
+      const SizedBox(height: BatshSpacing.lg),
+      if (_busy)
+        const BatshLoading()
+      else
+        BatshButton(
+          label: widget.isEditing ? S.saveChanges : S.createPostPublishButton,
+          onPressed: _submit,
+        ),
+      const SizedBox(height: BatshSpacing.lg),
+    ];
     return BatshScaffold(
       title: widget.isEditing ? S.editBriefTitle : S.createPostTitle,
       body: ListView(
         children: reduced
             ? items
-            : items.animate(interval: BatshMotion.staggerBase).fadeIn(
-                  duration: BatshMotion.normal,
-                ).slideY(
-                  begin: 0.06,
-                  end: 0,
-                  curve: BatshMotion.easeOut,
-                ),
+            : items
+                  .animate(interval: BatshMotion.staggerBase)
+                  .fadeIn(duration: BatshMotion.normal)
+                  .slideY(begin: 0.06, end: 0, curve: BatshMotion.easeOut),
       ),
     );
   }
 }
-
-

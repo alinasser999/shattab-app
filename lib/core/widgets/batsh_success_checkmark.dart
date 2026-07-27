@@ -4,11 +4,7 @@ import '../theme/batsh_colors.dart';
 import '../theme/batsh_motion.dart';
 
 class BatshSuccessCheckmark extends StatefulWidget {
-  const BatshSuccessCheckmark({
-    super.key,
-    this.size = 80,
-    this.message,
-  });
+  const BatshSuccessCheckmark({super.key, this.size = 80, this.message});
 
   final double size;
   final String? message;
@@ -24,26 +20,26 @@ class _BatshSuccessCheckmarkState extends State<BatshSuccessCheckmark>
     duration: BatshMotion.slower,
   );
 
-  late final Animation<double> _scale = Tween<double>(
-    begin: 0.0,
-    end: 1.0,
-  ).animate(CurvedAnimation(
-    parent: _ctrl,
-    curve: const Interval(0.0, 0.4, curve: Curves.elasticOut),
-  ));
+  late final Animation<double> _scale = Tween<double>(begin: 0.0, end: 1.0)
+      .animate(
+        CurvedAnimation(
+          parent: _ctrl,
+          curve: const Interval(0.0, 0.4, curve: Curves.elasticOut),
+        ),
+      );
 
-  late final Animation<double> _check = Tween<double>(
-    begin: 0.0,
-    end: 1.0,
-  ).animate(CurvedAnimation(
-    parent: _ctrl,
-    curve: const Interval(0.3, 0.8, curve: Curves.easeOutCubic),
-  ));
+  late final Animation<double> _check = Tween<double>(begin: 0.0, end: 1.0)
+      .animate(
+        CurvedAnimation(
+          parent: _ctrl,
+          curve: const Interval(0.3, 0.8, curve: Curves.easeOutCubic),
+        ),
+      );
 
   @override
   void initState() {
     super.initState();
-    if (!MediaQuery.of(context).disableAnimations) {
+    if (!MediaQuery.disableAnimationsOf(context)) {
       _ctrl.forward();
     } else {
       _ctrl.value = 1.0;

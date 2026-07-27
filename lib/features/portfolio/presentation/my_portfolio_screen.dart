@@ -30,7 +30,10 @@ class MyPortfolioScreen extends ConsumerWidget {
   const MyPortfolioScreen({super.key});
 
   Future<void> _confirmDelete(
-      BuildContext context, WidgetRef ref, PortfolioProject p) async {
+    BuildContext context,
+    WidgetRef ref,
+    PortfolioProject p,
+  ) async {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -94,9 +97,9 @@ class MyPortfolioScreen extends ConsumerWidget {
       body: projectsAsync.when(
         loading: () => const _PortfolioSkeleton(),
         error: (e, _) => BatshError(
-              message: ErrorMapper.map(e),
-              onRetry: () => ref.invalidate(myPortfolioProvider),
-            ),
+          message: ErrorMapper.map(e),
+          onRetry: () => ref.invalidate(myPortfolioProvider),
+        ),
         data: (projects) {
           if (projects.isEmpty) {
             return BatshEmptyState(
@@ -127,7 +130,7 @@ class MyPortfolioScreen extends ConsumerWidget {
               itemCount: projects.length,
               itemBuilder: (context, i) {
                 final p = projects[i];
-                final reduced = MediaQuery.of(context).disableAnimations;
+                final reduced = MediaQuery.disableAnimationsOf(context);
                 final tile = _PortfolioTile(
                   project: p,
                   onTap: () =>
@@ -137,12 +140,17 @@ class MyPortfolioScreen extends ConsumerWidget {
                 return reduced
                     ? tile
                     : tile
-                        .animate()
-                        .fadeIn(
+                          .animate()
+                          .fadeIn(
                             duration: 320.ms,
                             delay: (60 * i.clamp(0, 7)).ms,
-                            curve: Curves.easeOut)
-                        .slideY(begin: 0.08, end: 0, curve: Curves.easeOutCubic);
+                            curve: Curves.easeOut,
+                          )
+                          .slideY(
+                            begin: 0.08,
+                            end: 0,
+                            curve: Curves.easeOutCubic,
+                          );
               },
             ),
           );
@@ -169,17 +177,15 @@ class _PortfolioSkeleton extends StatelessWidget {
         ),
         itemCount: 4,
         itemBuilder: (_, i) {
-          final reduced = MediaQuery.of(context).disableAnimations;
-          final box = BatshShimmerBox(
-            borderRadius: BatshRadius.brLg,
-          );
+          final reduced = MediaQuery.disableAnimationsOf(context);
+          final box = BatshShimmerBox(borderRadius: BatshRadius.brLg);
           return reduced
               ? box
               : box.animate().fadeIn(
-                duration: 320.ms,
-                delay: (60 * i.clamp(0, 7)).ms,
-                curve: Curves.easeOut,
-              );
+                  duration: 320.ms,
+                  delay: (60 * i.clamp(0, 7)).ms,
+                  curve: Curves.easeOut,
+                );
         },
       ),
     );
@@ -217,8 +223,11 @@ class _PortfolioTile extends StatelessWidget {
               errorWidget: (_, _, _) => Container(
                 color: BatshColors.surfaceContainer,
                 child: const Center(
-                  child: Icon(Icons.image_outlined,
-                      size: BatshIconSize.xl, color: BatshColors.onSurfaceVariant),
+                  child: Icon(
+                    Icons.image_outlined,
+                    size: BatshIconSize.xl,
+                    color: BatshColors.onSurfaceVariant,
+                  ),
                 ),
               ),
             ),
@@ -272,8 +281,11 @@ class _PortfolioTile extends StatelessWidget {
                 ),
                 child: const Padding(
                   padding: EdgeInsets.all(6),
-                  child: Icon(Icons.edit_outlined,
-                      size: BatshIconSize.sm, color: Colors.white),
+                  child: Icon(
+                    Icons.edit_outlined,
+                    size: BatshIconSize.sm,
+                    color: Colors.white,
+                  ),
                 ),
               ),
             ),

@@ -150,7 +150,7 @@ class _ContractorAccountView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final reduced = MediaQuery.of(context).disableAnimations;
+    final reduced = MediaQuery.disableAnimationsOf(context);
 
     final items = <Widget>[
       const SizedBox(height: BatshSpacing.md),
@@ -853,7 +853,7 @@ class _HomeownerProfile extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final savedCount = ref.watch(savedContractorIdsProvider).value?.length ?? 0;
     final requestsCount = ref.watch(myBriefsProvider).value?.length ?? 0;
-    final reduced = MediaQuery.of(context).disableAnimations;
+    final reduced = MediaQuery.disableAnimationsOf(context);
 
     final items = <Widget>[
       const SizedBox(height: BatshSpacing.md),

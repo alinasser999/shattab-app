@@ -344,7 +344,7 @@ class _JobOpportunitiesScreenState
                       }
                       final brief = filtered[i];
                       final job = JobCardData.fromBrief(brief);
-                      final reduced = MediaQuery.of(context).disableAnimations;
+                      final reduced = MediaQuery.disableAnimationsOf(context);
                       final card = PremiumJobCard(
                         job: job,
                         budgetLabel: null,

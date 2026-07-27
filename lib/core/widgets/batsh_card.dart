@@ -40,7 +40,7 @@ class _BatshCardState extends State<BatshCard>
   );
 
   bool _isHovered = false;
-  bool get _reduced => MediaQuery.of(context).disableAnimations;
+  bool get _reduced => MediaQuery.disableAnimationsOf(context);
 
   void _onTapDown(_) {
     if (widget.onTap == null || _reduced) return;
@@ -49,7 +49,11 @@ class _BatshCardState extends State<BatshCard>
 
   void _onTapUp(_) {
     if (_reduced) return;
-    _ctrl.animateTo(0, duration: BatshMotion.normal, curve: BatshMotion.springTap);
+    _ctrl.animateTo(
+      0,
+      duration: BatshMotion.normal,
+      curve: BatshMotion.springTap,
+    );
   }
 
   void _onTapCancel() {
@@ -98,8 +102,8 @@ class _BatshCardState extends State<BatshCard>
         final shadow = _reduced
             ? defaultShadow
             : _isHovered
-                ? BatshShadows.elevated
-                : _lerpShadows(defaultShadow, BatshShadows.elevated, t);
+            ? BatshShadows.elevated
+            : _lerpShadows(defaultShadow, BatshShadows.elevated, t);
         final hoverY = _isHovered && !_reduced ? -1.0 : 0.0;
 
         return Transform.translate(
@@ -136,15 +140,16 @@ class _BatshCardState extends State<BatshCard>
     result = MouseRegion(
       onEnter: _onHoverEnter,
       onExit: _onHoverExit,
-      cursor: widget.onTap != null ? SystemMouseCursors.click : MouseCursor.defer,
+      cursor: widget.onTap != null
+          ? SystemMouseCursors.click
+          : MouseCursor.defer,
       child: result,
     );
 
     return Semantics(button: widget.onTap != null, child: result);
   }
 
-  List<BoxShadow> _lerpShadows(
-      List<BoxShadow> a, List<BoxShadow> b, double t) {
+  List<BoxShadow> _lerpShadows(List<BoxShadow> a, List<BoxShadow> b, double t) {
     if (t <= 0) return a;
     if (t >= 1) return b;
     return [

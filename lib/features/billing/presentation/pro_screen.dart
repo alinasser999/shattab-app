@@ -33,7 +33,7 @@ class _ProScreenState extends State<ProScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final motion = !MediaQuery.of(context).disableAnimations;
+    final motion = !MediaQuery.disableAnimationsOf(context);
     return Scaffold(
       backgroundColor: BatshColors.surface,
       body: SingleChildScrollView(
@@ -46,7 +46,8 @@ class _ProScreenState extends State<ProScreen> {
               offset: const Offset(0, -36),
               child: Padding(
                 padding: const EdgeInsets.symmetric(
-                    horizontal: BatshSpacing.gutter),
+                  horizontal: BatshSpacing.gutter,
+                ),
                 child: _PlanCard(
                   annual: _annual,
                   onToggle: (v) => setState(() => _annual = v),
@@ -114,8 +115,9 @@ class _Hero extends StatelessWidget {
           Text(
             S.proScreenTitle,
             textAlign: TextAlign.center,
-            style: BatshTypography.displayMd
-                .copyWith(color: BatshColors.onPrimary),
+            style: BatshTypography.displayMd.copyWith(
+              color: BatshColors.onPrimary,
+            ),
           ),
           const SizedBox(height: BatshSpacing.xs),
           Text(
@@ -169,7 +171,11 @@ class _Medallion extends StatelessWidget {
       child: seal
           .animate()
           .scaleXY(
-              begin: 0.85, end: 1, duration: 420.ms, curve: Curves.easeOutCubic)
+            begin: 0.85,
+            end: 1,
+            duration: 420.ms,
+            curve: Curves.easeOutCubic,
+          )
           .fadeIn(duration: 320.ms),
     );
   }
@@ -216,8 +222,9 @@ class _PlanCard extends StatelessWidget {
           Text(
             S.proRoiLine,
             textAlign: TextAlign.center,
-            style: BatshTypography.bodySm
-                .copyWith(color: BatshColors.onSurfaceVariant),
+            style: BatshTypography.bodySm.copyWith(
+              color: BatshColors.onSurfaceVariant,
+            ),
           ),
           const SizedBox(height: BatshSpacing.lg),
           for (var i = 0; i < benefits.length; i++)
@@ -232,8 +239,9 @@ class _PlanCard extends StatelessWidget {
           Text(
             S.cancelAnytime,
             textAlign: TextAlign.center,
-            style: BatshTypography.labelMd
-                .copyWith(color: BatshColors.onSurfaceVariant),
+            style: BatshTypography.labelMd.copyWith(
+              color: BatshColors.onSurfaceVariant,
+            ),
           ),
         ],
       ),
@@ -257,9 +265,10 @@ class _PlanToggle extends StatelessWidget {
       child: Row(
         children: [
           _seg(
-              label: S.planMonthly,
-              selected: !annual,
-              onTap: () => onToggle(false)),
+            label: S.planMonthly,
+            selected: !annual,
+            onTap: () => onToggle(false),
+          ),
           _seg(
             label: S.planAnnual,
             selected: annual,
@@ -311,7 +320,9 @@ class _PlanToggle extends StatelessWidget {
                   const SizedBox(width: BatshSpacing.xs),
                   Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: BatshSpacing.xs, vertical: 1),
+                      horizontal: BatshSpacing.xs,
+                      vertical: 1,
+                    ),
                     decoration: BoxDecoration(
                       color: BatshColors.secondaryContainer,
                       borderRadius: BatshRadius.brFull,
@@ -339,8 +350,9 @@ class _PriceBlock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final price =
-        annual ? BatshPricing.proAnnualEgp : BatshPricing.proMonthlyEgp;
+    final price = annual
+        ? BatshPricing.proAnnualEgp
+        : BatshPricing.proMonthlyEgp;
     final unit = annual ? S.perYear : S.perMonth;
     return AnimatedSwitcher(
       duration: 200.ms,
@@ -363,14 +375,14 @@ class _PriceBlock extends StatelessWidget {
           const SizedBox(width: BatshSpacing.xxs),
           Text(
             S.egpUnit,
-            style:
-                BatshTypography.titleLg.copyWith(color: BatshColors.primary),
+            style: BatshTypography.titleLg.copyWith(color: BatshColors.primary),
           ),
           const SizedBox(width: BatshSpacing.xxs),
           Text(
             unit,
-            style: BatshTypography.bodyMd
-                .copyWith(color: BatshColors.onSurfaceVariant),
+            style: BatshTypography.bodyMd.copyWith(
+              color: BatshColors.onSurfaceVariant,
+            ),
           ),
         ],
       ),
@@ -395,8 +407,11 @@ class _BenefitRow extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.check_circle_rounded,
-              size: BatshIconSize.md, color: BatshColors.tertiary),
+          const Icon(
+            Icons.check_circle_rounded,
+            size: BatshIconSize.md,
+            color: BatshColors.tertiary,
+          ),
           const SizedBox(width: BatshSpacing.sm),
           Expanded(child: Text(text, style: BatshTypography.bodyMd)),
         ],
@@ -426,8 +441,11 @@ class _CompareTable extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(S.comparePlans,
-              style: BatshTypography.titleMd, textAlign: TextAlign.center),
+          Text(
+            S.comparePlans,
+            style: BatshTypography.titleMd,
+            textAlign: TextAlign.center,
+          ),
           const SizedBox(height: BatshSpacing.md),
           _header(),
           const Divider(height: BatshSpacing.lg, color: BatshColors.divider),
@@ -447,17 +465,21 @@ class _CompareTable extends StatelessWidget {
         const Expanded(flex: 4, child: SizedBox()),
         Expanded(
           flex: 3,
-          child: Text(S.freePlanName,
-              textAlign: TextAlign.center,
-              style: BatshTypography.labelMd
-                  .copyWith(color: BatshColors.onSurfaceVariant)),
+          child: Text(
+            S.freePlanName,
+            textAlign: TextAlign.center,
+            style: BatshTypography.labelMd.copyWith(
+              color: BatshColors.onSurfaceVariant,
+            ),
+          ),
         ),
         Expanded(
           flex: 3,
-          child: Text(S.proPlanName,
-              textAlign: TextAlign.center,
-              style: BatshTypography.labelLg
-                  .copyWith(color: BatshColors.primary)),
+          child: Text(
+            S.proPlanName,
+            textAlign: TextAlign.center,
+            style: BatshTypography.labelLg.copyWith(color: BatshColors.primary),
+          ),
         ),
       ],
     );
@@ -469,8 +491,7 @@ class _CompareTable extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: BatshSpacing.xs),
       child: Row(
         children: [
-          Expanded(
-              flex: 4, child: Text(label, style: BatshTypography.bodyMd)),
+          Expanded(flex: 4, child: Text(label, style: BatshTypography.bodyMd)),
           Expanded(flex: 3, child: _cell(free, isPro: false)),
           Expanded(flex: 3, child: _cell(pro, isPro: true)),
         ],
@@ -509,12 +530,18 @@ class _TrustFooter extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        const Icon(Icons.lock_outline_rounded,
-            size: BatshIconSize.sm, color: BatshColors.onSurfaceVariant),
+        const Icon(
+          Icons.lock_outline_rounded,
+          size: BatshIconSize.sm,
+          color: BatshColors.onSurfaceVariant,
+        ),
         const SizedBox(width: BatshSpacing.xs),
-        Text(S.trustPaymob,
-            style: BatshTypography.labelMd
-                .copyWith(color: BatshColors.onSurfaceVariant)),
+        Text(
+          S.trustPaymob,
+          style: BatshTypography.labelMd.copyWith(
+            color: BatshColors.onSurfaceVariant,
+          ),
+        ),
       ],
     );
   }
@@ -528,5 +555,7 @@ const _arDigits = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
 String _digits(String s) {
   if (S.egpUnit == 'EGP') return s; // English mode keeps Western digits
   return s.replaceAllMapped(
-      RegExp(r'[0-9]'), (m) => _arDigits[int.parse(m[0]!)]);
+    RegExp(r'[0-9]'),
+    (m) => _arDigits[int.parse(m[0]!)],
+  );
 }

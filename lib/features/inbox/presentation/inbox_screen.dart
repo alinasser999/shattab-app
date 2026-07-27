@@ -59,7 +59,7 @@ class InboxScreen extends ConsumerWidget {
                   const SizedBox(height: BatshSpacing.md),
               itemBuilder: (context, i) {
                 final r = items[i];
-                final reduced = MediaQuery.of(context).disableAnimations;
+                final reduced = MediaQuery.disableAnimationsOf(context);
                 final card = _RequestCard(request: r);
                 return reduced
                     ? card
@@ -105,7 +105,7 @@ class _SkeletonCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final reduced = MediaQuery.of(context).disableAnimations;
+    final reduced = MediaQuery.disableAnimationsOf(context);
     final items = <Widget>[
       BatshShimmerBox(height: 16, width: 160, borderRadius: BatshRadius.brSm),
       const SizedBox(height: 8),

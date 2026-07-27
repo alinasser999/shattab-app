@@ -102,7 +102,7 @@ class _PostDetailBody extends StatelessWidget {
     final place = brief.district != null
         ? '${brief.city} · ${brief.district}'
         : brief.city;
-    final reduced = MediaQuery.of(context).disableAnimations;
+    final reduced = MediaQuery.disableAnimationsOf(context);
     final items = <Widget>[
       if (brief.photoUrls.isNotEmpty)
         _HeroImageSection(

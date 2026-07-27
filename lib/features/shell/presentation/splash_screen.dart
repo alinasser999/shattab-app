@@ -16,7 +16,7 @@ class _SplashScreenState extends State<SplashScreen>
     with SingleTickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
-    final reduced = MediaQuery.of(context).disableAnimations;
+    final reduced = MediaQuery.disableAnimationsOf(context);
     return Scaffold(
       backgroundColor: BatshColors.background,
       body: Center(
@@ -24,9 +24,7 @@ class _SplashScreenState extends State<SplashScreen>
           mainAxisSize: MainAxisSize.min,
           children: [
             // Decorative top-left shape
-            IgnorePointer(
-              child: _animatedCircle(reduced),
-            ),
+            IgnorePointer(child: _animatedCircle(reduced)),
             const SizedBox(height: 24),
             // Brand name with dramatic entrance
             _animatedBrand(reduced),
@@ -79,9 +77,18 @@ class _SplashScreenState extends State<SplashScreen>
     return brand
         .animate()
         .fadeIn(duration: 700.ms, curve: Curves.easeOut)
-        .slideY(begin: -0.2, end: 0, duration: 800.ms, curve: Curves.easeOutCubic)
-        .scale(begin: const Offset(0.6, 0.6), end: const Offset(1, 1),
-            duration: 800.ms, curve: Curves.easeOutCubic);
+        .slideY(
+          begin: -0.2,
+          end: 0,
+          duration: 800.ms,
+          curve: Curves.easeOutCubic,
+        )
+        .scale(
+          begin: const Offset(0.6, 0.6),
+          end: const Offset(1, 1),
+          duration: 800.ms,
+          curve: Curves.easeOutCubic,
+        );
   }
 
   Widget _animatedTagline(bool reduced) {
@@ -95,8 +102,13 @@ class _SplashScreenState extends State<SplashScreen>
     return tagline
         .animate()
         .fadeIn(duration: 500.ms, delay: 400.ms, curve: Curves.easeOut)
-        .slideY(begin: 0.1, end: 0, duration: 500.ms, delay: 400.ms,
-            curve: Curves.easeOutCubic);
+        .slideY(
+          begin: 0.1,
+          end: 0,
+          duration: 500.ms,
+          delay: 400.ms,
+          curve: Curves.easeOutCubic,
+        );
   }
 
   Widget _animatedLoader(bool reduced) {
@@ -112,37 +124,44 @@ class _SplashScreenState extends State<SplashScreen>
     return loader
         .animate()
         .fadeIn(duration: 400.ms, delay: 600.ms, curve: Curves.easeOut)
-        .shimmer(duration: 1200.ms, delay: 600.ms,
-            color: BatshColors.primaryContainer);
+        .shimmer(
+          duration: 1200.ms,
+          delay: 600.ms,
+          color: BatshColors.primaryContainer,
+        );
   }
 
   Widget _animatedDots(bool reduced) {
     return Row(
       mainAxisSize: MainAxisSize.min,
-      children: List.generate(
-        3,
-        (i) {
-          final dot = Container(
-            width: 6,
-            height: 6,
-            margin: EdgeInsetsDirectional.only(start: i < 2 ? 8 : 0),
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: i == 1
-                  ? BatshColors.primary
-                  : BatshColors.primary.withValues(alpha: 0.3),
-            ),
-          );
-          if (reduced) return dot;
-          return dot
-              .animate()
-              .fadeIn(duration: 300.ms,
-                  delay: (800 + i * 150).ms, curve: Curves.easeOut)
-              .scale(begin: const Offset(0, 0), end: const Offset(1, 1),
-                  duration: 300.ms, delay: (800 + i * 150).ms,
-                  curve: Curves.easeOutBack);
-        },
-      ),
+      children: List.generate(3, (i) {
+        final dot = Container(
+          width: 6,
+          height: 6,
+          margin: EdgeInsetsDirectional.only(start: i < 2 ? 8 : 0),
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: i == 1
+                ? BatshColors.primary
+                : BatshColors.primary.withValues(alpha: 0.3),
+          ),
+        );
+        if (reduced) return dot;
+        return dot
+            .animate()
+            .fadeIn(
+              duration: 300.ms,
+              delay: (800 + i * 150).ms,
+              curve: Curves.easeOut,
+            )
+            .scale(
+              begin: const Offset(0, 0),
+              end: const Offset(1, 1),
+              duration: 300.ms,
+              delay: (800 + i * 150).ms,
+              curve: Curves.easeOutBack,
+            );
+      }),
     );
   }
 }

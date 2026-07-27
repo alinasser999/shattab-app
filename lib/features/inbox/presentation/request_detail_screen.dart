@@ -36,8 +36,9 @@ class _RequestDetailScreenState extends ConsumerState<RequestDetailScreen> {
 
   Future<void> _fetchHomeowner(String homeownerId) async {
     try {
-      final result =
-          await ref.read(authRepositoryProvider).fetchProfileNameAndPhone(homeownerId);
+      final result = await ref
+          .read(authRepositoryProvider)
+          .fetchProfileNameAndPhone(homeownerId);
       if (!mounted) return;
       setState(() {
         _homeowner = result;
@@ -60,71 +61,80 @@ class _RequestDetailScreenState extends ConsumerState<RequestDetailScreen> {
       body: async.when(
         loading: () => const _RequestDetailSkeleton(),
         error: (e, _) => BatshError(
-              message: ErrorMapper.map(e),
-              onRetry: () => ref.invalidate(briefByIdProvider(widget.briefId)),
-            ),
+          message: ErrorMapper.map(e),
+          onRetry: () => ref.invalidate(briefByIdProvider(widget.briefId)),
+        ),
         data: (brief) {
           if (brief == null) return const BatshError();
           // Trigger homeowner fetch once on first data load.
-          if (_homeownerLoading && _homeownerError == null && _homeowner == null) {
+          if (_homeownerLoading &&
+              _homeownerError == null &&
+              _homeowner == null) {
             _fetchHomeowner(brief.homeownerId);
           }
           final date = intl.DateFormat.yMMMd('ar').format(brief.createdAt);
           final apt =
               OnboardingCatalog.apartmentLabels[brief.apartmentType] ??
-                  brief.apartmentType.name;
+              brief.apartmentType.name;
           final place = brief.district != null
               ? '$apt - ${brief.city} - ${brief.district}'
               : '$apt - ${brief.city}';
           final showContact =
               _homeowner != null && _homeowner!.phone.isNotEmpty;
-          final reduced = MediaQuery.of(context).disableAnimations;
+          final reduced = MediaQuery.disableAnimationsOf(context);
           final items = <Widget>[
-              const SizedBox(height: BatshSpacing.md),
-              if (brief.photoUrls.isNotEmpty) ...[
-                PhotoGallery(urls: brief.photoUrls),
-                const SizedBox(height: BatshSpacing.lg),
-              ],
-              _LabeledCard(
-                  label: S.workDescriptionLabel,
-                  value: brief.workDescription),
-              const SizedBox(height: BatshSpacing.gutter),
-              _LabeledCard(label: S.workLocationLabel, value: place),
-              const SizedBox(height: BatshSpacing.xs),
-              Text('  $date',
-                  style: BatshTypography.labelSm
-                      .copyWith(color: BatshColors.onSurfaceVariant)),
-              const SizedBox(height: BatshSpacing.xl),
-              ContractorQuoteCta(briefId: brief.id),
+            const SizedBox(height: BatshSpacing.md),
+            if (brief.photoUrls.isNotEmpty) ...[
+              PhotoGallery(urls: brief.photoUrls),
               const SizedBox(height: BatshSpacing.lg),
-              if (showContact) ...[
-                Text(S.contactClient,
-                    style: BatshTypography.labelMd
-                        .copyWith(color: BatshColors.onSurfaceVariant)),
-                const SizedBox(height: BatshSpacing.sm),
-                WhatsAppButton(phone: _homeowner!.phone),
-                const SizedBox(height: BatshSpacing.sm),
-                CallButton(phone: _homeowner!.phone),
-              ],
-              if (_homeownerError != null)
-                Padding(
-                  padding: const EdgeInsets.only(top: BatshSpacing.sm),
-                  child: Text(_homeownerError!,
-                      style: BatshTypography.labelSm
-                          .copyWith(color: BatshColors.error)),
+            ],
+            _LabeledCard(
+              label: S.workDescriptionLabel,
+              value: brief.workDescription,
+            ),
+            const SizedBox(height: BatshSpacing.gutter),
+            _LabeledCard(label: S.workLocationLabel, value: place),
+            const SizedBox(height: BatshSpacing.xs),
+            Text(
+              '  $date',
+              style: BatshTypography.labelSm.copyWith(
+                color: BatshColors.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: BatshSpacing.xl),
+            ContractorQuoteCta(briefId: brief.id),
+            const SizedBox(height: BatshSpacing.lg),
+            if (showContact) ...[
+              Text(
+                S.contactClient,
+                style: BatshTypography.labelMd.copyWith(
+                  color: BatshColors.onSurfaceVariant,
                 ),
-              const SizedBox(height: BatshSpacing.lg),
+              ),
+              const SizedBox(height: BatshSpacing.sm),
+              WhatsAppButton(phone: _homeowner!.phone),
+              const SizedBox(height: BatshSpacing.sm),
+              CallButton(phone: _homeowner!.phone),
+            ],
+            if (_homeownerError != null)
+              Padding(
+                padding: const EdgeInsets.only(top: BatshSpacing.sm),
+                child: Text(
+                  _homeownerError!,
+                  style: BatshTypography.labelSm.copyWith(
+                    color: BatshColors.error,
+                  ),
+                ),
+              ),
+            const SizedBox(height: BatshSpacing.lg),
           ];
           return ListView(
             children: reduced
                 ? items
-                : items.animate(interval: BatshMotion.staggerBase).fadeIn(
-                      duration: BatshMotion.normal,
-                    ).slideY(
-                      begin: 0.06,
-                      end: 0,
-                      curve: BatshMotion.easeOut,
-                    ),
+                : items
+                      .animate(interval: BatshMotion.staggerBase)
+                      .fadeIn(duration: BatshMotion.normal)
+                      .slideY(begin: 0.06, end: 0, curve: BatshMotion.easeOut),
           );
         },
       ),
@@ -140,22 +150,52 @@ class _RequestDetailSkeleton extends StatelessWidget {
       children: [
         const SizedBox(height: BatshSpacing.md),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: BatshSpacing.marginMobile),
+          padding: const EdgeInsets.symmetric(
+            horizontal: BatshSpacing.marginMobile,
+          ),
           child: Column(
             children: [
-              BatshShimmerBox(width: double.infinity, height: 120, borderRadius: BatshRadius.brLg),
+              BatshShimmerBox(
+                width: double.infinity,
+                height: 120,
+                borderRadius: BatshRadius.brLg,
+              ),
               const SizedBox(height: BatshSpacing.gutter),
-              BatshShimmerBox(width: double.infinity, height: 80, borderRadius: BatshRadius.brLg),
+              BatshShimmerBox(
+                width: double.infinity,
+                height: 80,
+                borderRadius: BatshRadius.brLg,
+              ),
               const SizedBox(height: BatshSpacing.xs),
-              BatshShimmerBox(width: 120, height: 12, borderRadius: BatshRadius.brSm),
+              BatshShimmerBox(
+                width: 120,
+                height: 12,
+                borderRadius: BatshRadius.brSm,
+              ),
               const SizedBox(height: BatshSpacing.xl),
-              BatshShimmerBox(width: double.infinity, height: 48, borderRadius: BatshRadius.brMd),
+              BatshShimmerBox(
+                width: double.infinity,
+                height: 48,
+                borderRadius: BatshRadius.brMd,
+              ),
               const SizedBox(height: BatshSpacing.lg),
-              BatshShimmerBox(width: 100, height: 14, borderRadius: BatshRadius.brSm),
+              BatshShimmerBox(
+                width: 100,
+                height: 14,
+                borderRadius: BatshRadius.brSm,
+              ),
               const SizedBox(height: BatshSpacing.sm),
-              BatshShimmerBox(width: double.infinity, height: 48, borderRadius: BatshRadius.brMd),
+              BatshShimmerBox(
+                width: double.infinity,
+                height: 48,
+                borderRadius: BatshRadius.brMd,
+              ),
               const SizedBox(height: BatshSpacing.sm),
-              BatshShimmerBox(width: double.infinity, height: 48, borderRadius: BatshRadius.brMd),
+              BatshShimmerBox(
+                width: double.infinity,
+                height: 48,
+                borderRadius: BatshRadius.brMd,
+              ),
             ],
           ),
         ),
@@ -175,9 +215,12 @@ class _LabeledCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label,
-              style: BatshTypography.labelMd
-                  .copyWith(color: BatshColors.onSurfaceVariant)),
+          Text(
+            label,
+            style: BatshTypography.labelMd.copyWith(
+              color: BatshColors.onSurfaceVariant,
+            ),
+          ),
           const SizedBox(height: BatshSpacing.sm),
           Text(value, style: BatshTypography.bodyLg),
         ],
