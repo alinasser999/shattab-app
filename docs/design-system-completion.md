@@ -4,7 +4,7 @@ Companion to [`design-system-audit.md`](design-system-audit.md), which set out
 what was wrong. This records what changed, what was deliberately left, and what
 is still open.
 
-Branch `feat/bottom-nav-redesign`, commits `87c2958..a02a99b`.
+Branch `feat/bottom-nav-redesign`, commits `87c2958..a919a31`.
 **75 files, +5666 / −3575.** `flutter analyze` clean, 186 tests passing
 (166 at the start of the work).
 
@@ -117,24 +117,49 @@ terracotta hardcoded in a debug role-switcher — was fixed.
 
 ---
 
-## 4. Still open
+## 4. The six follow-ups — closed
 
-Ranked by value, not effort.
+All six items from the first draft of this report were completed. What they
+turned into:
 
-1. **~69 raw `curve: Curves.*`.** `BatshMotion` defines custom cubics
-   (`easeOut` is `Cubic(0.25, 0.46, 0.45, 0.94)`, not `Curves.easeOut`), so
-   every raw use is a slightly different feel. The most visible remaining
-   inconsistency.
-2. **27 raw `BorderRadius.circular`.** Same class of drift as the icon sizes:
-   already diagnosed, mechanical to fix.
-3. **`BatshPressable` reaches only 7 sites.** Tap feedback is inconsistent
-   across cards and list rows.
-4. **`AvatarWithInitials` still lives in `features/discovery`** with 3
-   importers across features. Belongs in `core/widgets`.
-5. **No `BatshAppBar`/header primitive.** Screen headers are still per-screen.
-6. **Six files over 28KB** with large private-widget tails
-   (`profile_screen.dart`, `contractor_showcase.dart`,
-   `job_opportunities_screen.dart` and others).
+1. **69 raw curves → tokens.** In five flavours: `easeOut`, `easeOutCubic`,
+   `easeOutQuad`, `elasticOut`, `easeOutBack`. Nobody picked quad over cubic on
+   64 separate occasions. All three ease-outs resolve to `BatshMotion.easeOut`,
+   which is a different cubic from `Curves.easeOut`, so every one of those
+   sites had been decelerating slightly off-system.
+2. **19 numeric radii → tokens.** Fifteen already matched a token exactly; the
+   strays were 5, 11, 15 and 2. The 2 was the interesting one — it sits on a
+   4×18 accent bar, where a radius of half the width means *fully round*. That
+   is `brFull`, and a numeric mapping would have got it wrong in the direction
+   that looks almost right.
+3. **`BatshPressable` on the author affordances.** The avatar and name in both
+   the post card and post detail were bare `GestureDetector`s: no feedback, and
+   no button semantics, so the route to a contractor's profile was invisible to
+   a screen reader. Also found the remove-photo control at a ~20px target for
+   an action that destroys a photo; now ~40px with a label.
+4. **`AvatarWithInitials` → `core/widgets`.** It lived in `features/discovery`
+   and was imported by `briefs` and `explore` — and by nothing in discovery, so
+   the package that owned it was the one package that never used it.
+5. **One section header, and no `BatshAppBar`.** `discover_screen` had a
+   private `_SectionHeader` while `BatshSectionHeader` sat in core with six
+   callers. The header *primitive* was not built: `BatshScaffold` already is
+   one, and the raw `Scaffold` screens that remain are shells, splash, the
+   photo viewer, and `SliverAppBar` collapsing heroes that a fixed app bar
+   cannot serve. A second header abstraction would have been ceremony.
+6. **The three largest screens split.** `profile_screen` 1859 → 698,
+   `contractor_showcase` 1267 → 585, `phone_entry_screen` 1216 → 299, via
+   `part` files. `part` rather than new libraries because every one of those
+   widgets is private to its screen; real files would have meant making them
+   public to satisfy the compiler, turning an internal detail into API surface
+   as a side effect of tidying.
+
+### What is left
+
+- `strings.dart` is 1369 lines. It is a flat string table, so length is not
+  really the problem — but empty-state and error copy cannot be reviewed as a
+  set while it is ordered by when each string happened to be added.
+- `discover_screen` (883) and the contractor `post_detail_screen` (873) are the
+  next largest, both well below the size that made the other three urgent.
 
 ---
 
