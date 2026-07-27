@@ -31,13 +31,13 @@ class SavedScreen extends ConsumerWidget {
       body: async.when(
         loading: () => const BatshListSkeleton(),
         error: (e, _) => BatshError(
-            message: ErrorMapper.map(e),
-            onRetry: () => ref.invalidate(savedContractorsProvider)),
+          message: ErrorMapper.map(e),
+          onRetry: () => ref.invalidate(savedContractorsProvider),
+        ),
         data: (list) {
           return RefreshIndicator(
             backgroundColor: BatshColors.surface,
-            onRefresh: () async =>
-                ref.invalidate(savedContractorsProvider),
+            onRefresh: () async => ref.invalidate(savedContractorsProvider),
             child: list.isEmpty
                 ? LayoutBuilder(
                     builder: (context, constraints) => ListView(
@@ -46,16 +46,20 @@ class SavedScreen extends ConsumerWidget {
                         // Fill the viewport so BatshEmptyState's internal Center
                         // truly centers instead of collapsing to the top.
                         ConstrainedBox(
-                          constraints:
-                              BoxConstraints(minHeight: constraints.maxHeight),
+                          constraints: BoxConstraints(
+                            minHeight: constraints.maxHeight,
+                          ),
                           child: isGuest
                               ? BatshEmptyState(
                                   title: S.signInToSeeSaved,
+                                  message: S.signInEmptyMessage,
                                   icon: Icons.bookmark_border,
                                   action: BatshButton(
                                     label: S.signInSheetTitle,
-                                    onPressed: () => showSignInSheet(context,
-                                        reason: S.signInToSeeSaved),
+                                    onPressed: () => showSignInSheet(
+                                      context,
+                                      reason: S.signInToSeeSaved,
+                                    ),
                                   ),
                                 )
                               : BatshEmptyState(
@@ -69,7 +73,8 @@ class SavedScreen extends ConsumerWidget {
                   )
                 : ListView.separated(
                     padding: const EdgeInsets.symmetric(
-                        vertical: BatshSpacing.md),
+                      vertical: BatshSpacing.md,
+                    ),
                     itemCount: list.length,
                     separatorBuilder: (_, _) =>
                         const SizedBox(height: BatshSpacing.md),
@@ -83,21 +88,22 @@ class SavedScreen extends ConsumerWidget {
                             .read(savedControllerProvider.notifier)
                             .toggle(c.id),
                         onTap: () => context.push(
-                            Routes.homeownerContractorProfilePath(c.id)),
+                          Routes.homeownerContractorProfilePath(c.id),
+                        ),
                       );
                       return reduced
                           ? card
                           : card
-                              .animate()
-                              .fadeIn(
-                                duration: 260.ms,
-                                delay: (60 * i.clamp(0, 7)).ms,
-                              )
-                              .slideY(
-                                begin: 0.06,
-                                end: 0,
-                                curve: Curves.easeOutCubic,
-                              );
+                                .animate()
+                                .fadeIn(
+                                  duration: 260.ms,
+                                  delay: (60 * i.clamp(0, 7)).ms,
+                                )
+                                .slideY(
+                                  begin: 0.06,
+                                  end: 0,
+                                  curve: Curves.easeOutCubic,
+                                );
                     },
                   ),
           );

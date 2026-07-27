@@ -38,8 +38,9 @@ class MyBriefsScreen extends ConsumerWidget {
       body: async.when(
         loading: () => const BatshListSkeleton(),
         error: (e, _) => BatshError(
-            message: ErrorMapper.map(e),
-            onRetry: () => ref.invalidate(myBriefsProvider)),
+          message: ErrorMapper.map(e),
+          onRetry: () => ref.invalidate(myBriefsProvider),
+        ),
         data: (list) {
           final posts = list.where((b) => b.isPost).toList();
           final direct = list.where((b) => !b.isPost).toList();
@@ -51,11 +52,14 @@ class MyBriefsScreen extends ConsumerWidget {
                       isGuest
                           ? BatshEmptyState(
                               title: S.signInToSeeRequests,
+                              message: S.signInEmptyMessage,
                               icon: Icons.assignment_outlined,
                               action: BatshButton(
                                 label: S.signInSheetTitle,
-                                onPressed: () => showSignInSheet(context,
-                                    reason: S.signInToSeeRequests),
+                                onPressed: () => showSignInSheet(
+                                  context,
+                                  reason: S.signInToSeeRequests,
+                                ),
                               ),
                             )
                           : BatshEmptyState(
@@ -74,9 +78,11 @@ class MyBriefsScreen extends ConsumerWidget {
                         const SizedBox(height: BatshSpacing.sm),
                         for (final b in posts) ...[
                           BriefCard(
-                              brief: b,
-                              onTap: () => context.push(
-                                  Routes.homeownerBriefDetailPath(b.id))),
+                            brief: b,
+                            onTap: () => context.push(
+                              Routes.homeownerBriefDetailPath(b.id),
+                            ),
+                          ),
                           const SizedBox(height: BatshSpacing.md),
                         ],
                       ],
@@ -86,9 +92,11 @@ class MyBriefsScreen extends ConsumerWidget {
                         const SizedBox(height: BatshSpacing.sm),
                         for (final b in direct) ...[
                           BriefCard(
-                              brief: b,
-                              onTap: () => context.push(
-                                  Routes.homeownerBriefDetailPath(b.id))),
+                            brief: b,
+                            onTap: () => context.push(
+                              Routes.homeownerBriefDetailPath(b.id),
+                            ),
+                          ),
                           const SizedBox(height: BatshSpacing.md),
                         ],
                       ],
@@ -106,8 +114,11 @@ class _Section extends StatelessWidget {
   final String label;
   @override
   Widget build(BuildContext context) {
-    return Text(label,
-        style: BatshTypography.titleLg
-            .copyWith(color: BatshColors.onSurfaceVariant));
+    return Text(
+      label,
+      style: BatshTypography.titleLg.copyWith(
+        color: BatshColors.onSurfaceVariant,
+      ),
+    );
   }
 }

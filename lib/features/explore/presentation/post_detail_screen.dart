@@ -15,6 +15,7 @@ import '../../../core/router/routes.dart';
 import '../../../core/widgets/batsh_card.dart';
 import '../../../core/widgets/role_badge.dart';
 import '../../../core/widgets/batsh_empty_state.dart';
+import '../../../core/widgets/batsh_error.dart';
 import '../../../core/widgets/batsh_loading.dart';
 import '../../../core/widgets/batsh_scaffold.dart';
 import '../../../core/widgets/contact_buttons.dart';
@@ -41,20 +42,25 @@ class PostDetailScreen extends ConsumerWidget {
       title: S.exploreTitle,
       body: postAsync.when(
         loading: () => const BatshLoading(),
-        error: (e, _) => BatshEmptyState(title: S.unknownErrorRetry),
+        error: (e, _) =>
+            BatshError(onRetry: () => ref.invalidate(postByIdProvider(postId))),
         data: (post) {
           if (post == null) {
-            return BatshEmptyState(title: S.unknownErrorRetry);
+            // Not a failure: the post is gone. Nothing to retry — retrying
+            // resolves to null again — so this stays an absence, not an error.
+            return BatshEmptyState(
+              title: S.postUnavailable,
+              message: S.postUnavailableSub,
+              icon: Icons.hide_source_outlined,
+            );
           }
           return commentsAsync.when(
             loading: () => const BatshLoading(),
             // Comments failing shouldn't hide the post — show it with none.
             error: (_, __) =>
                 _PostDetailContent(post: post, comments: const []),
-            data: (comments) => _PostDetailContent(
-              post: post,
-              comments: comments,
-            ),
+            data: (comments) =>
+                _PostDetailContent(post: post, comments: comments),
           );
         },
       ),
@@ -91,14 +97,18 @@ class _PostDetailContentState extends ConsumerState<_PostDetailContent> {
   }
 
   void _sharePost(Post post) {
-    Share.share('https://shattab.app/explore/post/${post.id}', subject: post.caption);
+    Share.share(
+      'https://shattab.app/explore/post/${post.id}',
+      subject: post.caption,
+    );
   }
 
   void _navigateToProfile(Post post) {
     // Contractor profiles live under /h/discover; the role guard bounces
     // contractors off /h, so only homeowners/guests can open them.
-    final onContractorSide =
-        GoRouterState.of(context).matchedLocation.startsWith('/c/');
+    final onContractorSide = GoRouterState.of(
+      context,
+    ).matchedLocation.startsWith('/c/');
     if (post.authorRole == 'contractor' && !onContractorSide) {
       context.push(Routes.homeownerContractorProfilePath(post.authorId));
     }
@@ -108,24 +118,27 @@ class _PostDetailContentState extends ConsumerState<_PostDetailContent> {
     final text = _commentCtrl.text.trim();
     if (text.isEmpty || _sending) return;
     setState(() => _sending = true);
-    ref.read(postControllerProvider.notifier)
+    ref
+        .read(postControllerProvider.notifier)
         .addComment(widget.post.id, text)
         .then((_) {
-      _commentCtrl.clear();
-      _commentFocus.unfocus();
-      if (mounted) {
-        BatshSnack.success(context, S.commentPosted);
-      }
-    }).catchError((e) {
-      if (mounted) {
-        final msg = e.toString().contains('rate_limit')
-            ? S.commentRateLimitError
-            : S.unknownErrorRetry;
-        BatshSnack.error(context, msg);
-      }
-    }).whenComplete(() {
-      if (mounted) setState(() => _sending = false);
-    });
+          _commentCtrl.clear();
+          _commentFocus.unfocus();
+          if (mounted) {
+            BatshSnack.success(context, S.commentPosted);
+          }
+        })
+        .catchError((e) {
+          if (mounted) {
+            final msg = e.toString().contains('rate_limit')
+                ? S.commentRateLimitError
+                : S.unknownErrorRetry;
+            BatshSnack.error(context, msg);
+          }
+        })
+        .whenComplete(() {
+          if (mounted) setState(() => _sending = false);
+        });
   }
 
   @override
@@ -160,13 +173,14 @@ class _PostDetailContentState extends ConsumerState<_PostDetailContent> {
                           imageUrl: post.mediaUrls[i],
                           width: double.infinity,
                           fit: BoxFit.cover,
-                          placeholder: (_, __) => Container(
-                            color: BatshColors.surfaceVariant,
-                          ),
+                          placeholder: (_, __) =>
+                              Container(color: BatshColors.surfaceVariant),
                           errorWidget: (_, __, ___) => Container(
                             color: BatshColors.surfaceVariant,
-                            child: Icon(Icons.broken_image,
-                                color: BatshColors.onSurfaceVariant),
+                            child: Icon(
+                              Icons.broken_image,
+                              color: BatshColors.onSurfaceVariant,
+                            ),
                           ),
                         ),
                       ),
@@ -176,7 +190,10 @@ class _PostDetailContentState extends ConsumerState<_PostDetailContent> {
                 if (post.mediaUrls.length > 1)
                   Center(
                     child: Text(
-                      S.photoCount.replaceFirst('%s', '${post.mediaUrls.length}'),
+                      S.photoCount.replaceFirst(
+                        '%s',
+                        '${post.mediaUrls.length}',
+                      ),
                       style: BatshTypography.bodySm,
                     ),
                   ),
@@ -197,23 +214,29 @@ class _PostDetailContentState extends ConsumerState<_PostDetailContent> {
               const SizedBox(height: BatshSpacing.sm),
               if (widget.comments.isEmpty)
                 Padding(
-                  padding: const EdgeInsets.symmetric(vertical: BatshSpacing.gutter),
-                  child: Text(S.noComments,
+                  padding: const EdgeInsets.symmetric(
+                    vertical: BatshSpacing.gutter,
+                  ),
+                  child: Text(
+                    S.noComments,
                     style: BatshTypography.bodyMd,
                     textAlign: TextAlign.center,
                   ),
                 ),
-              ...widget.comments.asMap().entries.map((e) =>
-                _buildComment(e.value).animate().fadeIn(
-                  duration: BatshMotion.normal,
-                  delay: BatshMotion.stagger(e.key),
-                  curve: BatshMotion.easeOut,
-                ).slideX(
-                  begin: 0.05,
-                  duration: BatshMotion.normal,
-                  delay: BatshMotion.stagger(e.key),
-                  curve: BatshMotion.easeOut,
-                ),
+              ...widget.comments.asMap().entries.map(
+                (e) => _buildComment(e.value)
+                    .animate()
+                    .fadeIn(
+                      duration: BatshMotion.normal,
+                      delay: BatshMotion.stagger(e.key),
+                      curve: BatshMotion.easeOut,
+                    )
+                    .slideX(
+                      begin: 0.05,
+                      duration: BatshMotion.normal,
+                      delay: BatshMotion.stagger(e.key),
+                      curve: BatshMotion.easeOut,
+                    ),
               ),
             ],
           ),
@@ -248,10 +271,12 @@ class _PostDetailContentState extends ConsumerState<_PostDetailContent> {
                   Flexible(
                     child: GestureDetector(
                       onTap: () => _navigateToProfile(post),
-                      child: Text(post.authorName ?? '',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: BatshTypography.labelMd),
+                      child: Text(
+                        post.authorName ?? '',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: BatshTypography.labelMd,
+                      ),
                     ),
                   ),
                   const SizedBox(width: BatshSpacing.xs),
@@ -276,13 +301,18 @@ class _PostDetailContentState extends ConsumerState<_PostDetailContent> {
                                 ),
                                 TextButton(
                                   onPressed: () {
-                                    ref.read(postControllerProvider.notifier)
+                                    ref
+                                        .read(postControllerProvider.notifier)
                                         .deletePost(post.id);
                                     Navigator.pop(ctx);
                                     context.pop();
                                   },
-                                  child: Text(S.deletePost,
-                                      style: const TextStyle(color: BatshColors.error)),
+                                  child: Text(
+                                    S.deletePost,
+                                    style: const TextStyle(
+                                      color: BatshColors.error,
+                                    ),
+                                  ),
                                 ),
                               ],
                             ),
@@ -294,8 +324,11 @@ class _PostDetailContentState extends ConsumerState<_PostDetailContent> {
                           value: 'delete',
                           child: Row(
                             children: [
-                              Icon(Icons.delete_outline,
-                                  size: BatshIconSize.md, color: BatshColors.error),
+                              Icon(
+                                Icons.delete_outline,
+                                size: BatshIconSize.md,
+                                color: BatshColors.error,
+                              ),
                               const SizedBox(width: 8),
                               Text(S.deletePost),
                             ],
@@ -311,13 +344,22 @@ class _PostDetailContentState extends ConsumerState<_PostDetailContent> {
                 children: [
                   PostTypeIcon(postType: post.postType),
                   const SizedBox(width: 4),
-                  Text(_postTypeLabel(post.postType), style: BatshTypography.bodySm),
+                  Text(
+                    _postTypeLabel(post.postType),
+                    style: BatshTypography.bodySm,
+                  ),
                   const SizedBox(width: BatshSpacing.xs),
                   if (post.governorate != null) ...[
-                    Text('• ${post.governorate}', style: BatshTypography.bodySm),
+                    Text(
+                      '• ${post.governorate}',
+                      style: BatshTypography.bodySm,
+                    ),
                     const SizedBox(width: BatshSpacing.xs),
                   ],
-                  Text('• ${_timeAgo(post.createdAt)}', style: BatshTypography.bodySm),
+                  Text(
+                    '• ${_timeAgo(post.createdAt)}',
+                    style: BatshTypography.bodySm,
+                  ),
                 ],
               ),
             ],
@@ -335,12 +377,15 @@ class _PostDetailContentState extends ConsumerState<_PostDetailContent> {
           color: post.isLiked ? BatshColors.error : null,
           label: post.likeCount > 0 ? '${post.likeCount}' : S.likeLabel,
           onTap: () => _ensureAuth(
-              () => ref.read(postControllerProvider.notifier).toggleLike(post)),
+            () => ref.read(postControllerProvider.notifier).toggleLike(post),
+          ),
         ),
         const SizedBox(width: BatshSpacing.sm),
         _ActionBtn(
           icon: Icons.chat_bubble_outline,
-          label: post.commentCount > 0 ? '${post.commentCount}' : S.commentLabel,
+          label: post.commentCount > 0
+              ? '${post.commentCount}'
+              : S.commentLabel,
           onTap: () => _commentFocus.requestFocus(),
         ),
         const Spacer(),
@@ -354,7 +399,8 @@ class _PostDetailContentState extends ConsumerState<_PostDetailContent> {
           icon: post.isSaved ? Icons.bookmark : Icons.bookmark_border,
           color: post.isSaved ? BatshColors.tertiary : null,
           onTap: () => _ensureAuth(
-              () => ref.read(postControllerProvider.notifier).toggleSave(post)),
+            () => ref.read(postControllerProvider.notifier).toggleSave(post),
+          ),
         ),
       ],
     );
@@ -380,11 +426,10 @@ class _PostDetailContentState extends ConsumerState<_PostDetailContent> {
                 children: [
                   Row(
                     children: [
-                      Text(c.userName ?? '',
-                        style: BatshTypography.labelSm,
-                      ),
+                      Text(c.userName ?? '', style: BatshTypography.labelSm),
                       const Spacer(),
-                      Text(_timeAgo(c.createdAt),
+                      Text(
+                        _timeAgo(c.createdAt),
                         style: BatshTypography.labelSm,
                       ),
                     ],
@@ -436,13 +481,16 @@ class _PostDetailContentState extends ConsumerState<_PostDetailContent> {
               padding: const EdgeInsets.all(BatshSpacing.xs),
               child: _sending
                   ? const SizedBox(
-                      width: 20, height: 20,
+                      width: 20,
+                      height: 20,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : Text(S.postComment,
+                  : Text(
+                      S.postComment,
                       style: BatshTypography.labelMd.copyWith(
                         color: BatshColors.primary,
-                      )),
+                      ),
+                    ),
             ),
           ),
         ],
@@ -452,10 +500,14 @@ class _PostDetailContentState extends ConsumerState<_PostDetailContent> {
 
   String _postTypeLabel(PostType type) {
     switch (type) {
-      case PostType.projectShowcase: return S.postTypeProjectShowcase;
-      case PostType.tip: return S.postTypeTip;
-      case PostType.milestone: return S.postTypeMilestone;
-      case PostType.renovationUpdate: return S.postTypeRenovationUpdate;
+      case PostType.projectShowcase:
+        return S.postTypeProjectShowcase;
+      case PostType.tip:
+        return S.postTypeTip;
+      case PostType.milestone:
+        return S.postTypeMilestone;
+      case PostType.renovationUpdate:
+        return S.postTypeRenovationUpdate;
     }
   }
 
@@ -476,12 +528,7 @@ class _PostDetailContentState extends ConsumerState<_PostDetailContent> {
 }
 
 class _ActionBtn extends StatefulWidget {
-  const _ActionBtn({
-    required this.icon,
-    this.label,
-    this.color,
-    this.onTap,
-  });
+  const _ActionBtn({required this.icon, this.label, this.color, this.onTap});
 
   final IconData icon;
   final String? label;
@@ -523,7 +570,11 @@ class _ActionBtnState extends State<_ActionBtn>
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(widget.icon, size: BatshIconSize.md, color: widget.color ?? BatshColors.onSurfaceVariant),
+                Icon(
+                  widget.icon,
+                  size: BatshIconSize.md,
+                  color: widget.color ?? BatshColors.onSurfaceVariant,
+                ),
                 if (widget.label != null) ...[
                   const SizedBox(width: 3),
                   Text(widget.label!, style: BatshTypography.labelSm),

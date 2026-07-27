@@ -44,10 +44,8 @@ class ProfileScreen extends ConsumerWidget {
     final profileAsync = ref.watch(currentProfileProvider);
 
     return profileAsync.when(
-      loading: () => BatshScaffold(
-        title: S.profileTitle,
-        body: const _ProfileSkeleton(),
-      ),
+      loading: () =>
+          BatshScaffold(title: S.profileTitle, body: const _ProfileSkeleton()),
       error: (e, _) => BatshScaffold(
         title: S.profileTitle,
         body: BatshError(
@@ -57,10 +55,7 @@ class ProfileScreen extends ConsumerWidget {
       ),
       data: (profile) {
         if (profile == null) {
-          return BatshScaffold(
-            title: S.profileTitle,
-            body: _GuestProfile(),
-          );
+          return BatshScaffold(title: S.profileTitle, body: _GuestProfile());
         }
         if (profile.role == UserRole.contractor) {
           return _ContractorProfile(profile: profile);
@@ -81,6 +76,7 @@ class _GuestProfile extends StatelessWidget {
           children: [
             BatshEmptyState(
               title: S.signInOrCreateAccount,
+              message: S.signInEmptyMessage,
               icon: Icons.person_outline,
               action: BatshButton(
                 label: S.signInSheetTitle,
@@ -119,12 +115,16 @@ class _ContractorProfile extends ConsumerWidget {
       backgroundColor: BatshColors.background,
       body: listingAsync.when(
         loading: () => const BatshProfileSkeleton(),
-        error: (_, _) =>
-            _ProfileFallback(profile: profile, onSignOut: () => _confirmSignOut(context, ref)),
+        error: (_, _) => _ProfileFallback(
+          profile: profile,
+          onSignOut: () => _confirmSignOut(context, ref),
+        ),
         data: (listing) {
           if (listing == null) {
             return _ProfileFallback(
-                profile: profile, onSignOut: () => _confirmSignOut(context, ref));
+              profile: profile,
+              onSignOut: () => _confirmSignOut(context, ref),
+            );
           }
           return _ContractorAccountView(
             listing: listing,
@@ -141,7 +141,10 @@ class _ContractorProfile extends ConsumerWidget {
 /// incl. the verification entry. The full public profile stays reachable via
 /// "معاينة الملف العام".
 class _ContractorAccountView extends ConsumerWidget {
-  const _ContractorAccountView({required this.listing, required this.onSignOut});
+  const _ContractorAccountView({
+    required this.listing,
+    required this.onSignOut,
+  });
   final ContractorListing listing;
   final VoidCallback onSignOut;
 
@@ -183,7 +186,9 @@ class _ContractorAccountView extends ConsumerWidget {
                     builder: (_) => Scaffold(
                       backgroundColor: BatshColors.background,
                       body: ContractorShowcase(
-                          listing: listing, mode: ShowcaseMode.public),
+                        listing: listing,
+                        mode: ShowcaseMode.public,
+                      ),
                     ),
                   ),
                 ),
@@ -232,9 +237,9 @@ class _ContractorAccountView extends ConsumerWidget {
         children: reduced
             ? items
             : items
-                .animate(interval: 55.ms)
-                .fadeIn(duration: 300.ms, curve: Curves.easeOut)
-                .slideY(begin: 0.06, end: 0, curve: Curves.easeOutCubic),
+                  .animate(interval: 55.ms)
+                  .fadeIn(duration: 300.ms, curve: Curves.easeOut)
+                  .slideY(begin: 0.06, end: 0, curve: Curves.easeOutCubic),
       ),
     );
   }
@@ -273,7 +278,10 @@ class _AccountHero extends StatelessWidget {
         ),
         child: Row(
           children: [
-            _AccountAvatar(logoUrl: listing.logoUrl, verified: listing.verified),
+            _AccountAvatar(
+              logoUrl: listing.logoUrl,
+              verified: listing.verified,
+            ),
             const SizedBox(width: BatshSpacing.lg),
             Expanded(
               child: Column(
@@ -284,11 +292,14 @@ class _AccountHero extends StatelessWidget {
                       const Text('👋', style: TextStyle(fontSize: 13)),
                       const SizedBox(width: BatshSpacing.xxs),
                       Flexible(
-                        child: Text('${S.accountWelcome}، $first',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: BatshTypography.labelMd
-                                .copyWith(color: BatshColors.onSurfaceVariant)),
+                        child: Text(
+                          '${S.accountWelcome}، $first',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: BatshTypography.labelMd.copyWith(
+                            color: BatshColors.onSurfaceVariant,
+                          ),
+                        ),
                       ),
                     ],
                   ),
@@ -296,16 +307,22 @@ class _AccountHero extends StatelessWidget {
                   Row(
                     children: [
                       Flexible(
-                        child: Text(name,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: BatshTypography.headlineSm
-                                .copyWith(fontWeight: FontWeight.w700)),
+                        child: Text(
+                          name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: BatshTypography.headlineSm.copyWith(
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
                       ),
                       if (listing.verified) ...[
                         const SizedBox(width: BatshSpacing.xs),
-                        const Icon(Icons.verified_rounded,
-                            size: BatshIconSize.md, color: BatshColors.tertiary),
+                        const Icon(
+                          Icons.verified_rounded,
+                          size: BatshIconSize.md,
+                          color: BatshColors.tertiary,
+                        ),
                       ],
                     ],
                   ),
@@ -316,28 +333,43 @@ class _AccountHero extends StatelessWidget {
                   if (listing.rating case final avg?)
                     Row(
                       children: [
-                        const Icon(Icons.star_rounded,
-                            size: BatshIconSize.sm, color: BatshColors.tertiary),
+                        const Icon(
+                          Icons.star_rounded,
+                          size: BatshIconSize.sm,
+                          color: BatshColors.tertiary,
+                        ),
                         const SizedBox(width: 3),
-                        Text(avg.toStringAsFixed(1),
-                            style: BatshTypography.labelMd.copyWith(
-                                fontWeight: FontWeight.w700,
-                                color: BatshColors.onSurface)),
+                        Text(
+                          avg.toStringAsFixed(1),
+                          style: BatshTypography.labelMd.copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: BatshColors.onSurface,
+                          ),
+                        ),
                         const SizedBox(width: BatshSpacing.xs),
-                        Text(S.ratingCaption,
-                            style: BatshTypography.labelSm
-                                .copyWith(color: BatshColors.onSurfaceVariant)),
+                        Text(
+                          S.ratingCaption,
+                          style: BatshTypography.labelSm.copyWith(
+                            color: BatshColors.onSurfaceVariant,
+                          ),
+                        ),
                       ],
                     )
                   else
                     Row(
                       children: [
-                        const Icon(Icons.auto_awesome,
-                            size: BatshIconSize.sm, color: BatshColors.secondary),
+                        const Icon(
+                          Icons.auto_awesome,
+                          size: BatshIconSize.sm,
+                          color: BatshColors.secondary,
+                        ),
                         const SizedBox(width: 4),
-                        Text(S.newProfessional,
-                            style: BatshTypography.labelSm.copyWith(
-                                color: BatshColors.onSurfaceVariant)),
+                        Text(
+                          S.newProfessional,
+                          style: BatshTypography.labelSm.copyWith(
+                            color: BatshColors.onSurfaceVariant,
+                          ),
+                        ),
                       ],
                     ),
                 ],
@@ -371,14 +403,19 @@ class _AccountAvatar extends StatelessWidget {
               borderRadius: radius,
               color: BatshColors.surfaceContainer,
               border: Border.all(
-                  color: BatshColors.primary.withValues(alpha: 0.5), width: 2),
+                color: BatshColors.primary.withValues(alpha: 0.5),
+                width: 2,
+              ),
               boxShadow: BatshShadows.soft,
             ),
             clipBehavior: Clip.antiAlias,
             child: logoUrl != null
                 ? CachedNetworkImage(imageUrl: logoUrl!, fit: BoxFit.cover)
-                : const Icon(Icons.engineering_outlined,
-                    size: BatshIconSize.xl, color: BatshColors.primary),
+                : const Icon(
+                    Icons.engineering_outlined,
+                    size: BatshIconSize.xl,
+                    color: BatshColors.primary,
+                  ),
           ),
           if (verified)
             Positioned(
@@ -392,10 +429,15 @@ class _AccountAvatar extends StatelessWidget {
                   shape: BoxShape.circle,
                   color: BatshColors.tertiary,
                   border: Border.all(
-                      color: BatshColors.surfaceContainerLowest, width: 2.5),
+                    color: BatshColors.surfaceContainerLowest,
+                    width: 2.5,
+                  ),
                 ),
-                child: const Icon(Icons.check_rounded,
-                    size: BatshIconSize.sm, color: BatshColors.onTertiary),
+                child: const Icon(
+                  Icons.check_rounded,
+                  size: BatshIconSize.sm,
+                  color: BatshColors.onTertiary,
+                ),
               ),
             ),
         ],
@@ -418,36 +460,43 @@ class _StatStrip extends StatelessWidget {
     final tierLabel = listing.tier.label;
     final cells = <Widget>[
       _StatCell(
-          icon: Icons.event_outlined,
-          value: since != null ? '$since' : '—',
-          label: S.memberSinceLabel),
+        icon: Icons.event_outlined,
+        value: since != null ? '$since' : '—',
+        label: S.memberSinceLabel,
+      ),
       _StatCell(
-          icon: Icons.home_work_outlined,
-          value: '${listing.projectsCompleted}',
-          label: S.statJobs),
+        icon: Icons.home_work_outlined,
+        value: '${listing.projectsCompleted}',
+        label: S.statJobs,
+      ),
       // The "معدل الرد 100%" cell that sat here read `response_rate`, a column
       // whose default is 100 for every contractor — a constant presented as a
       // measurement. Reinstate it when brief-to-first-quote latency is tracked.
       _StatCell(
-          icon: Icons.star_rounded,
-          value: listing.hasReviews
-              ? '${listing.reviewAvg.toStringAsFixed(1)} (${listing.reviewCount})'
-              : '—',
-          label: S.ratingCaption),
+        icon: Icons.star_rounded,
+        value: listing.hasReviews
+            ? '${listing.reviewAvg.toStringAsFixed(1)} (${listing.reviewCount})'
+            : '—',
+        label: S.ratingCaption,
+      ),
       _StatCell(
-          icon: Icons.workspace_premium_rounded,
-          value: tierLabel,
-          label: S.statLevel,
-          highlight: true),
+        icon: Icons.workspace_premium_rounded,
+        value: tierLabel,
+        label: S.statLevel,
+        highlight: true,
+      ),
     ];
     final row = <Widget>[];
     for (var i = 0; i < cells.length; i++) {
       row.add(Expanded(child: cells[i]));
       if (i != cells.length - 1) {
-        row.add(Container(
+        row.add(
+          Container(
             width: 1,
             height: 34,
-            color: BatshColors.primary.withValues(alpha: 0.12)));
+            color: BatshColors.primary.withValues(alpha: 0.12),
+          ),
+        );
       }
     }
     return Padding(
@@ -459,7 +508,9 @@ class _StatStrip extends StatelessWidget {
           borderRadius: BorderRadius.circular(20),
         ),
         child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center, children: row),
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: row,
+        ),
       ),
     );
   }
@@ -479,31 +530,40 @@ class _StatCell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final valueColor =
-        highlight ? BatshColors.tertiary : BatshColors.onSurface;
+    final valueColor = highlight ? BatshColors.tertiary : BatshColors.onSurface;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 4),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon,
-              size: BatshIconSize.sm,
-              color: highlight ? BatshColors.tertiary : BatshColors.primary),
+          Icon(
+            icon,
+            size: BatshIconSize.sm,
+            color: highlight ? BatshColors.tertiary : BatshColors.primary,
+          ),
           const SizedBox(height: 5),
           FittedBox(
             fit: BoxFit.scaleDown,
-            child: Text(value,
-                maxLines: 1,
-                style: BatshTypography.titleMd.copyWith(
-                    fontWeight: FontWeight.w800, color: valueColor)),
+            child: Text(
+              value,
+              maxLines: 1,
+              style: BatshTypography.titleMd.copyWith(
+                fontWeight: FontWeight.w800,
+                color: valueColor,
+              ),
+            ),
           ),
           const SizedBox(height: 1),
-          Text(label,
-              textAlign: TextAlign.center,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: BatshTypography.labelSm
-                  .copyWith(color: BatshColors.onSurfaceVariant, fontSize: 10)),
+          Text(
+            label,
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: BatshTypography.labelSm.copyWith(
+              color: BatshColors.onSurfaceVariant,
+              fontSize: 10,
+            ),
+          ),
         ],
       ),
     );
@@ -539,34 +599,46 @@ class _AccountProBanner extends StatelessWidget {
                   alignment: Alignment.center,
                   decoration: const BoxDecoration(
                     shape: BoxShape.circle,
-                    gradient: LinearGradient(colors: [
-                      BatshColors.tertiaryContainer,
-                      BatshColors.tertiary,
-                    ]),
+                    gradient: LinearGradient(
+                      colors: [
+                        BatshColors.tertiaryContainer,
+                        BatshColors.tertiary,
+                      ],
+                    ),
                   ),
-                  child: const Icon(Icons.workspace_premium_rounded,
-                      size: BatshIconSize.md, color: BatshColors.onTertiaryContainer),
+                  child: const Icon(
+                    Icons.workspace_premium_rounded,
+                    size: BatshIconSize.md,
+                    color: BatshColors.onTertiaryContainer,
+                  ),
                 ),
                 const SizedBox(width: BatshSpacing.md),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(S.upgradeToProShort,
-                          style: BatshTypography.titleMd.copyWith(
-                              color: BatshColors.onPrimary,
-                              fontWeight: FontWeight.w700)),
-                      Text(S.proBannerSubtitle,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: BatshTypography.bodySm.copyWith(
-                              color: BatshColors.onPrimary
-                                  .withValues(alpha: 0.85))),
+                      Text(
+                        S.upgradeToProShort,
+                        style: BatshTypography.titleMd.copyWith(
+                          color: BatshColors.onPrimary,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      Text(
+                        S.proBannerSubtitle,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: BatshTypography.bodySm.copyWith(
+                          color: BatshColors.onPrimary.withValues(alpha: 0.85),
+                        ),
+                      ),
                     ],
                   ),
                 ),
-                Icon(Icons.chevron_left_rounded,
-                    color: BatshColors.onPrimary.withValues(alpha: 0.9)),
+                Icon(
+                  Icons.chevron_left_rounded,
+                  color: BatshColors.onPrimary.withValues(alpha: 0.9),
+                ),
               ],
             ),
           ),
@@ -589,14 +661,19 @@ class _ProActivePill extends StatelessWidget {
       ),
       child: Row(
         children: [
-          const Icon(Icons.workspace_premium_rounded,
-              color: BatshColors.secondary),
+          const Icon(
+            Icons.workspace_premium_rounded,
+            color: BatshColors.secondary,
+          ),
           const SizedBox(width: BatshSpacing.md),
           Expanded(
-            child: Text(S.proActiveLine,
-                style: BatshTypography.titleMd.copyWith(
-                    color: BatshColors.onSecondaryContainer,
-                    fontWeight: FontWeight.w700)),
+            child: Text(
+              S.proActiveLine,
+              style: BatshTypography.titleMd.copyWith(
+                color: BatshColors.onSecondaryContainer,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
           ),
         ],
       ),
@@ -617,15 +694,20 @@ class _VerificationTile extends StatelessWidget {
         subtitle: S.verifySubtitle,
         trailing: Container(
           padding: const EdgeInsets.symmetric(
-              horizontal: BatshSpacing.sm, vertical: BatshSpacing.xxs),
+            horizontal: BatshSpacing.sm,
+            vertical: BatshSpacing.xxs,
+          ),
           decoration: BoxDecoration(
             color: BatshColors.tertiaryFixed,
             borderRadius: BatshRadius.brSm,
           ),
-          child: Text(S.verifyStateVerified,
-              style: BatshTypography.labelSm.copyWith(
-                  color: BatshColors.onTertiaryContainer,
-                  fontWeight: FontWeight.w700)),
+          child: Text(
+            S.verifyStateVerified,
+            style: BatshTypography.labelSm.copyWith(
+              color: BatshColors.onTertiaryContainer,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
         ),
         onTap: () => _open(context),
       );
@@ -634,15 +716,18 @@ class _VerificationTile extends StatelessWidget {
       icon: Icons.verified_outlined,
       label: S.verifyTileLabel,
       subtitle: S.verifySubtitle,
-      trailing: const Icon(Icons.chevron_left,
-          color: BatshColors.onSurfaceVariant, size: BatshIconSize.md),
+      trailing: const Icon(
+        Icons.chevron_left,
+        color: BatshColors.onSurfaceVariant,
+        size: BatshIconSize.md,
+      ),
       onTap: () => _open(context),
     );
   }
 
-  void _open(BuildContext context) => Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => const VerificationScreen()),
-      );
+  void _open(BuildContext context) => Navigator.of(
+    context,
+  ).push(MaterialPageRoute(builder: (_) => const VerificationScreen()));
 }
 
 class _ProfileFallback extends StatelessWidget {
@@ -680,8 +765,9 @@ class _ProfileFallback extends StatelessWidget {
                       profile.fullName.isNotEmpty
                           ? profile.fullName.characters.first
                           : '',
-                      style: BatshTypography.headlineMd
-                          .copyWith(color: BatshColors.onPrimaryContainer),
+                      style: BatshTypography.headlineMd.copyWith(
+                        color: BatshColors.onPrimaryContainer,
+                      ),
                     ),
                   ),
                   const SizedBox(width: BatshSpacing.lg),
@@ -691,13 +777,17 @@ class _ProfileFallback extends StatelessWidget {
                       children: [
                         Text(
                           profile.fullName.isNotEmpty ? profile.fullName : '—',
-                          style: BatshTypography.titleLg
-                              .copyWith(fontWeight: FontWeight.w700),
+                          style: BatshTypography.titleLg.copyWith(
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                         const SizedBox(height: BatshSpacing.xxs),
-                        Text(profile.phone,
-                            style: BatshTypography.bodyMd.copyWith(
-                                color: BatshColors.onSurfaceVariant)),
+                        Text(
+                          profile.phone,
+                          style: BatshTypography.bodyMd.copyWith(
+                            color: BatshColors.onSurfaceVariant,
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -726,7 +816,11 @@ class _ProfileFallback extends StatelessWidget {
             style: BatshButtonStyle.secondary,
             onPressed: () => context.push(Routes.contractorEditProfile),
           ),
-          const Divider(height: 24, thickness: 1, color: BatshColors.outlineVariant),
+          const Divider(
+            height: 24,
+            thickness: 1,
+            color: BatshColors.outlineVariant,
+          ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: BatshSpacing.md),
             child: Column(
@@ -865,9 +959,9 @@ class _HomeownerProfile extends ConsumerWidget {
         children: reduced
             ? items
             : items
-                .animate(interval: 55.ms)
-                .fadeIn(duration: 300.ms, curve: Curves.easeOut)
-                .slideY(begin: 0.06, end: 0, curve: Curves.easeOutCubic),
+                  .animate(interval: 55.ms)
+                  .fadeIn(duration: 300.ms, curve: Curves.easeOut)
+                  .slideY(begin: 0.06, end: 0, curve: Curves.easeOutCubic),
       ),
     );
   }
@@ -905,28 +999,38 @@ class _ProfileHero extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(_greeting(),
-                      style: BatshTypography.labelMd
-                          .copyWith(color: BatshColors.onSurfaceVariant)),
+                  Text(
+                    _greeting(),
+                    style: BatshTypography.labelMd.copyWith(
+                      color: BatshColors.onSurfaceVariant,
+                    ),
+                  ),
                   const SizedBox(height: 2),
-                  Text(name,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: BatshTypography.headlineSm
-                          .copyWith(fontWeight: FontWeight.w700)),
+                  Text(
+                    name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: BatshTypography.headlineSm.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
                   const SizedBox(height: BatshSpacing.xs),
                   Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: BatshSpacing.sm, vertical: 3),
+                      horizontal: BatshSpacing.sm,
+                      vertical: 3,
+                    ),
                     decoration: BoxDecoration(
                       color: BatshColors.primaryFixed.withValues(alpha: 0.4),
                       borderRadius: BatshRadius.brFull,
                     ),
-                    child: Text(S.roleHomeowner,
-                        style: BatshTypography.labelSm.copyWith(
-                          color: BatshColors.primary,
-                          fontWeight: FontWeight.w700,
-                        )),
+                    child: Text(
+                      S.roleHomeowner,
+                      style: BatshTypography.labelSm.copyWith(
+                        color: BatshColors.primary,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -939,8 +1043,11 @@ class _ProfileHero extends StatelessWidget {
 }
 
 class _HeroAvatar extends StatelessWidget {
-  const _HeroAvatar(
-      {required this.name, required this.avatarUrl, required this.onEdit});
+  const _HeroAvatar({
+    required this.name,
+    required this.avatarUrl,
+    required this.onEdit,
+  });
   final String name;
   final String? avatarUrl;
   final VoidCallback onEdit;
@@ -960,8 +1067,9 @@ class _HeroAvatar extends StatelessWidget {
               shape: BoxShape.circle,
               color: BatshColors.primaryContainer,
               border: Border.all(
-                  color: BatshColors.onSurface.withValues(alpha: 0.06),
-                  width: 1),
+                color: BatshColors.onSurface.withValues(alpha: 0.06),
+                width: 1,
+              ),
               boxShadow: BatshShadows.soft,
             ),
             clipBehavior: Clip.antiAlias,
@@ -969,9 +1077,12 @@ class _HeroAvatar extends StatelessWidget {
                 ? CachedNetworkImage(imageUrl: avatarUrl!, fit: BoxFit.cover)
                 : Center(
                     child: Text(
-                      name.isNotEmpty && name != '—' ? name.characters.first : '',
-                      style: BatshTypography.headlineMd
-                          .copyWith(color: BatshColors.onPrimaryContainer),
+                      name.isNotEmpty && name != '—'
+                          ? name.characters.first
+                          : '',
+                      style: BatshTypography.headlineMd.copyWith(
+                        color: BatshColors.onPrimaryContainer,
+                      ),
                     ),
                   ),
           ),
@@ -992,10 +1103,15 @@ class _HeroAvatar extends StatelessWidget {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     border: Border.all(
-                        color: BatshColors.surfaceContainerLowest, width: 2.5),
+                      color: BatshColors.surfaceContainerLowest,
+                      width: 2.5,
+                    ),
                   ),
-                  child: const Icon(Icons.edit_outlined,
-                      size: BatshIconSize.sm, color: BatshColors.onPrimary),
+                  child: const Icon(
+                    Icons.edit_outlined,
+                    size: BatshIconSize.sm,
+                    color: BatshColors.onPrimary,
+                  ),
                 ),
               ),
             ),
@@ -1013,8 +1129,10 @@ class _SectionLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: BatshSpacing.lg),
-      child: Text(text,
-          style: BatshTypography.titleMd.copyWith(fontWeight: FontWeight.w700)),
+      child: Text(
+        text,
+        style: BatshTypography.titleMd.copyWith(fontWeight: FontWeight.w700),
+      ),
     );
   }
 }
@@ -1034,16 +1152,24 @@ class _StatBig extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final number = reduced
-        ? Text('$value',
-            style: BatshTypography.displayMd
-                .copyWith(fontWeight: FontWeight.w700, color: BatshColors.onSurface))
+        ? Text(
+            '$value',
+            style: BatshTypography.displayMd.copyWith(
+              fontWeight: FontWeight.w700,
+              color: BatshColors.onSurface,
+            ),
+          )
         : TweenAnimationBuilder<double>(
             tween: Tween(begin: 0, end: value.toDouble()),
             duration: const Duration(milliseconds: 900),
             curve: Curves.easeOutCubic,
-            builder: (_, v, _) => Text('${v.round()}',
-                style: BatshTypography.displayMd.copyWith(
-                    fontWeight: FontWeight.w700, color: BatshColors.onSurface)),
+            builder: (_, v, _) => Text(
+              '${v.round()}',
+              style: BatshTypography.displayMd.copyWith(
+                fontWeight: FontWeight.w700,
+                color: BatshColors.onSurface,
+              ),
+            ),
           );
     return Container(
       padding: const EdgeInsets.all(BatshSpacing.lg),
@@ -1059,9 +1185,12 @@ class _StatBig extends StatelessWidget {
           const SizedBox(height: BatshSpacing.md),
           number,
           const SizedBox(height: BatshSpacing.xxs),
-          Text(label,
-              style: BatshTypography.labelMd
-                  .copyWith(color: BatshColors.onSurfaceVariant)),
+          Text(
+            label,
+            style: BatshTypography.labelMd.copyWith(
+              color: BatshColors.onSurfaceVariant,
+            ),
+          ),
         ],
       ),
     );
@@ -1069,8 +1198,11 @@ class _StatBig extends StatelessWidget {
 }
 
 class _QuickAction extends StatelessWidget {
-  const _QuickAction(
-      {required this.icon, required this.label, required this.onTap});
+  const _QuickAction({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
   final IconData icon;
   final String label;
   final VoidCallback onTap;
@@ -1090,7 +1222,9 @@ class _QuickAction extends StatelessWidget {
           onTap: onTap,
           child: Padding(
             padding: const EdgeInsets.symmetric(
-                vertical: BatshSpacing.lg, horizontal: BatshSpacing.sm),
+              vertical: BatshSpacing.lg,
+              horizontal: BatshSpacing.sm,
+            ),
             child: Column(
               children: [
                 Container(
@@ -1101,15 +1235,22 @@ class _QuickAction extends StatelessWidget {
                     color: BatshColors.primaryFixed.withValues(alpha: 0.35),
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(icon, color: BatshColors.primary, size: BatshIconSize.md),
+                  child: Icon(
+                    icon,
+                    color: BatshColors.primary,
+                    size: BatshIconSize.md,
+                  ),
                 ),
                 const SizedBox(height: BatshSpacing.sm),
-                Text(label,
-                    textAlign: TextAlign.center,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: BatshTypography.labelMd
-                        .copyWith(fontWeight: FontWeight.w600)),
+                Text(
+                  label,
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: BatshTypography.labelMd.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ],
             ),
           ),
@@ -1130,8 +1271,14 @@ class _SettingsGroup extends StatelessWidget {
     for (var i = 0; i < children.length; i++) {
       rows.add(children[i]);
       if (i != children.length - 1) {
-        rows.add(const Divider(
-            height: 1, thickness: 1, indent: 64, color: BatshColors.outlineVariant));
+        rows.add(
+          const Divider(
+            height: 1,
+            thickness: 1,
+            indent: 64,
+            color: BatshColors.outlineVariant,
+          ),
+        );
       }
     }
     return DecoratedBox(
@@ -1170,7 +1317,9 @@ class _LogoutRow extends StatelessWidget {
           splashColor: BatshColors.error.withValues(alpha: 0.08),
           child: Padding(
             padding: const EdgeInsets.symmetric(
-                horizontal: BatshSpacing.lg, vertical: BatshSpacing.gutter),
+              horizontal: BatshSpacing.lg,
+              vertical: BatshSpacing.gutter,
+            ),
             child: Row(
               children: [
                 Container(
@@ -1180,18 +1329,27 @@ class _LogoutRow extends StatelessWidget {
                     color: BatshColors.error.withValues(alpha: 0.1),
                     borderRadius: BatshRadius.brMd,
                   ),
-                  child: const Icon(Icons.logout,
-                      color: BatshColors.error, size: BatshIconSize.md),
+                  child: const Icon(
+                    Icons.logout,
+                    color: BatshColors.error,
+                    size: BatshIconSize.md,
+                  ),
                 ),
                 const SizedBox(width: BatshSpacing.gutter),
                 Expanded(
-                  child: Text(S.signOutButton,
-                      style: BatshTypography.bodyLg.copyWith(
-                          color: BatshColors.error,
-                          fontWeight: FontWeight.w600)),
+                  child: Text(
+                    S.signOutButton,
+                    style: BatshTypography.bodyLg.copyWith(
+                      color: BatshColors.error,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ),
-                const Icon(Icons.chevron_left,
-                    color: BatshColors.error, size: BatshIconSize.md),
+                const Icon(
+                  Icons.chevron_left,
+                  color: BatshColors.error,
+                  size: BatshIconSize.md,
+                ),
               ],
             ),
           ),
@@ -1238,7 +1396,11 @@ class _SettingsTile extends StatelessWidget {
                   color: BatshColors.primaryFixed.withValues(alpha: 0.2),
                   borderRadius: BatshRadius.brMd,
                 ),
-                child: Icon(icon, color: BatshColors.primary, size: BatshIconSize.md),
+                child: Icon(
+                  icon,
+                  color: BatshColors.primary,
+                  size: BatshIconSize.md,
+                ),
               ),
               const SizedBox(width: BatshSpacing.gutter),
               Expanded(
@@ -1282,7 +1444,8 @@ class _DarkModeTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final themeMode = ref.watch(themeModeProvider);
-    final isDark = themeMode == ThemeMode.dark ||
+    final isDark =
+        themeMode == ThemeMode.dark ||
         (themeMode == ThemeMode.system &&
             MediaQuery.of(context).platformBrightness == Brightness.dark);
 
@@ -1406,8 +1569,11 @@ class _HelpTile extends StatelessWidget {
       icon: Icons.support_agent_outlined,
       label: S.helpSupport,
       subtitle: S.helpSubtitle,
-      trailing: const Icon(Icons.chevron_left,
-          color: BatshColors.onSurfaceVariant, size: BatshIconSize.md),
+      trailing: const Icon(
+        Icons.chevron_left,
+        color: BatshColors.onSurfaceVariant,
+        size: BatshIconSize.md,
+      ),
       onTap: () => _open(context),
     );
   }
@@ -1428,8 +1594,10 @@ class _LegalTile extends StatelessWidget {
   Future<void> _open(BuildContext context) async {
     var ok = false;
     try {
-      ok = await launchUrl(Uri.parse(url),
-          mode: LaunchMode.externalApplication);
+      ok = await launchUrl(
+        Uri.parse(url),
+        mode: LaunchMode.externalApplication,
+      );
     } catch (_) {
       ok = false;
     }
@@ -1443,8 +1611,11 @@ class _LegalTile extends StatelessWidget {
     return _SettingsTile(
       icon: icon,
       label: label,
-      trailing: const Icon(Icons.chevron_left,
-          color: BatshColors.onSurfaceVariant, size: BatshIconSize.md),
+      trailing: const Icon(
+        Icons.chevron_left,
+        color: BatshColors.onSurfaceVariant,
+        size: BatshIconSize.md,
+      ),
       onTap: () => _open(context),
     );
   }
@@ -1484,8 +1655,9 @@ class _DeleteAccountTileState extends ConsumerState<_DeleteAccountTile> {
               TextField(
                 controller: controller,
                 autofocus: true,
-                decoration:
-                    InputDecoration(hintText: S.deleteAccountConfirmHint),
+                decoration: InputDecoration(
+                  hintText: S.deleteAccountConfirmHint,
+                ),
                 onChanged: (_) => setLocal(() {}),
               ),
             ],
@@ -1500,8 +1672,10 @@ class _DeleteAccountTileState extends ConsumerState<_DeleteAccountTile> {
               onPressed: controller.text.trim() == word
                   ? () => Navigator.of(ctx).pop(true)
                   : null,
-              child: Text(S.deleteAccount,
-                  style: const TextStyle(color: BatshColors.error)),
+              child: Text(
+                S.deleteAccount,
+                style: const TextStyle(color: BatshColors.error),
+              ),
             ),
           ],
         ),
@@ -1531,8 +1705,11 @@ class _DeleteAccountTileState extends ConsumerState<_DeleteAccountTile> {
     return _SettingsTile(
       icon: Icons.delete_forever_outlined,
       label: S.deleteAccount,
-      trailing: const Icon(Icons.chevron_left,
-          color: BatshColors.onSurfaceVariant, size: BatshIconSize.md),
+      trailing: const Icon(
+        Icons.chevron_left,
+        color: BatshColors.onSurfaceVariant,
+        size: BatshIconSize.md,
+      ),
       onTap: _confirm,
     );
   }
@@ -1546,18 +1723,32 @@ class _ProfileSkeleton extends StatelessWidget {
       children: [
         const SizedBox(height: BatshSpacing.lg),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: BatshSpacing.marginMobile),
+          padding: const EdgeInsets.symmetric(
+            horizontal: BatshSpacing.marginMobile,
+          ),
           child: Row(
             children: [
-              BatshShimmerBox(width: 60, height: 60, borderRadius: BatshRadius.brFull),
+              BatshShimmerBox(
+                width: 60,
+                height: 60,
+                borderRadius: BatshRadius.brFull,
+              ),
               const SizedBox(width: BatshSpacing.lg),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    BatshShimmerBox(width: 140, height: 18, borderRadius: BatshRadius.brSm),
+                    BatshShimmerBox(
+                      width: 140,
+                      height: 18,
+                      borderRadius: BatshRadius.brSm,
+                    ),
                     const SizedBox(height: BatshSpacing.xxs),
-                    BatshShimmerBox(width: 100, height: 14, borderRadius: BatshRadius.brSm),
+                    BatshShimmerBox(
+                      width: 100,
+                      height: 14,
+                      borderRadius: BatshRadius.brSm,
+                    ),
                   ],
                 ),
               ),
@@ -1566,40 +1757,74 @@ class _ProfileSkeleton extends StatelessWidget {
         ),
         const SizedBox(height: BatshSpacing.gutter),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: BatshSpacing.marginMobile),
-          child: BatshShimmerBox(width: double.infinity, height: 44, borderRadius: BatshRadius.brMd),
-        ),
-        const SizedBox(height: BatshSpacing.lg),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: BatshSpacing.marginMobile),
-          child: Row(
-            children: List.generate(3, (i) => Expanded(
-              child: Padding(
-                padding: EdgeInsetsDirectional.only(start: i > 0 ? BatshSpacing.md : 0),
-                child: BatshShimmerBox(width: double.infinity, height: 60, borderRadius: BatshRadius.brLg),
-              ),
-            )),
+          padding: const EdgeInsets.symmetric(
+            horizontal: BatshSpacing.marginMobile,
+          ),
+          child: BatshShimmerBox(
+            width: double.infinity,
+            height: 44,
+            borderRadius: BatshRadius.brMd,
           ),
         ),
         const SizedBox(height: BatshSpacing.lg),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: BatshSpacing.marginMobile),
-          child: Column(
-            children: List.generate(3, (_) => Padding(
-              padding: const EdgeInsets.only(bottom: BatshSpacing.sm),
-              child: Row(
-                children: [
-                  BatshShimmerBox(width: 40, height: 40, borderRadius: BatshRadius.brMd),
-                  const SizedBox(width: BatshSpacing.gutter),
-                  BatshShimmerBox(width: 180, height: 16, borderRadius: BatshRadius.brSm),
-                ],
+          padding: const EdgeInsets.symmetric(
+            horizontal: BatshSpacing.marginMobile,
+          ),
+          child: Row(
+            children: List.generate(
+              3,
+              (i) => Expanded(
+                child: Padding(
+                  padding: EdgeInsetsDirectional.only(
+                    start: i > 0 ? BatshSpacing.md : 0,
+                  ),
+                  child: BatshShimmerBox(
+                    width: double.infinity,
+                    height: 60,
+                    borderRadius: BatshRadius.brLg,
+                  ),
+                ),
               ),
-            )),
+            ),
+          ),
+        ),
+        const SizedBox(height: BatshSpacing.lg),
+        Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: BatshSpacing.marginMobile,
+          ),
+          child: Column(
+            children: List.generate(
+              3,
+              (_) => Padding(
+                padding: const EdgeInsets.only(bottom: BatshSpacing.sm),
+                child: Row(
+                  children: [
+                    BatshShimmerBox(
+                      width: 40,
+                      height: 40,
+                      borderRadius: BatshRadius.brMd,
+                    ),
+                    const SizedBox(width: BatshSpacing.gutter),
+                    BatshShimmerBox(
+                      width: 180,
+                      height: 16,
+                      borderRadius: BatshRadius.brSm,
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
         ),
         const SizedBox(height: BatshSpacing.xxl),
         Center(
-          child: BatshShimmerBox(width: 120, height: 20, borderRadius: BatshRadius.brSm),
+          child: BatshShimmerBox(
+            width: 120,
+            height: 20,
+            borderRadius: BatshRadius.brSm,
+          ),
         ),
       ],
     );
@@ -1622,11 +1847,12 @@ void _confirmSignOut(BuildContext context, WidgetRef ref) {
             Navigator.of(ctx).pop();
             ref.read(authRepositoryProvider).signOut();
           },
-          child: Text(S.signOutButton,
-              style: const TextStyle(color: BatshColors.error)),
+          child: Text(
+            S.signOutButton,
+            style: const TextStyle(color: BatshColors.error),
+          ),
         ),
       ],
     ),
   );
 }
-

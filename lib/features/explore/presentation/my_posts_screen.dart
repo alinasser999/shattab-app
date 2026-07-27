@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/l10n/strings.dart';
 import '../../../core/theme/batsh_spacing.dart';
 import '../../../core/widgets/batsh_empty_state.dart';
+import '../../../core/widgets/batsh_error.dart';
 import '../../../core/widgets/batsh_scaffold.dart';
 import '../../../core/widgets/batsh_shimmer.dart';
 import 'providers/explore_providers.dart';
@@ -21,14 +22,13 @@ class MyPostsScreen extends ConsumerWidget {
       title: S.myPosts,
       body: posts.when(
         loading: () => const BatshListSkeleton(count: 3),
-        error: (e, _) => BatshEmptyState(
-          title: S.unknownErrorRetry,
-          icon: Icons.error_outline,
-        ),
+        error: (e, _) =>
+            BatshError(onRetry: () => ref.invalidate(myPostsProvider)),
         data: (list) {
           if (list.isEmpty) {
             return BatshEmptyState(
               title: S.myPostsEmpty,
+              message: S.myPostsEmptySub,
               icon: Icons.article_outlined,
             );
           }

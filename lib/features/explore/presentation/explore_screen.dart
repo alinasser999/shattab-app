@@ -8,6 +8,7 @@ import '../../../core/theme/batsh_spacing.dart';
 import '../../../core/utils/error_mapper.dart';
 import '../../../core/widgets/batsh_button.dart';
 import '../../../core/widgets/batsh_empty_state.dart';
+import '../../../core/widgets/batsh_error.dart';
 import '../../../core/widgets/batsh_loading.dart';
 import '../../../core/widgets/batsh_scaffold.dart';
 import '../../../core/widgets/batsh_shimmer.dart';
@@ -104,12 +105,8 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
         onRefresh: () => ref.read(exploreFeedProvider.notifier).refresh(),
         child: feed.when(
           loading: () => const BatshListSkeleton(count: 4),
-          error: (e, _) => BatshEmptyState(
-            title: S.unknownErrorRetry,
-            action: BatshButton(
-              label: S.retry,
-              onPressed: () => ref.read(exploreFeedProvider.notifier).refresh(),
-            ),
+          error: (e, _) => BatshError(
+            onRetry: () => ref.read(exploreFeedProvider.notifier).refresh(),
           ),
           data: (posts) {
             if (posts.isEmpty) {

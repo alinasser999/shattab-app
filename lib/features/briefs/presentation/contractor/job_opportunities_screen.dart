@@ -14,6 +14,7 @@ import '../../../../core/theme/batsh_shadows.dart';
 import '../../../../core/theme/batsh_spacing.dart';
 import '../../../../core/theme/batsh_typography.dart';
 import '../../../../core/widgets/batsh_button.dart';
+import '../../../../core/widgets/batsh_empty_state.dart';
 import '../../../../core/widgets/batsh_error.dart';
 import '../../../../core/widgets/batsh_filter_sheet.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
@@ -70,29 +71,35 @@ class _JobOpportunitiesScreenState
       icon: Icons.category_rounded,
       options: [
         FilterOption(
-            value: SpecialtyFilter.painting.key,
-            label: S.filterPainting,
-            icon: Icons.format_paint),
+          value: SpecialtyFilter.painting.key,
+          label: S.filterPainting,
+          icon: Icons.format_paint,
+        ),
         FilterOption(
-            value: SpecialtyFilter.electrical.key,
-            label: S.filterElectrical,
-            icon: Icons.electrical_services),
+          value: SpecialtyFilter.electrical.key,
+          label: S.filterElectrical,
+          icon: Icons.electrical_services,
+        ),
         FilterOption(
-            value: SpecialtyFilter.plumbing.key,
-            label: S.filterPlumbing,
-            icon: Icons.plumbing),
+          value: SpecialtyFilter.plumbing.key,
+          label: S.filterPlumbing,
+          icon: Icons.plumbing,
+        ),
         FilterOption(
-            value: SpecialtyFilter.finishing.key,
-            label: S.filterFinishing,
-            icon: Icons.build),
+          value: SpecialtyFilter.finishing.key,
+          label: S.filterFinishing,
+          icon: Icons.build,
+        ),
         FilterOption(
-            value: SpecialtyFilter.bathrooms.key,
-            label: S.filterBathrooms,
-            icon: Icons.bathtub_outlined),
+          value: SpecialtyFilter.bathrooms.key,
+          label: S.filterBathrooms,
+          icon: Icons.bathtub_outlined,
+        ),
         FilterOption(
-            value: SpecialtyFilter.kitchens.key,
-            label: S.filterKitchens,
-            icon: Icons.countertops_outlined),
+          value: SpecialtyFilter.kitchens.key,
+          label: S.filterKitchens,
+          icon: Icons.countertops_outlined,
+        ),
       ],
     ),
     BatshFilterSheetSection(
@@ -101,17 +108,20 @@ class _JobOpportunitiesScreenState
       singleSelect: true,
       options: [
         FilterOption(
-            value: RecencyFilter.today.key,
-            label: S.filterToday,
-            icon: Icons.today),
+          value: RecencyFilter.today.key,
+          label: S.filterToday,
+          icon: Icons.today,
+        ),
         FilterOption(
-            value: RecencyFilter.thisWeek.key,
-            label: S.filterThisWeek,
-            icon: Icons.date_range_rounded),
+          value: RecencyFilter.thisWeek.key,
+          label: S.filterThisWeek,
+          icon: Icons.date_range_rounded,
+        ),
         FilterOption(
-            value: RecencyFilter.thisMonth.key,
-            label: S.filterThisMonth,
-            icon: Icons.calendar_month_rounded),
+          value: RecencyFilter.thisMonth.key,
+          label: S.filterThisMonth,
+          icon: Icons.calendar_month_rounded,
+        ),
       ],
     ),
   ];
@@ -158,161 +168,203 @@ class _JobOpportunitiesScreenState
           child: CustomScrollView(
             controller: _scrollController,
             slivers: [
-            SliverToBoxAdapter(
-              child: _PremiumAppBar(
-                greeting: greeting,
-                name: name,
-                avatarUrl: profile.value?.avatarUrl,
-                onTap: () => context.go(Routes.contractorProfile),
-              ),
-            ),
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: EdgeInsets.fromLTRB(
-                  BatshSpacing.gutter, 0, BatshSpacing.gutter, 0),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: _SearchBar(
-                        controller: _searchController,
-                        onChanged: _onQueryChanged,
-                        onClear: _clearQuery,
-                      ),
-                    ),
-                    const SizedBox(width: BatshSpacing.sm),
-                    BatshFilterButton(
-                      activeCount: _activeFilters.length,
-                      onTap: () => _openFilterSheet(context),
-                    ),
-                    const SizedBox(width: BatshSpacing.sm),
-                    Material(
-                      color: BatshColors.cardBackground,
-                      borderRadius: BatshRadius.brFull,
-                      child: InkWell(
-                        borderRadius: BatshRadius.brFull,
-                        onTap: () =>
-                            context.push(Routes.contractorMyQuotes),
-                        child: Container(
-                          height: 48,
-                          width: 48,
-                          alignment: Alignment.center,
-                          decoration: BoxDecoration(
-                            borderRadius: BatshRadius.brFull,
-                            boxShadow: BatshShadows.soft,
-                          ),
-                          child: Icon(Icons.receipt_long_outlined,
-                              color: BatshColors.primary, size: BatshIconSize.md),
-                        ),
-                      ),
-                    ),
-                  ],
+              SliverToBoxAdapter(
+                child: _PremiumAppBar(
+                  greeting: greeting,
+                  name: name,
+                  avatarUrl: profile.value?.avatarUrl,
+                  onTap: () => context.go(Routes.contractorProfile),
                 ),
               ),
-            ),
-            if (_activeFilters.isNotEmpty)
               SliverToBoxAdapter(
                 child: Padding(
                   padding: EdgeInsets.fromLTRB(
-                    BatshSpacing.gutter, BatshSpacing.sm, BatshSpacing.gutter, 0),
-                  child: SizedBox(
-                    height: 30,
-                    child: ListView.separated(
-                      scrollDirection: Axis.horizontal,
-                      itemCount: _activeFilters.length + 1,
-                      separatorBuilder: (_, _) => const SizedBox(width: BatshSpacing.xs),
-                      itemBuilder: (_, i) {
-                        if (i < _activeFilters.length) {
-                          final filter = _activeFilters.elementAt(i);
+                    BatshSpacing.gutter,
+                    0,
+                    BatshSpacing.gutter,
+                    0,
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: _SearchBar(
+                          controller: _searchController,
+                          onChanged: _onQueryChanged,
+                          onClear: _clearQuery,
+                        ),
+                      ),
+                      const SizedBox(width: BatshSpacing.sm),
+                      BatshFilterButton(
+                        activeCount: _activeFilters.length,
+                        onTap: () => _openFilterSheet(context),
+                      ),
+                      const SizedBox(width: BatshSpacing.sm),
+                      Material(
+                        color: BatshColors.cardBackground,
+                        borderRadius: BatshRadius.brFull,
+                        child: InkWell(
+                          borderRadius: BatshRadius.brFull,
+                          onTap: () => context.push(Routes.contractorMyQuotes),
+                          child: Container(
+                            height: 48,
+                            width: 48,
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              borderRadius: BatshRadius.brFull,
+                              boxShadow: BatshShadows.soft,
+                            ),
+                            child: Icon(
+                              Icons.receipt_long_outlined,
+                              color: BatshColors.primary,
+                              size: BatshIconSize.md,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              if (_activeFilters.isNotEmpty)
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(
+                      BatshSpacing.gutter,
+                      BatshSpacing.sm,
+                      BatshSpacing.gutter,
+                      0,
+                    ),
+                    child: SizedBox(
+                      height: 30,
+                      child: ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: _activeFilters.length + 1,
+                        separatorBuilder: (_, _) =>
+                            const SizedBox(width: BatshSpacing.xs),
+                        itemBuilder: (_, i) {
+                          if (i < _activeFilters.length) {
+                            final filter = _activeFilters.elementAt(i);
+                            return BatshActiveFilterChip(
+                              // Chips are keyed on stable values now, so the
+                              // label has to be resolved for display.
+                              label: _filterLabels[filter] ?? filter,
+                              onRemove: () =>
+                                  setState(() => _activeFilters.remove(filter)),
+                            );
+                          }
                           return BatshActiveFilterChip(
-                            // Chips are keyed on stable values now, so the
-                            // label has to be resolved for display.
-                            label: _filterLabels[filter] ?? filter,
-                            onRemove: () =>
-                                setState(() => _activeFilters.remove(filter)),
+                            label: S.clearAll,
+                            onRemove: () => setState(_activeFilters.clear),
                           );
-                        }
-                        return BatshActiveFilterChip(
-                          label: S.clearAll,
-                          onRemove: () => setState(_activeFilters.clear),
-                        );
-                      },
+                        },
+                      ),
                     ),
                   ),
                 ),
-              ),
-            async.when(
-              loading: () => SliverToBoxAdapter(
-                child: Padding(
-                  padding: EdgeInsets.fromLTRB(
-                    BatshSpacing.gutter, BatshSpacing.md, BatshSpacing.gutter, BatshSpacing.gutter),
-                  child: Column(
-                    children: List.generate(4, (_) => Padding(
-                      padding: EdgeInsets.only(bottom: BatshSpacing.md),
-                      child: JobCardSkeleton(),
-                    )),
+              async.when(
+                loading: () => SliverToBoxAdapter(
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(
+                      BatshSpacing.gutter,
+                      BatshSpacing.md,
+                      BatshSpacing.gutter,
+                      BatshSpacing.gutter,
+                    ),
+                    child: Column(
+                      children: List.generate(
+                        4,
+                        (_) => Padding(
+                          padding: EdgeInsets.only(bottom: BatshSpacing.md),
+                          child: JobCardSkeleton(),
+                        ),
+                      ),
+                    ),
                   ),
                 ),
-              ),
-              error: (e, _) => SliverFillRemaining(
-                child: BatshError(
-                  message: ErrorMapper.map(e),
-                  onRetry: () => ref.invalidate(contractorOpportunitiesProvider),
+                error: (e, _) => SliverFillRemaining(
+                  child: BatshError(
+                    message: ErrorMapper.map(e),
+                    onRetry: () =>
+                        ref.invalidate(contractorOpportunitiesProvider),
+                  ),
                 ),
-              ),
-              data: (list) {
-                final quotedIds = ref.watch(myQuotesProvider).maybeWhen(
-                      data: (qs) => {for (final q in qs) q.briefId},
-                      orElse: () => <String>{},
+                data: (list) {
+                  final quotedIds = ref
+                      .watch(myQuotesProvider)
+                      .maybeWhen(
+                        data: (qs) => {for (final q in qs) q.briefId},
+                        orElse: () => <String>{},
+                      );
+                  final filtered = _filterJobs(list, _activeFilters);
+                  if (filtered.isEmpty) {
+                    // "Nothing posted yet" and "nothing matched your words" need
+                    // different exits: refresh in the first case, clear the
+                    // search in the second.
+                    return SliverFillRemaining(
+                      child: query.isEmpty
+                          ? BatshEmptyState(
+                              title: S.noJobsTitle,
+                              message: S.noJobsMessage,
+                              icon: Icons.work_outline,
+                              action: BatshButton(
+                                label: S.tryAgain,
+                                icon: Icons.refresh,
+                                fullWidth: false,
+                                onPressed: () => ref.invalidate(
+                                  contractorOpportunitiesProvider,
+                                ),
+                              ),
+                            )
+                          // Jobs exist; the query hid them. Neutral, and the
+                          // action undoes the search rather than offering work.
+                          : BatshEmptyState(
+                              kind: BatshEmptyStateKind.noResults,
+                              title: S.noJobsMatchSearchTitle,
+                              message: S.noJobsMatchSearchMessage,
+                              icon: Icons.search_off_rounded,
+                              action: BatshButton(
+                                label: S.clearSearch,
+                                icon: Icons.close_rounded,
+                                fullWidth: false,
+                                onPressed: _clearQuery,
+                              ),
+                            ),
                     );
-                final filtered = _filterJobs(list, _activeFilters);
-                if (filtered.isEmpty) {
-                  // "Nothing posted yet" and "nothing matched your words" need
-                  // different exits: refresh in the first case, clear the
-                  // search in the second.
-                  return SliverFillRemaining(
-                    child: query.isEmpty
-                        ? _EmptyJobsState(
-                            onRefresh: () => ref
-                                .invalidate(contractorOpportunitiesProvider),
-                          )
-                        : _NoSearchMatchState(onClear: _clearQuery),
-                  );
-                }
+                  }
                   return SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (context, i) {
-                        // Near the end → pull the next page. The notifier
-                        // guards against duplicate and exhausted fetches.
-                        if (i >= filtered.length - 3) {
-                          WidgetsBinding.instance.addPostFrameCallback((_) {
-                            ref
-                                .read(contractorOpportunitiesProvider.notifier)
-                                .loadMore();
-                          });
-                        }
-                        final brief = filtered[i];
-                        final job = JobCardData.fromBrief(brief);
-                        final reduced = MediaQuery.of(context).disableAnimations;
-                        final card = PremiumJobCard(
-                          job: job,
-                          budgetLabel: null,
-                          isUrgent: false,
-                          alreadyQuoted: quotedIds.contains(brief.id),
-                          onTap: () => context.push(
-                            Routes.contractorPostDetailPath(brief.id),
-                          ),
-                          onQuote: () => _openQuote(context, brief.id),
-                        );
-                        return Padding(
-                          padding: EdgeInsets.fromLTRB(
-                            BatshSpacing.gutter,
-                            i == 0 ? BatshSpacing.md : 0,
-                            BatshSpacing.gutter,
-                            BatshSpacing.md,
-                          ),
-                          child: reduced
-                              ? card
-                              : card
+                    delegate: SliverChildBuilderDelegate((context, i) {
+                      // Near the end → pull the next page. The notifier
+                      // guards against duplicate and exhausted fetches.
+                      if (i >= filtered.length - 3) {
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          ref
+                              .read(contractorOpportunitiesProvider.notifier)
+                              .loadMore();
+                        });
+                      }
+                      final brief = filtered[i];
+                      final job = JobCardData.fromBrief(brief);
+                      final reduced = MediaQuery.of(context).disableAnimations;
+                      final card = PremiumJobCard(
+                        job: job,
+                        budgetLabel: null,
+                        isUrgent: false,
+                        alreadyQuoted: quotedIds.contains(brief.id),
+                        onTap: () => context.push(
+                          Routes.contractorPostDetailPath(brief.id),
+                        ),
+                        onQuote: () => _openQuote(context, brief.id),
+                      );
+                      return Padding(
+                        padding: EdgeInsets.fromLTRB(
+                          BatshSpacing.gutter,
+                          i == 0 ? BatshSpacing.md : 0,
+                          BatshSpacing.gutter,
+                          BatshSpacing.md,
+                        ),
+                        child: reduced
+                            ? card
+                            : card
                                   .animate()
                                   .fadeIn(
                                     duration: 350.ms,
@@ -326,15 +378,13 @@ class _JobOpportunitiesScreenState
                                     delay: BatshMotion.staggerClamped(i),
                                     curve: Curves.easeOutCubic,
                                   ),
-                        );
-                      },
-                      childCount: filtered.length,
-                    ),
+                      );
+                    }, childCount: filtered.length),
                   );
-              },
-            ),
-          ],
-        ),
+                },
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -347,9 +397,11 @@ class _JobOpportunitiesScreenState
       initialSelected: _activeFilters,
     );
     if (result != null) {
-      setState(() => _activeFilters
-        ..clear()
-        ..addAll(result));
+      setState(
+        () => _activeFilters
+          ..clear()
+          ..addAll(result),
+      );
     }
   }
 
@@ -374,9 +426,11 @@ class _JobOpportunitiesScreenState
     final now = DateTime.now();
 
     return jobs
-        .where((j) =>
-            matchesSpecialtyFilters(j.targetSpecialties, specialties) &&
-            matchesRecency(j.createdAt, recency, now))
+        .where(
+          (j) =>
+              matchesSpecialtyFilters(j.targetSpecialties, specialties) &&
+              matchesRecency(j.createdAt, recency, now),
+        )
         .toList();
   }
 
@@ -406,7 +460,11 @@ class _PremiumAppBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(
-        BatshSpacing.gutter, BatshSpacing.md, BatshSpacing.gutter, BatshSpacing.md),
+        BatshSpacing.gutter,
+        BatshSpacing.md,
+        BatshSpacing.gutter,
+        BatshSpacing.md,
+      ),
       child: Row(
         children: [
           // Tapping your own avatar to reach your profile is the convention
@@ -432,7 +490,9 @@ class _PremiumAppBar extends StatelessWidget {
                 ),
                 Text(
                   S.newJobs,
-                  style: BatshTypography.titleMd.copyWith(fontWeight: FontWeight.w700),
+                  style: BatshTypography.titleMd.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ],
             ),
@@ -489,7 +549,9 @@ class _SearchBarState extends State<_SearchBar> {
     return Container(
       height: 52,
       padding: const EdgeInsetsDirectional.only(
-          start: BatshSpacing.gutter, end: BatshSpacing.sm),
+        start: BatshSpacing.gutter,
+        end: BatshSpacing.sm,
+      ),
       decoration: BoxDecoration(
         color: BatshColors.surfaceContainerLow,
         borderRadius: BorderRadius.circular(26),
@@ -497,7 +559,11 @@ class _SearchBarState extends State<_SearchBar> {
       ),
       child: Row(
         children: [
-          Icon(Icons.search, size: BatshIconSize.md, color: BatshColors.onSurfaceVariant),
+          Icon(
+            Icons.search,
+            size: BatshIconSize.md,
+            color: BatshColors.onSurfaceVariant,
+          ),
           const SizedBox(width: BatshSpacing.sm),
           Expanded(
             child: TextField(
@@ -510,8 +576,9 @@ class _SearchBarState extends State<_SearchBar> {
                 border: InputBorder.none,
                 isDense: true,
                 contentPadding: EdgeInsets.zero,
-                hintStyle: BatshTypography.bodyMd
-                    .copyWith(color: BatshColors.onSurfaceVariant),
+                hintStyle: BatshTypography.bodyMd.copyWith(
+                  color: BatshColors.onSurfaceVariant,
+                ),
               ),
             ),
           ),
@@ -520,113 +587,12 @@ class _SearchBarState extends State<_SearchBar> {
               tooltip: S.clearSearch,
               visualDensity: VisualDensity.compact,
               onPressed: widget.onClear,
-              icon: Icon(Icons.close_rounded,
-                  size: BatshIconSize.md, color: BatshColors.onSurfaceVariant),
+              icon: Icon(
+                Icons.close_rounded,
+                size: BatshIconSize.md,
+                color: BatshColors.onSurfaceVariant,
+              ),
             ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Shown when the feed has jobs but none match the typed query. Distinct from
-/// [_EmptyJobsState] because the way out is different: clear the search.
-class _NoSearchMatchState extends StatelessWidget {
-  const _NoSearchMatchState({required this.onClear});
-  final VoidCallback onClear;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: BatshSpacing.gutter),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Spacer(),
-          Container(
-            width: 80,
-            height: 80,
-            decoration: BoxDecoration(
-              color: BatshColors.surfaceContainerLow,
-              shape: BoxShape.circle,
-            ),
-            child: Icon(Icons.search_off_rounded,
-                size: BatshIconSize.xl, color: BatshColors.onSurfaceVariant),
-          ),
-          const SizedBox(height: BatshSpacing.lg),
-          Text(
-            S.noJobsMatchSearchTitle,
-            textAlign: TextAlign.center,
-            style: BatshTypography.titleLg.copyWith(fontWeight: FontWeight.w700),
-          ),
-          const SizedBox(height: BatshSpacing.sm),
-          Text(
-            S.noJobsMatchSearchMessage,
-            textAlign: TextAlign.center,
-            style: BatshTypography.bodyMd
-                .copyWith(color: BatshColors.onSurfaceVariant),
-          ),
-          const SizedBox(height: BatshSpacing.lg),
-          BatshButton(
-            label: S.clearSearch,
-            icon: Icons.close_rounded,
-            fullWidth: false,
-            onPressed: onClear,
-          ),
-          const Spacer(),
-          const SizedBox(height: BatshSpacing.xl),
-        ],
-      ),
-    );
-  }
-}
-
-// ─── Empty State ─────────────────────────────────────────────────────────────
-
-class _EmptyJobsState extends StatelessWidget {
-  const _EmptyJobsState({required this.onRefresh});
-  final VoidCallback onRefresh;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: BatshSpacing.gutter),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Spacer(),
-          Container(
-            width: 80,
-            height: 80,
-            decoration: BoxDecoration(
-              color: BatshColors.primaryFixed.withValues(alpha: 0.3),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(Icons.work_outline,
-                size: BatshIconSize.xl, color: BatshColors.primary.withValues(alpha: 0.5)),
-          ),
-          const SizedBox(height: BatshSpacing.lg),
-          Text(
-            S.noJobsTitle,
-            style: BatshTypography.titleLg.copyWith(fontWeight: FontWeight.w700),
-          ),
-          const SizedBox(height: BatshSpacing.sm),
-          Text(
-            S.noJobsMessage,
-            textAlign: TextAlign.center,
-            style: BatshTypography.bodyMd.copyWith(
-              color: BatshColors.onSurfaceVariant,
-            ),
-          ),
-          const SizedBox(height: BatshSpacing.lg),
-          BatshButton(
-            label: S.tryAgain,
-            icon: Icons.refresh,
-            fullWidth: false,
-            onPressed: onRefresh,
-          ),
-          const Spacer(),
-          const SizedBox(height: BatshSpacing.xl),
         ],
       ),
     );
