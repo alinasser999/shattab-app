@@ -9,16 +9,17 @@ import '../../../core/theme/batsh_typography.dart';
 import '../../../core/utils/error_mapper.dart';
 import '../data/moderation_repository.dart';
 import '../../../core/theme/batsh_icon_size.dart';
+import '../../../core/widgets/batsh_dialog.dart';
 
 String _reasonLabel(ReportReason r) => switch (r) {
-      ReportReason.spam => S.reportReasonSpam,
-      ReportReason.scam => S.reportReasonScam,
-      ReportReason.offensive => S.reportReasonOffensive,
-      ReportReason.sexual => S.reportReasonSexual,
-      ReportReason.violence => S.reportReasonViolence,
-      ReportReason.impersonation => S.reportReasonImpersonation,
-      ReportReason.other => S.reportReasonOther,
-    };
+  ReportReason.spam => S.reportReasonSpam,
+  ReportReason.scam => S.reportReasonScam,
+  ReportReason.offensive => S.reportReasonOffensive,
+  ReportReason.sexual => S.reportReasonSexual,
+  ReportReason.violence => S.reportReasonViolence,
+  ReportReason.impersonation => S.reportReasonImpersonation,
+  ReportReason.other => S.reportReasonOther,
+};
 
 /// Reason picker for reporting a piece of content.
 ///
@@ -62,7 +63,9 @@ class _ReportSheetState extends ConsumerState<_ReportSheet> {
     final messenger = ScaffoldMessenger.of(context);
     final navigator = Navigator.of(context);
     try {
-      final filed = await ref.read(moderationRepositoryProvider).report(
+      final filed = await ref
+          .read(moderationRepositoryProvider)
+          .report(
             target: widget.target,
             targetId: widget.targetId,
             reason: reason,
@@ -71,19 +74,23 @@ class _ReportSheetState extends ConsumerState<_ReportSheet> {
       navigator.pop();
       messenger
         ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(
-          content: Text(filed ? S.reportSent : S.reportAlreadySent),
-          behavior: SnackBarBehavior.floating,
-        ));
+        ..showSnackBar(
+          SnackBar(
+            content: Text(filed ? S.reportSent : S.reportAlreadySent),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
     } catch (e) {
       if (!mounted) return;
       setState(() => _busy = false);
       messenger
         ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(
-          content: Text(ErrorMapper.map(e)),
-          behavior: SnackBarBehavior.floating,
-        ));
+        ..showSnackBar(
+          SnackBar(
+            content: Text(ErrorMapper.map(e)),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
     }
   }
 
@@ -107,14 +114,18 @@ class _ReportSheetState extends ConsumerState<_ReportSheet> {
               ),
             ),
             const SizedBox(height: BatshSpacing.md),
-            Text(S.reportTitle,
-                textAlign: TextAlign.center, style: BatshTypography.titleLg),
+            Text(
+              S.reportTitle,
+              textAlign: TextAlign.center,
+              style: BatshTypography.titleLg,
+            ),
             const SizedBox(height: BatshSpacing.xs),
             Text(
               S.reportSheetSubtitle,
               textAlign: TextAlign.center,
-              style: BatshTypography.bodySm
-                  .copyWith(color: BatshColors.onSurfaceVariant),
+              style: BatshTypography.bodySm.copyWith(
+                color: BatshColors.onSurfaceVariant,
+              ),
             ),
             const SizedBox(height: BatshSpacing.md),
             if (_busy)
@@ -126,10 +137,15 @@ class _ReportSheetState extends ConsumerState<_ReportSheet> {
               for (final reason in ReportReason.values)
                 ListTile(
                   contentPadding: EdgeInsets.zero,
-                  title:
-                      Text(_reasonLabel(reason), style: BatshTypography.bodyMd),
-                  trailing: const Icon(Icons.arrow_forward_ios,
-                      size: BatshIconSize.sm, color: BatshColors.onSurfaceVariant),
+                  title: Text(
+                    _reasonLabel(reason),
+                    style: BatshTypography.bodyMd,
+                  ),
+                  trailing: const Icon(
+                    Icons.arrow_forward_ios,
+                    size: BatshIconSize.sm,
+                    color: BatshColors.onSurfaceVariant,
+                  ),
                   onTap: () => _submit(reason),
                 ),
           ],
@@ -146,23 +162,13 @@ Future<bool> confirmAndBlock(
   WidgetRef ref,
   String userId,
 ) async {
-  final ok = await showDialog<bool>(
-    context: context,
-    builder: (ctx) => AlertDialog(
-      title: Text(S.blockUserTitle),
-      content: Text(S.blockUserBody),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(ctx).pop(false),
-          child: Text(S.cancel),
-        ),
-        TextButton(
-          onPressed: () => Navigator.of(ctx).pop(true),
-          child: Text(S.blockUser,
-              style: const TextStyle(color: BatshColors.error)),
-        ),
-      ],
-    ),
+  final ok = await BatshDialog.confirm(
+    context,
+    title: S.blockUserTitle,
+    message: S.blockUserBody,
+    confirmLabel: S.blockUser,
+    cancelLabel: S.cancel,
+    isDestructive: true,
   );
   if (ok != true || !context.mounted) return false;
 
@@ -172,18 +178,22 @@ Future<bool> confirmAndBlock(
     ref.invalidate(blockedIdsProvider);
     messenger
       ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(
-        content: Text(S.userBlocked),
-        behavior: SnackBarBehavior.floating,
-      ));
+      ..showSnackBar(
+        SnackBar(
+          content: Text(S.userBlocked),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
     return true;
   } catch (e) {
     messenger
       ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(
-        content: Text(ErrorMapper.map(e)),
-        behavior: SnackBarBehavior.floating,
-      ));
+      ..showSnackBar(
+        SnackBar(
+          content: Text(ErrorMapper.map(e)),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
     return false;
   }
 }

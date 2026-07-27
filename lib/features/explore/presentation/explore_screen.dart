@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/l10n/strings.dart';
 import '../../../core/router/routes.dart';
-import '../../../core/theme/batsh_colors.dart';
 import '../../../core/theme/batsh_spacing.dart';
 import '../../../core/utils/error_mapper.dart';
 import '../../../core/widgets/batsh_button.dart';
@@ -17,6 +16,7 @@ import '../../auth/presentation/providers/auth_provider.dart';
 import 'providers/explore_providers.dart';
 import 'widgets/post_card.dart';
 import '../../../core/widgets/batsh_snack.dart';
+import '../../../core/widgets/batsh_dialog.dart';
 
 class ExploreScreen extends ConsumerStatefulWidget {
   const ExploreScreen({super.key});
@@ -67,23 +67,13 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
   /// the dialog's own context: the screen's context resolves to the shell
   /// branch navigator and would dismiss the screen instead of the dialog.
   Future<void> _confirmDeletePost(BuildContext context, String postId) async {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(S.deletePost),
-        content: Text(S.deletePostConfirm),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text(S.cancel),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text(S.deletePost,
-                style: const TextStyle(color: BatshColors.error)),
-          ),
-        ],
-      ),
+    final ok = await BatshDialog.confirm(
+      context,
+      title: S.deletePost,
+      message: S.deletePostConfirm,
+      confirmLabel: S.deletePost,
+      cancelLabel: S.cancel,
+      isDestructive: true,
     );
     if (ok != true || !context.mounted) return;
 
@@ -130,7 +120,8 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                 action: session != null
                     ? BatshButton(
                         label: S.createPost,
-                        onPressed: () => context.push('${_explorePrefix()}/new'),
+                        onPressed: () =>
+                            context.push('${_explorePrefix()}/new'),
                       )
                     : null,
               );
@@ -157,13 +148,15 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                       context.push('${_explorePrefix()}/post/${posts[i].id}'),
                   onLike: () {
                     _ensureAuth(context, () {
-                      ref.read(postControllerProvider.notifier)
+                      ref
+                          .read(postControllerProvider.notifier)
                           .toggleLike(posts[i]);
                     });
                   },
                   onSave: () {
                     _ensureAuth(context, () {
-                      ref.read(postControllerProvider.notifier)
+                      ref
+                          .read(postControllerProvider.notifier)
                           .toggleSave(posts[i]);
                     });
                   },

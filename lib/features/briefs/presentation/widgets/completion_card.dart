@@ -14,6 +14,7 @@ import '../../domain/brief.dart';
 import '../providers/briefs_providers.dart';
 import '../../../../core/theme/batsh_icon_size.dart';
 import '../../../../core/widgets/batsh_snack.dart';
+import '../../../../core/widgets/batsh_dialog.dart';
 
 /// Which side of the job is looking at the card.
 enum CompletionRole { homeowner, contractor }
@@ -69,30 +70,20 @@ class _CompletionCardState extends ConsumerState<CompletionCard> {
   }
 
   Future<void> _requestCompletion() => _run(
-        () => ref
-            .read(briefsControllerProvider.notifier)
-            .requestCompletion(widget.brief.id),
-        S.workDoneRequested,
-      );
+    () => ref
+        .read(briefsControllerProvider.notifier)
+        .requestCompletion(widget.brief.id),
+    S.workDoneRequested,
+  );
 
   Future<void> _confirmCompletion() async {
     // Irreversible, and it mints a public project count, so it asks first.
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(S.confirmCompletionTitle),
-        content: Text(S.confirmCompletionBody),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text(S.cancel),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text(S.confirmWorkDone),
-          ),
-        ],
-      ),
+    final ok = await BatshDialog.confirm(
+      context,
+      title: S.confirmCompletionTitle,
+      message: S.confirmCompletionBody,
+      confirmLabel: S.confirmWorkDone,
+      cancelLabel: S.cancel,
     );
     if (ok != true) return;
 
@@ -123,41 +114,43 @@ class _CompletionCardState extends ConsumerState<CompletionCard> {
       // Nothing to finish before anyone is hired.
       BriefStage.open => const SizedBox.shrink(),
       BriefStage.completed => _Banner(
-          icon: Icons.verified_rounded,
-          color: BatshColors.secondary,
-          title: S.completedLabel,
-        ),
-      BriefStage.hired => isHomeowner
-          ? _ActionCard(
-              icon: Icons.handyman_outlined,
-              message: S.reviewAfterCompletionHint,
-              actionLabel: S.confirmWorkDone,
-              busy: _busy,
-              onPressed: _confirmCompletion,
-            )
-          : _ActionCard(
-              icon: Icons.handyman_outlined,
-              message: S.markWorkDone,
-              actionLabel: S.markWorkDone,
-              busy: _busy,
-              onPressed: _requestCompletion,
-            ),
-      BriefStage.completionRequested => isHomeowner
-          // The contractor has said they finished, so confirming becomes the
-          // primary action rather than a passive option.
-          ? _ActionCard(
-              icon: Icons.notifications_active_outlined,
-              message: S.contractorSaysDone,
-              actionLabel: S.confirmWorkDone,
-              emphasised: true,
-              busy: _busy,
-              onPressed: _confirmCompletion,
-            )
-          : _Banner(
-              icon: Icons.hourglass_top_rounded,
-              color: BatshColors.onSurfaceVariant,
-              title: S.awaitingHomeownerConfirm,
-            ),
+        icon: Icons.verified_rounded,
+        color: BatshColors.secondary,
+        title: S.completedLabel,
+      ),
+      BriefStage.hired =>
+        isHomeowner
+            ? _ActionCard(
+                icon: Icons.handyman_outlined,
+                message: S.reviewAfterCompletionHint,
+                actionLabel: S.confirmWorkDone,
+                busy: _busy,
+                onPressed: _confirmCompletion,
+              )
+            : _ActionCard(
+                icon: Icons.handyman_outlined,
+                message: S.markWorkDone,
+                actionLabel: S.markWorkDone,
+                busy: _busy,
+                onPressed: _requestCompletion,
+              ),
+      BriefStage.completionRequested =>
+        isHomeowner
+            // The contractor has said they finished, so confirming becomes the
+            // primary action rather than a passive option.
+            ? _ActionCard(
+                icon: Icons.notifications_active_outlined,
+                message: S.contractorSaysDone,
+                actionLabel: S.confirmWorkDone,
+                emphasised: true,
+                busy: _busy,
+                onPressed: _confirmCompletion,
+              )
+            : _Banner(
+                icon: Icons.hourglass_top_rounded,
+                color: BatshColors.onSurfaceVariant,
+                title: S.awaitingHomeownerConfirm,
+              ),
     };
   }
 }
@@ -199,11 +192,13 @@ class _ActionCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(icon,
-                  size: BatshIconSize.md,
-                  color: emphasised
-                      ? BatshColors.onSecondaryContainer
-                      : BatshColors.onSurfaceVariant),
+              Icon(
+                icon,
+                size: BatshIconSize.md,
+                color: emphasised
+                    ? BatshColors.onSecondaryContainer
+                    : BatshColors.onSurfaceVariant,
+              ),
               const SizedBox(width: BatshSpacing.sm),
               Expanded(
                 child: Text(
@@ -234,11 +229,7 @@ class _ActionCard extends StatelessWidget {
 }
 
 class _Banner extends StatelessWidget {
-  const _Banner({
-    required this.icon,
-    required this.color,
-    required this.title,
-  });
+  const _Banner({required this.icon, required this.color, required this.title});
 
   final IconData icon;
   final Color color;
@@ -248,7 +239,9 @@ class _Banner extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(
-          horizontal: BatshSpacing.gutter, vertical: BatshSpacing.md),
+        horizontal: BatshSpacing.gutter,
+        vertical: BatshSpacing.md,
+      ),
       decoration: BoxDecoration(
         color: BatshColors.surfaceContainerLow,
         borderRadius: BatshRadius.brCard,
@@ -259,9 +252,12 @@ class _Banner extends StatelessWidget {
           Icon(icon, size: BatshIconSize.md, color: color),
           const SizedBox(width: BatshSpacing.sm),
           Expanded(
-            child: Text(title,
-                style: BatshTypography.labelLg
-                    .copyWith(color: BatshColors.onSurface)),
+            child: Text(
+              title,
+              style: BatshTypography.labelLg.copyWith(
+                color: BatshColors.onSurface,
+              ),
+            ),
           ),
         ],
       ),

@@ -27,6 +27,7 @@ import '../widgets/completion_card.dart';
 import 'create_post_screen.dart';
 import '../../../../core/theme/batsh_icon_size.dart';
 import '../../../../core/widgets/batsh_snack.dart';
+import '../../../../core/widgets/batsh_dialog.dart';
 
 /// Resolves the hired contractor so confirming completion can open the review
 /// sheet for them immediately. Falls back to confirming without the prompt if
@@ -57,22 +58,12 @@ class BriefDetailScreen extends ConsumerWidget {
 
   /// Returns true only if the user confirmed and the brief was cancelled.
   Future<bool> _cancel(BuildContext context, WidgetRef ref) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      // Pop with the dialog's own context: the screen's context resolves to
-      // the shell branch navigator and would pop the screen, not the dialog.
-      builder: (ctx) => AlertDialog(
-        title: Text(S.cancelBriefTitle),
-        content: Text(S.cancelBriefMessage),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.of(ctx).pop(false),
-              child: Text(S.cancelBriefNo)),
-          TextButton(
-              onPressed: () => Navigator.of(ctx).pop(true),
-              child: Text(S.cancelBriefYes)),
-        ],
-      ),
+    final confirmed = await BatshDialog.confirm(
+      context,
+      title: S.cancelBriefTitle,
+      message: S.cancelBriefMessage,
+      confirmLabel: S.cancelBriefYes,
+      cancelLabel: S.cancelBriefNo,
     );
     if (confirmed != true) return false;
     await ref.read(briefsControllerProvider.notifier).cancel(briefId);
@@ -88,9 +79,9 @@ class BriefDetailScreen extends ConsumerWidget {
       body: async.when(
         loading: () => const _BriefDetailSkeleton(),
         error: (e, _) => BatshError(
-              message: ErrorMapper.map(e),
-              onRetry: () => ref.invalidate(briefByIdProvider(briefId)),
-            ),
+          message: ErrorMapper.map(e),
+          onRetry: () => ref.invalidate(briefByIdProvider(briefId)),
+        ),
         data: (brief) {
           if (brief == null) {
             return BatshError(message: S.briefNotFound);
@@ -112,12 +103,14 @@ class BriefDetailScreen extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(S.workDescriptionLabel,
-                      style: BatshTypography.labelMd.copyWith(
-                          color: BatshColors.onSurfaceVariant)),
+                  Text(
+                    S.workDescriptionLabel,
+                    style: BatshTypography.labelMd.copyWith(
+                      color: BatshColors.onSurfaceVariant,
+                    ),
+                  ),
                   const SizedBox(height: BatshSpacing.sm),
-                  Text(brief.workDescription,
-                      style: BatshTypography.bodyLg),
+                  Text(brief.workDescription, style: BatshTypography.bodyLg),
                 ],
               ),
             ),
@@ -126,9 +119,12 @@ class BriefDetailScreen extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(S.locationDetailsLabel,
-                      style: BatshTypography.labelMd.copyWith(
-                          color: BatshColors.onSurfaceVariant)),
+                  Text(
+                    S.locationDetailsLabel,
+                    style: BatshTypography.labelMd.copyWith(
+                      color: BatshColors.onSurfaceVariant,
+                    ),
+                  ),
                   const SizedBox(height: BatshSpacing.sm),
                   Text(
                     '${OnboardingCatalog.apartmentLabels[brief.apartmentType] ?? brief.apartmentType.name} · ${brief.city}${brief.district != null ? ' · ${brief.district}' : ''}',
@@ -145,17 +141,23 @@ class BriefDetailScreen extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(S.lookingForLabel,
-                        style: BatshTypography.labelMd.copyWith(
-                            color: BatshColors.onSurfaceVariant)),
+                    Text(
+                      S.lookingForLabel,
+                      style: BatshTypography.labelMd.copyWith(
+                        color: BatshColors.onSurfaceVariant,
+                      ),
+                    ),
                     const SizedBox(height: BatshSpacing.sm),
                     Wrap(
                       spacing: BatshSpacing.xs,
                       runSpacing: BatshSpacing.xs,
                       children: brief.targetSpecialties
-                          .map((s) => Text(
+                          .map(
+                            (s) => Text(
                               OnboardingCatalog.specialtiesCatalog[s] ?? s,
-                              style: BatshTypography.bodyMd))
+                              style: BatshTypography.bodyMd,
+                            ),
+                          )
                           .toList(),
                     ),
                   ],
@@ -170,8 +172,9 @@ class BriefDetailScreen extends ConsumerWidget {
             if (brief.isHired)
               Padding(
                 padding: const EdgeInsets.symmetric(
-                    horizontal: BatshSpacing.gutter,
-                    vertical: BatshSpacing.sm),
+                  horizontal: BatshSpacing.gutter,
+                  vertical: BatshSpacing.sm,
+                ),
                 child: _CompletionSection(brief: brief),
               ),
             QuotesReceivedSection(briefId: brief.id, canAct: brief.isActive),
@@ -199,18 +202,18 @@ class BriefDetailScreen extends ConsumerWidget {
 
           final reduced = MediaQuery.of(context).disableAnimations;
           return RefreshIndicator(
-            onRefresh: () async =>
-                ref.invalidate(briefByIdProvider(briefId)),
+            onRefresh: () async => ref.invalidate(briefByIdProvider(briefId)),
             child: ListView(
               children: reduced
                   ? children
                   : children
-                      .animate(interval: BatshMotion.staggerBase)
-                      .fadeIn(duration: BatshMotion.normal)
-                      .slideY(
+                        .animate(interval: BatshMotion.staggerBase)
+                        .fadeIn(duration: BatshMotion.normal)
+                        .slideY(
                           begin: 0.06,
                           end: 0,
-                          curve: BatshMotion.easeOut),
+                          curve: BatshMotion.easeOut,
+                        ),
             ),
           );
         },
@@ -227,26 +230,52 @@ class _BriefDetailSkeleton extends StatelessWidget {
       children: [
         const SizedBox(height: BatshSpacing.md),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: BatshSpacing.marginMobile),
+          padding: const EdgeInsets.symmetric(
+            horizontal: BatshSpacing.marginMobile,
+          ),
           child: Row(
             children: [
-              BatshShimmerBox(width: 12, height: 12, borderRadius: BatshRadius.brFull),
+              BatshShimmerBox(
+                width: 12,
+                height: 12,
+                borderRadius: BatshRadius.brFull,
+              ),
               const SizedBox(width: BatshSpacing.sm),
-              BatshShimmerBox(width: 120, height: 14, borderRadius: BatshRadius.brSm),
+              BatshShimmerBox(
+                width: 120,
+                height: 14,
+                borderRadius: BatshRadius.brSm,
+              ),
               const Spacer(),
-              BatshShimmerBox(width: 80, height: 12, borderRadius: BatshRadius.brSm),
+              BatshShimmerBox(
+                width: 80,
+                height: 12,
+                borderRadius: BatshRadius.brSm,
+              ),
             ],
           ),
         ),
         const SizedBox(height: BatshSpacing.lg),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: BatshSpacing.marginMobile),
-          child: BatshShimmerBox(width: double.infinity, height: 120, borderRadius: BatshRadius.brLg),
+          padding: const EdgeInsets.symmetric(
+            horizontal: BatshSpacing.marginMobile,
+          ),
+          child: BatshShimmerBox(
+            width: double.infinity,
+            height: 120,
+            borderRadius: BatshRadius.brLg,
+          ),
         ),
         const SizedBox(height: BatshSpacing.gutter),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: BatshSpacing.marginMobile),
-          child: BatshShimmerBox(width: double.infinity, height: 80, borderRadius: BatshRadius.brLg),
+          padding: const EdgeInsets.symmetric(
+            horizontal: BatshSpacing.marginMobile,
+          ),
+          child: BatshShimmerBox(
+            width: double.infinity,
+            height: 80,
+            borderRadius: BatshRadius.brLg,
+          ),
         ),
       ],
     );
@@ -266,25 +295,13 @@ class _StatusRow extends ConsumerWidget {
     final quotes = ref.read(quotesForBriefProvider(brief.id)).value;
     final willCancel = (quotes?.isNotEmpty ?? false) || brief.isHired;
 
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(S.deleteBriefTitle),
-        content: Text(willCancel
-            ? S.deleteBriefWithQuotesBody
-            : S.deleteBriefBody),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text(S.cancel),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text(S.deletePost,
-                style: const TextStyle(color: BatshColors.error)),
-          ),
-        ],
-      ),
+    final ok = await BatshDialog.confirm(
+      context,
+      title: S.deleteBriefTitle,
+      message: willCancel ? S.deleteBriefWithQuotesBody : S.deleteBriefBody,
+      confirmLabel: S.deletePost,
+      cancelLabel: S.cancel,
+      isDestructive: true,
     );
     if (ok != true || !context.mounted) return;
 
@@ -294,7 +311,9 @@ class _StatusRow extends ConsumerWidget {
           .deleteOrCancelBrief(brief.id);
       if (!context.mounted) return;
       BatshSnack.success(
-        context, outcome == 'deleted' ? S.briefDeleted : S.briefCancelledInstead);
+        context,
+        outcome == 'deleted' ? S.briefDeleted : S.briefCancelledInstead,
+      );
       // The row is gone when it was truly deleted; stay put when cancelled so
       // the homeowner can still see the quotes that survived.
       if (outcome == 'deleted') Navigator.of(context).maybePop();
@@ -318,26 +337,39 @@ class _StatusRow extends ConsumerWidget {
       children: [
         Icon(Icons.circle, color: color, size: BatshIconSize.xs),
         const SizedBox(width: BatshSpacing.sm),
-        Text(label,
-            style: BatshTypography.labelMd
-                .copyWith(color: color, fontWeight: FontWeight.w700)),
+        Text(
+          label,
+          style: BatshTypography.labelMd.copyWith(
+            color: color,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
         if (brief.isEdited) ...[
           const SizedBox(width: BatshSpacing.sm),
           // Contractors see this too: a quote written against the original
           // wording may no longer fit the scope.
-          Text('· ${S.editedMarker}',
-              style: BatshTypography.labelSm
-                  .copyWith(color: BatshColors.onSurfaceVariant)),
+          Text(
+            '· ${S.editedMarker}',
+            style: BatshTypography.labelSm.copyWith(
+              color: BatshColors.onSurfaceVariant,
+            ),
+          ),
         ],
         const Spacer(),
-        Text(date,
-            style: BatshTypography.labelMd
-                .copyWith(color: BatshColors.onSurfaceVariant)),
+        Text(
+          date,
+          style: BatshTypography.labelMd.copyWith(
+            color: BatshColors.onSurfaceVariant,
+          ),
+        ),
         if (!isCancelled)
           PopupMenuButton<String>(
             tooltip: S.editPost,
-            icon: const Icon(Icons.more_horiz_rounded,
-                size: BatshIconSize.md, color: BatshColors.onSurfaceVariant),
+            icon: const Icon(
+              Icons.more_horiz_rounded,
+              size: BatshIconSize.md,
+              color: BatshColors.onSurfaceVariant,
+            ),
             onSelected: (v) {
               if (v == 'delete') {
                 _delete(context, ref);
@@ -370,11 +402,16 @@ class _StatusRow extends ConsumerWidget {
                 value: 'delete',
                 child: Row(
                   children: [
-                    const Icon(Icons.delete_outline,
-                        size: BatshIconSize.md, color: BatshColors.error),
+                    const Icon(
+                      Icons.delete_outline,
+                      size: BatshIconSize.md,
+                      color: BatshColors.error,
+                    ),
                     const SizedBox(width: BatshSpacing.sm),
-                    Text(S.deletePost,
-                        style: const TextStyle(color: BatshColors.error)),
+                    Text(
+                      S.deletePost,
+                      style: const TextStyle(color: BatshColors.error),
+                    ),
                   ],
                 ),
               ),

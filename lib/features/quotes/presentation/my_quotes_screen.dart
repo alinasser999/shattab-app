@@ -23,6 +23,7 @@ import 'quote_sheet.dart';
 import 'widgets/quote_status_badge.dart';
 import '../../../core/theme/batsh_icon_size.dart';
 import '../../../core/widgets/batsh_snack.dart';
+import '../../../core/widgets/batsh_dialog.dart';
 
 /// Contractor's own quotes across every brief — the one place a quote sent on
 /// a public post stays trackable after the post leaves the opportunities feed.
@@ -57,13 +58,11 @@ class MyQuotesScreen extends ConsumerWidget {
               itemCount: quotes.length,
               separatorBuilder: (_, _) =>
                   const SizedBox(height: BatshSpacing.md),
-              itemBuilder: (context, i) => _QuoteRow(
-                quote: quotes[i].quote,
-                brief: quotes[i].brief,
-              )
-                  .animate()
-                  .fadeIn(delay: (60 * i.clamp(0, 8)).ms, duration: 260.ms)
-                  .slideY(begin: 0.06, end: 0, curve: Curves.easeOutCubic),
+              itemBuilder: (context, i) =>
+                  _QuoteRow(quote: quotes[i].quote, brief: quotes[i].brief)
+                      .animate()
+                      .fadeIn(delay: (60 * i.clamp(0, 8)).ms, duration: 260.ms)
+                      .slideY(begin: 0.06, end: 0, curve: Curves.easeOutCubic),
             ),
           );
         },
@@ -83,28 +82,20 @@ class _QuoteOwnerMenu extends ConsumerWidget {
   final Quote quote;
 
   Future<void> _withdraw(BuildContext context, WidgetRef ref) async {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(S.withdrawQuoteTitle),
-        content: Text(S.withdrawQuoteBody),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text(S.cancel),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text(S.withdrawQuote,
-                style: const TextStyle(color: BatshColors.error)),
-          ),
-        ],
-      ),
+    final ok = await BatshDialog.confirm(
+      context,
+      title: S.withdrawQuoteTitle,
+      message: S.withdrawQuoteBody,
+      confirmLabel: S.withdrawQuote,
+      cancelLabel: S.cancel,
+      isDestructive: true,
     );
     if (ok != true || !context.mounted) return;
 
     try {
-      await ref.read(quotesControllerProvider.notifier).setStatus(
+      await ref
+          .read(quotesControllerProvider.notifier)
+          .setStatus(
             quoteId: quote.id,
             briefId: quote.briefId,
             status: QuoteStatus.withdrawn,
@@ -121,8 +112,11 @@ class _QuoteOwnerMenu extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return PopupMenuButton<String>(
       tooltip: S.editPost,
-      icon: const Icon(Icons.more_horiz_rounded,
-          size: BatshIconSize.md, color: BatshColors.onSurfaceVariant),
+      icon: const Icon(
+        Icons.more_horiz_rounded,
+        size: BatshIconSize.md,
+        color: BatshColors.onSurfaceVariant,
+      ),
       onSelected: (v) {
         if (v == 'edit') {
           // The quote sheet prefills from the existing quote and updates it.
@@ -146,11 +140,16 @@ class _QuoteOwnerMenu extends ConsumerWidget {
           value: 'withdraw',
           child: Row(
             children: [
-              const Icon(Icons.undo_rounded,
-                  size: BatshIconSize.md, color: BatshColors.error),
+              const Icon(
+                Icons.undo_rounded,
+                size: BatshIconSize.md,
+                color: BatshColors.error,
+              ),
               const SizedBox(width: BatshSpacing.sm),
-              Text(S.withdrawQuote,
-                  style: const TextStyle(color: BatshColors.error)),
+              Text(
+                S.withdrawQuote,
+                style: const TextStyle(color: BatshColors.error),
+              ),
             ],
           ),
         ),
@@ -173,11 +172,9 @@ class _QuoteRow extends ConsumerWidget {
     final title = brief?.workDescription ?? S.postDetailTitle;
     // Only the winning quote gets the completion step; the others have no work
     // to finish.
-    final completionBrief =
-        quote.status == QuoteStatus.accepted ? brief : null;
+    final completionBrief = quote.status == QuoteStatus.accepted ? brief : null;
     return BatshCard(
-      onTap: () =>
-          context.push(Routes.contractorPostDetailPath(quote.briefId)),
+      onTap: () => context.push(Routes.contractorPostDetailPath(quote.briefId)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -185,10 +182,12 @@ class _QuoteRow extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
-                child: Text(title,
-                    style: BatshTypography.titleLg.copyWith(fontSize: 16),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis),
+                child: Text(
+                  title,
+                  style: BatshTypography.titleLg.copyWith(fontSize: 16),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
               const SizedBox(width: BatshSpacing.sm),
               QuoteStatusBadge(status: quote.status),
@@ -200,31 +199,45 @@ class _QuoteRow extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: BatshSpacing.sm),
-          Text(quotePriceLabel(quote),
-              style: BatshTypography.labelMd.copyWith(
-                  color: BatshColors.primary, fontWeight: FontWeight.w700)),
+          Text(
+            quotePriceLabel(quote),
+            style: BatshTypography.labelMd.copyWith(
+              color: BatshColors.primary,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
           if (quote.durationText != null) ...[
             const SizedBox(height: BatshSpacing.xs),
             Row(
               children: [
-                const Icon(Icons.schedule,
-                    size: BatshIconSize.sm, color: BatshColors.onSurfaceVariant),
+                const Icon(
+                  Icons.schedule,
+                  size: BatshIconSize.sm,
+                  color: BatshColors.onSurfaceVariant,
+                ),
                 const SizedBox(width: BatshSpacing.xs),
-                Text(quote.durationText!,
-                    style: BatshTypography.labelMd
-                        .copyWith(color: BatshColors.onSurfaceVariant)),
+                Text(
+                  quote.durationText!,
+                  style: BatshTypography.labelMd.copyWith(
+                    color: BatshColors.onSurfaceVariant,
+                  ),
+                ),
               ],
             ),
           ],
           const SizedBox(height: BatshSpacing.sm),
-          Text(quote.note,
-              style: BatshTypography.bodyMd,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis),
+          Text(
+            quote.note,
+            style: BatshTypography.bodyMd,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
           if (completionBrief != null && completionBrief.isHired) ...[
             const SizedBox(height: BatshSpacing.md),
             CompletionCard(
-                brief: completionBrief, role: CompletionRole.contractor),
+              brief: completionBrief,
+              role: CompletionRole.contractor,
+            ),
           ],
         ],
       ),
