@@ -11,13 +11,10 @@ import '../theme/batsh_typography.dart';
 import '../utils/image_url.dart';
 import 'batsh_card.dart';
 import '../theme/batsh_icon_size.dart';
+import 'batsh_badge.dart';
 
 class BriefCard extends StatelessWidget {
-  const BriefCard({
-    super.key,
-    required this.brief,
-    required this.onTap,
-  });
+  const BriefCard({super.key, required this.brief, required this.onTap});
 
   final Brief brief;
   final VoidCallback onTap;
@@ -43,9 +40,12 @@ class BriefCard extends StatelessWidget {
                   children: [
                     _StatusBadge(status: brief.status, isPost: brief.isPost),
                     const Spacer(),
-                    Text(formatted,
-                        style: BatshTypography.labelSm.copyWith(
-                            color: BatshColors.onSurfaceVariant)),
+                    Text(
+                      formatted,
+                      style: BatshTypography.labelSm.copyWith(
+                        color: BatshColors.onSurfaceVariant,
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: BatshSpacing.sm),
@@ -58,22 +58,34 @@ class BriefCard extends StatelessWidget {
                 const SizedBox(height: BatshSpacing.sm),
                 Row(
                   children: [
-                    const Icon(Icons.place_outlined,
-                        size: BatshIconSize.sm, color: BatshColors.onSurfaceVariant),
+                    const Icon(
+                      Icons.place_outlined,
+                      size: BatshIconSize.sm,
+                      color: BatshColors.onSurfaceVariant,
+                    ),
                     const SizedBox(width: 4),
-                    Text(brief.city,
-                        style: BatshTypography.labelMd.copyWith(
-                            color: BatshColors.onSurfaceVariant)),
+                    Text(
+                      brief.city,
+                      style: BatshTypography.labelMd.copyWith(
+                        color: BatshColors.onSurfaceVariant,
+                      ),
+                    ),
                     if (brief.district != null) ...[
-                      Text(' · ',
-                          style: BatshTypography.labelMd.copyWith(
-                              color: BatshColors.onSurfaceVariant)),
+                      Text(
+                        ' · ',
+                        style: BatshTypography.labelMd.copyWith(
+                          color: BatshColors.onSurfaceVariant,
+                        ),
+                      ),
                       Expanded(
-                        child: Text(brief.district!,
-                            style: BatshTypography.labelMd.copyWith(
-                                color: BatshColors.onSurfaceVariant),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis),
+                        child: Text(
+                          brief.district!,
+                          style: BatshTypography.labelMd.copyWith(
+                            color: BatshColors.onSurfaceVariant,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
                     ],
                   ],
@@ -108,8 +120,12 @@ class _Thumb extends StatelessWidget {
               memCacheWidth: 320,
             )
           : const Center(
-              child: Icon(Icons.image_outlined,
-                  color: BatshColors.onSurfaceVariant, size: BatshIconSize.lg)),
+              child: Icon(
+                Icons.image_outlined,
+                color: BatshColors.onSurfaceVariant,
+                size: BatshIconSize.lg,
+              ),
+            ),
     );
   }
 }
@@ -121,26 +137,16 @@ class _StatusBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final (label, color, bg) = switch (status) {
-      BriefStatus.cancelled => (
-        S.statusCancelled,
-        BatshColors.onSurfaceVariant,
-        BatshColors.surfaceContainerHigh
-      ),
-      BriefStatus.open => isPost
-          ? (S.statusOpen, BatshColors.tertiary, BatshColors.tertiaryFixed)
-          : (S.statusDirect, BatshColors.primary, BatshColors.primaryFixed),
+    // Cancelled is over, not wrong, so it stays neutral: a list of cancelled
+    // briefs should not read as a wall of errors. An open post is available
+    // work; an open direct request was addressed to this contractor by name.
+    final (label, tone) = switch (status) {
+      BriefStatus.cancelled => (S.statusCancelled, BatshBadgeTone.neutral),
+      BriefStatus.open =>
+        isPost
+            ? (S.statusOpen, BatshBadgeTone.success)
+            : (S.statusDirect, BatshBadgeTone.brand),
     };
-    return Container(
-      padding:
-          const EdgeInsets.symmetric(horizontal: BatshSpacing.sm, vertical: 4),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BatshRadius.brFull,
-      ),
-      child: Text(label,
-          style: BatshTypography.labelSm
-              .copyWith(color: color, fontWeight: FontWeight.w700)),
-    );
+    return BatshBadge(label: label, tone: tone, compact: true);
   }
 }

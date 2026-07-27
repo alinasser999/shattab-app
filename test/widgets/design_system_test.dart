@@ -355,11 +355,20 @@ void main() {
             tone: tone,
             emphasis: emphasis,
           ).debugPalette;
-          // Outline has no fill, so its text sits on whatever surface the badge
-          // was placed over. The app background is the realistic worst case.
-          final behind = emphasis == BatshBadgeEmphasis.outline
-              ? const Color(0xFFFFF8F3)
-              : background;
+          // What the text actually sits on differs per emphasis:
+          // - outline has no fill, so it inherits the app background;
+          // - onImage is a translucent scrim, so the effective colour is the
+          //   scrim composited over the brightest photo it could cover. A
+          //   blown-out white sky is that worst case, and asserting against the
+          //   raw scrim colour would pass on alpha the user never sees.
+          final behind = switch (emphasis) {
+            BatshBadgeEmphasis.outline => const Color(0xFFFFF8F3),
+            BatshBadgeEmphasis.onImage => Color.alphaBlend(
+              background,
+              const Color(0xFFFFFFFF),
+            ),
+            _ => background,
+          };
           expect(
             _contrast(foreground, behind),
             greaterThanOrEqualTo(4.5),

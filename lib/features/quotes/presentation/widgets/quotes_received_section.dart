@@ -28,6 +28,7 @@ import '../quote_format.dart';
 import 'quote_status_badge.dart';
 import '../../../../core/theme/batsh_icon_size.dart';
 import '../../../../core/widgets/batsh_snack.dart';
+import '../../../../core/widgets/batsh_badge.dart';
 
 /// Homeowner-side section listing every quote received on a brief, with
 /// accept/decline actions and contact shortcuts once accepted.
@@ -54,8 +55,14 @@ class QuotesReceivedSection extends ConsumerWidget {
             Text(S.quotesSectionTitle, style: BatshTypography.titleLg),
             const SizedBox(width: BatshSpacing.sm),
             async.maybeWhen(
-              data: (q) =>
-                  q.isEmpty ? const SizedBox.shrink() : _CountChip(count: q.length),
+              data: (q) => q.isEmpty
+                  ? const SizedBox.shrink()
+                  : BatshBadge(
+                      label: '${q.length}',
+                      tone: BatshBadgeTone.brand,
+                      compact: true,
+                      semanticLabel: '${q.length} ${S.quotesSectionTitle}',
+                    ),
               orElse: () => const SizedBox.shrink(),
             ),
           ],
@@ -73,10 +80,9 @@ class QuotesReceivedSection extends ConsumerWidget {
             ),
           ),
           error: (e, _) => BatshError(
-                message: ErrorMapper.map(e),
-                onRetry: () =>
-                    ref.invalidate(quotesForBriefProvider(briefId)),
-              ),
+            message: ErrorMapper.map(e),
+            onRetry: () => ref.invalidate(quotesForBriefProvider(briefId)),
+          ),
           data: (quotes) {
             if (quotes.isEmpty) {
               return RefreshIndicator(
@@ -86,9 +92,12 @@ class QuotesReceivedSection extends ConsumerWidget {
                   shrinkWrap: true,
                   physics: const AlwaysScrollableScrollPhysics(),
                   children: [
-                    Text(S.noQuotesYet,
-                        style: BatshTypography.bodyMd.copyWith(
-                            color: BatshColors.onSurfaceVariant)),
+                    Text(
+                      S.noQuotesYet,
+                      style: BatshTypography.bodyMd.copyWith(
+                        color: BatshColors.onSurfaceVariant,
+                      ),
+                    ),
                   ],
                 ),
               );
@@ -102,14 +111,15 @@ class QuotesReceivedSection extends ConsumerWidget {
                 children: [
                   for (var i = 0; i < quotes.length; i++)
                     Padding(
-                      padding:
-                          const EdgeInsets.only(bottom: BatshSpacing.md),
+                      padding: const EdgeInsets.only(bottom: BatshSpacing.md),
                       child: _animatedQuoteCard(
-                          _QuoteCard(
-                              quote: quotes[i],
-                              briefId: briefId,
-                              canAct: canAct),
-                          i),
+                        _QuoteCard(
+                          quote: quotes[i],
+                          briefId: briefId,
+                          canAct: canAct,
+                        ),
+                        i,
+                      ),
                     ),
                 ],
               ),
@@ -127,13 +137,8 @@ Widget _animatedQuoteCard(Widget card, int index) {
       if (MediaQuery.of(context).disableAnimations) return card;
       return card
           .animate()
-          .fadeIn(
-              delay: (80 * index.clamp(0, 6)).ms,
-              duration: 280.ms)
-          .slideY(
-              begin: 0.08,
-              end: 0,
-              curve: Curves.easeOutCubic);
+          .fadeIn(delay: (80 * index.clamp(0, 6)).ms, duration: 280.ms)
+          .slideY(begin: 0.08, end: 0, curve: Curves.easeOutCubic);
     },
   );
 }
@@ -147,29 +152,61 @@ class _QuoteSkeletonCard extends StatelessWidget {
       children: [
         Row(
           children: [
-            BatshShimmerBox(width: 44, height: 44, borderRadius: BatshRadius.brFull),
+            BatshShimmerBox(
+              width: 44,
+              height: 44,
+              borderRadius: BatshRadius.brFull,
+            ),
             const SizedBox(width: BatshSpacing.md),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  BatshShimmerBox(width: 140, height: 16, borderRadius: BatshRadius.brSm),
+                  BatshShimmerBox(
+                    width: 140,
+                    height: 16,
+                    borderRadius: BatshRadius.brSm,
+                  ),
                   const SizedBox(height: 4),
-                  BatshShimmerBox(width: 80, height: 14, borderRadius: BatshRadius.brSm),
+                  BatshShimmerBox(
+                    width: 80,
+                    height: 14,
+                    borderRadius: BatshRadius.brSm,
+                  ),
                 ],
               ),
             ),
-            BatshShimmerBox(width: 60, height: 24, borderRadius: BatshRadius.brFull),
+            BatshShimmerBox(
+              width: 60,
+              height: 24,
+              borderRadius: BatshRadius.brFull,
+            ),
           ],
         ),
         const SizedBox(height: BatshSpacing.md),
-        BatshShimmerBox(width: double.infinity, height: 14, borderRadius: BatshRadius.brSm),
+        BatshShimmerBox(
+          width: double.infinity,
+          height: 14,
+          borderRadius: BatshRadius.brSm,
+        ),
         const SizedBox(height: BatshSpacing.md),
         Row(
           children: [
-            Expanded(child: BatshShimmerBox(width: double.infinity, height: 44, borderRadius: BatshRadius.brMd)),
+            Expanded(
+              child: BatshShimmerBox(
+                width: double.infinity,
+                height: 44,
+                borderRadius: BatshRadius.brMd,
+              ),
+            ),
             const SizedBox(width: BatshSpacing.md),
-            Expanded(child: BatshShimmerBox(width: double.infinity, height: 44, borderRadius: BatshRadius.brMd)),
+            Expanded(
+              child: BatshShimmerBox(
+                width: double.infinity,
+                height: 44,
+                borderRadius: BatshRadius.brMd,
+              ),
+            ),
           ],
         ),
       ],
@@ -177,56 +214,48 @@ class _QuoteSkeletonCard extends StatelessWidget {
   }
 }
 
-class _CountChip extends StatelessWidget {
-  const _CountChip({required this.count});
-  final int count;
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding:
-          const EdgeInsets.symmetric(horizontal: BatshSpacing.sm, vertical: 2),
-      decoration: BoxDecoration(
-        color: BatshColors.primaryFixed,
-        borderRadius: BatshRadius.brFull,
-      ),
-      child: Text('$count',
-          style: BatshTypography.labelSm.copyWith(
-              color: BatshColors.primary, fontWeight: FontWeight.w700)),
-    );
-  }
-}
-
 class _QuoteCard extends ConsumerWidget {
-  const _QuoteCard(
-      {required this.quote, required this.briefId, this.canAct = true});
+  const _QuoteCard({
+    required this.quote,
+    required this.briefId,
+    this.canAct = true,
+  });
   final Quote quote;
   final String briefId;
   final bool canAct;
 
   Future<void> _confirmAndSet(
-      BuildContext context, WidgetRef ref, QuoteStatus status) async {
+    BuildContext context,
+    WidgetRef ref,
+    QuoteStatus status,
+  ) async {
     final ok = await showDialog<bool>(
       context: context,
       // Pop with the dialog's own context: the card's context resolves to the
       // shell branch navigator and would pop the screen, not the dialog.
       builder: (ctx) => AlertDialog(
-        title: Text(status == QuoteStatus.accepted
-            ? S.quoteAcceptConfirm
-            : S.quoteDeclineConfirm),
+        title: Text(
+          status == QuoteStatus.accepted
+              ? S.quoteAcceptConfirm
+              : S.quoteDeclineConfirm,
+        ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.of(ctx).pop(false),
-              child: Text(S.cancel)),
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(S.cancel),
+          ),
           TextButton(
-              onPressed: () => Navigator.of(ctx).pop(true),
-              child: Text(S.confirm)),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(S.confirm),
+          ),
         ],
       ),
     );
     if (ok != true) return;
     try {
-      await ref.read(quotesControllerProvider.notifier).setStatus(
-          quoteId: quote.id, briefId: briefId, status: status);
+      await ref
+          .read(quotesControllerProvider.notifier)
+          .setStatus(quoteId: quote.id, briefId: briefId, status: status);
       if (status == QuoteStatus.accepted) HapticFeedback.mediumImpact();
     } catch (_) {
       if (context.mounted) {
@@ -237,13 +266,14 @@ class _QuoteCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final contractor =
-        ref.watch(contractorByIdProvider(quote.contractorId)).value;
+    final contractor = ref
+        .watch(contractorByIdProvider(quote.contractorId))
+        .value;
     final name = contractor == null
         ? '...'
         : (contractor.businessName.isNotEmpty
-            ? contractor.businessName
-            : contractor.fullName);
+              ? contractor.businessName
+              : contractor.fullName);
     return BatshCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -257,14 +287,19 @@ class _QuoteCard extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(name,
-                        style: BatshTypography.titleLg.copyWith(fontSize: 17),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis),
-                    Text(quotePriceLabel(quote),
-                        style: BatshTypography.labelMd.copyWith(
-                            color: BatshColors.primary,
-                            fontWeight: FontWeight.w700)),
+                    Text(
+                      name,
+                      style: BatshTypography.titleLg.copyWith(fontSize: 17),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    Text(
+                      quotePriceLabel(quote),
+                      style: BatshTypography.labelMd.copyWith(
+                        color: BatshColors.primary,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -276,12 +311,18 @@ class _QuoteCard extends ConsumerWidget {
             const SizedBox(height: BatshSpacing.md),
             Row(
               children: [
-                const Icon(Icons.schedule,
-                    size: BatshIconSize.sm, color: BatshColors.onSurfaceVariant),
+                const Icon(
+                  Icons.schedule,
+                  size: BatshIconSize.sm,
+                  color: BatshColors.onSurfaceVariant,
+                ),
                 const SizedBox(width: BatshSpacing.xs),
-                Text(quote.durationText!,
-                    style: BatshTypography.labelMd
-                        .copyWith(color: BatshColors.onSurfaceVariant)),
+                Text(
+                  quote.durationText!,
+                  style: BatshTypography.labelMd.copyWith(
+                    color: BatshColors.onSurfaceVariant,
+                  ),
+                ),
               ],
             ),
           ],
@@ -326,7 +367,8 @@ class _QuoteCard extends ConsumerWidget {
             alignment: AlignmentDirectional.centerStart,
             child: TextButton.icon(
               onPressed: () => context.push(
-                  Routes.homeownerContractorProfilePath(quote.contractorId)),
+                Routes.homeownerContractorProfilePath(quote.contractorId),
+              ),
               icon: const Icon(Icons.person_outline, size: BatshIconSize.md),
               label: Text(S.viewContractorProfile),
             ),
@@ -351,13 +393,18 @@ class _Avatar extends StatelessWidget {
         shape: BoxShape.circle,
         image: hasUrl
             ? DecorationImage(
-                image: CachedNetworkImageProvider(url!), fit: BoxFit.cover)
+                image: CachedNetworkImageProvider(url!),
+                fit: BoxFit.cover,
+              )
             : null,
       ),
       child: hasUrl
           ? null
-          : const Icon(Icons.handyman_outlined,
-              color: BatshColors.onSurfaceVariant, size: BatshIconSize.md),
+          : const Icon(
+              Icons.handyman_outlined,
+              color: BatshColors.onSurfaceVariant,
+              size: BatshIconSize.md,
+            ),
     );
   }
 }
@@ -382,14 +429,18 @@ class _ReviewBlock extends ConsumerWidget {
           padding: const EdgeInsets.only(top: BatshSpacing.sm),
           child: Row(
             children: [
-              Icon(Icons.info_outline,
-                  size: BatshIconSize.sm, color: BatshColors.onSurfaceVariant),
+              Icon(
+                Icons.info_outline,
+                size: BatshIconSize.sm,
+                color: BatshColors.onSurfaceVariant,
+              ),
               const SizedBox(width: BatshSpacing.xs),
               Expanded(
                 child: Text(
                   S.reviewAfterCompletionHint,
-                  style: BatshTypography.labelSm
-                      .copyWith(color: BatshColors.onSurfaceVariant),
+                  style: BatshTypography.labelSm.copyWith(
+                    color: BatshColors.onSurfaceVariant,
+                  ),
                 ),
               ),
             ],
@@ -402,8 +453,11 @@ class _ReviewBlock extends ConsumerWidget {
           label: S.rateContractor,
           style: BatshButtonStyle.secondary,
           icon: Icons.star_outline,
-          onPressed: () => showWriteReviewSheet(context,
-              briefId: briefId, contractorId: contractorId),
+          onPressed: () => showWriteReviewSheet(
+            context,
+            briefId: briefId,
+            contractorId: contractorId,
+          ),
         ),
       );
     }
@@ -413,15 +467,20 @@ class _ReviewBlock extends ConsumerWidget {
         children: [
           BatshStars(rating: existing.rating.toDouble(), size: 18),
           const SizedBox(width: BatshSpacing.sm),
-          Text(S.yourReview,
-              style: BatshTypography.labelMd
-                  .copyWith(color: BatshColors.onSurfaceVariant)),
+          Text(
+            S.yourReview,
+            style: BatshTypography.labelMd.copyWith(
+              color: BatshColors.onSurfaceVariant,
+            ),
+          ),
           const Spacer(),
           TextButton(
-            onPressed: () => showWriteReviewSheet(context,
-                briefId: briefId,
-                contractorId: contractorId,
-                existing: existing),
+            onPressed: () => showWriteReviewSheet(
+              context,
+              briefId: briefId,
+              contractorId: contractorId,
+              existing: existing,
+            ),
             child: Text(S.editReview),
           ),
         ],

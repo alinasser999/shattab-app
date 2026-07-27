@@ -24,6 +24,7 @@ import '../../../quotes/presentation/quote_sheet.dart';
 import '../../domain/brief.dart';
 import '../providers/briefs_providers.dart';
 import '../../../../core/theme/batsh_icon_size.dart';
+import '../../../../core/widgets/batsh_badge.dart';
 
 class PostDetailScreen extends ConsumerStatefulWidget {
   const PostDetailScreen({super.key, required this.postId});
@@ -43,8 +44,9 @@ class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
   Future<({String name, String phone})?> _futureHomeowner(String homeownerId) {
     if (_cachedHomeownerId != homeownerId) {
       _cachedHomeownerId = homeownerId;
-      _cachedFutureHomeowner =
-          ref.read(authRepositoryProvider).fetchProfileNameAndPhone(homeownerId);
+      _cachedFutureHomeowner = ref
+          .read(authRepositoryProvider)
+          .fetchProfileNameAndPhone(homeownerId);
     }
     return _cachedFutureHomeowner!;
   }
@@ -60,9 +62,9 @@ class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
       body: async.when(
         loading: () => const _PostDetailSkeleton(),
         error: (e, _) => BatshError(
-              message: ErrorMapper.map(e),
-              onRetry: () => ref.invalidate(briefByIdProvider(widget.postId)),
-            ),
+          message: ErrorMapper.map(e),
+          onRetry: () => ref.invalidate(briefByIdProvider(widget.postId)),
+        ),
         data: (brief) {
           if (brief == null) {
             return BatshError(message: S.postNotFound);
@@ -96,7 +98,7 @@ class _PostDetailBody extends StatelessWidget {
   Widget build(BuildContext context) {
     final apt =
         OnboardingCatalog.apartmentLabels[brief.apartmentType] ??
-            brief.apartmentType.name;
+        brief.apartmentType.name;
     final place = brief.district != null
         ? '${brief.city} · ${brief.district}'
         : brief.city;
@@ -137,14 +139,13 @@ class _PostDetailBody extends StatelessWidget {
             padding: EdgeInsets.zero,
             children: reduced
                 ? items
-                : items.animate(interval: BatshMotion.staggerBase).fadeIn(
-                      duration: BatshMotion.normal,
-                      curve: Curves.easeOutQuad,
-                    ).slideY(
-                      begin: 0.06,
-                      end: 0,
-                      curve: BatshMotion.easeOut,
-                    ),
+                : items
+                      .animate(interval: BatshMotion.staggerBase)
+                      .fadeIn(
+                        duration: BatshMotion.normal,
+                        curve: Curves.easeOutQuad,
+                      )
+                      .slideY(begin: 0.06, end: 0, curve: BatshMotion.easeOut),
           ),
         ),
         _StickyQuoteBar(onQuote: onQuote),
@@ -203,8 +204,9 @@ class _GallerySection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final tileCount =
-        photoUrls.length <= _maxTiles ? photoUrls.length : _maxTiles;
+    final tileCount = photoUrls.length <= _maxTiles
+        ? photoUrls.length
+        : _maxTiles;
     final overflow = photoUrls.length - tileCount;
 
     return Padding(
@@ -276,41 +278,77 @@ class _PostDetailSkeleton extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListView(
       children: [
-        BatshShimmerBox(width: double.infinity, height: 200, borderRadius: BatshRadius.brLg),
+        BatshShimmerBox(
+          width: double.infinity,
+          height: 200,
+          borderRadius: BatshRadius.brLg,
+        ),
         const SizedBox(height: BatshSpacing.gutter),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: BatshSpacing.gutter),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              BatshShimmerBox(width: 200, height: 14, borderRadius: BatshRadius.brSm),
+              BatshShimmerBox(
+                width: 200,
+                height: 14,
+                borderRadius: BatshRadius.brSm,
+              ),
               const SizedBox(height: BatshSpacing.sm),
-              BatshShimmerBox(width: double.infinity, height: 12, borderRadius: BatshRadius.brSm),
+              BatshShimmerBox(
+                width: double.infinity,
+                height: 12,
+                borderRadius: BatshRadius.brSm,
+              ),
               const SizedBox(height: BatshSpacing.sm),
-              BatshShimmerBox(width: double.infinity, height: 12, borderRadius: BatshRadius.brSm),
+              BatshShimmerBox(
+                width: double.infinity,
+                height: 12,
+                borderRadius: BatshRadius.brSm,
+              ),
               const SizedBox(height: BatshSpacing.sm),
-              BatshShimmerBox(width: 140, height: 12, borderRadius: BatshRadius.brSm),
+              BatshShimmerBox(
+                width: 140,
+                height: 12,
+                borderRadius: BatshRadius.brSm,
+              ),
             ],
           ),
         ),
         const SizedBox(height: BatshSpacing.gutter),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: BatshSpacing.gutter),
-          child: BatshShimmerBox(width: double.infinity, height: 60, borderRadius: BatshRadius.brLg),
+          child: BatshShimmerBox(
+            width: double.infinity,
+            height: 60,
+            borderRadius: BatshRadius.brLg,
+          ),
         ),
         const SizedBox(height: BatshSpacing.gutter),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: BatshSpacing.gutter),
-          child: BatshShimmerBox(width: double.infinity, height: 48, borderRadius: BatshRadius.brMd),
+          child: BatshShimmerBox(
+            width: double.infinity,
+            height: 48,
+            borderRadius: BatshRadius.brMd,
+          ),
         ),
         const SizedBox(height: BatshSpacing.md),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: BatshSpacing.gutter),
           child: Column(
             children: [
-              BatshShimmerBox(width: double.infinity, height: 48, borderRadius: BatshRadius.brMd),
+              BatshShimmerBox(
+                width: double.infinity,
+                height: 48,
+                borderRadius: BatshRadius.brMd,
+              ),
               const SizedBox(height: BatshSpacing.sm),
-              BatshShimmerBox(width: double.infinity, height: 48, borderRadius: BatshRadius.brMd),
+              BatshShimmerBox(
+                width: double.infinity,
+                height: 48,
+                borderRadius: BatshRadius.brMd,
+              ),
             ],
           ),
         ),
@@ -352,8 +390,9 @@ class _HeroImageSectionState extends State<_HeroImageSection> {
   @override
   Widget build(BuildContext context) {
     final urls = widget.photoUrls;
-    const radius =
-        BorderRadius.vertical(bottom: Radius.circular(BatshRadius.xl));
+    const radius = BorderRadius.vertical(
+      bottom: Radius.circular(BatshRadius.xl),
+    );
 
     return SizedBox(
       height: 240,
@@ -418,16 +457,16 @@ class _HeroImageSectionState extends State<_HeroImageSection> {
                 children: [
                   Row(
                     children: [
-                      _Pill(
-                          label: widget.apartmentLabel,
-                          bgColor: Colors.white24,
-                          textColor: Colors.white),
+                      BatshBadge(
+                        label: widget.apartmentLabel,
+                        emphasis: BatshBadgeEmphasis.onImage,
+                      ),
                       const SizedBox(width: BatshSpacing.sm),
                       Flexible(
-                        child: _Pill(
-                            label: widget.location,
-                            bgColor: Colors.white24,
-                            textColor: Colors.white),
+                        child: BatshBadge(
+                          label: widget.location,
+                          emphasis: BatshBadgeEmphasis.onImage,
+                        ),
                       ),
                     ],
                   ),
@@ -454,10 +493,10 @@ class _HeroImageSectionState extends State<_HeroImageSection> {
               top: BatshSpacing.md,
               end: BatshSpacing.gutter,
               child: IgnorePointer(
-                child: _Pill(
+                child: BatshBadge(
                   label: S.photoIndexOf(_index + 1, urls.length),
-                  bgColor: Colors.black38,
-                  textColor: Colors.white,
+                  emphasis: BatshBadgeEmphasis.onImage,
+                  compact: true,
                 ),
               ),
             ),
@@ -495,32 +534,6 @@ class _PageDots extends StatelessWidget {
   }
 }
 
-class _Pill extends StatelessWidget {
-  const _Pill({
-    required this.label,
-    required this.bgColor,
-    required this.textColor,
-  });
-
-  final String label;
-  final Color bgColor;
-  final Color textColor;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BatshRadius.brFull,
-      ),
-      child: Text(label,
-          style: BatshTypography.labelSm.copyWith(
-              color: textColor, fontWeight: FontWeight.w600)),
-    );
-  }
-}
-
 class _NoHeroHeader extends StatelessWidget {
   const _NoHeroHeader({
     required this.location,
@@ -548,37 +561,52 @@ class _NoHeroHeader extends StatelessWidget {
         children: [
           Row(
             children: [
-              _Pill(
-                  label: apartmentLabel,
-                  bgColor: BatshColors.primaryFixed.withValues(alpha: 0.4),
-                  textColor: BatshColors.primary),
+              BatshBadge(
+                label: apartmentLabel,
+                tone: BatshBadgeTone.brand,
+                compact: true,
+              ),
               const SizedBox(width: BatshSpacing.sm),
-              Icon(Icons.place_outlined,
-                  size: BatshIconSize.sm, color: BatshColors.onSurfaceVariant),
+              Icon(
+                Icons.place_outlined,
+                size: BatshIconSize.sm,
+                color: BatshColors.onSurfaceVariant,
+              ),
               const SizedBox(width: 4),
               Expanded(
-                child: Text(location,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: BatshTypography.labelMd
-                        .copyWith(color: BatshColors.onSurfaceVariant)),
+                child: Text(
+                  location,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: BatshTypography.labelMd.copyWith(
+                    color: BatshColors.onSurfaceVariant,
+                  ),
+                ),
               ),
             ],
           ),
           const SizedBox(height: BatshSpacing.sm),
-          Text(title,
-              style: BatshTypography.titleLg.copyWith(
-                fontWeight: FontWeight.w700,
-              )),
+          Text(
+            title,
+            style: BatshTypography.titleLg.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
           const SizedBox(height: BatshSpacing.xs),
           Row(
             children: [
-              Icon(Icons.access_time,
-                  size: BatshIconSize.sm, color: BatshColors.onSurfaceVariant),
+              Icon(
+                Icons.access_time,
+                size: BatshIconSize.sm,
+                color: BatshColors.onSurfaceVariant,
+              ),
               const SizedBox(width: 4),
-              Text(time,
-                  style: BatshTypography.labelSm
-                      .copyWith(color: BatshColors.onSurfaceVariant)),
+              Text(
+                time,
+                style: BatshTypography.labelSm.copyWith(
+                  color: BatshColors.onSurfaceVariant,
+                ),
+              ),
             ],
           ),
         ],
@@ -649,12 +677,17 @@ class _BriefInfoCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: BatshSpacing.lg),
-            Text(S.postDescriptionLabel,
-                style: BatshTypography.labelMd.copyWith(
-                    color: BatshColors.onSurfaceVariant)),
+            Text(
+              S.postDescriptionLabel,
+              style: BatshTypography.labelMd.copyWith(
+                color: BatshColors.onSurfaceVariant,
+              ),
+            ),
             const SizedBox(height: BatshSpacing.sm),
-            Text(brief.workDescription,
-                style: BatshTypography.bodyLg.copyWith(height: 1.6)),
+            Text(
+              brief.workDescription,
+              style: BatshTypography.bodyLg.copyWith(height: 1.6),
+            ),
           ],
         ),
       ),
@@ -681,7 +714,9 @@ class _SpecTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(
-          horizontal: BatshSpacing.sm, vertical: BatshSpacing.md),
+        horizontal: BatshSpacing.sm,
+        vertical: BatshSpacing.md,
+      ),
       decoration: BoxDecoration(
         color: BatshColors.surfaceContainerLow,
         borderRadius: BatshRadius.brMd,
@@ -694,15 +729,20 @@ class _SpecTile extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(icon, size: BatshIconSize.xs, color: BatshColors.onSurfaceVariant),
+              Icon(
+                icon,
+                size: BatshIconSize.xs,
+                color: BatshColors.onSurfaceVariant,
+              ),
               const SizedBox(width: 4),
               Flexible(
                 child: Text(
                   label,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: BatshTypography.labelSm
-                      .copyWith(color: BatshColors.onSurfaceVariant),
+                  style: BatshTypography.labelSm.copyWith(
+                    color: BatshColors.onSurfaceVariant,
+                  ),
                 ),
               ),
             ],

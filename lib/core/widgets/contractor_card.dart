@@ -14,6 +14,7 @@ import 'batsh_pressable.dart';
 import 'batsh_shimmer.dart';
 import 'tier_badge.dart';
 import '../theme/batsh_icon_size.dart';
+import 'batsh_badge.dart';
 
 /// Large editorial-style card for the discover feed. Premium magazine layout:
 /// a tall cover with the logo, name, headline and rating composited directly
@@ -76,24 +77,32 @@ class ContractorCard extends StatelessWidget {
                       runSpacing: BatshSpacing.xs,
                       children: [
                         for (final s in topSpecialties)
-                          _MiniChip(
-                              label:
-                                  OnboardingCatalog.specialtiesCatalog[s] ?? s),
+                          BatshBadge(
+                            label: OnboardingCatalog.specialtiesCatalog[s] ?? s,
+                            tone: BatshBadgeTone.brand,
+                            compact: true,
+                          ),
                       ],
                     ),
                     if (firstAreas.isNotEmpty) ...[
                       const SizedBox(height: BatshSpacing.sm),
                       Row(
                         children: [
-                          const Icon(Icons.place_outlined,
-                              size: BatshIconSize.sm, color: BatshColors.onSurfaceVariant),
+                          const Icon(
+                            Icons.place_outlined,
+                            size: BatshIconSize.sm,
+                            color: BatshColors.onSurfaceVariant,
+                          ),
                           const SizedBox(width: 4),
                           Expanded(
-                            child: Text(firstAreas.join(' · '),
-                                style: BatshTypography.labelMd.copyWith(
-                                    color: BatshColors.onSurfaceVariant),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis),
+                            child: Text(
+                              firstAreas.join(' · '),
+                              style: BatshTypography.labelMd.copyWith(
+                                color: BatshColors.onSurfaceVariant,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
                         ],
                       ),
@@ -172,7 +181,17 @@ class _EditorialCover extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                _RatingBadge(listing: listing),
+                BatshBadge(
+                  label: listing.rating?.toStringAsFixed(1) ?? S.newBadge,
+                  icon: listing.reviewCount == 0
+                      ? Icons.auto_awesome
+                      : Icons.star,
+                  emphasis: BatshBadgeEmphasis.onImage,
+                  compact: true,
+                  semanticLabel: listing.rating == null
+                      ? S.newBadge
+                      : '${S.ratingLabel} ${listing.rating!.toStringAsFixed(1)}',
+                ),
                 if (listing.tier.isPublic) ...[
                   const SizedBox(height: BatshSpacing.xxs),
                   TierBadge(tier: listing.tier),
@@ -198,8 +217,10 @@ class _EditorialCover extends StatelessWidget {
                         : BatshColors.onSurfaceVariant,
                   ),
                   onPressed: onToggleSave,
-                  constraints:
-                      const BoxConstraints(minWidth: 44, minHeight: 44),
+                  constraints: const BoxConstraints(
+                    minWidth: 44,
+                    minHeight: 44,
+                  ),
                   padding: EdgeInsets.zero,
                   visualDensity: VisualDensity.compact,
                 ),
@@ -278,8 +299,11 @@ class _LogoAvatar extends StatelessWidget {
                   placeholder: (_, _) =>
                       const ColoredBox(color: BatshColors.surfaceContainer),
                 )
-              : const Icon(Icons.engineering_outlined,
-                  color: BatshColors.primary, size: BatshIconSize.lg),
+              : const Icon(
+                  Icons.engineering_outlined,
+                  color: BatshColors.primary,
+                  size: BatshIconSize.lg,
+                ),
         ),
       ),
     );
@@ -288,42 +312,6 @@ class _LogoAvatar extends StatelessWidget {
 
 /// Rating pill (star + score) or a neutral "new" badge for cold-start
 /// contractors — icon + text, never colour alone.
-class _RatingBadge extends StatelessWidget {
-  const _RatingBadge({required this.listing});
-  final ContractorListing listing;
-
-  @override
-  Widget build(BuildContext context) {
-    final isNew = listing.reviewCount == 0;
-    return Container(
-      padding: const EdgeInsets.symmetric(
-          horizontal: BatshSpacing.sm, vertical: 5),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.92),
-        borderRadius: BatshRadius.brFull,
-        boxShadow: BatshShadows.soft,
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            isNew ? Icons.auto_awesome : Icons.star,
-            size: BatshIconSize.sm,
-            color: isNew ? BatshColors.secondary : BatshColors.tertiary,
-          ),
-          const SizedBox(width: 4),
-          Text(
-            listing.rating?.toStringAsFixed(1) ?? S.newBadge,
-            style: BatshTypography.labelSm.copyWith(
-              color: BatshColors.onSurface,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
 
 class _CoverFallback extends StatelessWidget {
   const _CoverFallback();
@@ -341,73 +329,20 @@ class _MicroStats extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        _StatChip(
-            icon: Icons.home_work_outlined,
-            iconColor: BatshColors.primary,
-            label: '${listing.projectsCompleted} ${S.singleProject}'),
+        BatshBadge(
+          label: '${listing.projectsCompleted} ${S.singleProject}',
+          icon: Icons.home_work_outlined,
+          compact: true,
+        ),
         if (listing.yearsExperience != null) ...[
           const SizedBox(width: BatshSpacing.sm),
-          _StatChip(
-              icon: Icons.workspace_premium_outlined,
-              iconColor: BatshColors.secondary,
-              label: '${listing.yearsExperience} ${S.year}'),
+          BatshBadge(
+            label: '${listing.yearsExperience} ${S.year}',
+            icon: Icons.workspace_premium_outlined,
+            compact: true,
+          ),
         ],
       ],
-    );
-  }
-}
-
-class _StatChip extends StatelessWidget {
-  const _StatChip({
-    required this.icon,
-    required this.iconColor,
-    required this.label,
-  });
-
-  final IconData icon;
-  final Color iconColor;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-          horizontal: BatshSpacing.sm, vertical: 4),
-      decoration: BoxDecoration(
-        color: BatshColors.surfaceContainerLow,
-        borderRadius: BatshRadius.brFull,
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: BatshIconSize.xs, color: iconColor),
-          const SizedBox(width: 4),
-          Text(label,
-              style: BatshTypography.labelSm
-                  .copyWith(fontWeight: FontWeight.w700)),
-        ],
-      ),
-    );
-  }
-}
-
-class _MiniChip extends StatelessWidget {
-  const _MiniChip({required this.label});
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-          horizontal: BatshSpacing.sm, vertical: 4),
-      decoration: BoxDecoration(
-        color: BatshColors.primaryFixed,
-        borderRadius: BatshRadius.brFull,
-      ),
-      child: Text(label,
-          style: BatshTypography.labelSm.copyWith(
-              color: BatshColors.onPrimaryFixed,
-              fontWeight: FontWeight.w600)),
     );
   }
 }

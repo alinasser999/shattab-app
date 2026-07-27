@@ -26,6 +26,7 @@ import '../../../reviews/presentation/reviews_sheet.dart';
 import '../../../saved/presentation/providers/saved_providers.dart';
 import '../../domain/contractor_listing.dart';
 import '../../../../core/theme/batsh_icon_size.dart';
+import '../../../../core/widgets/batsh_badge.dart';
 
 /// How the showcase is being viewed.
 /// - [public]: a homeowner browsing the contractor (save, share, contact CTAs).
@@ -82,8 +83,9 @@ class ContractorShowcase extends ConsumerWidget {
     // `.value ?? []` collapses error and empty into the same blank section, so
     // a contractor with twelve projects looked like one with none. Keep the
     // async state so the section can say which it is.
-    final portfolioAsync =
-        ref.watch(portfolioForContractorProvider(listing.id));
+    final portfolioAsync = ref.watch(
+      portfolioForContractorProvider(listing.id),
+    );
     final portfolio = portfolioAsync.value ?? const <PortfolioProject>[];
     final effectiveRating = rating ?? listing.rating;
     final effectiveCount = reviewCount ?? listing.reviewCount;
@@ -114,8 +116,9 @@ class ContractorShowcase extends ConsumerWidget {
                     tooltip: isSaved ? S.unsaveTooltip : S.saveTooltip,
                     icon: Icon(
                       isSaved ? Icons.bookmark : Icons.bookmark_border,
-                      color:
-                          isSaved ? BatshColors.primary : BatshColors.onSurface,
+                      color: isSaved
+                          ? BatshColors.primary
+                          : BatshColors.onSurface,
                     ),
                     onPressed: () => runSignedIn(
                       context,
@@ -182,8 +185,9 @@ class ContractorShowcase extends ConsumerWidget {
                   projects: portfolio,
                   isOwner: _isOwner,
                   failed: portfolioAsync.hasError,
-                  onRetry: () => ref
-                      .invalidate(portfolioForContractorProvider(listing.id)),
+                  onRetry: () => ref.invalidate(
+                    portfolioForContractorProvider(listing.id),
+                  ),
                 ),
               ],
 
@@ -228,8 +232,9 @@ class ContractorShowcase extends ConsumerWidget {
 /// here the moment App Links / a web profile exist, since a shareable link is
 /// the whole point of the button.
 void _shareContractor(ContractorListing listing) {
-  final name =
-      listing.businessName.isNotEmpty ? listing.businessName : listing.fullName;
+  final name = listing.businessName.isNotEmpty
+      ? listing.businessName
+      : listing.fullName;
   final blurb = StringBuffer(S.seeOnShattab.replaceFirst('%s', name));
   if (listing.headline != null && listing.headline!.isNotEmpty) {
     blurb.write(' - ${listing.headline}');
@@ -247,7 +252,7 @@ double _scaledStripHeight(BuildContext context, double base, int labelLines) {
   const labelFontSize = 13.0; // BatshTypography.labelSm
   final delta =
       (MediaQuery.textScalerOf(context).scale(labelFontSize) - labelFontSize) *
-          labelLines;
+      labelLines;
   return base + delta.clamp(0.0, 64.0);
 }
 
@@ -299,8 +304,9 @@ class ContractorContactBar extends StatelessWidget {
 
     if (!sticky) {
       return Padding(
-        padding:
-            const EdgeInsets.symmetric(horizontal: BatshSpacing.marginMobile),
+        padding: const EdgeInsets.symmetric(
+          horizontal: BatshSpacing.marginMobile,
+        ),
         child: content,
       );
     }
@@ -423,7 +429,9 @@ class _AvatarRing extends StatelessWidget {
           shape: BoxShape.circle,
           color: BatshColors.surfaceContainer,
           border: Border.all(
-              color: BatshColors.primary.withValues(alpha: 0.55), width: 2),
+            color: BatshColors.primary.withValues(alpha: 0.55),
+            width: 2,
+          ),
         ),
         clipBehavior: Clip.antiAlias,
         child: logoUrl != null
@@ -434,8 +442,11 @@ class _AvatarRing extends StatelessWidget {
                 placeholder: (_, _) =>
                     const ColoredBox(color: BatshColors.surfaceContainer),
               )
-            : const Icon(Icons.engineering_outlined,
-                size: BatshIconSize.xxl, color: BatshColors.primary),
+            : const Icon(
+                Icons.engineering_outlined,
+                size: BatshIconSize.xxl,
+                color: BatshColors.primary,
+              ),
       ),
     );
   }
@@ -451,13 +462,16 @@ class _NameHeadline extends StatelessWidget {
         ? contractor.businessName
         : contractor.fullName;
     return Padding(
-      padding:
-          const EdgeInsets.symmetric(horizontal: BatshSpacing.marginMobile),
+      padding: const EdgeInsets.symmetric(
+        horizontal: BatshSpacing.marginMobile,
+      ),
       child: Column(
         children: [
-          Text(name,
-              textAlign: TextAlign.center,
-              style: BatshTypography.headlineLgMobile),
+          Text(
+            name,
+            textAlign: TextAlign.center,
+            style: BatshTypography.headlineLgMobile,
+          ),
           const SizedBox(height: BatshSpacing.sm),
           // Kind first, then verification, then the earned level: what they
           // are, whether we checked, and what the work record says. Wrap so
@@ -467,8 +481,17 @@ class _NameHeadline extends StatelessWidget {
             spacing: BatshSpacing.xs,
             runSpacing: BatshSpacing.xs,
             children: [
-              _ProviderKindBadge(kind: contractor.providerKind),
-              if (contractor.verified) const _VerifiedBadge(),
+              BatshBadge(
+                label: contractor.providerKind.label,
+                icon: contractor.providerKind.icon,
+                emphasis: BatshBadgeEmphasis.outline,
+              ),
+              if (contractor.verified)
+                BatshBadge(
+                  label: S.verified,
+                  icon: Icons.verified_rounded,
+                  tone: BatshBadgeTone.brand,
+                ),
               // Tappable here because this is where a homeowner is actually
               // deciding, and an unexplained rank is just another glyph.
               TierBadge(tier: contractor.tier, explainOnTap: true),
@@ -480,8 +503,9 @@ class _NameHeadline extends StatelessWidget {
             Text(
               contractor.headline!,
               textAlign: TextAlign.center,
-              style: BatshTypography.bodyMd
-                  .copyWith(color: BatshColors.onSurfaceVariant),
+              style: BatshTypography.bodyMd.copyWith(
+                color: BatshColors.onSurfaceVariant,
+              ),
             ),
           ],
         ],
@@ -496,34 +520,6 @@ class _NameHeadline extends StatelessWidget {
 /// Styled as a neutral outline rather than a filled accent so it reads as a
 /// statement of fact, not an award. Verification is the award, and the two must
 /// not look alike.
-class _ProviderKindBadge extends StatelessWidget {
-  const _ProviderKindBadge({required this.kind});
-  final ProviderKind kind;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-          horizontal: BatshSpacing.md, vertical: 4),
-      decoration: BoxDecoration(
-        border: Border.all(color: BatshColors.outlineVariant),
-        borderRadius: BatshRadius.brFull,
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(kind.icon, size: BatshIconSize.sm, color: BatshColors.onSurfaceVariant),
-          const SizedBox(width: 4),
-          Text(
-            kind.label,
-            style: BatshTypography.labelSm
-                .copyWith(color: BatshColors.onSurfaceVariant),
-          ),
-        ],
-      ),
-    );
-  }
-}
 
 /// Verification, labelled.
 ///
@@ -531,43 +527,9 @@ class _ProviderKindBadge extends StatelessWidget {
 /// point of the request flow behind migration 0015, and an unlabelled glyph is
 /// the one form most users will not decode. Icon plus word, like `RoleBadge`,
 /// so it survives a greyscale read.
-class _VerifiedBadge extends StatelessWidget {
-  const _VerifiedBadge();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding:
-          const EdgeInsets.symmetric(horizontal: BatshSpacing.md, vertical: 4),
-      decoration: BoxDecoration(
-        color: BatshColors.tertiaryContainer,
-        borderRadius: BatshRadius.brFull,
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(Icons.verified_rounded,
-              size: BatshIconSize.sm, color: BatshColors.onTertiaryContainer),
-          const SizedBox(width: 4),
-          Text(
-            S.verified,
-            style: BatshTypography.labelMd.copyWith(
-              color: BatshColors.onTertiaryContainer,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
 
 class _RatingPill extends StatelessWidget {
-  const _RatingPill({
-    required this.rating,
-    this.reviewCount,
-    this.onTap,
-  });
+  const _RatingPill({required this.rating, this.reviewCount, this.onTap});
 
   /// Null when unreviewed — the pill then shows the neutral "new" state.
   final double? rating;
@@ -587,7 +549,9 @@ class _RatingPill extends StatelessWidget {
     if (avg == null || reviewCount == null || reviewCount == 0) {
       return Container(
         padding: const EdgeInsets.symmetric(
-            horizontal: BatshSpacing.gutter, vertical: BatshSpacing.sm),
+          horizontal: BatshSpacing.gutter,
+          vertical: BatshSpacing.sm,
+        ),
         decoration: BoxDecoration(
           color: BatshColors.secondaryContainer,
           borderRadius: BatshRadius.brFull,
@@ -596,8 +560,11 @@ class _RatingPill extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.auto_awesome,
-                size: BatshIconSize.sm, color: BatshColors.onSecondaryContainer),
+            const Icon(
+              Icons.auto_awesome,
+              size: BatshIconSize.sm,
+              color: BatshColors.onSecondaryContainer,
+            ),
             const SizedBox(width: BatshSpacing.xs),
             Text(
               S.newProfessional,
@@ -623,7 +590,9 @@ class _RatingPill extends StatelessWidget {
         onTap: onTap,
         child: Container(
           padding: const EdgeInsets.symmetric(
-              horizontal: BatshSpacing.gutter, vertical: BatshSpacing.sm),
+            horizontal: BatshSpacing.gutter,
+            vertical: BatshSpacing.sm,
+          ),
           decoration: BoxDecoration(
             borderRadius: BatshRadius.brFull,
             border: Border.all(color: BatshColors.tertiary, width: 1),
@@ -631,8 +600,11 @@ class _RatingPill extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.star_rounded,
-                  size: BatshIconSize.md, color: BatshColors.tertiary),
+              const Icon(
+                Icons.star_rounded,
+                size: BatshIconSize.md,
+                color: BatshColors.tertiary,
+              ),
               const SizedBox(width: BatshSpacing.xs),
               Text(
                 avg.toStringAsFixed(1),
@@ -644,13 +616,17 @@ class _RatingPill extends StatelessWidget {
               const SizedBox(width: BatshSpacing.xs),
               Text(
                 '· $reviewCount ${S.reviewsCount}',
-                style: BatshTypography.labelSm
-                    .copyWith(color: BatshColors.onTertiaryContainer),
+                style: BatshTypography.labelSm.copyWith(
+                  color: BatshColors.onTertiaryContainer,
+                ),
               ),
               if (onTap != null) ...[
                 const SizedBox(width: 2),
-                const Icon(Icons.arrow_forward_ios,
-                    size: BatshIconSize.xs, color: BatshColors.onTertiaryContainer),
+                const Icon(
+                  Icons.arrow_forward_ios,
+                  size: BatshIconSize.xs,
+                  color: BatshColors.onTertiaryContainer,
+                ),
               ],
             ],
           ),
@@ -690,8 +666,9 @@ class _StatsRow extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(top: BatshSpacing.xl),
       child: Padding(
-        padding:
-            const EdgeInsets.symmetric(horizontal: BatshSpacing.marginMobile),
+        padding: const EdgeInsets.symmetric(
+          horizontal: BatshSpacing.marginMobile,
+        ),
         child: Row(
           children: [
             for (var i = 0; i < tiles.length; i++) ...[
@@ -719,7 +696,9 @@ class _StatCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(
-          vertical: BatshSpacing.lg, horizontal: BatshSpacing.md),
+        vertical: BatshSpacing.lg,
+        horizontal: BatshSpacing.md,
+      ),
       decoration: BoxDecoration(
         color: BatshColors.surfaceContainerLowest,
         borderRadius: BatshRadius.brXl,
@@ -734,14 +713,21 @@ class _StatCard extends StatelessWidget {
           // and this widget's ancestor watches the saved-contractors provider —
           // so tapping the bookmark made the stats visibly re-count from zero.
           // Animating 0→3 was never worth that.
-          Text(value,
-              style: BatshTypography.displayMd.copyWith(
-                  color: BatshColors.onSurface, fontWeight: FontWeight.w700)),
+          Text(
+            value,
+            style: BatshTypography.displayMd.copyWith(
+              color: BatshColors.onSurface,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
           const SizedBox(height: BatshSpacing.xxs),
-          Text(label,
-              maxLines: 2,
-              style: BatshTypography.labelMd
-                  .copyWith(color: BatshColors.onSurfaceVariant)),
+          Text(
+            label,
+            maxLines: 2,
+            style: BatshTypography.labelMd.copyWith(
+              color: BatshColors.onSurfaceVariant,
+            ),
+          ),
         ],
       ),
     );
@@ -755,8 +741,9 @@ class _GoProBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding:
-          const EdgeInsets.symmetric(horizontal: BatshSpacing.marginMobile),
+      padding: const EdgeInsets.symmetric(
+        horizontal: BatshSpacing.marginMobile,
+      ),
       child: Material(
         borderRadius: BatshRadius.brCard,
         clipBehavior: Clip.antiAlias,
@@ -765,10 +752,7 @@ class _GoProBanner extends StatelessWidget {
             gradient: LinearGradient(
               begin: Alignment.centerRight,
               end: Alignment.centerLeft,
-              colors: [
-                BatshColors.primary,
-                BatshColors.onPrimaryFixedVariant,
-              ],
+              colors: [BatshColors.primary, BatshColors.onPrimaryFixedVariant],
             ),
           ),
           child: InkWell(
@@ -789,32 +773,44 @@ class _GoProBanner extends StatelessWidget {
                         ],
                       ),
                     ),
-                    child: const Icon(Icons.workspace_premium_rounded,
-                        size: BatshIconSize.md, color: BatshColors.onTertiaryContainer),
+                    child: const Icon(
+                      Icons.workspace_premium_rounded,
+                      size: BatshIconSize.md,
+                      color: BatshColors.onTertiaryContainer,
+                    ),
                   ),
                   const SizedBox(width: BatshSpacing.md),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(S.upgradeToProShort,
-                            style: BatshTypography.titleMd.copyWith(
-                                color: BatshColors.onPrimary,
-                                fontWeight: FontWeight.w700)),
-                        Text(S.proValueLine,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: BatshTypography.bodySm.copyWith(
-                                color: BatshColors.onPrimary
-                                    .withValues(alpha: 0.85))),
+                        Text(
+                          S.upgradeToProShort,
+                          style: BatshTypography.titleMd.copyWith(
+                            color: BatshColors.onPrimary,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        Text(
+                          S.proValueLine,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: BatshTypography.bodySm.copyWith(
+                            color: BatshColors.onPrimary.withValues(
+                              alpha: 0.85,
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                   ),
                   // Mirrors with text direction, unlike the previous hardcoded
                   // `chevron_left_rounded`.
-                  Icon(Icons.arrow_forward_ios,
-                      size: BatshIconSize.sm,
-                      color: BatshColors.onPrimary.withValues(alpha: 0.9)),
+                  Icon(
+                    Icons.arrow_forward_ios,
+                    size: BatshIconSize.sm,
+                    color: BatshColors.onPrimary.withValues(alpha: 0.9),
+                  ),
                 ],
               ),
             ),
@@ -832,8 +828,9 @@ class _OwnerActions extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding:
-          const EdgeInsets.symmetric(horizontal: BatshSpacing.marginMobile),
+      padding: const EdgeInsets.symmetric(
+        horizontal: BatshSpacing.marginMobile,
+      ),
       child: Column(
         children: [
           BatshButton(
@@ -845,13 +842,17 @@ class _OwnerActions extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.visibility_outlined,
-                  size: BatshIconSize.sm, color: BatshColors.onSurfaceVariant),
+              const Icon(
+                Icons.visibility_outlined,
+                size: BatshIconSize.sm,
+                color: BatshColors.onSurfaceVariant,
+              ),
               const SizedBox(width: BatshSpacing.xs),
               Text(
                 S.clientsPreview,
-                style: BatshTypography.labelSm
-                    .copyWith(color: BatshColors.onSurfaceVariant),
+                style: BatshTypography.labelSm.copyWith(
+                  color: BatshColors.onSurfaceVariant,
+                ),
               ),
             ],
           ),
@@ -868,8 +869,9 @@ class _SignOutBlock extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding:
-          const EdgeInsets.symmetric(horizontal: BatshSpacing.marginMobile),
+      padding: const EdgeInsets.symmetric(
+        horizontal: BatshSpacing.marginMobile,
+      ),
       child: BatshButton(
         label: S.signOutButton,
         style: BatshButtonStyle.ghost,
@@ -886,8 +888,9 @@ class _BioSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding:
-          const EdgeInsets.symmetric(horizontal: BatshSpacing.marginMobile),
+      padding: const EdgeInsets.symmetric(
+        horizontal: BatshSpacing.marginMobile,
+      ),
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.all(BatshSpacing.gutter),
@@ -898,11 +901,13 @@ class _BioSection extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(S.aboutProfessional,
-                style: BatshTypography.labelMd.copyWith(
-                  color: BatshColors.onSurfaceVariant,
-                  fontWeight: FontWeight.w700,
-                )),
+            Text(
+              S.aboutProfessional,
+              style: BatshTypography.labelMd.copyWith(
+                color: BatshColors.onSurfaceVariant,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
             const SizedBox(height: BatshSpacing.sm),
             Text(bio, style: BatshTypography.bodyLg),
           ],
@@ -945,10 +950,14 @@ class _ServicesSection extends StatelessWidget {
       children: [
         Padding(
           padding: const EdgeInsets.symmetric(
-              horizontal: BatshSpacing.marginMobile),
-          child: Text(S.specialtiesLabel,
-              style: BatshTypography.titleLg
-                  .copyWith(color: BatshColors.onSurface)),
+            horizontal: BatshSpacing.marginMobile,
+          ),
+          child: Text(
+            S.specialtiesLabel,
+            style: BatshTypography.titleLg.copyWith(
+              color: BatshColors.onSurface,
+            ),
+          ),
         ),
         const SizedBox(height: BatshSpacing.sm),
         SizedBox(
@@ -956,7 +965,8 @@ class _ServicesSection extends StatelessWidget {
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(
-                horizontal: BatshSpacing.marginMobile),
+              horizontal: BatshSpacing.marginMobile,
+            ),
             physics: const BouncingScrollPhysics(),
             itemCount: specialtyKeys.length,
             separatorBuilder: (_, _) => const SizedBox(width: BatshSpacing.sm),
@@ -985,7 +995,9 @@ class _ServiceTile extends StatelessWidget {
     return Container(
       width: 84,
       padding: const EdgeInsets.symmetric(
-          horizontal: BatshSpacing.xs, vertical: BatshSpacing.md),
+        horizontal: BatshSpacing.xs,
+        vertical: BatshSpacing.md,
+      ),
       decoration: BoxDecoration(
         color: BatshColors.surfaceContainerLowest,
         borderRadius: BatshRadius.brLg,
@@ -1024,14 +1036,18 @@ class _ChipsSection extends StatelessWidget {
   Widget build(BuildContext context) {
     if (labels.isEmpty) return const SizedBox.shrink();
     return Padding(
-      padding:
-          const EdgeInsets.symmetric(horizontal: BatshSpacing.marginMobile),
+      padding: const EdgeInsets.symmetric(
+        horizontal: BatshSpacing.marginMobile,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title,
-              style: BatshTypography.titleLg
-                  .copyWith(color: BatshColors.onSurface)),
+          Text(
+            title,
+            style: BatshTypography.titleLg.copyWith(
+              color: BatshColors.onSurface,
+            ),
+          ),
           const SizedBox(height: BatshSpacing.sm),
           Wrap(
             spacing: BatshSpacing.sm,
@@ -1040,18 +1056,24 @@ class _ChipsSection extends StatelessWidget {
               for (final label in labels)
                 Container(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: BatshSpacing.gutter,
-                      vertical: BatshSpacing.sm),
+                    horizontal: BatshSpacing.gutter,
+                    vertical: BatshSpacing.sm,
+                  ),
                   decoration: BoxDecoration(
                     color: BatshColors.surfaceContainer,
                     borderRadius: BatshRadius.brFull,
-                    border:
-                        Border.all(color: BatshColors.outlineVariant, width: 1),
+                    border: Border.all(
+                      color: BatshColors.outlineVariant,
+                      width: 1,
+                    ),
                   ),
-                  child: Text(label,
-                      style: BatshTypography.labelMd.copyWith(
-                          color: BatshColors.onSurface,
-                          fontWeight: FontWeight.w600)),
+                  child: Text(
+                    label,
+                    style: BatshTypography.labelMd.copyWith(
+                      color: BatshColors.onSurface,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ),
             ],
           ),
@@ -1081,17 +1103,24 @@ class _PortfolioSection extends StatelessWidget {
   Widget build(BuildContext context) {
     if (projects.isEmpty && failed) {
       return Padding(
-        padding:
-            const EdgeInsets.symmetric(horizontal: BatshSpacing.marginMobile),
+        padding: const EdgeInsets.symmetric(
+          horizontal: BatshSpacing.marginMobile,
+        ),
         child: Row(
           children: [
-            const Icon(Icons.cloud_off_outlined,
-                size: BatshIconSize.md, color: BatshColors.onSurfaceVariant),
+            const Icon(
+              Icons.cloud_off_outlined,
+              size: BatshIconSize.md,
+              color: BatshColors.onSurfaceVariant,
+            ),
             const SizedBox(width: BatshSpacing.sm),
             Expanded(
-              child: Text(S.portfolioLoadFailed,
-                  style: BatshTypography.bodySm
-                      .copyWith(color: BatshColors.onSurfaceVariant)),
+              child: Text(
+                S.portfolioLoadFailed,
+                style: BatshTypography.bodySm.copyWith(
+                  color: BatshColors.onSurfaceVariant,
+                ),
+              ),
             ),
             if (onRetry != null)
               TextButton(onPressed: onRetry, child: Text(S.tryAgain)),
@@ -1106,18 +1135,23 @@ class _PortfolioSection extends StatelessWidget {
       children: [
         Padding(
           padding: const EdgeInsets.symmetric(
-              horizontal: BatshSpacing.marginMobile),
+            horizontal: BatshSpacing.marginMobile,
+          ),
           child: Row(
             children: [
-              Text(S.portfolioGalleryTitle,
-                  style: BatshTypography.titleLg
-                      .copyWith(color: BatshColors.onSurface)),
+              Text(
+                S.portfolioGalleryTitle,
+                style: BatshTypography.titleLg.copyWith(
+                  color: BatshColors.onSurface,
+                ),
+              ),
               const Spacer(),
               TextButton(
                 onPressed: () => isOwner
                     ? context.go(Routes.contractorPortfolio)
                     : context.push(
-                        Routes.homeownerContractorPortfolioPath(contractor.id)),
+                        Routes.homeownerContractorPortfolioPath(contractor.id),
+                      ),
                 child: Text(S.viewAll),
               ),
             ],
@@ -1129,7 +1163,8 @@ class _PortfolioSection extends StatelessWidget {
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(
-                horizontal: BatshSpacing.marginMobile),
+              horizontal: BatshSpacing.marginMobile,
+            ),
             itemCount: projects.length,
             separatorBuilder: (_, _) =>
                 const SizedBox(width: BatshSpacing.gutter),
@@ -1139,8 +1174,9 @@ class _PortfolioSection extends StatelessWidget {
                 project: p,
                 onTap: () => isOwner
                     ? context.push(Routes.contractorPortfolioEditPath(p.id))
-                    : context.push(Routes.homeownerProjectDetailPath(
-                        contractor.id, p.id)),
+                    : context.push(
+                        Routes.homeownerProjectDetailPath(contractor.id, p.id),
+                      ),
               );
             },
           ),
@@ -1185,9 +1221,12 @@ class _PortfolioTile extends StatelessWidget {
                     placeholder: (_, _) =>
                         const ColoredBox(color: BatshColors.surfaceContainer),
                     errorWidget: (_, _, _) => Container(
-                        color: BatshColors.surfaceContainer,
-                        child: const Icon(Icons.image_outlined,
-                            color: BatshColors.onSurfaceVariant)),
+                      color: BatshColors.surfaceContainer,
+                      child: const Icon(
+                        Icons.image_outlined,
+                        color: BatshColors.onSurfaceVariant,
+                      ),
+                    ),
                   ),
                 ),
                 Padding(
@@ -1196,18 +1235,24 @@ class _PortfolioTile extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(project.title,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: BatshTypography.labelMd
-                              .copyWith(fontWeight: FontWeight.w700)),
+                      Text(
+                        project.title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: BatshTypography.labelMd.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
                       if (project.category != null) ...[
                         const SizedBox(height: 2),
-                        Text(project.category!,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: BatshTypography.labelSm.copyWith(
-                                color: BatshColors.onSurfaceVariant)),
+                        Text(
+                          project.category!,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: BatshTypography.labelSm.copyWith(
+                            color: BatshColors.onSurfaceVariant,
+                          ),
+                        ),
                       ],
                     ],
                   ),

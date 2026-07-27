@@ -10,6 +10,10 @@ import '../theme/batsh_typography.dart';
 /// What a badge is saying about the thing it sits on.
 enum BatshBadgeTone {
   /// Plain metadata. A category, a count, a type. No judgement.
+  ///
+  /// Also the right tone for a state that is simply over — cancelled,
+  /// archived, withdrawn. Those are terminal but not wrong, and colouring a
+  /// whole list of them red makes routine history look like a wall of errors.
   neutral,
 
   /// Something to do with Shattab itself: Pro, featured, verified.
@@ -21,7 +25,8 @@ enum BatshBadgeTone {
   /// A state worth noticing but not acting on. Pending, expiring, a rating.
   warning,
 
-  /// A bad or terminal state. Cancelled, declined, rejected, blocked.
+  /// A decision that went against the user. Declined, rejected, blocked.
+  /// Not merely "finished" — see [neutral].
   danger,
 }
 
@@ -36,19 +41,39 @@ enum BatshBadgeEmphasis {
   /// neither of them is emphasised any more.
   solid,
 
-  /// Border only, transparent background. For badges sitting on photography
-  /// or any surface whose colour is not known at build time.
+  /// Border only, transparent background. For badges on a *known* surface that
+  /// already carries colour — inside a tinted card, over a filled header —
+  /// where a second fill would muddy it.
+  ///
+  /// Not for photography: transparent means the text takes whatever the photo
+  /// puts behind it, and a dark photo swallows it. Use [onImage] there.
   outline,
+
+  /// Dark scrim, white text. The only variant safe over an arbitrary photo.
+  ///
+  /// The scrim is heavy enough that white still clears 4.5:1 against a
+  /// blown-out white sky, which is the case that defeats a hand-rolled
+  /// `Colors.white24` pill: that one only works while a gradient happens to sit
+  /// underneath it, and silently fails the moment the photo changes.
+  onImage,
 }
 
 /// A small, non-interactive status label.
 ///
-/// This replaces thirteen private classes — `_Badge`, `_Pill`, `_MiniChip`,
-/// `_StatChip`, `_CountChip`, `_CategoryChip`, `_RatingPill`, `_RatingBadge`,
-/// `_ProActivePill`, `_CancelledChip`, `_StatusBadge`, `_VerifiedBadge`,
-/// `_ProviderKindBadge` — each of which drew the same rounded label with its
-/// own padding, its own radius, and its own idea of what "open" should look
-/// like.
+/// This replaces ten private classes — `_Badge`, `_Pill`, `_MiniChip`,
+/// `_StatChip`, `_CountChip`, `_RatingBadge`, `_CancelledChip`, `_StatusBadge`,
+/// `_VerifiedBadge`, `_ProviderKindBadge` — each of which drew the same rounded
+/// label with its own padding, its own radius, and its own idea of what "open"
+/// should look like.
+///
+/// Three lookalikes were deliberately left alone, because sharing a silhouette
+/// is not the same as sharing a job:
+///
+/// - `_CategoryChip` (discover) and `_RatingPill` (showcase) both take an
+///   `onTap`. They are controls, and folding them in here would make them
+///   announce as inert to a screen reader.
+/// - `_ProActivePill` is a full-width banner with a title-sized line and its
+///   own icon column. Only its name suggests a badge.
 ///
 /// This is not [BatshChip]. A chip is a control: the user taps it, it has a
 /// selected state, it changes what is on screen. A badge is a fact about
@@ -95,57 +120,64 @@ class BatshBadge extends StatelessWidget {
   /// fails.
   @visibleForTesting
   (Color, Color, Color) get debugPalette => switch ((tone, emphasis)) {
-        (BatshBadgeTone.neutral, BatshBadgeEmphasis.solid) => (
-            BatshColors.inverseOnSurface,
-            BatshColors.inverseSurface,
-            BatshColors.inverseSurface,
-          ),
-        (BatshBadgeTone.neutral, _) => (
-            BatshColors.onSurfaceVariant,
-            BatshColors.surfaceContainerHigh,
-            BatshColors.outlineVariant,
-          ),
-        (BatshBadgeTone.brand, BatshBadgeEmphasis.solid) => (
-            BatshColors.onPrimary,
-            BatshColors.primary,
-            BatshColors.primary,
-          ),
-        (BatshBadgeTone.brand, _) => (
-            BatshColors.onPrimaryContainer,
-            BatshColors.primaryContainer,
-            BatshColors.primary,
-          ),
-        (BatshBadgeTone.success, BatshBadgeEmphasis.solid) => (
-            BatshColors.onSuccess,
-            BatshColors.success,
-            BatshColors.success,
-          ),
-        (BatshBadgeTone.success, _) => (
-            BatshColors.onSecondaryContainer,
-            BatshColors.successContainer,
-            BatshColors.success,
-          ),
-        (BatshBadgeTone.warning, BatshBadgeEmphasis.solid) => (
-            BatshColors.onWarning,
-            BatshColors.warning,
-            BatshColors.warning,
-          ),
-        (BatshBadgeTone.warning, _) => (
-            BatshColors.onTertiaryContainer,
-            BatshColors.warningContainer,
-            BatshColors.warning,
-          ),
-        (BatshBadgeTone.danger, BatshBadgeEmphasis.solid) => (
-            BatshColors.onError,
-            BatshColors.error,
-            BatshColors.error,
-          ),
-        (BatshBadgeTone.danger, _) => (
-            BatshColors.onErrorContainer,
-            BatshColors.errorContainer,
-            BatshColors.error,
-          ),
-      };
+    // Deliberately ignores tone. Over a photo the only job is legibility,
+    // and a tinted scrim would tint the photograph rather than the badge.
+    (_, BatshBadgeEmphasis.onImage) => (
+      Colors.white,
+      Colors.black.withValues(alpha: 0.6),
+      Colors.transparent,
+    ),
+    (BatshBadgeTone.neutral, BatshBadgeEmphasis.solid) => (
+      BatshColors.inverseOnSurface,
+      BatshColors.inverseSurface,
+      BatshColors.inverseSurface,
+    ),
+    (BatshBadgeTone.neutral, _) => (
+      BatshColors.onSurfaceVariant,
+      BatshColors.surfaceContainerHigh,
+      BatshColors.outlineVariant,
+    ),
+    (BatshBadgeTone.brand, BatshBadgeEmphasis.solid) => (
+      BatshColors.onPrimary,
+      BatshColors.primary,
+      BatshColors.primary,
+    ),
+    (BatshBadgeTone.brand, _) => (
+      BatshColors.onPrimaryContainer,
+      BatshColors.primaryContainer,
+      BatshColors.primary,
+    ),
+    (BatshBadgeTone.success, BatshBadgeEmphasis.solid) => (
+      BatshColors.onSuccess,
+      BatshColors.success,
+      BatshColors.success,
+    ),
+    (BatshBadgeTone.success, _) => (
+      BatshColors.onSecondaryContainer,
+      BatshColors.successContainer,
+      BatshColors.success,
+    ),
+    (BatshBadgeTone.warning, BatshBadgeEmphasis.solid) => (
+      BatshColors.onWarning,
+      BatshColors.warning,
+      BatshColors.warning,
+    ),
+    (BatshBadgeTone.warning, _) => (
+      BatshColors.onTertiaryContainer,
+      BatshColors.warningContainer,
+      BatshColors.warning,
+    ),
+    (BatshBadgeTone.danger, BatshBadgeEmphasis.solid) => (
+      BatshColors.onError,
+      BatshColors.error,
+      BatshColors.error,
+    ),
+    (BatshBadgeTone.danger, _) => (
+      BatshColors.onErrorContainer,
+      BatshColors.errorContainer,
+      BatshColors.error,
+    ),
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -164,8 +196,7 @@ class BatshBadge extends StatelessWidget {
           color: outlined ? Colors.transparent : background,
           borderRadius: BatshRadius.brFull,
           border: Border.all(
-            color:
-                outlined ? borderColor : borderColor.withValues(alpha: 0.25),
+            color: outlined ? borderColor : borderColor.withValues(alpha: 0.25),
             width: BatshBorderWidth.hairline,
           ),
         ),
@@ -184,10 +215,7 @@ class BatshBadge extends StatelessWidget {
               label,
               style:
                   (compact ? BatshTypography.labelSm : BatshTypography.labelMd)
-                      .copyWith(
-                color: foreground,
-                fontWeight: FontWeight.w600,
-              ),
+                      .copyWith(color: foreground, fontWeight: FontWeight.w600),
             ),
           ],
         ),

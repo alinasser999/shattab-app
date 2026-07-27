@@ -12,21 +12,22 @@ import '../../../../../core/utils/image_url.dart';
 import '../../../../onboarding/domain/onboarding_models.dart';
 import '../../../domain/brief.dart';
 import '../../../../../core/theme/batsh_icon_size.dart';
+import '../../../../../core/widgets/batsh_badge.dart';
 
 class JobCardData {
   JobCardData.fromBrief(Brief brief)
-      : id = brief.id,
-        title = brief.workDescription,
-        apartmentLabel =
-            OnboardingCatalog.apartmentLabels[brief.apartmentType] ??
-                brief.apartmentType.name,
-        location = brief.district != null
-            ? '${brief.city} · ${brief.district}'
-            : brief.city,
-        photoCount = brief.photoUrls.length,
-        createdAt = brief.createdAt,
-        coverPhotoUrl = brief.photoUrls.isNotEmpty ? brief.photoUrls.first : null,
-        specialties = brief.targetSpecialties;
+    : id = brief.id,
+      title = brief.workDescription,
+      apartmentLabel =
+          OnboardingCatalog.apartmentLabels[brief.apartmentType] ??
+          brief.apartmentType.name,
+      location = brief.district != null
+          ? '${brief.city} · ${brief.district}'
+          : brief.city,
+      photoCount = brief.photoUrls.length,
+      createdAt = brief.createdAt,
+      coverPhotoUrl = brief.photoUrls.isNotEmpty ? brief.photoUrls.first : null,
+      specialties = brief.targetSpecialties;
 
   final String id;
   final String title;
@@ -193,17 +194,17 @@ class _Hero extends StatelessWidget {
             child: Row(
               children: [
                 if (isNew)
-                  const _Badge(
-                    resolveNew: true,
-                    bgColor: BatshColors.secondary,
-                    textColor: Colors.white,
+                  BatshBadge(
+                    label: S.newBadge,
+                    tone: BatshBadgeTone.success,
+                    compact: true,
                   ),
                 if (isNew && isUrgent) const SizedBox(width: BatshSpacing.xs),
                 if (isUrgent)
-                  const _Badge(
-                    resolveUrgent: true,
-                    bgColor: BatshColors.tertiary,
-                    textColor: Colors.white,
+                  BatshBadge(
+                    label: S.urgentBadge,
+                    tone: BatshBadgeTone.warning,
+                    compact: true,
                   ),
               ],
             ),
@@ -225,7 +226,9 @@ class _Hero extends StatelessWidget {
               start: BatshSpacing.sm,
               child: Container(
                 padding: const EdgeInsets.symmetric(
-                    horizontal: BatshSpacing.sm, vertical: 5),
+                  horizontal: BatshSpacing.sm,
+                  vertical: 5,
+                ),
                 decoration: BoxDecoration(
                   color: BatshColors.primary,
                   borderRadius: BatshRadius.brFull,
@@ -307,39 +310,6 @@ class _BookmarkButton extends StatelessWidget {
   }
 }
 
-class _Badge extends StatelessWidget {
-  const _Badge({
-    required this.bgColor,
-    required this.textColor,
-    this.resolveNew = false,
-    this.resolveUrgent = false,
-  });
-
-  final Color bgColor;
-  final Color textColor;
-  final bool resolveNew;
-  final bool resolveUrgent;
-
-  @override
-  Widget build(BuildContext context) {
-    final text = resolveNew ? S.newBadge : (resolveUrgent ? S.urgentBadge : '');
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BatshRadius.brFull,
-      ),
-      child: Text(
-        text,
-        style: BatshTypography.labelSm.copyWith(
-          color: textColor,
-          fontWeight: FontWeight.w700,
-        ),
-      ),
-    );
-  }
-}
-
 // ─── Meta row ────────────────────────────────────────────────────────────────
 
 class _MetaRow extends StatelessWidget {
@@ -351,8 +321,11 @@ class _MetaRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Icon(Icons.place_outlined,
-            size: BatshIconSize.sm, color: BatshColors.onSurfaceVariant),
+        Icon(
+          Icons.place_outlined,
+          size: BatshIconSize.sm,
+          color: BatshColors.onSurfaceVariant,
+        ),
         const SizedBox(width: BatshSpacing.xxs),
         Flexible(
           child: Text(
@@ -366,8 +339,10 @@ class _MetaRow extends StatelessWidget {
         ),
         const SizedBox(width: BatshSpacing.sm),
         Container(
-          padding:
-              const EdgeInsets.symmetric(horizontal: BatshSpacing.sm, vertical: 3),
+          padding: const EdgeInsets.symmetric(
+            horizontal: BatshSpacing.sm,
+            vertical: 3,
+          ),
           decoration: BoxDecoration(
             color: BatshColors.primaryFixed.withValues(alpha: 0.3),
             borderRadius: BatshRadius.brFull,
@@ -392,8 +367,11 @@ class _MetaRow extends StatelessWidget {
             ),
           ),
         ] else ...[
-          Icon(Icons.access_time,
-              size: BatshIconSize.sm, color: BatshColors.onSurfaceVariant),
+          Icon(
+            Icons.access_time,
+            size: BatshIconSize.sm,
+            color: BatshColors.onSurfaceVariant,
+          ),
           const SizedBox(width: BatshSpacing.xxs),
           Text(
             job.relativeTime,
@@ -472,8 +450,8 @@ class _CtaButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final fg = fgColor ??
-        (filled ? BatshColors.onPrimary : BatshColors.onSurface);
+    final fg =
+        fgColor ?? (filled ? BatshColors.onPrimary : BatshColors.onSurface);
     return Material(
       color: filled ? (bgColor ?? BatshColors.primary) : Colors.transparent,
       borderRadius: BatshRadius.brDefault,
@@ -489,7 +467,8 @@ class _CtaButton extends StatelessWidget {
                 ? null
                 : Border.all(
                     color: BatshColors.outline.withValues(alpha: 0.5),
-                    width: 1.5),
+                    width: 1.5,
+                  ),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,

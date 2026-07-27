@@ -22,6 +22,7 @@ import '../../quotes/presentation/widgets/quote_status_badge.dart';
 import '../domain/received_request.dart';
 import 'providers/inbox_providers.dart';
 import '../../../core/theme/batsh_icon_size.dart';
+import '../../../core/widgets/batsh_badge.dart';
 
 class InboxScreen extends ConsumerWidget {
   const InboxScreen({super.key});
@@ -35,8 +36,9 @@ class InboxScreen extends ConsumerWidget {
       body: async.when(
         loading: () => const _InboxSkeleton(),
         error: (e, _) => BatshError(
-            message: ErrorMapper.map(e),
-            onRetry: () => ref.invalidate(inboxRequestsProvider)),
+          message: ErrorMapper.map(e),
+          onRetry: () => ref.invalidate(inboxRequestsProvider),
+        ),
         data: (items) {
           if (items.isEmpty) {
             return BatshEmptyState(
@@ -62,9 +64,16 @@ class InboxScreen extends ConsumerWidget {
                 return reduced
                     ? card
                     : card
-                        .animate()
-                        .fadeIn(delay: (60 * i.clamp(0, 7)).ms, duration: 260.ms)
-                        .slideY(begin: 0.06, end: 0, curve: Curves.easeOutCubic);
+                          .animate()
+                          .fadeIn(
+                            delay: (60 * i.clamp(0, 7)).ms,
+                            duration: 260.ms,
+                          )
+                          .slideY(
+                            begin: 0.06,
+                            end: 0,
+                            curve: Curves.easeOutCubic,
+                          );
               },
             ),
           );
@@ -84,10 +93,7 @@ class _InboxSkeleton extends StatelessWidget {
         vertical: BatshSpacing.md,
       ),
       child: Column(
-        children: [
-          for (var i = 0; i < 4; i++)
-            _SkeletonCard(index: i),
-        ],
+        children: [for (var i = 0; i < 4; i++) _SkeletonCard(index: i)],
       ),
     );
   }
@@ -113,10 +119,9 @@ class _SkeletonCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: reduced
             ? items
-            : items.animate(interval: 60.ms).fadeIn(
-              duration: 280.ms,
-              curve: Curves.easeOut,
-            ),
+            : items
+                  .animate(interval: 60.ms)
+                  .fadeIn(duration: 280.ms, curve: Curves.easeOut),
       ),
     );
   }
@@ -130,7 +135,8 @@ class _RequestCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final brief = request.brief;
     final date = intl.DateFormat.yMMMd('ar').format(brief.createdAt);
-    final apt = OnboardingCatalog.apartmentLabels[brief.apartmentType] ??
+    final apt =
+        OnboardingCatalog.apartmentLabels[brief.apartmentType] ??
         brief.apartmentType.name;
     final place = '$apt - ${brief.city}';
     return BatshCard(
@@ -142,57 +148,50 @@ class _RequestCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
-                child: Text(brief.workDescription,
-                    style: BatshTypography.titleLg.copyWith(fontSize: 17),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis),
+                child: Text(
+                  brief.workDescription,
+                  style: BatshTypography.titleLg.copyWith(fontSize: 17),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
               const SizedBox(width: BatshSpacing.sm),
               // A cancelled request is dead — surface that instead of a quote
               // badge so the contractor doesn't quote into a closed job.
               brief.status == BriefStatus.cancelled
-                  ? const _CancelledChip()
+                  ? BatshBadge(label: S.statusCancelled, compact: true)
                   : QuoteStatusBadge(status: request.quoteStatus),
             ],
           ),
           const SizedBox(height: BatshSpacing.sm),
           Row(
             children: [
-              const Icon(Icons.place_outlined,
-                  size: BatshIconSize.sm, color: BatshColors.onSurfaceVariant),
+              const Icon(
+                Icons.place_outlined,
+                size: BatshIconSize.sm,
+                color: BatshColors.onSurfaceVariant,
+              ),
               const SizedBox(width: BatshSpacing.xs),
               Expanded(
-                child: Text(place,
-                    style: BatshTypography.labelMd
-                        .copyWith(color: BatshColors.onSurfaceVariant),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis),
+                child: Text(
+                  place,
+                  style: BatshTypography.labelMd.copyWith(
+                    color: BatshColors.onSurfaceVariant,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
-              Text(date,
-                  style: BatshTypography.labelSm
-                      .copyWith(color: BatshColors.onSurfaceVariant)),
+              Text(
+                date,
+                style: BatshTypography.labelSm.copyWith(
+                  color: BatshColors.onSurfaceVariant,
+                ),
+              ),
             ],
           ),
         ],
       ),
-    );
-  }
-}
-
-class _CancelledChip extends StatelessWidget {
-  const _CancelledChip();
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-          horizontal: BatshSpacing.sm, vertical: 2),
-      decoration: BoxDecoration(
-        color: BatshColors.surfaceContainer,
-        borderRadius: BatshRadius.brFull,
-      ),
-      child: Text(S.statusCancelled,
-          style: BatshTypography.labelSm
-              .copyWith(color: BatshColors.onSurfaceVariant)),
     );
   }
 }
