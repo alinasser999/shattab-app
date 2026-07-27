@@ -24,6 +24,7 @@ import '../../../onboarding/domain/onboarding_models.dart';
 import '../../../onboarding/presentation/providers/onboarding_provider.dart';
 import '../../domain/brief.dart';
 import '../providers/briefs_providers.dart';
+import '../../../../core/widgets/batsh_snack.dart';
 
 class CreatePostScreen extends ConsumerStatefulWidget {
   const CreatePostScreen({super.key, this.editing});
@@ -119,12 +120,8 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
             );
       }
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-            content: Text(widget.isEditing
-                ? S.changesSaved
-                : S.postCreatedSuccess)),
-      );
+      BatshSnack.success(
+        context, widget.isEditing ? S.changesSaved : S.postCreatedSuccess);
       if (widget.isEditing) {
         Navigator.of(context).maybePop();
       } else {

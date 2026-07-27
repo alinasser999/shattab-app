@@ -8,6 +8,7 @@ import '../theme/batsh_radius.dart';
 import '../theme/batsh_spacing.dart';
 import '../theme/batsh_typography.dart';
 import '../theme/batsh_icon_size.dart';
+import 'batsh_snack.dart';
 
 /// Big primary WhatsApp CTA. Opens whatsapp://send?phone=...
 class WhatsAppButton extends StatelessWidget {
@@ -29,8 +30,7 @@ class WhatsAppButton extends StatelessWidget {
       ok = false;
     }
     if (!ok && context.mounted) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(S.couldNotOpenApp)));
+      BatshSnack.error(context, S.couldNotOpenApp);
     }
   }
 
@@ -85,8 +85,7 @@ class CallButton extends StatelessWidget {
       ok = false;
     }
     if (!ok && context.mounted) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(S.couldNotOpenApp)));
+      BatshSnack.error(context, S.couldNotOpenApp);
     }
   }
 

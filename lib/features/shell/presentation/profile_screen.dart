@@ -34,6 +34,7 @@ import '../../discovery/presentation/widgets/contractor_showcase.dart';
 import '../../saved/presentation/providers/saved_providers.dart';
 import '../../verification/presentation/verification_screen.dart';
 import '../../../core/theme/batsh_icon_size.dart';
+import '../../../core/widgets/batsh_snack.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -1395,9 +1396,7 @@ class _HelpTile extends StatelessWidget {
       ok = false;
     }
     if (!ok && context.mounted) {
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(content: Text(S.couldNotOpenApp)));
+      BatshSnack.error(context, S.couldNotOpenApp);
     }
   }
 
@@ -1435,9 +1434,7 @@ class _LegalTile extends StatelessWidget {
       ok = false;
     }
     if (!ok && context.mounted) {
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(content: Text(S.couldNotOpenApp)));
+      BatshSnack.error(context, S.couldNotOpenApp);
     }
   }
 

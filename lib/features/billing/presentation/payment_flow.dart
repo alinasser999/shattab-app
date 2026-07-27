@@ -14,6 +14,7 @@ import '../../../core/widgets/photo_picker.dart';
 import '../data/payment_repository.dart';
 import '../pricing.dart';
 import '../../../core/theme/batsh_icon_size.dart';
+import '../../../core/widgets/batsh_snack.dart';
 
 /// Opens the payment-method chooser, then routes to the chosen flow.
 /// InstaPay is functional (manual verify); Apple Pay is pending a processor.
@@ -31,9 +32,7 @@ Future<void> showPaymentMethods(BuildContext context,
       MaterialPageRoute(builder: (_) => InstaPayScreen(annual: annual)),
     );
   } else if (method == 'applepay') {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(S.applePaySoon)));
+    BatshSnack.info(context, S.applePaySoon);
   }
 }
 
@@ -192,9 +191,7 @@ class _InstaPayScreenState extends ConsumerState<InstaPayScreen> {
 
   Future<void> _submit() async {
     if (_proof == null) {
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(content: Text(S.instapayProofRequired)));
+      BatshSnack.error(context, S.instapayProofRequired);
       return;
     }
     setState(() => _loading = true);
@@ -212,9 +209,7 @@ class _InstaPayScreenState extends ConsumerState<InstaPayScreen> {
       if (mounted) setState(() => _submitted = true);
     } catch (_) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-          ..hideCurrentSnackBar()
-          ..showSnackBar(SnackBar(content: Text(S.instapayError)));
+        BatshSnack.error(context, S.instapayError);
       }
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -259,10 +254,7 @@ class _InstaPayScreenState extends ConsumerState<InstaPayScreen> {
                   onPressed: () {
                     Clipboard.setData(const ClipboardData(
                         text: BatshPricing.instapayNumber));
-                    ScaffoldMessenger.of(context)
-                      ..hideCurrentSnackBar()
-                      ..showSnackBar(
-                          SnackBar(content: Text(S.copiedToast)));
+                    BatshSnack.info(context, S.copiedToast);
                   },
                   icon: const Icon(Icons.copy_rounded, size: BatshIconSize.md),
                   label: Text(S.copyAction),

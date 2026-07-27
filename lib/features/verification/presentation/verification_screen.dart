@@ -12,6 +12,7 @@ import '../../../core/widgets/batsh_button.dart';
 import '../../../core/widgets/photo_picker.dart';
 import '../data/verification_repository.dart';
 import '../../../core/theme/batsh_icon_size.dart';
+import '../../../core/widgets/batsh_snack.dart';
 
 /// Free "Verified" flow: contractor uploads ID + optional trade licence, we file
 /// a pending request, a founder reviews it and flips the badge. Mirrors the
@@ -37,9 +38,7 @@ class _VerificationScreenState extends ConsumerState<VerificationScreen> {
 
   Future<void> _submit() async {
     if (_docs.isEmpty) {
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(content: Text(S.verifyDocsRequired)));
+      BatshSnack.error(context, S.verifyDocsRequired);
       return;
     }
     setState(() => _loading = true);
@@ -52,9 +51,7 @@ class _VerificationScreenState extends ConsumerState<VerificationScreen> {
       if (mounted) setState(() => _submitted = true);
     } catch (_) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-          ..hideCurrentSnackBar()
-          ..showSnackBar(SnackBar(content: Text(S.verifyError)));
+        BatshSnack.error(context, S.verifyError);
       }
     } finally {
       if (mounted) setState(() => _loading = false);

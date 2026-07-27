@@ -7,6 +7,7 @@ import '../../../core/theme/batsh_spacing.dart';
 import '../../../core/theme/batsh_typography.dart';
 import '../../../core/widgets/batsh_button.dart';
 import '../../../core/theme/batsh_icon_size.dart';
+import '../../../core/widgets/batsh_snack.dart';
 
 /// Pro upgrade paywall. Presentational STUB: benefits + subscribe button.
 /// The button is inert until Paymob is wired (create-payment edge fn) -- it
@@ -93,9 +94,7 @@ class _PaywallSheet extends StatelessWidget {
               icon: Icons.workspace_premium_outlined,
               onPressed: () {
                 Navigator.of(context).pop();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(S.paymentComingSoon)),
-                );
+                BatshSnack.info(context, S.paymentComingSoon);
               },
             ),
           ],

@@ -16,6 +16,7 @@ import '../../../../core/widgets/batsh_chip.dart';
 import '../../../../core/widgets/batsh_scaffold.dart';
 import '../../domain/onboarding_models.dart';
 import '../providers/onboarding_provider.dart';
+import '../../../../core/widgets/batsh_snack.dart';
 
 class LocationScreen extends ConsumerStatefulWidget {
   const LocationScreen({super.key});
@@ -48,9 +49,7 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
       context.go(Routes.homeownerDiscover);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(ErrorMapper.map(e))),
-      );
+      BatshSnack.error(context, ErrorMapper.map(e));
     } finally {
       if (mounted) setState(() => _busy = false);
     }

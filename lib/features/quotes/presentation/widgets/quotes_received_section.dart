@@ -27,6 +27,7 @@ import '../providers/quotes_providers.dart';
 import '../quote_format.dart';
 import 'quote_status_badge.dart';
 import '../../../../core/theme/batsh_icon_size.dart';
+import '../../../../core/widgets/batsh_snack.dart';
 
 /// Homeowner-side section listing every quote received on a brief, with
 /// accept/decline actions and contact shortcuts once accepted.
@@ -229,9 +230,7 @@ class _QuoteCard extends ConsumerWidget {
       if (status == QuoteStatus.accepted) HapticFeedback.mediumImpact();
     } catch (_) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(S.unknownErrorRetry)),
-        );
+        BatshSnack.error(context, S.unknownErrorRetry);
       }
     }
   }

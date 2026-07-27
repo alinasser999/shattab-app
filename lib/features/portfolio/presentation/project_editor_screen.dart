@@ -21,6 +21,7 @@ import '../../../core/models/draft_photo.dart';
 import '../domain/portfolio_project.dart';
 import 'providers/my_portfolio_providers.dart';
 import 'providers/portfolio_providers.dart';
+import '../../../core/widgets/batsh_snack.dart';
 
 /// Create / edit one portfolio project. [projectId] null means a new project.
 class ProjectEditorScreen extends ConsumerStatefulWidget {
@@ -98,9 +99,7 @@ class _ProjectEditorScreenState extends ConsumerState<ProjectEditorScreen> {
             photos: _photos,
           );
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(S.projectSavedSuccess)),
-      );
+      BatshSnack.success(context, S.projectSavedSuccess);
       context.pop();
     } catch (e) {
       if (!mounted) return;

@@ -22,6 +22,7 @@ import 'quote_format.dart';
 import 'quote_sheet.dart';
 import 'widgets/quote_status_badge.dart';
 import '../../../core/theme/batsh_icon_size.dart';
+import '../../../core/widgets/batsh_snack.dart';
 
 /// Contractor's own quotes across every brief — the one place a quote sent on
 /// a public post stays trackable after the post leaves the opportunities feed.
@@ -109,20 +110,10 @@ class _QuoteOwnerMenu extends ConsumerWidget {
             status: QuoteStatus.withdrawn,
           );
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(
-          content: Text(S.quoteWithdrawn),
-          behavior: SnackBarBehavior.floating,
-        ));
+      BatshSnack.info(context, S.quoteWithdrawn);
     } catch (e) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(
-          content: Text(ErrorMapper.map(e)),
-          behavior: SnackBarBehavior.floating,
-        ));
+      BatshSnack.error(context, ErrorMapper.map(e));
     }
   }
 

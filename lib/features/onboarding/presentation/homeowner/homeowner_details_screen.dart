@@ -19,6 +19,7 @@ import '../../../../core/widgets/batsh_section_header.dart';
 import '../../domain/onboarding_models.dart';
 import '../providers/onboarding_provider.dart';
 import '../../../../core/theme/batsh_icon_size.dart';
+import '../../../../core/widgets/batsh_snack.dart';
 
 class HomeownerDetailsScreen extends ConsumerStatefulWidget {
   const HomeownerDetailsScreen({super.key});
@@ -77,9 +78,7 @@ class _HomeownerDetailsScreenState
       // below only shows the mapped Arabic message.
       debugPrint('homeowner onboarding submit failed: $e');
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(ErrorMapper.map(e))),
-      );
+      BatshSnack.error(context, ErrorMapper.map(e));
     } finally {
       if (mounted) setState(() => _busy = false);
     }

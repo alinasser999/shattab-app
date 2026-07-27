@@ -26,6 +26,7 @@ import '../providers/briefs_providers.dart';
 import '../widgets/completion_card.dart';
 import 'create_post_screen.dart';
 import '../../../../core/theme/batsh_icon_size.dart';
+import '../../../../core/widgets/batsh_snack.dart';
 
 /// Resolves the hired contractor so confirming completion can open the review
 /// sheet for them immediately. Falls back to confirming without the prompt if
@@ -187,9 +188,7 @@ class BriefDetailScreen extends ConsumerWidget {
                     if (cancelled && context.mounted) context.pop();
                   } catch (_) {
                     if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(S.unknownErrorRetry)),
-                      );
+                      BatshSnack.error(context, S.unknownErrorRetry);
                     }
                   }
                 },
@@ -294,25 +293,14 @@ class _StatusRow extends ConsumerWidget {
           .read(briefsControllerProvider.notifier)
           .deleteOrCancelBrief(brief.id);
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(
-          content: Text(outcome == 'deleted'
-              ? S.briefDeleted
-              : S.briefCancelledInstead),
-          behavior: SnackBarBehavior.floating,
-        ));
+      BatshSnack.success(
+        context, outcome == 'deleted' ? S.briefDeleted : S.briefCancelledInstead);
       // The row is gone when it was truly deleted; stay put when cancelled so
       // the homeowner can still see the quotes that survived.
       if (outcome == 'deleted') Navigator.of(context).maybePop();
     } catch (e) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(
-          content: Text(ErrorMapper.map(e)),
-          behavior: SnackBarBehavior.floating,
-        ));
+      BatshSnack.error(context, ErrorMapper.map(e));
     }
   }
 

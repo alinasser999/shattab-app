@@ -25,6 +25,7 @@ import '../domain/post.dart';
 import 'providers/explore_providers.dart';
 import 'widgets/post_type_icon.dart';
 import '../../../core/theme/batsh_icon_size.dart';
+import '../../../core/widgets/batsh_snack.dart';
 
 class PostDetailScreen extends ConsumerWidget {
   const PostDetailScreen({super.key, required this.postId});
@@ -113,18 +114,14 @@ class _PostDetailContentState extends ConsumerState<_PostDetailContent> {
       _commentCtrl.clear();
       _commentFocus.unfocus();
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(S.commentPosted)),
-        );
+        BatshSnack.success(context, S.commentPosted);
       }
     }).catchError((e) {
       if (mounted) {
         final msg = e.toString().contains('rate_limit')
             ? S.commentRateLimitError
             : S.unknownErrorRetry;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(msg)),
-        );
+        BatshSnack.error(context, msg);
       }
     }).whenComplete(() {
       if (mounted) setState(() => _sending = false);

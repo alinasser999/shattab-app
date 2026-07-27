@@ -14,6 +14,7 @@ import '../../../core/widgets/batsh_text_field.dart';
 import '../domain/quote.dart';
 import 'providers/quotes_providers.dart';
 import '../../../core/theme/batsh_icon_size.dart';
+import '../../../core/widgets/batsh_snack.dart';
 
 /// Opens the price-quote bottom sheet. Returns true if a quote was submitted.
 Future<bool> showQuoteSheet(
@@ -107,9 +108,7 @@ class _QuoteSheetState extends ConsumerState<_QuoteSheet> {
     } catch (_) {
       if (!mounted) return;
       setState(() => _submitting = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(S.unknownErrorRetry)),
-      );
+      BatshSnack.error(context, S.unknownErrorRetry);
     }
   }
 

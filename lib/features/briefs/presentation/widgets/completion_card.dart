@@ -13,6 +13,7 @@ import '../../../reviews/presentation/write_review_sheet.dart';
 import '../../domain/brief.dart';
 import '../providers/briefs_providers.dart';
 import '../../../../core/theme/batsh_icon_size.dart';
+import '../../../../core/widgets/batsh_snack.dart';
 
 /// Which side of the job is looking at the card.
 enum CompletionRole { homeowner, contractor }
@@ -57,21 +58,11 @@ class _CompletionCardState extends ConsumerState<CompletionCard> {
     try {
       await action();
       if (!mounted) return;
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(
-          content: Text(successMessage),
-          behavior: SnackBarBehavior.floating,
-        ));
+      BatshSnack.success(context, successMessage);
       onSuccess?.call();
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(
-          content: Text(ErrorMapper.map(e)),
-          behavior: SnackBarBehavior.floating,
-        ));
+      BatshSnack.error(context, ErrorMapper.map(e));
     } finally {
       if (mounted) setState(() => _busy = false);
     }

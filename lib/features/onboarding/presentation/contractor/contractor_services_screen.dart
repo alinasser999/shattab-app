@@ -17,6 +17,7 @@ import '../../../../core/widgets/batsh_scaffold.dart';
 import '../../../../core/widgets/batsh_section_header.dart';
 import '../../domain/onboarding_models.dart';
 import '../providers/onboarding_provider.dart';
+import '../../../../core/widgets/batsh_snack.dart';
 
 class ContractorServicesScreen extends ConsumerStatefulWidget {
   const ContractorServicesScreen({super.key});
@@ -62,9 +63,7 @@ class _ContractorServicesScreenState
       context.go(Routes.onboardingContractorExperience);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(ErrorMapper.map(e))),
-      );
+      BatshSnack.error(context, ErrorMapper.map(e));
     } finally {
       if (mounted) setState(() => _busy = false);
     }

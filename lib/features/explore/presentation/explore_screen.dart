@@ -16,6 +16,7 @@ import '../../auth/presentation/sign_in_sheet.dart';
 import '../../auth/presentation/providers/auth_provider.dart';
 import 'providers/explore_providers.dart';
 import 'widgets/post_card.dart';
+import '../../../core/widgets/batsh_snack.dart';
 
 class ExploreScreen extends ConsumerStatefulWidget {
   const ExploreScreen({super.key});
@@ -89,20 +90,10 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
     try {
       await ref.read(postControllerProvider.notifier).deletePost(postId);
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(
-          content: Text(S.postDeleted),
-          behavior: SnackBarBehavior.floating,
-        ));
+      BatshSnack.success(context, S.postDeleted);
     } catch (e) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(
-          content: Text(ErrorMapper.map(e)),
-          behavior: SnackBarBehavior.floating,
-        ));
+      BatshSnack.error(context, ErrorMapper.map(e));
     }
   }
 

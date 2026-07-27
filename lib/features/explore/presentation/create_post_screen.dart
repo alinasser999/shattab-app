@@ -20,6 +20,7 @@ import '../data/post_repository.dart';
 import '../domain/post.dart';
 import 'providers/explore_providers.dart';
 import '../../../core/theme/batsh_icon_size.dart';
+import '../../../core/widgets/batsh_snack.dart';
 
 class CreatePostScreen extends ConsumerStatefulWidget {
   const CreatePostScreen({super.key});
@@ -72,9 +73,7 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
   Future<void> _submit() async {
     final caption = _captionCtrl.text.trim();
     if (caption.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(S.captionRequired)),
-      );
+      BatshSnack.error(context, S.captionRequired);
       return;
     }
 
@@ -127,9 +126,7 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(S.unknownErrorRetry)),
-        );
+        BatshSnack.error(context, S.unknownErrorRetry);
       }
     } finally {
       if (mounted) setState(() => _uploading = false);

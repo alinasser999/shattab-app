@@ -22,6 +22,7 @@ import '../../../core/utils/error_mapper.dart';
 import '../domain/portfolio_project.dart';
 import 'providers/my_portfolio_providers.dart';
 import '../../../core/theme/batsh_icon_size.dart';
+import '../../../core/widgets/batsh_snack.dart';
 
 /// Contractor-facing portfolio manager (Tab 3). Grid of own projects;
 /// tap to edit, long-press to delete, FAB to add.
@@ -52,15 +53,11 @@ class MyPortfolioScreen extends ConsumerWidget {
     try {
       await ref.read(portfolioControllerProvider.notifier).remove(p.id);
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(S.projectDeletedSuccess)),
-        );
+        BatshSnack.success(context, S.projectDeletedSuccess);
       }
     } catch (_) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(S.unknownErrorRetry)),
-        );
+        BatshSnack.error(context, S.unknownErrorRetry);
       }
     }
   }
