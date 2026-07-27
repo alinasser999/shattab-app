@@ -27,6 +27,7 @@ import 'providers/explore_providers.dart';
 import 'widgets/post_type_icon.dart';
 import '../../../core/theme/batsh_icon_size.dart';
 import '../../../core/widgets/batsh_snack.dart';
+import '../../../core/widgets/batsh_pressable.dart';
 
 class PostDetailScreen extends ConsumerWidget {
   const PostDetailScreen({super.key, required this.postId});
@@ -270,8 +271,9 @@ class _PostDetailContentState extends ConsumerState<_PostDetailContent> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        GestureDetector(
+        BatshPressable(
           onTap: () => _navigateToProfile(post),
+          semanticLabel: post.authorName ?? '',
           child: AvatarWithInitials(
             imageUrl: post.authorAvatarUrl,
             name: post.authorName ?? '',
@@ -286,7 +288,7 @@ class _PostDetailContentState extends ConsumerState<_PostDetailContent> {
               Row(
                 children: [
                   Flexible(
-                    child: GestureDetector(
+                    child: BatshPressable(
                       onTap: () => _navigateToProfile(post),
                       child: Text(
                         post.authorName ?? '',

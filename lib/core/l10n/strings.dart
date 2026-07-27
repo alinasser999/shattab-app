@@ -1077,6 +1077,10 @@ class S {
   static String get singleProject => _t('مشروع', 'Project');
   static String get year => _t('سنة', 'Year');
   static String get photos => _t('صور', 'Photos');
+
+  /// Screen-reader label for the per-photo remove control. "Delete" alone
+  /// would not say what is being deleted when read in a grid of thumbnails.
+  static String get removePhoto => _t('احذف الصورة', 'Remove photo');
   static String get saveTooltip => _t('حفظ المحترف', 'Save Professional');
   static String get unsaveTooltip =>
       _t('إزالة من المحفوظات', 'Remove from saved');

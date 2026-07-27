@@ -21,6 +21,7 @@ import '../../../../core/widgets/avatar_with_initials.dart';
 import '../../domain/post.dart';
 import 'post_type_icon.dart';
 import '../../../../core/theme/batsh_icon_size.dart';
+import '../../../../core/widgets/batsh_pressable.dart';
 
 class PostCard extends StatelessWidget {
   const PostCard({
@@ -75,38 +76,41 @@ class PostCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BatshCard(
-      padding: EdgeInsets.zero,
-      onTap: onTap,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildHeader(context),
-          if (post.caption.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                BatshSpacing.gutter, BatshSpacing.sm,
-                BatshSpacing.gutter, BatshSpacing.xs,
-              ),
-              child: Text(post.caption,
-                style: BatshTypography.bodyMd,
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          if (post.mediaUrls.isNotEmpty) _buildMedia(context),
-          _buildActions(),
-        ],
-      ),
-    ).animate(
-      delay: index != null ? BatshMotion.stagger(index!) : Duration.zero,
-    ).fadeIn(
-      duration: BatshMotion.normal,
-      curve: BatshMotion.easeOut,
-    ).slideY(
-      begin: 0.1,
-      duration: BatshMotion.normal,
-      curve: BatshMotion.easeOut,
-    );
+          padding: EdgeInsets.zero,
+          onTap: onTap,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildHeader(context),
+              if (post.caption.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    BatshSpacing.gutter,
+                    BatshSpacing.sm,
+                    BatshSpacing.gutter,
+                    BatshSpacing.xs,
+                  ),
+                  child: Text(
+                    post.caption,
+                    style: BatshTypography.bodyMd,
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              if (post.mediaUrls.isNotEmpty) _buildMedia(context),
+              _buildActions(),
+            ],
+          ),
+        )
+        .animate(
+          delay: index != null ? BatshMotion.stagger(index!) : Duration.zero,
+        )
+        .fadeIn(duration: BatshMotion.normal, curve: BatshMotion.easeOut)
+        .slideY(
+          begin: 0.1,
+          duration: BatshMotion.normal,
+          curve: BatshMotion.easeOut,
+        );
   }
 
   Widget _buildHeader(BuildContext context) {
@@ -114,8 +118,9 @@ class PostCard extends StatelessWidget {
       padding: const EdgeInsets.all(BatshSpacing.gutter),
       child: Row(
         children: [
-          GestureDetector(
+          BatshPressable(
             onTap: onProfileTap,
+            semanticLabel: post.authorName ?? '',
             child: AvatarWithInitials(
               imageUrl: post.authorAvatarUrl,
               name: post.authorName ?? '',
@@ -130,7 +135,7 @@ class PostCard extends StatelessWidget {
                 Row(
                   children: [
                     Flexible(
-                      child: GestureDetector(
+                      child: BatshPressable(
                         onTap: onProfileTap,
                         child: Text(
                           post.authorName ?? '',
@@ -152,13 +157,15 @@ class PostCard extends StatelessWidget {
                   children: [
                     PostTypeIcon(postType: post.postType),
                     const SizedBox(width: 4),
-                    Text(_postTypeLabel(post.postType),
+                    Text(
+                      _postTypeLabel(post.postType),
                       style: BatshTypography.bodySm,
                     ),
                     const SizedBox(width: BatshSpacing.xs),
                     Text('•', style: BatshTypography.bodySm),
                     const SizedBox(width: BatshSpacing.xs),
-                    Text(_timeAgo(post.createdAt),
+                    Text(
+                      _timeAgo(post.createdAt),
                       style: BatshTypography.bodySm,
                     ),
                   ],
@@ -187,14 +194,15 @@ class PostCard extends StatelessWidget {
           height: 260,
           fit: BoxFit.cover,
           memCacheWidth: 800, // decode at display size, not source resolution
-          placeholder: (_, __) => Container(
-            height: 260,
-            color: BatshColors.surfaceVariant,
-          ),
+          placeholder: (_, __) =>
+              Container(height: 260, color: BatshColors.surfaceVariant),
           errorWidget: (_, __, ___) => Container(
             height: 260,
             color: BatshColors.surfaceVariant,
-            child: Icon(Icons.broken_image, color: BatshColors.onSurfaceVariant),
+            child: Icon(
+              Icons.broken_image,
+              color: BatshColors.onSurfaceVariant,
+            ),
           ),
         ),
       );
@@ -211,12 +219,14 @@ class PostCard extends StatelessWidget {
             width: double.infinity,
             fit: BoxFit.cover,
             memCacheWidth: 800,
-            placeholder: (_, __) => Container(
-              color: BatshColors.surfaceVariant,
-            ),
+            placeholder: (_, __) =>
+                Container(color: BatshColors.surfaceVariant),
             errorWidget: (_, __, ___) => Container(
               color: BatshColors.surfaceVariant,
-              child: Icon(Icons.broken_image, color: BatshColors.onSurfaceVariant),
+              child: Icon(
+                Icons.broken_image,
+                color: BatshColors.onSurfaceVariant,
+              ),
             ),
           ),
         ),
@@ -241,7 +251,9 @@ class PostCard extends StatelessWidget {
           const SizedBox(width: BatshSpacing.sm),
           _ActionButton(
             icon: Icons.chat_bubble_outline,
-            label: post.commentCount > 0 ? '${post.commentCount}' : S.commentLabel,
+            label: post.commentCount > 0
+                ? '${post.commentCount}'
+                : S.commentLabel,
             onTap: onCommentTap,
           ),
           const Spacer(),
@@ -263,10 +275,14 @@ class PostCard extends StatelessWidget {
 
   String _postTypeLabel(PostType type) {
     switch (type) {
-      case PostType.projectShowcase: return S.postTypeProjectShowcase;
-      case PostType.tip: return S.postTypeTip;
-      case PostType.milestone: return S.postTypeMilestone;
-      case PostType.renovationUpdate: return S.postTypeRenovationUpdate;
+      case PostType.projectShowcase:
+        return S.postTypeProjectShowcase;
+      case PostType.tip:
+        return S.postTypeTip;
+      case PostType.milestone:
+        return S.postTypeMilestone;
+      case PostType.renovationUpdate:
+        return S.postTypeRenovationUpdate;
     }
   }
 }
@@ -285,12 +301,14 @@ class _ModerationMenu extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return PopupMenuButton<String>(
       tooltip: S.reportTitle,
-      icon: const Icon(Icons.more_horiz_rounded,
-          size: BatshIconSize.md, color: BatshColors.onSurfaceVariant),
+      icon: const Icon(
+        Icons.more_horiz_rounded,
+        size: BatshIconSize.md,
+        color: BatshColors.onSurfaceVariant,
+      ),
       onSelected: (v) async {
         if (v == 'report') {
-          showReportSheet(context,
-              target: ReportTarget.post, targetId: postId);
+          showReportSheet(context, target: ReportTarget.post, targetId: postId);
         } else if (v == 'block') {
           final blocked = await confirmAndBlock(context, ref, authorId);
           if (blocked) ref.invalidate(exploreFeedProvider);
@@ -311,10 +329,16 @@ class _ModerationMenu extends ConsumerWidget {
           value: 'block',
           child: Row(
             children: [
-              const Icon(Icons.block, size: BatshIconSize.md, color: BatshColors.error),
+              const Icon(
+                Icons.block,
+                size: BatshIconSize.md,
+                color: BatshColors.error,
+              ),
               const SizedBox(width: BatshSpacing.sm),
-              Text(S.blockUser,
-                  style: const TextStyle(color: BatshColors.error)),
+              Text(
+                S.blockUser,
+                style: const TextStyle(color: BatshColors.error),
+              ),
             ],
           ),
         ),
@@ -335,8 +359,11 @@ class _OwnerMenu extends StatelessWidget {
   Widget build(BuildContext context) {
     return PopupMenuButton<String>(
       tooltip: S.editPost,
-      icon: const Icon(Icons.more_horiz_rounded,
-          size: BatshIconSize.md, color: BatshColors.onSurfaceVariant),
+      icon: const Icon(
+        Icons.more_horiz_rounded,
+        size: BatshIconSize.md,
+        color: BatshColors.onSurfaceVariant,
+      ),
       onSelected: (v) {
         if (v == 'edit') onEdit?.call();
         if (v == 'delete') onDelete?.call();
@@ -358,11 +385,16 @@ class _OwnerMenu extends StatelessWidget {
             value: 'delete',
             child: Row(
               children: [
-                const Icon(Icons.delete_outline,
-                    size: BatshIconSize.md, color: BatshColors.error),
+                const Icon(
+                  Icons.delete_outline,
+                  size: BatshIconSize.md,
+                  color: BatshColors.error,
+                ),
                 const SizedBox(width: BatshSpacing.sm),
-                Text(S.deletePost,
-                    style: const TextStyle(color: BatshColors.error)),
+                Text(
+                  S.deletePost,
+                  style: const TextStyle(color: BatshColors.error),
+                ),
               ],
             ),
           ),
@@ -372,12 +404,7 @@ class _OwnerMenu extends StatelessWidget {
 }
 
 class _ActionButton extends StatefulWidget {
-  const _ActionButton({
-    required this.icon,
-    this.label,
-    this.color,
-    this.onTap,
-  });
+  const _ActionButton({required this.icon, this.label, this.color, this.onTap});
 
   final IconData icon;
   final String? label;
@@ -419,7 +446,11 @@ class _ActionButtonState extends State<_ActionButton>
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(widget.icon, size: BatshIconSize.md, color: widget.color ?? BatshColors.onSurfaceVariant),
+                Icon(
+                  widget.icon,
+                  size: BatshIconSize.md,
+                  color: widget.color ?? BatshColors.onSurfaceVariant,
+                ),
                 if (widget.label != null) ...[
                   const SizedBox(width: 3),
                   Text(widget.label!, style: BatshTypography.labelSm),

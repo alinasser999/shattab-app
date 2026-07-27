@@ -96,13 +96,15 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
 
       // Role lives in the profiles table, not auth metadata.
       final role = ref.read(currentProfileProvider).value?.role.name;
-      await ref.read(postControllerProvider.notifier).createPost(
-        authorId: session.user.id,
-        authorRole: role ?? 'homeowner',
-        postType: (_selectedType ?? PostType.renovationUpdate).dbValue,
-        caption: caption,
-        mediaUrls: urls,
-      );
+      await ref
+          .read(postControllerProvider.notifier)
+          .createPost(
+            authorId: session.user.id,
+            authorRole: role ?? 'homeowner',
+            postType: (_selectedType ?? PostType.renovationUpdate).dbValue,
+            caption: caption,
+            mediaUrls: urls,
+          );
 
       if (mounted) {
         await showDialog<void>(
@@ -147,7 +149,10 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
               : _submit,
           child: _uploading
               ? const BatshShimmerBox(width: 40, height: 16)
-              : Text(S.postComment, style: TextStyle(color: BatshColors.primary)),
+              : Text(
+                  S.postComment,
+                  style: TextStyle(color: BatshColors.primary),
+                ),
         ),
       ],
       body: SingleChildScrollView(
@@ -163,11 +168,13 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
                 runSpacing: BatshSpacing.sm,
                 children: PostType.values
                     .where((t) => t != PostType.renovationUpdate)
-                    .map((t) => ChoiceChip(
-                          label: Text(_typeLabel(t)),
-                          selected: _selectedType == t,
-                          onSelected: (_) => setState(() => _selectedType = t),
-                        ))
+                    .map(
+                      (t) => ChoiceChip(
+                        label: Text(_typeLabel(t)),
+                        selected: _selectedType == t,
+                        onSelected: (_) => setState(() => _selectedType = t),
+                      ),
+                    )
                     .toList(),
               ),
               const SizedBox(height: BatshSpacing.gutter),
@@ -201,16 +208,31 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
                       Positioned(
                         top: 4,
                         right: 4,
-                        child: GestureDetector(
-                          onTap: () => _removeImage(i),
-                          child: Container(
-                            padding: const EdgeInsets.all(2),
-                            decoration: const BoxDecoration(
-                              color: BatshColors.error,
-                              shape: BoxShape.circle,
+                        // The visible dot stays small, but padding inside an
+                        // opaque hit test grows the tap target to ~40px. At the
+                        // drawn size alone it was near 20px — half the minimum,
+                        // for an action that destroys a photo.
+                        child: Semantics(
+                          button: true,
+                          label: S.removePhoto,
+                          child: GestureDetector(
+                            onTap: () => _removeImage(i),
+                            behavior: HitTestBehavior.opaque,
+                            child: Padding(
+                              padding: const EdgeInsets.all(BatshSpacing.sm),
+                              child: Container(
+                                padding: const EdgeInsets.all(2),
+                                decoration: const BoxDecoration(
+                                  color: BatshColors.error,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.close,
+                                  size: BatshIconSize.sm,
+                                  color: BatshColors.onError,
+                                ),
+                              ),
                             ),
-                            child: const Icon(Icons.close,
-                                size: BatshIconSize.sm, color: BatshColors.onError),
                           ),
                         ),
                       ),
@@ -233,10 +255,14 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
 
   String _typeLabel(PostType t) {
     switch (t) {
-      case PostType.projectShowcase: return S.postTypeProjectShowcase;
-      case PostType.tip: return S.postTypeTip;
-      case PostType.milestone: return S.postTypeMilestone;
-      case PostType.renovationUpdate: return S.postTypeRenovationUpdate;
+      case PostType.projectShowcase:
+        return S.postTypeProjectShowcase;
+      case PostType.tip:
+        return S.postTypeTip;
+      case PostType.milestone:
+        return S.postTypeMilestone;
+      case PostType.renovationUpdate:
+        return S.postTypeRenovationUpdate;
     }
   }
 }
