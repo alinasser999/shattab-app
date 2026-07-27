@@ -4,6 +4,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../theme/batsh_colors.dart';
 import '../theme/batsh_spacing.dart';
 import '../theme/batsh_typography.dart';
+import '../theme/batsh_icon_size.dart';
 
 class BatshEmptyState extends StatelessWidget {
   const BatshEmptyState({
@@ -32,7 +33,7 @@ class BatshEmptyState extends StatelessWidget {
           shape: BoxShape.circle,
         ),
         child: Icon(icon,
-            color: BatshColors.primary.withValues(alpha: 0.65), size: 34),
+            color: BatshColors.primary.withValues(alpha: 0.65), size: BatshIconSize.xl),
       ),
     );
 

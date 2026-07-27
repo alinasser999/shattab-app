@@ -26,6 +26,7 @@ import '../../domain/quote.dart';
 import '../providers/quotes_providers.dart';
 import '../quote_format.dart';
 import 'quote_status_badge.dart';
+import '../../../../core/theme/batsh_icon_size.dart';
 
 /// Homeowner-side section listing every quote received on a brief, with
 /// accept/decline actions and contact shortcuts once accepted.
@@ -277,7 +278,7 @@ class _QuoteCard extends ConsumerWidget {
             Row(
               children: [
                 const Icon(Icons.schedule,
-                    size: 16, color: BatshColors.onSurfaceVariant),
+                    size: BatshIconSize.sm, color: BatshColors.onSurfaceVariant),
                 const SizedBox(width: BatshSpacing.xs),
                 Text(quote.durationText!,
                     style: BatshTypography.labelMd
@@ -327,7 +328,7 @@ class _QuoteCard extends ConsumerWidget {
             child: TextButton.icon(
               onPressed: () => context.push(
                   Routes.homeownerContractorProfilePath(quote.contractorId)),
-              icon: const Icon(Icons.person_outline, size: 18),
+              icon: const Icon(Icons.person_outline, size: BatshIconSize.md),
               label: Text(S.viewContractorProfile),
             ),
           ),
@@ -357,7 +358,7 @@ class _Avatar extends StatelessWidget {
       child: hasUrl
           ? null
           : const Icon(Icons.handyman_outlined,
-              color: BatshColors.onSurfaceVariant, size: 22),
+              color: BatshColors.onSurfaceVariant, size: BatshIconSize.md),
     );
   }
 }
@@ -383,7 +384,7 @@ class _ReviewBlock extends ConsumerWidget {
           child: Row(
             children: [
               Icon(Icons.info_outline,
-                  size: 15, color: BatshColors.onSurfaceVariant),
+                  size: BatshIconSize.sm, color: BatshColors.onSurfaceVariant),
               const SizedBox(width: BatshSpacing.xs),
               Expanded(
                 child: Text(

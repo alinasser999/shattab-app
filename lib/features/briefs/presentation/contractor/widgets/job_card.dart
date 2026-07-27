@@ -11,6 +11,7 @@ import '../../../../../core/theme/batsh_typography.dart';
 import '../../../../../core/utils/image_url.dart';
 import '../../../../onboarding/domain/onboarding_models.dart';
 import '../../../domain/brief.dart';
+import '../../../../../core/theme/batsh_icon_size.dart';
 
 class JobCardData {
   JobCardData.fromBrief(Brief brief)
@@ -266,7 +267,7 @@ class _HeroPlaceholder extends StatelessWidget {
           : Center(
               child: Icon(
                 Icons.home_work_outlined,
-                size: 44,
+                size: BatshIconSize.xl,
                 color: BatshColors.primary.withValues(alpha: 0.35),
               ),
             ),
@@ -294,7 +295,7 @@ class _BookmarkButton extends StatelessWidget {
             child: Icon(
               isBookmarked ? Icons.bookmark : Icons.bookmark_border,
               key: ValueKey(isBookmarked),
-              size: 20,
+              size: BatshIconSize.md,
               color: isBookmarked
                   ? BatshColors.primary
                   : BatshColors.onSurfaceVariant,
@@ -351,7 +352,7 @@ class _MetaRow extends StatelessWidget {
     return Row(
       children: [
         Icon(Icons.place_outlined,
-            size: 16, color: BatshColors.onSurfaceVariant),
+            size: BatshIconSize.sm, color: BatshColors.onSurfaceVariant),
         const SizedBox(width: BatshSpacing.xxs),
         Flexible(
           child: Text(
@@ -381,7 +382,7 @@ class _MetaRow extends StatelessWidget {
         ),
         const Spacer(),
         if (clientRating != null) ...[
-          Icon(Icons.star, size: 15, color: BatshColors.tertiary),
+          Icon(Icons.star, size: BatshIconSize.sm, color: BatshColors.tertiary),
           const SizedBox(width: BatshSpacing.xxs),
           Text(
             clientRating!.toStringAsFixed(1),
@@ -392,7 +393,7 @@ class _MetaRow extends StatelessWidget {
           ),
         ] else ...[
           Icon(Icons.access_time,
-              size: 14, color: BatshColors.onSurfaceVariant),
+              size: BatshIconSize.sm, color: BatshColors.onSurfaceVariant),
           const SizedBox(width: BatshSpacing.xxs),
           Text(
             job.relativeTime,
@@ -494,7 +495,7 @@ class _CtaButton extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               if (icon != null) ...[
-                Icon(icon, size: 17, color: fg),
+                Icon(icon, size: BatshIconSize.sm, color: fg),
                 const SizedBox(width: BatshSpacing.xs),
               ],
               Text(

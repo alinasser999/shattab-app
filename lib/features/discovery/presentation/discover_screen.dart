@@ -28,6 +28,7 @@ import '../../onboarding/presentation/providers/onboarding_provider.dart';
 import '../../saved/presentation/providers/saved_providers.dart';
 import '../domain/contractor_listing.dart';
 import 'providers/discovery_providers.dart';
+import '../../../core/theme/batsh_icon_size.dart';
 
 class DiscoverScreen extends ConsumerStatefulWidget {
   const DiscoverScreen({super.key});
@@ -429,7 +430,7 @@ class _SearchBarState extends State<_SearchBar> {
         children: [
           const SizedBox(width: BatshSpacing.gutter),
           Icon(Icons.search_rounded,
-              color: BatshColors.onSurfaceVariant, size: 22),
+              color: BatshColors.onSurfaceVariant, size: BatshIconSize.md),
           const SizedBox(width: BatshSpacing.sm),
           Expanded(
             child: TextField(
@@ -450,7 +451,7 @@ class _SearchBarState extends State<_SearchBar> {
               child: Padding(
                 padding: const EdgeInsets.all(BatshSpacing.xs),
                 child: Icon(Icons.close_rounded,
-                    color: BatshColors.onSurfaceVariant, size: 20),
+                    color: BatshColors.onSurfaceVariant, size: BatshIconSize.md),
               ),
             ),
           const SizedBox(width: BatshSpacing.gutter),
@@ -656,7 +657,7 @@ class _FeaturedPremiumCard extends StatelessWidget {
                             listing.reviewCount == 0
                                 ? Icons.auto_awesome
                                 : Icons.star,
-                            size: 12,
+                            size: BatshIconSize.xs,
                             color: BatshColors.tertiaryFixed),
                         const SizedBox(width: 4),
                         Text(

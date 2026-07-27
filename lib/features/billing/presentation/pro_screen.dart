@@ -10,6 +10,7 @@ import '../../../core/theme/batsh_typography.dart';
 import '../../../core/widgets/batsh_button.dart';
 import '../pricing.dart';
 import 'payment_flow.dart';
+import '../../../core/theme/batsh_icon_size.dart';
 
 /// Shattab Pro subscription page. The one surface that earns a Committed /
 /// Drenched treatment (aspirational terracotta hero) inside an otherwise
@@ -159,7 +160,7 @@ class _Medallion extends StatelessWidget {
       ),
       child: const Icon(
         Icons.workspace_premium_rounded,
-        size: 46,
+        size: BatshIconSize.xl,
         color: BatshColors.onTertiaryContainer,
       ),
     );
@@ -395,7 +396,7 @@ class _BenefitRow extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Icon(Icons.check_circle_rounded,
-              size: 21, color: BatshColors.tertiary),
+              size: BatshIconSize.md, color: BatshColors.tertiary),
           const SizedBox(width: BatshSpacing.sm),
           Expanded(child: Text(text, style: BatshTypography.bodyMd)),
         ],
@@ -483,7 +484,7 @@ class _CompareTable extends StatelessWidget {
         isPro
             ? Icons.check_circle_rounded
             : Icons.remove_circle_outline_rounded,
-        size: 20,
+        size: BatshIconSize.md,
         color: isPro ? BatshColors.tertiary : BatshColors.outlineVariant,
       );
     }
@@ -509,7 +510,7 @@ class _TrustFooter extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         const Icon(Icons.lock_outline_rounded,
-            size: 15, color: BatshColors.onSurfaceVariant),
+            size: BatshIconSize.sm, color: BatshColors.onSurfaceVariant),
         const SizedBox(width: BatshSpacing.xs),
         Text(S.trustPaymob,
             style: BatshTypography.labelMd

@@ -7,6 +7,7 @@ import '../theme/batsh_motion.dart';
 import '../theme/batsh_radius.dart';
 import '../theme/batsh_spacing.dart';
 import '../theme/batsh_typography.dart';
+import '../theme/batsh_icon_size.dart';
 
 class FilterOption {
   const FilterOption({
@@ -69,7 +70,7 @@ class BatshFilterButton extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.tune_rounded, size: 18, color: fgColor),
+              Icon(Icons.tune_rounded, size: BatshIconSize.md, color: fgColor),
               const SizedBox(width: BatshSpacing.xs),
               Text(
                 activeCount > 0 ? S.filterWithCount(activeCount) : S.filter,
@@ -132,7 +133,7 @@ class BatshActiveFilterChip extends StatelessWidget {
                 onTap: () { HapticFeedback.lightImpact(); onRemove(); },
                 child: const Icon(
                   Icons.close_rounded,
-                  size: 14,
+                  size: BatshIconSize.sm,
                   color: BatshColors.primary,
                 ),
               ),
@@ -309,7 +310,7 @@ class _BatshFilterSheetState extends State<BatshFilterSheet> {
         Row(
           children: [
             if (section.icon != null) ...[
-              Icon(section.icon, size: 16, color: BatshColors.primary),
+              Icon(section.icon, size: BatshIconSize.sm, color: BatshColors.primary),
               const SizedBox(width: BatshSpacing.xs),
             ],
             Text(
@@ -354,7 +355,7 @@ class _BatshFilterSheetState extends State<BatshFilterSheet> {
                     if (opt.icon != null) ...[
                       Icon(
                         opt.icon,
-                        size: 16,
+                        size: BatshIconSize.sm,
                         color: isSelected
                             ? BatshColors.primary
                             : BatshColors.onSurfaceVariant,

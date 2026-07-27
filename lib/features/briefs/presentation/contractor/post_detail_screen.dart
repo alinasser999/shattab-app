@@ -23,6 +23,7 @@ import '../../../auth/data/auth_repository.dart';
 import '../../../quotes/presentation/quote_sheet.dart';
 import '../../domain/brief.dart';
 import '../providers/briefs_providers.dart';
+import '../../../../core/theme/batsh_icon_size.dart';
 
 class PostDetailScreen extends ConsumerStatefulWidget {
   const PostDetailScreen({super.key, required this.postId});
@@ -553,7 +554,7 @@ class _NoHeroHeader extends StatelessWidget {
                   textColor: BatshColors.primary),
               const SizedBox(width: BatshSpacing.sm),
               Icon(Icons.place_outlined,
-                  size: 14, color: BatshColors.onSurfaceVariant),
+                  size: BatshIconSize.sm, color: BatshColors.onSurfaceVariant),
               const SizedBox(width: 4),
               Expanded(
                 child: Text(location,
@@ -573,7 +574,7 @@ class _NoHeroHeader extends StatelessWidget {
           Row(
             children: [
               Icon(Icons.access_time,
-                  size: 14, color: BatshColors.onSurfaceVariant),
+                  size: BatshIconSize.sm, color: BatshColors.onSurfaceVariant),
               const SizedBox(width: 4),
               Text(time,
                   style: BatshTypography.labelSm
@@ -693,7 +694,7 @@ class _SpecTile extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(icon, size: 13, color: BatshColors.onSurfaceVariant),
+              Icon(icon, size: BatshIconSize.xs, color: BatshColors.onSurfaceVariant),
               const SizedBox(width: 4),
               Flexible(
                 child: Text(

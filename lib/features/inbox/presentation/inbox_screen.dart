@@ -21,6 +21,7 @@ import '../../onboarding/domain/onboarding_models.dart';
 import '../../quotes/presentation/widgets/quote_status_badge.dart';
 import '../domain/received_request.dart';
 import 'providers/inbox_providers.dart';
+import '../../../core/theme/batsh_icon_size.dart';
 
 class InboxScreen extends ConsumerWidget {
   const InboxScreen({super.key});
@@ -158,7 +159,7 @@ class _RequestCard extends StatelessWidget {
           Row(
             children: [
               const Icon(Icons.place_outlined,
-                  size: 15, color: BatshColors.onSurfaceVariant),
+                  size: BatshIconSize.sm, color: BatshColors.onSurfaceVariant),
               const SizedBox(width: BatshSpacing.xs),
               Expanded(
                 child: Text(place,

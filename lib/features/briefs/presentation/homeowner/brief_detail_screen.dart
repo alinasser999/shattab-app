@@ -25,6 +25,7 @@ import '../../domain/brief.dart';
 import '../providers/briefs_providers.dart';
 import '../widgets/completion_card.dart';
 import 'create_post_screen.dart';
+import '../../../../core/theme/batsh_icon_size.dart';
 
 /// Resolves the hired contractor so confirming completion can open the review
 /// sheet for them immediately. Falls back to confirming without the prompt if
@@ -327,7 +328,7 @@ class _StatusRow extends ConsumerWidget {
         : (isPost ? S.statusPost : S.statusDirectRequest);
     return Row(
       children: [
-        Icon(Icons.circle, color: color, size: 12),
+        Icon(Icons.circle, color: color, size: BatshIconSize.xs),
         const SizedBox(width: BatshSpacing.sm),
         Text(label,
             style: BatshTypography.labelMd
@@ -348,7 +349,7 @@ class _StatusRow extends ConsumerWidget {
           PopupMenuButton<String>(
             tooltip: S.editPost,
             icon: const Icon(Icons.more_horiz_rounded,
-                size: 20, color: BatshColors.onSurfaceVariant),
+                size: BatshIconSize.md, color: BatshColors.onSurfaceVariant),
             onSelected: (v) {
               if (v == 'delete') {
                 _delete(context, ref);
@@ -371,7 +372,7 @@ class _StatusRow extends ConsumerWidget {
                   value: 'edit',
                   child: Row(
                     children: [
-                      const Icon(Icons.edit_outlined, size: 18),
+                      const Icon(Icons.edit_outlined, size: BatshIconSize.md),
                       const SizedBox(width: BatshSpacing.sm),
                       Text(S.editBriefTitle),
                     ],
@@ -382,7 +383,7 @@ class _StatusRow extends ConsumerWidget {
                 child: Row(
                   children: [
                     const Icon(Icons.delete_outline,
-                        size: 18, color: BatshColors.error),
+                        size: BatshIconSize.md, color: BatshColors.error),
                     const SizedBox(width: BatshSpacing.sm),
                     Text(S.deletePost,
                         style: const TextStyle(color: BatshColors.error)),

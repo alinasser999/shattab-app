@@ -13,6 +13,7 @@ import '../../../core/widgets/batsh_button.dart';
 import '../../../core/widgets/batsh_text_field.dart';
 import '../domain/quote.dart';
 import 'providers/quotes_providers.dart';
+import '../../../core/theme/batsh_icon_size.dart';
 
 /// Opens the price-quote bottom sheet. Returns true if a quote was submitted.
 Future<bool> showQuoteSheet(
@@ -220,7 +221,7 @@ class _SuccessView extends StatelessWidget {
               shape: BoxShape.circle,
             ),
             child: const Icon(Icons.check_rounded,
-                color: BatshColors.success, size: 48),
+                color: BatshColors.success, size: BatshIconSize.xxl),
           )
               .animate()
               .scale(

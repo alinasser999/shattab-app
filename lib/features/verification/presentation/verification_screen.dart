@@ -11,6 +11,7 @@ import '../../../core/theme/batsh_typography.dart';
 import '../../../core/widgets/batsh_button.dart';
 import '../../../core/widgets/photo_picker.dart';
 import '../data/verification_repository.dart';
+import '../../../core/theme/batsh_icon_size.dart';
 
 /// Free "Verified" flow: contractor uploads ID + optional trade licence, we file
 /// a pending request, a founder reviews it and flips the badge. Mirrors the
@@ -105,7 +106,7 @@ class _VerificationScreenState extends ConsumerState<VerificationScreen> {
                         ]),
                       ),
                       child: const Icon(Icons.verified_rounded,
-                          color: BatshColors.onTertiaryContainer, size: 24),
+                          color: BatshColors.onTertiaryContainer, size: BatshIconSize.lg),
                     ),
                     const SizedBox(width: BatshSpacing.md),
                     Expanded(
@@ -182,7 +183,7 @@ class _Bullet extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Icon(Icons.check_circle_rounded,
-              size: 18, color: BatshColors.secondary),
+              size: BatshIconSize.md, color: BatshColors.secondary),
           const SizedBox(width: BatshSpacing.sm),
           Expanded(child: Text(text, style: BatshTypography.bodyMd)),
         ],
@@ -211,7 +212,7 @@ class _StatusView extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 72, color: color),
+            Icon(icon, size: BatshIconSize.xxl, color: color),
             const SizedBox(height: BatshSpacing.lg),
             Text(title,
                 textAlign: TextAlign.center,

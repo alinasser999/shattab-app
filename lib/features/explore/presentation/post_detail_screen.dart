@@ -24,6 +24,7 @@ import '../../discovery/presentation/widgets/avatar_with_initials.dart';
 import '../domain/post.dart';
 import 'providers/explore_providers.dart';
 import 'widgets/post_type_icon.dart';
+import '../../../core/theme/batsh_icon_size.dart';
 
 class PostDetailScreen extends ConsumerWidget {
   const PostDetailScreen({super.key, required this.postId});
@@ -297,7 +298,7 @@ class _PostDetailContentState extends ConsumerState<_PostDetailContent> {
                           child: Row(
                             children: [
                               Icon(Icons.delete_outline,
-                                  size: 18, color: BatshColors.error),
+                                  size: BatshIconSize.md, color: BatshColors.error),
                               const SizedBox(width: 8),
                               Text(S.deletePost),
                             ],
@@ -525,7 +526,7 @@ class _ActionBtnState extends State<_ActionBtn>
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(widget.icon, size: 20, color: widget.color ?? BatshColors.onSurfaceVariant),
+                Icon(widget.icon, size: BatshIconSize.md, color: widget.color ?? BatshColors.onSurfaceVariant),
                 if (widget.label != null) ...[
                   const SizedBox(width: 3),
                   Text(widget.label!, style: BatshTypography.labelSm),

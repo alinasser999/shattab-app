@@ -25,6 +25,7 @@ import '../../../portfolio/presentation/providers/portfolio_providers.dart';
 import '../../../reviews/presentation/reviews_sheet.dart';
 import '../../../saved/presentation/providers/saved_providers.dart';
 import '../../domain/contractor_listing.dart';
+import '../../../../core/theme/batsh_icon_size.dart';
 
 /// How the showcase is being viewed.
 /// - [public]: a homeowner browsing the contractor (save, share, contact CTAs).
@@ -434,7 +435,7 @@ class _AvatarRing extends StatelessWidget {
                     const ColoredBox(color: BatshColors.surfaceContainer),
               )
             : const Icon(Icons.engineering_outlined,
-                size: 48, color: BatshColors.primary),
+                size: BatshIconSize.xxl, color: BatshColors.primary),
       ),
     );
   }
@@ -511,7 +512,7 @@ class _ProviderKindBadge extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(kind.icon, size: 14, color: BatshColors.onSurfaceVariant),
+          Icon(kind.icon, size: BatshIconSize.sm, color: BatshColors.onSurfaceVariant),
           const SizedBox(width: 4),
           Text(
             kind.label,
@@ -546,7 +547,7 @@ class _VerifiedBadge extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           const Icon(Icons.verified_rounded,
-              size: 15, color: BatshColors.onTertiaryContainer),
+              size: BatshIconSize.sm, color: BatshColors.onTertiaryContainer),
           const SizedBox(width: 4),
           Text(
             S.verified,
@@ -596,7 +597,7 @@ class _RatingPill extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             const Icon(Icons.auto_awesome,
-                size: 16, color: BatshColors.onSecondaryContainer),
+                size: BatshIconSize.sm, color: BatshColors.onSecondaryContainer),
             const SizedBox(width: BatshSpacing.xs),
             Text(
               S.newProfessional,
@@ -631,7 +632,7 @@ class _RatingPill extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               const Icon(Icons.star_rounded,
-                  size: 18, color: BatshColors.tertiary),
+                  size: BatshIconSize.md, color: BatshColors.tertiary),
               const SizedBox(width: BatshSpacing.xs),
               Text(
                 avg.toStringAsFixed(1),
@@ -649,7 +650,7 @@ class _RatingPill extends StatelessWidget {
               if (onTap != null) ...[
                 const SizedBox(width: 2),
                 const Icon(Icons.arrow_forward_ios,
-                    size: 11, color: BatshColors.onTertiaryContainer),
+                    size: BatshIconSize.xs, color: BatshColors.onTertiaryContainer),
               ],
             ],
           ),
@@ -727,7 +728,7 @@ class _StatCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: BatshColors.primary, size: 18),
+          Icon(icon, color: BatshColors.primary, size: BatshIconSize.md),
           const SizedBox(height: BatshSpacing.md),
           // Plain text, no count-up tween. The tween began at 0 on every build,
           // and this widget's ancestor watches the saved-contractors provider —
@@ -789,7 +790,7 @@ class _GoProBanner extends StatelessWidget {
                       ),
                     ),
                     child: const Icon(Icons.workspace_premium_rounded,
-                        size: 22, color: BatshColors.onTertiaryContainer),
+                        size: BatshIconSize.md, color: BatshColors.onTertiaryContainer),
                   ),
                   const SizedBox(width: BatshSpacing.md),
                   Expanded(
@@ -812,7 +813,7 @@ class _GoProBanner extends StatelessWidget {
                   // Mirrors with text direction, unlike the previous hardcoded
                   // `chevron_left_rounded`.
                   Icon(Icons.arrow_forward_ios,
-                      size: 14,
+                      size: BatshIconSize.sm,
                       color: BatshColors.onPrimary.withValues(alpha: 0.9)),
                 ],
               ),
@@ -845,7 +846,7 @@ class _OwnerActions extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const Icon(Icons.visibility_outlined,
-                  size: 14, color: BatshColors.onSurfaceVariant),
+                  size: BatshIconSize.sm, color: BatshColors.onSurfaceVariant),
               const SizedBox(width: BatshSpacing.xs),
               Text(
                 S.clientsPreview,
@@ -993,7 +994,7 @@ class _ServiceTile extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, size: 24, color: BatshColors.primary),
+          Icon(icon, size: BatshIconSize.lg, color: BatshColors.primary),
           const SizedBox(height: BatshSpacing.sm),
           Flexible(
             child: Text(
@@ -1085,7 +1086,7 @@ class _PortfolioSection extends StatelessWidget {
         child: Row(
           children: [
             const Icon(Icons.cloud_off_outlined,
-                size: 18, color: BatshColors.onSurfaceVariant),
+                size: BatshIconSize.md, color: BatshColors.onSurfaceVariant),
             const SizedBox(width: BatshSpacing.sm),
             Expanded(
               child: Text(S.portfolioLoadFailed,

@@ -17,6 +17,7 @@ import '../../../core/widgets/batsh_text_field.dart';
 import '../../auth/domain/profile.dart';
 import 'providers/onboarding_provider.dart';
 import '../../../core/utils/error_mapper.dart';
+import '../../../core/theme/batsh_icon_size.dart';
 
 class RoleSelectScreen extends ConsumerStatefulWidget {
   const RoleSelectScreen({super.key});
@@ -170,7 +171,7 @@ class _RoleCard extends StatelessWidget {
             ),
             child: Icon(
               icon,
-              size: 28,
+              size: BatshIconSize.lg,
               color: selected ? BatshColors.onPrimary : BatshColors.primary,
             ),
           ),
@@ -195,7 +196,7 @@ class _RoleCard extends StatelessWidget {
             curve: BatshMotion.easeOut,
             child: const Icon(
               Icons.check_circle_rounded,
-              size: 22,
+              size: BatshIconSize.md,
               color: BatshColors.primary,
             ),
           ),

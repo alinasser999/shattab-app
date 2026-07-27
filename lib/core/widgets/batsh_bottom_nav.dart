@@ -7,6 +7,7 @@ import '../theme/batsh_radius.dart';
 import '../theme/batsh_shadows.dart';
 import '../theme/batsh_spacing.dart';
 import '../theme/batsh_typography.dart';
+import '../theme/batsh_icon_size.dart';
 
 class BatshBottomNavItem {
   const BatshBottomNavItem({
@@ -182,7 +183,7 @@ class _NavItemState extends State<_NavItem>
                     widget.isSelected
                         ? widget.item.selectedIcon
                         : widget.item.icon,
-                    size: 22 + (_pillAnim.value * 3),
+                    size: BatshIconSize.md + (_pillAnim.value * 3),
                     color: Color.lerp(
                       BatshColors.onSurfaceVariant.withValues(alpha: 0.75),
                       BatshColors.primary,

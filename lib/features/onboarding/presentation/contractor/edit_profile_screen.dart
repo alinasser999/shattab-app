@@ -19,6 +19,7 @@ import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../discovery/domain/contractor_listing.dart';
 import '../../../discovery/presentation/providers/discovery_providers.dart';
 import '../providers/onboarding_provider.dart';
+import '../../../../core/theme/batsh_icon_size.dart';
 
 /// Edit the contractor showcase shown on their profile + in Discover.
 /// Reads current values from [contractorByIdProvider] and writes through
@@ -177,7 +178,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
               children: [
                 for (final kind in ProviderKind.values)
                   ChoiceChip(
-                    avatar: Icon(kind.icon, size: 16),
+                    avatar: Icon(kind.icon, size: BatshIconSize.sm),
                     label: Text(kind.label),
                     selected: _kind == kind,
                     onSelected: (_) => setState(() => _kind = kind),
@@ -259,7 +260,7 @@ class _CoverPicker extends StatelessWidget {
                   ? CachedNetworkImage(imageUrl: existingUrl!, fit: BoxFit.cover)
                   : const Center(
                       child: Icon(Icons.add_photo_alternate_outlined,
-                          size: 40, color: BatshColors.onSurfaceVariant),
+                          size: BatshIconSize.xl, color: BatshColors.onSurfaceVariant),
                     )),
         ),
       ),
@@ -295,7 +296,7 @@ class _LogoPicker extends StatelessWidget {
             : (existingUrl != null
                 ? CachedNetworkImage(imageUrl: existingUrl!, fit: BoxFit.cover)
                 : const Icon(Icons.add_a_photo_outlined,
-                    color: BatshColors.onSurfaceVariant, size: 30)),
+                    color: BatshColors.onSurfaceVariant, size: BatshIconSize.lg)),
       ),
     );
   }

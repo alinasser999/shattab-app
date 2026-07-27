@@ -13,6 +13,7 @@ import '../../../core/widgets/batsh_error.dart';
 import '../../../core/widgets/batsh_shimmer.dart';
 import '../domain/review.dart';
 import 'providers/reviews_providers.dart';
+import '../../../core/theme/batsh_icon_size.dart';
 
 /// Opens the list of reviews left for a contractor.
 ///
@@ -115,7 +116,7 @@ class _ReviewRow extends StatelessWidget {
                 i < review.rating
                     ? Icons.star_rounded
                     : Icons.star_outline_rounded,
-                size: 16,
+                size: BatshIconSize.sm,
                 color: i < review.rating
                     ? BatshColors.tertiary
                     : BatshColors.outlineVariant,

@@ -10,6 +10,7 @@ import '../theme/batsh_spacing.dart';
 import '../theme/batsh_typography.dart';
 import '../utils/image_url.dart';
 import 'batsh_card.dart';
+import '../theme/batsh_icon_size.dart';
 
 class BriefCard extends StatelessWidget {
   const BriefCard({
@@ -58,7 +59,7 @@ class BriefCard extends StatelessWidget {
                 Row(
                   children: [
                     const Icon(Icons.place_outlined,
-                        size: 14, color: BatshColors.onSurfaceVariant),
+                        size: BatshIconSize.sm, color: BatshColors.onSurfaceVariant),
                     const SizedBox(width: 4),
                     Text(brief.city,
                         style: BatshTypography.labelMd.copyWith(
@@ -108,7 +109,7 @@ class _Thumb extends StatelessWidget {
             )
           : const Center(
               child: Icon(Icons.image_outlined,
-                  color: BatshColors.onSurfaceVariant, size: 28)),
+                  color: BatshColors.onSurfaceVariant, size: BatshIconSize.lg)),
     );
   }
 }

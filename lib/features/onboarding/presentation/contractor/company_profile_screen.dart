@@ -22,6 +22,7 @@ import '../../../../core/widgets/batsh_section_header.dart';
 import '../../../../core/widgets/batsh_text_field.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../providers/onboarding_provider.dart';
+import '../../../../core/theme/batsh_icon_size.dart';
 
 class CompanyProfileScreen extends ConsumerStatefulWidget {
   const CompanyProfileScreen({super.key});
@@ -141,7 +142,7 @@ class _CompanyProfileScreenState
                                   const Icon(
                                     Icons.add_a_photo_outlined,
                                     color: BatshColors.onSurfaceVariant,
-                                    size: 28,
+                                    size: BatshIconSize.lg,
                                   ),
                                   const SizedBox(height: 4),
                                   Text(

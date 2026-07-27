@@ -6,6 +6,7 @@ import '../theme/batsh_colors.dart';
 import '../theme/batsh_radius.dart';
 import '../theme/batsh_spacing.dart';
 import '../theme/batsh_typography.dart';
+import '../theme/batsh_icon_size.dart';
 
 /// Full-screen photo viewer: swipe between photos, pinch to zoom.
 ///
@@ -86,7 +87,7 @@ class _BatshPhotoViewerState extends State<BatshPhotoViewer> {
                   errorWidget: (_, _, _) => const Icon(
                     Icons.broken_image_outlined,
                     color: Colors.white38,
-                    size: 44,
+                    size: BatshIconSize.xl,
                   ),
                 ),
               ),
@@ -101,7 +102,7 @@ class _BatshPhotoViewerState extends State<BatshPhotoViewer> {
                     child: IconButton(
                       tooltip: S.closePhotoViewer,
                       icon: const Icon(Icons.close_rounded,
-                          color: Colors.white, size: 22),
+                          color: Colors.white, size: BatshIconSize.md),
                       onPressed: () => Navigator.of(context).maybePop(),
                     ),
                   ),

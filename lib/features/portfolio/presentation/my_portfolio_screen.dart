@@ -21,6 +21,7 @@ import '../../../core/widgets/batsh_shimmer.dart';
 import '../../../core/utils/error_mapper.dart';
 import '../domain/portfolio_project.dart';
 import 'providers/my_portfolio_providers.dart';
+import '../../../core/theme/batsh_icon_size.dart';
 
 /// Contractor-facing portfolio manager (Tab 3). Grid of own projects;
 /// tap to edit, long-press to delete, FAB to add.
@@ -220,7 +221,7 @@ class _PortfolioTile extends StatelessWidget {
                 color: BatshColors.surfaceContainer,
                 child: const Center(
                   child: Icon(Icons.image_outlined,
-                      size: 40, color: BatshColors.onSurfaceVariant),
+                      size: BatshIconSize.xl, color: BatshColors.onSurfaceVariant),
                 ),
               ),
             ),
@@ -275,7 +276,7 @@ class _PortfolioTile extends StatelessWidget {
                 child: const Padding(
                   padding: EdgeInsets.all(6),
                   child: Icon(Icons.edit_outlined,
-                      size: 16, color: Colors.white),
+                      size: BatshIconSize.sm, color: Colors.white),
                 ),
               ),
             ),

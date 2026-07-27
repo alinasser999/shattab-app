@@ -18,6 +18,7 @@ import '../../auth/presentation/providers/auth_provider.dart';
 import '../../onboarding/domain/onboarding_models.dart';
 import '../../onboarding/presentation/providers/onboarding_provider.dart';
 import 'providers/homeowner_profile_providers.dart';
+import '../../../core/theme/batsh_icon_size.dart';
 
 class HomeownerEditProfileScreen extends ConsumerStatefulWidget {
   const HomeownerEditProfileScreen({super.key});
@@ -260,7 +261,7 @@ class _AvatarPicker extends StatelessWidget {
                   border: Border.all(color: BatshColors.background, width: 2),
                 ),
                 child: const Icon(Icons.camera_alt,
-                    size: 18, color: BatshColors.onPrimary),
+                    size: BatshIconSize.md, color: BatshColors.onPrimary),
               ),
             ),
           ],

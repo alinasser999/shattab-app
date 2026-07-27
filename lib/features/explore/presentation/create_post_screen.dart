@@ -19,6 +19,7 @@ import '../../auth/presentation/providers/auth_provider.dart';
 import '../data/post_repository.dart';
 import '../domain/post.dart';
 import 'providers/explore_providers.dart';
+import '../../../core/theme/batsh_icon_size.dart';
 
 class CreatePostScreen extends ConsumerStatefulWidget {
   const CreatePostScreen({super.key});
@@ -212,7 +213,7 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
                               shape: BoxShape.circle,
                             ),
                             child: const Icon(Icons.close,
-                                size: 14, color: BatshColors.onError),
+                                size: BatshIconSize.sm, color: BatshColors.onError),
                           ),
                         ),
                       ),

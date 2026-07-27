@@ -18,6 +18,7 @@ import '../../../../core/widgets/batsh_scaffold.dart';
 import '../../../../core/widgets/batsh_section_header.dart';
 import '../../domain/onboarding_models.dart';
 import '../providers/onboarding_provider.dart';
+import '../../../../core/theme/batsh_icon_size.dart';
 
 class HomeownerDetailsScreen extends ConsumerStatefulWidget {
   const HomeownerDetailsScreen({super.key});
@@ -127,7 +128,7 @@ class _HomeownerDetailsScreenState
                     children: [
                       Icon(
                         _apartmentIcons[type],
-                        size: 28,
+                        size: BatshIconSize.lg,
                         color: isSelected
                             ? BatshColors.primary
                             : BatshColors.onSurfaceVariant,

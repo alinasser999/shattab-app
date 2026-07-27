@@ -21,6 +21,7 @@ import 'providers/quotes_providers.dart';
 import 'quote_format.dart';
 import 'quote_sheet.dart';
 import 'widgets/quote_status_badge.dart';
+import '../../../core/theme/batsh_icon_size.dart';
 
 /// Contractor's own quotes across every brief — the one place a quote sent on
 /// a public post stays trackable after the post leaves the opportunities feed.
@@ -130,7 +131,7 @@ class _QuoteOwnerMenu extends ConsumerWidget {
     return PopupMenuButton<String>(
       tooltip: S.editPost,
       icon: const Icon(Icons.more_horiz_rounded,
-          size: 20, color: BatshColors.onSurfaceVariant),
+          size: BatshIconSize.md, color: BatshColors.onSurfaceVariant),
       onSelected: (v) {
         if (v == 'edit') {
           // The quote sheet prefills from the existing quote and updates it.
@@ -144,7 +145,7 @@ class _QuoteOwnerMenu extends ConsumerWidget {
           value: 'edit',
           child: Row(
             children: [
-              const Icon(Icons.edit_outlined, size: 18),
+              const Icon(Icons.edit_outlined, size: BatshIconSize.md),
               const SizedBox(width: BatshSpacing.sm),
               Text(S.editQuote),
             ],
@@ -155,7 +156,7 @@ class _QuoteOwnerMenu extends ConsumerWidget {
           child: Row(
             children: [
               const Icon(Icons.undo_rounded,
-                  size: 18, color: BatshColors.error),
+                  size: BatshIconSize.md, color: BatshColors.error),
               const SizedBox(width: BatshSpacing.sm),
               Text(S.withdrawQuote,
                   style: const TextStyle(color: BatshColors.error)),
@@ -216,7 +217,7 @@ class _QuoteRow extends ConsumerWidget {
             Row(
               children: [
                 const Icon(Icons.schedule,
-                    size: 15, color: BatshColors.onSurfaceVariant),
+                    size: BatshIconSize.sm, color: BatshColors.onSurfaceVariant),
                 const SizedBox(width: BatshSpacing.xs),
                 Text(quote.durationText!,
                     style: BatshTypography.labelMd

@@ -8,6 +8,7 @@ import '../../../core/theme/batsh_spacing.dart';
 import '../../../core/theme/batsh_typography.dart';
 import '../../../core/utils/error_mapper.dart';
 import '../data/moderation_repository.dart';
+import '../../../core/theme/batsh_icon_size.dart';
 
 String _reasonLabel(ReportReason r) => switch (r) {
       ReportReason.spam => S.reportReasonSpam,
@@ -128,7 +129,7 @@ class _ReportSheetState extends ConsumerState<_ReportSheet> {
                   title:
                       Text(_reasonLabel(reason), style: BatshTypography.bodyMd),
                   trailing: const Icon(Icons.arrow_forward_ios,
-                      size: 14, color: BatshColors.onSurfaceVariant),
+                      size: BatshIconSize.sm, color: BatshColors.onSurfaceVariant),
                   onTap: () => _submit(reason),
                 ),
           ],

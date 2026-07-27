@@ -12,6 +12,7 @@ import '../../../../core/widgets/batsh_button.dart';
 import '../../../reviews/presentation/write_review_sheet.dart';
 import '../../domain/brief.dart';
 import '../providers/briefs_providers.dart';
+import '../../../../core/theme/batsh_icon_size.dart';
 
 /// Which side of the job is looking at the card.
 enum CompletionRole { homeowner, contractor }
@@ -208,7 +209,7 @@ class _ActionCard extends StatelessWidget {
           Row(
             children: [
               Icon(icon,
-                  size: 18,
+                  size: BatshIconSize.md,
                   color: emphasised
                       ? BatshColors.onSecondaryContainer
                       : BatshColors.onSurfaceVariant),
@@ -264,7 +265,7 @@ class _Banner extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(icon, size: 18, color: color),
+          Icon(icon, size: BatshIconSize.md, color: color),
           const SizedBox(width: BatshSpacing.sm),
           Expanded(
             child: Text(title,

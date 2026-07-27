@@ -11,6 +11,7 @@ import '../../../core/widgets/batsh_error.dart';
 import '../../../core/widgets/batsh_loading.dart';
 import '../../../core/utils/error_mapper.dart';
 import 'providers/portfolio_providers.dart';
+import '../../../core/theme/batsh_icon_size.dart';
 
 class ProjectDetailScreen extends ConsumerWidget {
   const ProjectDetailScreen({super.key, required this.projectId});
@@ -152,7 +153,7 @@ class _MetaItem extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, color: BatshColors.primary, size: 18),
+        Icon(icon, color: BatshColors.primary, size: BatshIconSize.md),
         const SizedBox(width: BatshSpacing.sm),
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,

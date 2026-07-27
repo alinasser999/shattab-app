@@ -6,6 +6,7 @@ import '../theme/batsh_colors.dart';
 import '../theme/batsh_radius.dart';
 import '../theme/batsh_spacing.dart';
 import '../theme/batsh_typography.dart';
+import '../theme/batsh_icon_size.dart';
 
 /// The earned trust level — "مستوى فضي" / "مستوى ذهبي" — shown to homeowners.
 ///
@@ -47,7 +48,7 @@ class TierBadge extends StatelessWidget {
           // Icon and word each carry the meaning alone, so the badge survives a
           // greyscale or colour-blind read.
           const Icon(Icons.emoji_events_outlined,
-              size: 14, color: BatshColors.onSecondaryContainer),
+              size: BatshIconSize.sm, color: BatshColors.onSecondaryContainer),
           const SizedBox(width: 4),
           Text(
             label,
@@ -59,7 +60,7 @@ class TierBadge extends StatelessWidget {
           if (explainOnTap) ...[
             const SizedBox(width: 2),
             const Icon(Icons.info_outline,
-                size: 12, color: BatshColors.onSecondaryContainer),
+                size: BatshIconSize.xs, color: BatshColors.onSecondaryContainer),
           ],
         ],
       ),

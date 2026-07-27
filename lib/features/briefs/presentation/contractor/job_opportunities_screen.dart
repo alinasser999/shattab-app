@@ -26,6 +26,7 @@ import '../../domain/job_feed_filters.dart';
 import '../providers/briefs_providers.dart';
 import 'widgets/job_card.dart';
 import 'widgets/job_card_skeleton.dart';
+import '../../../../core/theme/batsh_icon_size.dart';
 
 class JobOpportunitiesScreen extends ConsumerStatefulWidget {
   const JobOpportunitiesScreen({super.key});
@@ -200,7 +201,7 @@ class _JobOpportunitiesScreenState
                             boxShadow: BatshShadows.soft,
                           ),
                           child: Icon(Icons.receipt_long_outlined,
-                              color: BatshColors.primary, size: 22),
+                              color: BatshColors.primary, size: BatshIconSize.md),
                         ),
                       ),
                     ),
@@ -496,7 +497,7 @@ class _SearchBarState extends State<_SearchBar> {
       ),
       child: Row(
         children: [
-          Icon(Icons.search, size: 22, color: BatshColors.onSurfaceVariant),
+          Icon(Icons.search, size: BatshIconSize.md, color: BatshColors.onSurfaceVariant),
           const SizedBox(width: BatshSpacing.sm),
           Expanded(
             child: TextField(
@@ -520,7 +521,7 @@ class _SearchBarState extends State<_SearchBar> {
               visualDensity: VisualDensity.compact,
               onPressed: widget.onClear,
               icon: Icon(Icons.close_rounded,
-                  size: 20, color: BatshColors.onSurfaceVariant),
+                  size: BatshIconSize.md, color: BatshColors.onSurfaceVariant),
             ),
         ],
       ),
@@ -550,7 +551,7 @@ class _NoSearchMatchState extends StatelessWidget {
               shape: BoxShape.circle,
             ),
             child: Icon(Icons.search_off_rounded,
-                size: 38, color: BatshColors.onSurfaceVariant),
+                size: BatshIconSize.xl, color: BatshColors.onSurfaceVariant),
           ),
           const SizedBox(height: BatshSpacing.lg),
           Text(
@@ -602,7 +603,7 @@ class _EmptyJobsState extends StatelessWidget {
               shape: BoxShape.circle,
             ),
             child: Icon(Icons.work_outline,
-                size: 40, color: BatshColors.primary.withValues(alpha: 0.5)),
+                size: BatshIconSize.xl, color: BatshColors.primary.withValues(alpha: 0.5)),
           ),
           const SizedBox(height: BatshSpacing.lg),
           Text(

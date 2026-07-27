@@ -18,6 +18,7 @@ import '../../discovery/presentation/providers/discovery_providers.dart';
 import '../../../core/utils/error_mapper.dart';
 import '../domain/portfolio_project.dart';
 import 'providers/portfolio_providers.dart';
+import '../../../core/theme/batsh_icon_size.dart';
 
 class PortfolioGalleryScreen extends ConsumerWidget {
   const PortfolioGalleryScreen({super.key, required this.contractorId});
@@ -118,7 +119,7 @@ class _ProjectMagazineCard extends StatelessWidget {
                     color: BatshColors.surfaceContainer,
                     child: const Center(
                       child: Icon(Icons.image_outlined,
-                          size: 48, color: BatshColors.onSurfaceVariant),
+                          size: BatshIconSize.xxl, color: BatshColors.onSurfaceVariant),
                     ),
                   ),
                 ),
@@ -186,7 +187,7 @@ class _Specs extends StatelessWidget {
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon, size: 14, color: BatshColors.onSurfaceVariant),
+              Icon(icon, size: BatshIconSize.sm, color: BatshColors.onSurfaceVariant),
               const SizedBox(width: 4),
               Text(label,
                   style: BatshTypography.labelMd.copyWith(

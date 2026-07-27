@@ -20,6 +20,7 @@ import '../../../../core/widgets/role_badge.dart';
 import '../../../discovery/presentation/widgets/avatar_with_initials.dart';
 import '../../domain/post.dart';
 import 'post_type_icon.dart';
+import '../../../../core/theme/batsh_icon_size.dart';
 
 class PostCard extends StatelessWidget {
   const PostCard({
@@ -285,7 +286,7 @@ class _ModerationMenu extends ConsumerWidget {
     return PopupMenuButton<String>(
       tooltip: S.reportTitle,
       icon: const Icon(Icons.more_horiz_rounded,
-          size: 20, color: BatshColors.onSurfaceVariant),
+          size: BatshIconSize.md, color: BatshColors.onSurfaceVariant),
       onSelected: (v) async {
         if (v == 'report') {
           showReportSheet(context,
@@ -300,7 +301,7 @@ class _ModerationMenu extends ConsumerWidget {
           value: 'report',
           child: Row(
             children: [
-              const Icon(Icons.flag_outlined, size: 18),
+              const Icon(Icons.flag_outlined, size: BatshIconSize.md),
               const SizedBox(width: BatshSpacing.sm),
               Text(S.reportPostAction),
             ],
@@ -310,7 +311,7 @@ class _ModerationMenu extends ConsumerWidget {
           value: 'block',
           child: Row(
             children: [
-              const Icon(Icons.block, size: 18, color: BatshColors.error),
+              const Icon(Icons.block, size: BatshIconSize.md, color: BatshColors.error),
               const SizedBox(width: BatshSpacing.sm),
               Text(S.blockUser,
                   style: const TextStyle(color: BatshColors.error)),
@@ -335,7 +336,7 @@ class _OwnerMenu extends StatelessWidget {
     return PopupMenuButton<String>(
       tooltip: S.editPost,
       icon: const Icon(Icons.more_horiz_rounded,
-          size: 20, color: BatshColors.onSurfaceVariant),
+          size: BatshIconSize.md, color: BatshColors.onSurfaceVariant),
       onSelected: (v) {
         if (v == 'edit') onEdit?.call();
         if (v == 'delete') onDelete?.call();
@@ -346,7 +347,7 @@ class _OwnerMenu extends StatelessWidget {
             value: 'edit',
             child: Row(
               children: [
-                const Icon(Icons.edit_outlined, size: 18),
+                const Icon(Icons.edit_outlined, size: BatshIconSize.md),
                 const SizedBox(width: BatshSpacing.sm),
                 Text(S.editPost),
               ],
@@ -358,7 +359,7 @@ class _OwnerMenu extends StatelessWidget {
             child: Row(
               children: [
                 const Icon(Icons.delete_outline,
-                    size: 18, color: BatshColors.error),
+                    size: BatshIconSize.md, color: BatshColors.error),
                 const SizedBox(width: BatshSpacing.sm),
                 Text(S.deletePost,
                     style: const TextStyle(color: BatshColors.error)),
@@ -418,7 +419,7 @@ class _ActionButtonState extends State<_ActionButton>
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(widget.icon, size: 20, color: widget.color ?? BatshColors.onSurfaceVariant),
+                Icon(widget.icon, size: BatshIconSize.md, color: widget.color ?? BatshColors.onSurfaceVariant),
                 if (widget.label != null) ...[
                   const SizedBox(width: 3),
                   Text(widget.label!, style: BatshTypography.labelSm),

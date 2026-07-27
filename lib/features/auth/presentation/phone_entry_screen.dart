@@ -21,6 +21,7 @@ import '../../auth/data/auth_repository.dart';
 import '../../auth/presentation/providers/auth_provider.dart';
 import '../../../core/utils/error_mapper.dart';
 import 'providers/otp_provider.dart';
+import '../../../core/theme/batsh_icon_size.dart';
 
 /// The cinematic intro plays once per app session. After the first mount the
 /// login card should appear instantly — a returning user shouldn't pay a ~1.4s
@@ -452,7 +453,7 @@ class _LoginCardState extends ConsumerState<_LoginCard> {
         padding: const EdgeInsets.only(top: BatshSpacing.xs),
         child: Row(
           children: [
-            Icon(Icons.error_outline, size: 15, color: BatshColors.error),
+            Icon(Icons.error_outline, size: BatshIconSize.sm, color: BatshColors.error),
             const SizedBox(width: 6),
             Expanded(
               child: Text(message,
@@ -667,7 +668,7 @@ class _LoginCardState extends ConsumerState<_LoginCard> {
               children: [
                 const SizedBox(width: BatshSpacing.md),
                 Icon(Icons.lock_outline,
-                    size: 20, color: BatshColors.onSurfaceVariant),
+                    size: BatshIconSize.md, color: BatshColors.onSurfaceVariant),
                 const SizedBox(width: BatshSpacing.sm),
                 Expanded(
                   child: TextField(
@@ -698,7 +699,7 @@ class _LoginCardState extends ConsumerState<_LoginCard> {
                   onPressed: () => setState(() => _obscure = !_obscure),
                   icon: Icon(
                     _obscure ? Icons.visibility_outlined : Icons.visibility_off_outlined,
-                    size: 20,
+                    size: BatshIconSize.md,
                     color: BatshColors.onSurfaceVariant,
                   ),
                 ),
@@ -717,7 +718,7 @@ class _LoginCardState extends ConsumerState<_LoginCard> {
                 children: [
                   const SizedBox(width: BatshSpacing.md),
                   Icon(Icons.lock_outline,
-                      size: 20, color: BatshColors.onSurfaceVariant),
+                      size: BatshIconSize.md, color: BatshColors.onSurfaceVariant),
                   const SizedBox(width: BatshSpacing.sm),
                   Expanded(
                     child: TextField(
@@ -934,7 +935,7 @@ class _AppleButton extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.apple, color: Colors.white, size: 22),
+              const Icon(Icons.apple, color: Colors.white, size: BatshIconSize.md),
               const SizedBox(width: BatshSpacing.sm),
               Text(
                 S.continueWithApple,
@@ -1018,7 +1019,7 @@ class _Footer extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(Icons.lock_outline,
-                size: 13, color: BatshColors.onSurfaceVariant),
+                size: BatshIconSize.xs, color: BatshColors.onSurfaceVariant),
             const SizedBox(width: 6),
             Text(
               S.dataSecure,

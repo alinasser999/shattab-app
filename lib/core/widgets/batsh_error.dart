@@ -6,6 +6,7 @@ import '../theme/batsh_colors.dart';
 import '../theme/batsh_spacing.dart';
 import '../theme/batsh_typography.dart';
 import 'batsh_button.dart';
+import '../theme/batsh_icon_size.dart';
 
 class BatshError extends StatelessWidget {
   const BatshError({
@@ -26,7 +27,7 @@ class BatshError extends StatelessWidget {
       child: const Icon(
         Icons.error_outline_rounded,
         color: BatshColors.error,
-        size: 48,
+        size: BatshIconSize.xxl,
       ),
     );
 

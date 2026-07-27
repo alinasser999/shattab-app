@@ -13,6 +13,7 @@ import '../../../core/widgets/batsh_button.dart';
 import '../../../core/widgets/photo_picker.dart';
 import '../data/payment_repository.dart';
 import '../pricing.dart';
+import '../../../core/theme/batsh_icon_size.dart';
 
 /// Opens the payment-method chooser, then routes to the chosen flow.
 /// InstaPay is functional (manual verify); Apple Pay is pending a processor.
@@ -263,7 +264,7 @@ class _InstaPayScreenState extends ConsumerState<InstaPayScreen> {
                       ..showSnackBar(
                           SnackBar(content: Text(S.copiedToast)));
                   },
-                  icon: const Icon(Icons.copy_rounded, size: 18),
+                  icon: const Icon(Icons.copy_rounded, size: BatshIconSize.md),
                   label: Text(S.copyAction),
                 ),
               ],
@@ -323,7 +324,7 @@ class _InstaPayScreenState extends ConsumerState<InstaPayScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             const Icon(Icons.check_circle_rounded,
-                size: 72, color: BatshColors.secondary),
+                size: BatshIconSize.xxl, color: BatshColors.secondary),
             const SizedBox(height: BatshSpacing.lg),
             Text(S.instapaySubmittedTitle,
                 textAlign: TextAlign.center,

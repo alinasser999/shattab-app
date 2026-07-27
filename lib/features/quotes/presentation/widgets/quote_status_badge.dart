@@ -6,6 +6,7 @@ import '../../../../core/theme/batsh_radius.dart';
 import '../../../../core/theme/batsh_spacing.dart';
 import '../../../../core/theme/batsh_typography.dart';
 import '../../domain/quote.dart';
+import '../../../../core/theme/batsh_icon_size.dart';
 
 /// Small colored pill describing a quote's status. Pass [status] null for the
 /// "needs a reply" (no quote yet) state used in the contractor inbox.
@@ -67,7 +68,7 @@ class QuoteStatusBadge extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(s.icon, size: 14, color: s.fg),
+          Icon(s.icon, size: BatshIconSize.sm, color: s.fg),
           const SizedBox(width: BatshSpacing.xs),
           Text(s.label,
               style: BatshTypography.labelSm

@@ -7,6 +7,7 @@ import '../theme/batsh_colors.dart';
 import '../theme/batsh_radius.dart';
 import '../theme/batsh_spacing.dart';
 import '../theme/batsh_typography.dart';
+import '../theme/batsh_icon_size.dart';
 
 /// Big primary WhatsApp CTA. Opens whatsapp://send?phone=...
 class WhatsAppButton extends StatelessWidget {
@@ -49,7 +50,7 @@ class WhatsAppButton extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const Icon(Icons.chat_bubble_outline,
-                  color: Colors.white, size: 20),
+                  color: Colors.white, size: BatshIconSize.md),
               const SizedBox(width: BatshSpacing.sm),
               Text(
                 S.contactViaWhatsApp,
@@ -93,7 +94,7 @@ class CallButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Semantics(button: true, label: S.call, child: OutlinedButton.icon(
       onPressed: () => _open(context),
-      icon: const Icon(Icons.call_outlined, size: 20),
+      icon: const Icon(Icons.call_outlined, size: BatshIconSize.md),
       label: Text(S.call),
       style: OutlinedButton.styleFrom(
         foregroundColor: BatshColors.primary,

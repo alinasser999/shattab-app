@@ -11,6 +11,7 @@ import '../theme/batsh_colors.dart';
 import '../theme/batsh_radius.dart';
 import '../theme/batsh_spacing.dart';
 import '../theme/batsh_typography.dart';
+import '../theme/batsh_icon_size.dart';
 
 /// Multi-photo picker (max [maxPhotos], default 5). Returns [DraftPhoto] entries
 /// the caller persists later.
@@ -129,7 +130,7 @@ class _AddTile extends StatelessWidget {
             color: disabled
                 ? BatshColors.surfaceContainerHigh
                 : BatshColors.primary,
-            size: 28,
+            size: BatshIconSize.lg,
           ),
         ),
       ),
@@ -177,7 +178,7 @@ class _PhotoTile extends StatelessWidget {
               child: const Padding(
                 padding: EdgeInsets.all(4),
                 child:
-                    Icon(Icons.close, size: 16, color: Colors.white),
+                    Icon(Icons.close, size: BatshIconSize.sm, color: Colors.white),
               ),
             ),
           ),

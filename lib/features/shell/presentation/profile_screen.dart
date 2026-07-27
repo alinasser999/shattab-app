@@ -33,6 +33,7 @@ import '../../discovery/presentation/providers/discovery_providers.dart';
 import '../../discovery/presentation/widgets/contractor_showcase.dart';
 import '../../saved/presentation/providers/saved_providers.dart';
 import '../../verification/presentation/verification_screen.dart';
+import '../../../core/theme/batsh_icon_size.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -303,7 +304,7 @@ class _AccountHero extends StatelessWidget {
                       if (listing.verified) ...[
                         const SizedBox(width: BatshSpacing.xs),
                         const Icon(Icons.verified_rounded,
-                            size: 20, color: BatshColors.tertiary),
+                            size: BatshIconSize.md, color: BatshColors.tertiary),
                       ],
                     ],
                   ),
@@ -315,7 +316,7 @@ class _AccountHero extends StatelessWidget {
                     Row(
                       children: [
                         const Icon(Icons.star_rounded,
-                            size: 16, color: BatshColors.tertiary),
+                            size: BatshIconSize.sm, color: BatshColors.tertiary),
                         const SizedBox(width: 3),
                         Text(avg.toStringAsFixed(1),
                             style: BatshTypography.labelMd.copyWith(
@@ -331,7 +332,7 @@ class _AccountHero extends StatelessWidget {
                     Row(
                       children: [
                         const Icon(Icons.auto_awesome,
-                            size: 15, color: BatshColors.secondary),
+                            size: BatshIconSize.sm, color: BatshColors.secondary),
                         const SizedBox(width: 4),
                         Text(S.newProfessional,
                             style: BatshTypography.labelSm.copyWith(
@@ -376,7 +377,7 @@ class _AccountAvatar extends StatelessWidget {
             child: logoUrl != null
                 ? CachedNetworkImage(imageUrl: logoUrl!, fit: BoxFit.cover)
                 : const Icon(Icons.engineering_outlined,
-                    size: 36, color: BatshColors.primary),
+                    size: BatshIconSize.xl, color: BatshColors.primary),
           ),
           if (verified)
             Positioned(
@@ -393,7 +394,7 @@ class _AccountAvatar extends StatelessWidget {
                       color: BatshColors.surfaceContainerLowest, width: 2.5),
                 ),
                 child: const Icon(Icons.check_rounded,
-                    size: 14, color: BatshColors.onTertiary),
+                    size: BatshIconSize.sm, color: BatshColors.onTertiary),
               ),
             ),
         ],
@@ -485,7 +486,7 @@ class _StatCell extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon,
-              size: 15,
+              size: BatshIconSize.sm,
               color: highlight ? BatshColors.tertiary : BatshColors.primary),
           const SizedBox(height: 5),
           FittedBox(
@@ -543,7 +544,7 @@ class _AccountProBanner extends StatelessWidget {
                     ]),
                   ),
                   child: const Icon(Icons.workspace_premium_rounded,
-                      size: 22, color: BatshColors.onTertiaryContainer),
+                      size: BatshIconSize.md, color: BatshColors.onTertiaryContainer),
                 ),
                 const SizedBox(width: BatshSpacing.md),
                 Expanded(
@@ -633,7 +634,7 @@ class _VerificationTile extends StatelessWidget {
       label: S.verifyTileLabel,
       subtitle: S.verifySubtitle,
       trailing: const Icon(Icons.chevron_left,
-          color: BatshColors.onSurfaceVariant, size: 20),
+          color: BatshColors.onSurfaceVariant, size: BatshIconSize.md),
       onTap: () => _open(context),
     );
   }
@@ -993,7 +994,7 @@ class _HeroAvatar extends StatelessWidget {
                         color: BatshColors.surfaceContainerLowest, width: 2.5),
                   ),
                   child: const Icon(Icons.edit_outlined,
-                      size: 14, color: BatshColors.onPrimary),
+                      size: BatshIconSize.sm, color: BatshColors.onPrimary),
                 ),
               ),
             ),
@@ -1053,7 +1054,7 @@ class _StatBig extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 18, color: BatshColors.primary),
+          Icon(icon, size: BatshIconSize.md, color: BatshColors.primary),
           const SizedBox(height: BatshSpacing.md),
           number,
           const SizedBox(height: BatshSpacing.xxs),
@@ -1099,7 +1100,7 @@ class _QuickAction extends StatelessWidget {
                     color: BatshColors.primaryFixed.withValues(alpha: 0.35),
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(icon, color: BatshColors.primary, size: 22),
+                  child: Icon(icon, color: BatshColors.primary, size: BatshIconSize.md),
                 ),
                 const SizedBox(height: BatshSpacing.sm),
                 Text(label,
@@ -1179,7 +1180,7 @@ class _LogoutRow extends StatelessWidget {
                     borderRadius: BatshRadius.brMd,
                   ),
                   child: const Icon(Icons.logout,
-                      color: BatshColors.error, size: 20),
+                      color: BatshColors.error, size: BatshIconSize.md),
                 ),
                 const SizedBox(width: BatshSpacing.gutter),
                 Expanded(
@@ -1189,7 +1190,7 @@ class _LogoutRow extends StatelessWidget {
                           fontWeight: FontWeight.w600)),
                 ),
                 const Icon(Icons.chevron_left,
-                    color: BatshColors.error, size: 20),
+                    color: BatshColors.error, size: BatshIconSize.md),
               ],
             ),
           ),
@@ -1236,7 +1237,7 @@ class _SettingsTile extends StatelessWidget {
                   color: BatshColors.primaryFixed.withValues(alpha: 0.2),
                   borderRadius: BatshRadius.brMd,
                 ),
-                child: Icon(icon, color: BatshColors.primary, size: 22),
+                child: Icon(icon, color: BatshColors.primary, size: BatshIconSize.md),
               ),
               const SizedBox(width: BatshSpacing.gutter),
               Expanded(
@@ -1407,7 +1408,7 @@ class _HelpTile extends StatelessWidget {
       label: S.helpSupport,
       subtitle: S.helpSubtitle,
       trailing: const Icon(Icons.chevron_left,
-          color: BatshColors.onSurfaceVariant, size: 20),
+          color: BatshColors.onSurfaceVariant, size: BatshIconSize.md),
       onTap: () => _open(context),
     );
   }
@@ -1446,7 +1447,7 @@ class _LegalTile extends StatelessWidget {
       icon: icon,
       label: label,
       trailing: const Icon(Icons.chevron_left,
-          color: BatshColors.onSurfaceVariant, size: 20),
+          color: BatshColors.onSurfaceVariant, size: BatshIconSize.md),
       onTap: () => _open(context),
     );
   }
@@ -1534,7 +1535,7 @@ class _DeleteAccountTileState extends ConsumerState<_DeleteAccountTile> {
       icon: Icons.delete_forever_outlined,
       label: S.deleteAccount,
       trailing: const Icon(Icons.chevron_left,
-          color: BatshColors.onSurfaceVariant, size: 20),
+          color: BatshColors.onSurfaceVariant, size: BatshIconSize.md),
       onTap: _confirm,
     );
   }

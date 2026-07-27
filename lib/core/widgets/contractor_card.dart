@@ -13,6 +13,7 @@ import '../utils/image_url.dart';
 import 'batsh_pressable.dart';
 import 'batsh_shimmer.dart';
 import 'tier_badge.dart';
+import '../theme/batsh_icon_size.dart';
 
 /// Large editorial-style card for the discover feed. Premium magazine layout:
 /// a tall cover with the logo, name, headline and rating composited directly
@@ -85,7 +86,7 @@ class ContractorCard extends StatelessWidget {
                       Row(
                         children: [
                           const Icon(Icons.place_outlined,
-                              size: 14, color: BatshColors.onSurfaceVariant),
+                              size: BatshIconSize.sm, color: BatshColors.onSurfaceVariant),
                           const SizedBox(width: 4),
                           Expanded(
                             child: Text(firstAreas.join(' · '),
@@ -191,7 +192,7 @@ class _EditorialCover extends StatelessWidget {
                   tooltip: isSaved ? S.unsaveTooltip : S.saveTooltip,
                   icon: Icon(
                     isSaved ? Icons.bookmark : Icons.bookmark_border,
-                    size: 18,
+                    size: BatshIconSize.md,
                     color: isSaved
                         ? BatshColors.primary
                         : BatshColors.onSurfaceVariant,
@@ -278,7 +279,7 @@ class _LogoAvatar extends StatelessWidget {
                       const ColoredBox(color: BatshColors.surfaceContainer),
                 )
               : const Icon(Icons.engineering_outlined,
-                  color: BatshColors.primary, size: 24),
+                  color: BatshColors.primary, size: BatshIconSize.lg),
         ),
       ),
     );
@@ -307,7 +308,7 @@ class _RatingBadge extends StatelessWidget {
         children: [
           Icon(
             isNew ? Icons.auto_awesome : Icons.star,
-            size: 14,
+            size: BatshIconSize.sm,
             color: isNew ? BatshColors.secondary : BatshColors.tertiary,
           ),
           const SizedBox(width: 4),
@@ -379,7 +380,7 @@ class _StatChip extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 12, color: iconColor),
+          Icon(icon, size: BatshIconSize.xs, color: iconColor),
           const SizedBox(width: 4),
           Text(label,
               style: BatshTypography.labelSm

@@ -6,6 +6,7 @@ import '../theme/batsh_motion.dart';
 import '../theme/batsh_radius.dart';
 import '../theme/batsh_spacing.dart';
 import '../theme/batsh_typography.dart';
+import '../theme/batsh_icon_size.dart';
 
 enum BatshButtonStyle { primary, secondary, ghost }
 
@@ -57,7 +58,7 @@ class BatshButton extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               if (icon != null) ...[
-                Icon(icon, size: 20),
+                Icon(icon, size: BatshIconSize.md),
                 const SizedBox(width: BatshSpacing.sm),
               ],
               Text(label, style: BatshTypography.labelLg.copyWith(
