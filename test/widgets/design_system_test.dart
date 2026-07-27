@@ -2,6 +2,8 @@ import 'package:batsh/core/theme/batsh_border_width.dart';
 import 'package:batsh/core/theme/batsh_icon_size.dart';
 import 'package:batsh/core/theme/batsh_shadows.dart';
 import 'package:batsh/core/widgets/batsh_badge.dart';
+import 'package:batsh/core/widgets/batsh_dialog.dart';
+import 'package:batsh/core/widgets/batsh_sheet.dart';
 import 'package:batsh/core/widgets/batsh_snack.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -114,7 +116,135 @@ void main() {
       expect(node.flagsCollection.isButton, isFalse);
       handle.dispose();
     });
+  });
 
+  group('BatshDialog', () {
+    testWidgets('confirm returns true when the confirm action is tapped',
+        (tester) async {
+      bool? result;
+      await tester.pumpWidget(MaterialApp(
+        home: Scaffold(
+          body: Builder(
+            builder: (context) => TextButton(
+              onPressed: () async {
+                result = await BatshDialog.confirm(
+                  context,
+                  title: 'عنوان',
+                  message: 'رسالة',
+                  confirmLabel: 'تأكيد',
+                  isDestructive: true,
+                );
+              },
+              child: const Text('open'),
+            ),
+          ),
+        ),
+      ));
+      await tester.tap(find.text('open'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('تأكيد'));
+      await tester.pumpAndSettle();
+      expect(result, isTrue);
+    });
+
+    testWidgets('confirm returns false when cancelled', (tester) async {
+      bool? result;
+      await tester.pumpWidget(MaterialApp(
+        home: Scaffold(
+          body: Builder(
+            builder: (context) => TextButton(
+              onPressed: () async {
+                result = await BatshDialog.confirm(
+                  context,
+                  title: 'عنوان',
+                  message: 'رسالة',
+                );
+              },
+              child: const Text('open'),
+            ),
+          ),
+        ),
+      ));
+      await tester.tap(find.text('open'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('إلغاء'));
+      await tester.pumpAndSettle();
+      expect(result, isFalse);
+    });
+
+    testWidgets('info dismisses on its single action', (tester) async {
+      await tester.pumpWidget(MaterialApp(
+        home: Scaffold(
+          body: Builder(
+            builder: (context) => TextButton(
+              onPressed: () => BatshDialog.info(
+                context,
+                title: 'عنوان',
+                message: 'رسالة',
+              ),
+              child: const Text('open'),
+            ),
+          ),
+        ),
+      ));
+      await tester.tap(find.text('open'));
+      await tester.pumpAndSettle();
+      expect(find.text('رسالة'), findsOneWidget);
+      await tester.tap(find.text('حسنًا'));
+      await tester.pumpAndSettle();
+      expect(find.text('رسالة'), findsNothing);
+    });
+  });
+
+  group('BatshSheet', () {
+    testWidgets('shows its content above the drag handle', (tester) async {
+      await tester.pumpWidget(MaterialApp(
+        home: Scaffold(
+          body: Builder(
+            builder: (context) => TextButton(
+              onPressed: () => BatshSheet.show<void>(
+                context,
+                builder: (_) => const Text('sheet content'),
+              ),
+              child: const Text('open'),
+            ),
+          ),
+        ),
+      ));
+      await tester.tap(find.text('open'));
+      await tester.pumpAndSettle();
+      expect(find.text('sheet content'), findsOneWidget);
+    });
+
+    testWidgets('returns the popped value to the caller', (tester) async {
+      String? result;
+      await tester.pumpWidget(MaterialApp(
+        home: Scaffold(
+          body: Builder(
+            builder: (context) => TextButton(
+              onPressed: () async {
+                result = await BatshSheet.show<String>(
+                  context,
+                  builder: (ctx) => TextButton(
+                    onPressed: () => Navigator.of(ctx).pop('done'),
+                    child: const Text('close'),
+                  ),
+                );
+              },
+              child: const Text('open'),
+            ),
+          ),
+        ),
+      ));
+      await tester.tap(find.text('open'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('close'));
+      await tester.pumpAndSettle();
+      expect(result, 'done');
+    });
+  });
+
+  group('BatshBadge', () {
     test('every tone and emphasis pairing clears 4.5:1 contrast', () {
       // Badge text sits at labelMd (13) and labelSm (11). Both are below the
       // WCAG large-text threshold, so the full 4.5:1 applies to all of them.

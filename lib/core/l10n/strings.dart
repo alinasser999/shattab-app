@@ -547,6 +547,7 @@ class S {
   static String get cancel => _t('إلغاء', 'Cancel');
   static String get delete => _t('حذف', 'Delete');
   static String get confirm => _t('تأكيد', 'Confirm');
+  static String get ok => _t('حسنًا', 'OK');
 
   // ── Profile ──────────────────────────────────────────────────────────────
   static String get profileTitle => _t('حسابي', 'Profile');
