@@ -8,6 +8,7 @@ import '../theme/batsh_radius.dart';
 import '../theme/batsh_spacing.dart';
 import '../theme/batsh_typography.dart';
 import '../theme/batsh_icon_size.dart';
+import 'batsh_sheet.dart';
 
 class FilterOption {
   const FilterOption({
@@ -58,7 +59,10 @@ class BatshFilterButton extends StatelessWidget {
       color: bgColor,
       borderRadius: BatshRadius.brFull,
       child: InkWell(
-        onTap: () { HapticFeedback.lightImpact(); onTap(); },
+        onTap: () {
+          HapticFeedback.lightImpact();
+          onTap();
+        },
         borderRadius: BatshRadius.brFull,
         child: Container(
           height: 42,
@@ -105,9 +109,7 @@ class BatshActiveFilterChip extends StatelessWidget {
       decoration: BoxDecoration(
         color: BatshColors.primaryFixed,
         borderRadius: BatshRadius.brFull,
-        border: Border.all(
-          color: BatshColors.primary.withValues(alpha: 0.25),
-        ),
+        border: Border.all(color: BatshColors.primary.withValues(alpha: 0.25)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -130,7 +132,10 @@ class BatshActiveFilterChip extends StatelessWidget {
               shape: const CircleBorder(),
               child: InkWell(
                 customBorder: const CircleBorder(),
-                onTap: () { HapticFeedback.lightImpact(); onRemove(); },
+                onTap: () {
+                  HapticFeedback.lightImpact();
+                  onRemove();
+                },
                 child: const Icon(
                   Icons.close_rounded,
                   size: BatshIconSize.sm,
@@ -174,10 +179,9 @@ class BatshFilterSheet extends StatefulWidget {
     required List<BatshFilterSheetSection> sections,
     Set<String> initialSelected = const {},
   }) {
-    return showModalBottomSheet<Set<String>>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+    return BatshSheet.show<Set<String>>(
+      context,
+      contentPadding: EdgeInsets.zero,
       builder: (_) => BatshFilterSheet(
         sections: sections,
         initialSelected: initialSelected,
@@ -216,57 +220,31 @@ class _BatshFilterSheetState extends State<BatshFilterSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: BatshColors.surfaceBright,
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(16),
-          topRight: Radius.circular(16),
-        ),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _buildHandle(),
-          _buildHeader(),
-          Flexible(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(
-                BatshSpacing.lg,
-                0,
-                BatshSpacing.lg,
-                BatshSpacing.lg,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  for (final section in widget.sections) ...[
-                    _buildSection(section),
-                    const SizedBox(height: BatshSpacing.lg),
-                  ],
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _buildHeader(),
+        Flexible(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(
+              BatshSpacing.lg,
+              0,
+              BatshSpacing.lg,
+              BatshSpacing.lg,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                for (final section in widget.sections) ...[
+                  _buildSection(section),
+                  const SizedBox(height: BatshSpacing.lg),
                 ],
-              ),
+              ],
             ),
           ),
-          _buildFooter(),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHandle() {
-    return Padding(
-      padding: const EdgeInsets.only(top: BatshSpacing.sm),
-      child: Center(
-        child: Container(
-          width: 36,
-          height: 4,
-          decoration: BoxDecoration(
-            color: BatshColors.outlineVariant,
-            borderRadius: BatshRadius.brFull,
-          ),
         ),
-      ),
+        _buildFooter(),
+      ],
     );
   }
 
@@ -289,7 +267,10 @@ class _BatshFilterSheetState extends State<BatshFilterSheet> {
           const Spacer(),
           if (_selected.isNotEmpty)
             GestureDetector(
-              onTap: () { HapticFeedback.lightImpact(); _clear(); },
+              onTap: () {
+                HapticFeedback.lightImpact();
+                _clear();
+              },
               child: Text(
                 S.clearAll,
                 style: BatshTypography.labelMd.copyWith(
@@ -310,7 +291,11 @@ class _BatshFilterSheetState extends State<BatshFilterSheet> {
         Row(
           children: [
             if (section.icon != null) ...[
-              Icon(section.icon, size: BatshIconSize.sm, color: BatshColors.primary),
+              Icon(
+                section.icon,
+                size: BatshIconSize.sm,
+                color: BatshColors.primary,
+              ),
               const SizedBox(width: BatshSpacing.xs),
             ],
             Text(
@@ -329,7 +314,10 @@ class _BatshFilterSheetState extends State<BatshFilterSheet> {
           children: section.options.map((opt) {
             final isSelected = _selected.contains(opt.value);
             return GestureDetector(
-              onTap: () { HapticFeedback.lightImpact(); _toggle(opt.value, section.singleSelect); },
+              onTap: () {
+                HapticFeedback.lightImpact();
+                _toggle(opt.value, section.singleSelect);
+              },
               child: AnimatedContainer(
                 duration: BatshMotion.fast,
                 curve: BatshMotion.easeOut,
@@ -368,8 +356,9 @@ class _BatshFilterSheetState extends State<BatshFilterSheet> {
                         color: isSelected
                             ? BatshColors.primary
                             : BatshColors.onSurfaceVariant,
-                        fontWeight:
-                            isSelected ? FontWeight.w600 : FontWeight.w500,
+                        fontWeight: isSelected
+                            ? FontWeight.w600
+                            : FontWeight.w500,
                       ),
                     ),
                   ],
@@ -398,7 +387,10 @@ class _BatshFilterSheetState extends State<BatshFilterSheet> {
               borderRadius: BatshRadius.brMd,
               child: InkWell(
                 borderRadius: BatshRadius.brMd,
-                onTap: () { HapticFeedback.lightImpact(); Navigator.of(context).pop(); },
+                onTap: () {
+                  HapticFeedback.lightImpact();
+                  Navigator.of(context).pop();
+                },
                 child: Container(
                   height: 50,
                   decoration: BoxDecoration(
@@ -425,7 +417,10 @@ class _BatshFilterSheetState extends State<BatshFilterSheet> {
               borderRadius: BatshRadius.brMd,
               child: InkWell(
                 borderRadius: BatshRadius.brMd,
-                onTap: () { HapticFeedback.lightImpact(); Navigator.of(context).pop(_selected); },
+                onTap: () {
+                  HapticFeedback.lightImpact();
+                  Navigator.of(context).pop(_selected);
+                },
                 child: Container(
                   height: 50,
                   alignment: Alignment.center,
