@@ -21,7 +21,7 @@ import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../../core/utils/error_mapper.dart';
 import '../../../quotes/presentation/quote_sheet.dart';
 import '../../../quotes/presentation/providers/quotes_providers.dart';
-import '../../../discovery/presentation/widgets/avatar_with_initials.dart';
+import '../../../../core/widgets/avatar_with_initials.dart';
 import '../../domain/brief.dart';
 import '../../domain/job_feed_filters.dart';
 import '../providers/briefs_providers.dart';
@@ -371,14 +371,14 @@ class _JobOpportunitiesScreenState
                                   .fadeIn(
                                     duration: 350.ms,
                                     delay: BatshMotion.staggerClamped(i),
-                                    curve: Curves.easeOutQuad,
+                                    curve: BatshMotion.easeOut,
                                   )
                                   .slideY(
                                     begin: 0.08,
                                     end: 0,
                                     duration: 350.ms,
                                     delay: BatshMotion.staggerClamped(i),
-                                    curve: Curves.easeOutCubic,
+                                    curve: BatshMotion.easeOut,
                                   ),
                       );
                     }, childCount: filtered.length),

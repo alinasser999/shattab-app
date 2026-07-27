@@ -63,7 +63,7 @@ class BatshListSkeleton extends StatelessWidget {
           ).animate().fadeIn(
             duration: BatshMotion.normal,
             delay: BatshMotion.staggerClamped(i),
-            curve: Curves.easeOut,
+            curve: BatshMotion.easeOut,
           ),
     );
   }
@@ -149,7 +149,7 @@ class BatshProfileSkeleton extends StatelessWidget {
                         .animate(interval: BatshMotion.staggerBase)
                         .fadeIn(
                           duration: BatshMotion.normal,
-                          curve: Curves.easeOut,
+                          curve: BatshMotion.easeOut,
                         ),
               ),
             ),
@@ -201,7 +201,7 @@ class BatshCommentsSkeleton extends StatelessWidget {
           ).animate().fadeIn(
             duration: BatshMotion.normal,
             delay: BatshMotion.staggerClamped(i),
-            curve: Curves.easeOut,
+            curve: BatshMotion.easeOut,
           ),
       ],
     );
@@ -261,7 +261,10 @@ class BatshPostSkeleton extends StatelessWidget {
                   const BatshCommentsSkeleton(),
                 ]
                 .animate(interval: BatshMotion.staggerBase)
-                .fadeIn(duration: BatshMotion.normal, curve: Curves.easeOut),
+                .fadeIn(
+                  duration: BatshMotion.normal,
+                  curve: BatshMotion.easeOut,
+                ),
       ),
     );
   }
@@ -302,7 +305,7 @@ class BatshHeroDetailSkeleton extends StatelessWidget {
                       .animate(interval: BatshMotion.staggerBase)
                       .fadeIn(
                         duration: BatshMotion.normal,
-                        curve: Curves.easeOut,
+                        curve: BatshMotion.easeOut,
                       ),
             ),
           ),

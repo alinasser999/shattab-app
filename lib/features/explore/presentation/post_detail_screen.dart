@@ -21,7 +21,7 @@ import '../../../core/widgets/batsh_scaffold.dart';
 import '../../../core/widgets/contact_buttons.dart';
 import '../../auth/presentation/providers/auth_provider.dart';
 import '../../auth/presentation/sign_in_sheet.dart';
-import '../../discovery/presentation/widgets/avatar_with_initials.dart';
+import '../../../core/widgets/avatar_with_initials.dart';
 import '../domain/post.dart';
 import 'providers/explore_providers.dart';
 import 'widgets/post_type_icon.dart';

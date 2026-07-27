@@ -23,6 +23,7 @@ import '../domain/received_request.dart';
 import 'providers/inbox_providers.dart';
 import '../../../core/theme/batsh_icon_size.dart';
 import '../../../core/widgets/batsh_badge.dart';
+import '../../../core/theme/batsh_motion.dart';
 
 class InboxScreen extends ConsumerWidget {
   const InboxScreen({super.key});
@@ -72,7 +73,7 @@ class InboxScreen extends ConsumerWidget {
                           .slideY(
                             begin: 0.06,
                             end: 0,
-                            curve: Curves.easeOutCubic,
+                            curve: BatshMotion.easeOut,
                           );
               },
             ),
@@ -121,7 +122,7 @@ class _SkeletonCard extends StatelessWidget {
             ? items
             : items
                   .animate(interval: 60.ms)
-                  .fadeIn(duration: 280.ms, curve: Curves.easeOut),
+                  .fadeIn(duration: 280.ms, curve: BatshMotion.easeOut),
       ),
     );
   }

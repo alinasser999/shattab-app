@@ -24,6 +24,7 @@ import 'widgets/quote_status_badge.dart';
 import '../../../core/theme/batsh_icon_size.dart';
 import '../../../core/widgets/batsh_snack.dart';
 import '../../../core/widgets/batsh_dialog.dart';
+import '../../../core/theme/batsh_motion.dart';
 
 /// Contractor's own quotes across every brief — the one place a quote sent on
 /// a public post stays trackable after the post leaves the opportunities feed.
@@ -62,7 +63,7 @@ class MyQuotesScreen extends ConsumerWidget {
                   _QuoteRow(quote: quotes[i].quote, brief: quotes[i].brief)
                       .animate()
                       .fadeIn(delay: (60 * i.clamp(0, 8)).ms, duration: 260.ms)
-                      .slideY(begin: 0.06, end: 0, curve: Curves.easeOutCubic),
+                      .slideY(begin: 0.06, end: 0, curve: BatshMotion.easeOut),
             ),
           );
         },

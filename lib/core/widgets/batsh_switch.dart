@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../theme/batsh_colors.dart';
 import '../theme/batsh_shadows.dart';
+import '../theme/batsh_motion.dart';
 
 /// Premium custom toggle — terracotta track, spring-eased thumb, soft shadow.
 /// Replaces stock [Switch] on the account screen so the control reads on-brand.
@@ -36,7 +37,7 @@ class BatshSwitch extends StatelessWidget {
           child: Center(
             child: AnimatedContainer(
               duration: d,
-              curve: Curves.easeOutCubic,
+              curve: BatshMotion.easeOut,
               width: _w,
               height: _h,
               padding: const EdgeInsets.all(3),
@@ -48,7 +49,7 @@ class BatshSwitch extends StatelessWidget {
               ),
               child: AnimatedAlign(
                 duration: d,
-                curve: Curves.easeOutCubic,
+                curve: BatshMotion.easeOut,
                 alignment: value ? Alignment.centerRight : Alignment.centerLeft,
                 child: Container(
                   width: _thumb,

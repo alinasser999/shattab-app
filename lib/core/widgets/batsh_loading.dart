@@ -3,6 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 
 import '../l10n/strings.dart';
 import '../theme/batsh_colors.dart';
+import '../theme/batsh_motion.dart';
 
 class BatshLoading extends StatelessWidget {
   const BatshLoading({super.key, this.size = 32});
@@ -15,20 +16,22 @@ class BatshLoading extends StatelessWidget {
       label: S.loading,
       liveRegion: true,
       child: Center(
-      child: SizedBox(
-        height: size,
-        width: size,
-        child: const CircularProgressIndicator(
-          color: BatshColors.primary,
-          strokeWidth: 3,
-        ),
-      ).animate().fadeIn(
-            duration: 300.ms,
-            curve: Curves.easeOut,
-          ).shimmer(
-            duration: 1500.ms,
-            color: BatshColors.primaryContainer,
-          ),
-    ));
+        child:
+            SizedBox(
+                  height: size,
+                  width: size,
+                  child: const CircularProgressIndicator(
+                    color: BatshColors.primary,
+                    strokeWidth: 3,
+                  ),
+                )
+                .animate()
+                .fadeIn(duration: 300.ms, curve: BatshMotion.easeOut)
+                .shimmer(
+                  duration: 1500.ms,
+                  color: BatshColors.primaryContainer,
+                ),
+      ),
+    );
   }
 }

@@ -223,7 +223,7 @@ class _SuccessView extends StatelessWidget {
               .animate()
               .scale(
                 duration: 400.ms,
-                curve: Curves.elasticOut,
+                curve: BatshMotion.springCelebrate,
                 begin: const Offset(0.4, 0.4),
                 end: const Offset(1, 1),
               )

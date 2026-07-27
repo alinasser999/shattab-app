@@ -13,6 +13,7 @@ import 'core/theme/theme_mode_provider.dart';
 import 'features/auth/domain/profile.dart';
 import 'features/auth/presentation/providers/auth_provider.dart';
 import 'core/theme/batsh_colors.dart';
+import 'core/theme/batsh_radius.dart';
 
 class BatshApp extends ConsumerWidget {
   const BatshApp({super.key});
@@ -89,7 +90,7 @@ class _DebugBanner extends ConsumerWidget {
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         decoration: BoxDecoration(
           color: Colors.black.withValues(alpha: 0.75),
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BatshRadius.brSm,
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -118,7 +119,7 @@ class _DebugBanner extends ConsumerWidget {
         padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
         decoration: BoxDecoration(
           color: active ? BatshColors.primary : Colors.white24,
-          borderRadius: BorderRadius.circular(5),
+          borderRadius: BatshRadius.brXs,
         ),
         child: Text(
           label,

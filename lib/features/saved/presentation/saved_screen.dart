@@ -17,6 +17,7 @@ import '../../../core/widgets/contractor_card.dart';
 import '../../auth/presentation/providers/auth_provider.dart';
 import '../../auth/presentation/sign_in_sheet.dart';
 import 'providers/saved_providers.dart';
+import '../../../core/theme/batsh_motion.dart';
 
 class SavedScreen extends ConsumerWidget {
   const SavedScreen({super.key});
@@ -102,7 +103,7 @@ class SavedScreen extends ConsumerWidget {
                                 .slideY(
                                   begin: 0.06,
                                   end: 0,
-                                  curve: Curves.easeOutCubic,
+                                  curve: BatshMotion.easeOut,
                                 );
                     },
                   ),

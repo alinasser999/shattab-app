@@ -35,6 +35,7 @@ import '../../saved/presentation/providers/saved_providers.dart';
 import '../../verification/presentation/verification_screen.dart';
 import '../../../core/theme/batsh_icon_size.dart';
 import '../../../core/widgets/batsh_snack.dart';
+import '../../../core/theme/batsh_motion.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -238,8 +239,8 @@ class _ContractorAccountView extends ConsumerWidget {
             ? items
             : items
                   .animate(interval: 55.ms)
-                  .fadeIn(duration: 300.ms, curve: Curves.easeOut)
-                  .slideY(begin: 0.06, end: 0, curve: Curves.easeOutCubic),
+                  .fadeIn(duration: 300.ms, curve: BatshMotion.easeOut)
+                  .slideY(begin: 0.06, end: 0, curve: BatshMotion.easeOut),
       ),
     );
   }
@@ -263,7 +264,7 @@ class _AccountHero extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(BatshSpacing.lg),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BatshRadius.brXxl,
           boxShadow: BatshShadows.soft,
           // Very soft warm radial so the card feels alive, not flat white.
           gradient: RadialGradient(
@@ -389,7 +390,7 @@ class _AccountAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final radius = BorderRadius.circular(20);
+    final radius = BatshRadius.brXl;
     return SizedBox(
       width: 76,
       height: 76,
@@ -505,7 +506,7 @@ class _StatStrip extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: BatshSpacing.md),
         decoration: BoxDecoration(
           color: BatshColors.primaryFixed.withValues(alpha: 0.5),
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BatshRadius.brXl,
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
@@ -748,7 +749,7 @@ class _ProfileFallback extends StatelessWidget {
               padding: const EdgeInsets.all(BatshSpacing.lg),
               decoration: BoxDecoration(
                 color: BatshColors.surfaceContainerLowest,
-                borderRadius: BorderRadius.circular(24),
+                borderRadius: BatshRadius.brXxl,
                 boxShadow: BatshShadows.soft,
               ),
               child: Row(
@@ -960,8 +961,8 @@ class _HomeownerProfile extends ConsumerWidget {
             ? items
             : items
                   .animate(interval: 55.ms)
-                  .fadeIn(duration: 300.ms, curve: Curves.easeOut)
-                  .slideY(begin: 0.06, end: 0, curve: Curves.easeOutCubic),
+                  .fadeIn(duration: 300.ms, curve: BatshMotion.easeOut)
+                  .slideY(begin: 0.06, end: 0, curve: BatshMotion.easeOut),
       ),
     );
   }
@@ -984,7 +985,7 @@ class _ProfileHero extends StatelessWidget {
         padding: const EdgeInsets.all(BatshSpacing.lg),
         decoration: BoxDecoration(
           color: BatshColors.surfaceContainerLowest,
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BatshRadius.brXxl,
           boxShadow: BatshShadows.soft,
         ),
         child: Row(
@@ -1162,7 +1163,7 @@ class _StatBig extends StatelessWidget {
         : TweenAnimationBuilder<double>(
             tween: Tween(begin: 0, end: value.toDouble()),
             duration: const Duration(milliseconds: 900),
-            curve: Curves.easeOutCubic,
+            curve: BatshMotion.easeOut,
             builder: (_, v, _) => Text(
               '${v.round()}',
               style: BatshTypography.displayMd.copyWith(
@@ -1175,7 +1176,7 @@ class _StatBig extends StatelessWidget {
       padding: const EdgeInsets.all(BatshSpacing.lg),
       decoration: BoxDecoration(
         color: BatshColors.surfaceContainerLowest,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BatshRadius.brXl,
         boxShadow: BatshShadows.soft,
       ),
       child: Column(
@@ -1211,12 +1212,12 @@ class _QuickAction extends StatelessWidget {
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BatshRadius.brXl,
         boxShadow: BatshShadows.soft,
       ),
       child: Material(
         color: BatshColors.surfaceContainerLowest,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BatshRadius.brXl,
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: onTap,
@@ -1283,11 +1284,11 @@ class _SettingsGroup extends StatelessWidget {
     }
     return DecoratedBox(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BatshRadius.brXl,
         boxShadow: BatshShadows.soft,
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BatshRadius.brXl,
         child: ColoredBox(
           color: BatshColors.surfaceContainerLowest,
           child: Column(children: rows),
@@ -1305,12 +1306,12 @@ class _LogoutRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BatshRadius.brXl,
         boxShadow: BatshShadows.soft,
       ),
       child: Material(
         color: BatshColors.surfaceContainerLowest,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BatshRadius.brXl,
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: onTap,

@@ -29,6 +29,7 @@ import 'quote_status_badge.dart';
 import '../../../../core/theme/batsh_icon_size.dart';
 import '../../../../core/widgets/batsh_snack.dart';
 import '../../../../core/widgets/batsh_badge.dart';
+import '../../../../core/theme/batsh_motion.dart';
 
 /// Homeowner-side section listing every quote received on a brief, with
 /// accept/decline actions and contact shortcuts once accepted.
@@ -138,7 +139,7 @@ Widget _animatedQuoteCard(Widget card, int index) {
       return card
           .animate()
           .fadeIn(delay: (80 * index.clamp(0, 6)).ms, duration: 280.ms)
-          .slideY(begin: 0.08, end: 0, curve: Curves.easeOutCubic);
+          .slideY(begin: 0.08, end: 0, curve: BatshMotion.easeOut);
     },
   );
 }

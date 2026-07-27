@@ -7,6 +7,7 @@ import '../theme/batsh_spacing.dart';
 import '../theme/batsh_typography.dart';
 import 'batsh_button.dart';
 import '../theme/batsh_icon_size.dart';
+import '../theme/batsh_motion.dart';
 
 class BatshError extends StatelessWidget {
   const BatshError({super.key, this.message, this.onRetry});
@@ -36,7 +37,7 @@ class BatshError extends StatelessWidget {
                 begin: const Offset(0.8, 0.8),
                 end: const Offset(1, 1),
                 duration: 400.ms,
-                curve: Curves.elasticOut,
+                curve: BatshMotion.springCelebrate,
               );
 
     return Semantics(
@@ -81,7 +82,12 @@ class _AnimatedText extends StatelessWidget {
     return widget
         .animate()
         .fadeIn(duration: 300.ms)
-        .slideY(begin: 0.1, end: 0, duration: 300.ms, curve: Curves.easeOut);
+        .slideY(
+          begin: 0.1,
+          end: 0,
+          duration: 300.ms,
+          curve: BatshMotion.easeOut,
+        );
   }
 }
 
@@ -103,7 +109,7 @@ class _AnimatedButton extends StatelessWidget {
     return widget.animate().fadeIn(
       duration: 400.ms,
       delay: 150.ms,
-      curve: Curves.easeOut,
+      curve: BatshMotion.easeOut,
     );
   }
 }

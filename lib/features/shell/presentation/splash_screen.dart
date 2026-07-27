@@ -4,6 +4,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/l10n/strings.dart';
 import '../../../core/theme/batsh_colors.dart';
 import '../../../core/theme/batsh_typography.dart';
+import '../../../core/theme/batsh_motion.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -55,12 +56,12 @@ class _SplashScreenState extends State<SplashScreen>
     if (reduced) return circle;
     return circle
         .animate()
-        .fadeIn(duration: 800.ms, curve: Curves.easeOut)
+        .fadeIn(duration: 800.ms, curve: BatshMotion.easeOut)
         .slide(
           begin: const Offset(-1, -1),
           end: Offset.zero,
           duration: 1000.ms,
-          curve: Curves.easeOutCubic,
+          curve: BatshMotion.easeOut,
         );
   }
 
@@ -76,18 +77,18 @@ class _SplashScreenState extends State<SplashScreen>
     if (reduced) return brand;
     return brand
         .animate()
-        .fadeIn(duration: 700.ms, curve: Curves.easeOut)
+        .fadeIn(duration: 700.ms, curve: BatshMotion.easeOut)
         .slideY(
           begin: -0.2,
           end: 0,
           duration: 800.ms,
-          curve: Curves.easeOutCubic,
+          curve: BatshMotion.easeOut,
         )
         .scale(
           begin: const Offset(0.6, 0.6),
           end: const Offset(1, 1),
           duration: 800.ms,
-          curve: Curves.easeOutCubic,
+          curve: BatshMotion.easeOut,
         );
   }
 
@@ -101,13 +102,13 @@ class _SplashScreenState extends State<SplashScreen>
     if (reduced) return tagline;
     return tagline
         .animate()
-        .fadeIn(duration: 500.ms, delay: 400.ms, curve: Curves.easeOut)
+        .fadeIn(duration: 500.ms, delay: 400.ms, curve: BatshMotion.easeOut)
         .slideY(
           begin: 0.1,
           end: 0,
           duration: 500.ms,
           delay: 400.ms,
-          curve: Curves.easeOutCubic,
+          curve: BatshMotion.easeOut,
         );
   }
 
@@ -123,7 +124,7 @@ class _SplashScreenState extends State<SplashScreen>
     if (reduced) return loader;
     return loader
         .animate()
-        .fadeIn(duration: 400.ms, delay: 600.ms, curve: Curves.easeOut)
+        .fadeIn(duration: 400.ms, delay: 600.ms, curve: BatshMotion.easeOut)
         .shimmer(
           duration: 1200.ms,
           delay: 600.ms,
@@ -152,14 +153,14 @@ class _SplashScreenState extends State<SplashScreen>
             .fadeIn(
               duration: 300.ms,
               delay: (800 + i * 150).ms,
-              curve: Curves.easeOut,
+              curve: BatshMotion.easeOut,
             )
             .scale(
               begin: const Offset(0, 0),
               end: const Offset(1, 1),
               duration: 300.ms,
               delay: (800 + i * 150).ms,
-              curve: Curves.easeOutBack,
+              curve: BatshMotion.springTap,
             );
       }),
     );

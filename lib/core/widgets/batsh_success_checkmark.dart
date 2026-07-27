@@ -24,7 +24,7 @@ class _BatshSuccessCheckmarkState extends State<BatshSuccessCheckmark>
       .animate(
         CurvedAnimation(
           parent: _ctrl,
-          curve: const Interval(0.0, 0.4, curve: Curves.elasticOut),
+          curve: const Interval(0.0, 0.4, curve: BatshMotion.springCelebrate),
         ),
       );
 
@@ -32,7 +32,7 @@ class _BatshSuccessCheckmarkState extends State<BatshSuccessCheckmark>
       .animate(
         CurvedAnimation(
           parent: _ctrl,
-          curve: const Interval(0.3, 0.8, curve: Curves.easeOutCubic),
+          curve: const Interval(0.3, 0.8, curve: BatshMotion.easeOut),
         ),
       );
 

@@ -45,7 +45,7 @@ class _BatshPressableState extends State<BatshPressable>
 
   void _onTapDown(_) {
     if (!_interactive || _reduced) return;
-    _ctrl.animateTo(1, duration: BatshMotion.fast, curve: Curves.easeOutCubic);
+    _ctrl.animateTo(1, duration: BatshMotion.fast, curve: BatshMotion.easeOut);
   }
 
   void _release(Curve curve) {

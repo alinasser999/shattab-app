@@ -5,6 +5,7 @@ import '../theme/batsh_colors.dart';
 import '../theme/batsh_spacing.dart';
 import '../theme/batsh_typography.dart';
 import '../theme/batsh_icon_size.dart';
+import '../theme/batsh_motion.dart';
 
 /// Why the screen is empty — which decides what the user should do next.
 ///
@@ -95,11 +96,11 @@ class BatshEmptyState extends StatelessWidget {
         ? iconWidget
         : iconWidget
               .animate()
-              .fadeIn(duration: 350.ms, curve: Curves.easeOut)
+              .fadeIn(duration: 350.ms, curve: BatshMotion.easeOut)
               .scale(
                 begin: const Offset(0.85, 0.85),
                 end: const Offset(1, 1),
-                curve: Curves.easeOutBack,
+                curve: BatshMotion.springTap,
               );
 
     final titleWidget = Text(
@@ -112,8 +113,8 @@ class BatshEmptyState extends StatelessWidget {
         ? titleWidget
         : titleWidget
               .animate(delay: 100.ms)
-              .fadeIn(duration: 350.ms, curve: Curves.easeOut)
-              .slideY(begin: 0.2, end: 0, curve: Curves.easeOut);
+              .fadeIn(duration: 350.ms, curve: BatshMotion.easeOut)
+              .slideY(begin: 0.2, end: 0, curve: BatshMotion.easeOut);
 
     final messageWidget = Padding(
       padding: const EdgeInsets.only(top: BatshSpacing.sm),
@@ -133,8 +134,8 @@ class BatshEmptyState extends StatelessWidget {
         ? messageWidget
         : messageWidget
               .animate(delay: 200.ms)
-              .fadeIn(duration: 350.ms, curve: Curves.easeOut)
-              .slideY(begin: 0.2, end: 0, curve: Curves.easeOut);
+              .fadeIn(duration: 350.ms, curve: BatshMotion.easeOut)
+              .slideY(begin: 0.2, end: 0, curve: BatshMotion.easeOut);
 
     Widget? animatedAction;
     if (action != null) {
@@ -146,8 +147,8 @@ class BatshEmptyState extends StatelessWidget {
           ? actionWidget
           : actionWidget
                 .animate(delay: 300.ms)
-                .fadeIn(duration: 350.ms, curve: Curves.easeOut)
-                .slideY(begin: 0.2, end: 0, curve: Curves.easeOut);
+                .fadeIn(duration: 350.ms, curve: BatshMotion.easeOut)
+                .slideY(begin: 0.2, end: 0, curve: BatshMotion.easeOut);
     }
 
     return Center(

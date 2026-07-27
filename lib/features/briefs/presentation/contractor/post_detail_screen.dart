@@ -143,7 +143,7 @@ class _PostDetailBody extends StatelessWidget {
                       .animate(interval: BatshMotion.staggerBase)
                       .fadeIn(
                         duration: BatshMotion.normal,
-                        curve: Curves.easeOutQuad,
+                        curve: BatshMotion.easeOut,
                       )
                       .slideY(begin: 0.06, end: 0, curve: BatshMotion.easeOut),
           ),

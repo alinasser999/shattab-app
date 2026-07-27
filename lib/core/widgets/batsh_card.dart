@@ -44,7 +44,7 @@ class _BatshCardState extends State<BatshCard>
 
   void _onTapDown(_) {
     if (widget.onTap == null || _reduced) return;
-    _ctrl.animateTo(1, duration: BatshMotion.fast, curve: Curves.easeOutCubic);
+    _ctrl.animateTo(1, duration: BatshMotion.fast, curve: BatshMotion.easeOut);
   }
 
   void _onTapUp(_) {

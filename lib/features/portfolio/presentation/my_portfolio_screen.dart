@@ -144,12 +144,12 @@ class MyPortfolioScreen extends ConsumerWidget {
                           .fadeIn(
                             duration: 320.ms,
                             delay: (60 * i.clamp(0, 7)).ms,
-                            curve: Curves.easeOut,
+                            curve: BatshMotion.easeOut,
                           )
                           .slideY(
                             begin: 0.08,
                             end: 0,
-                            curve: Curves.easeOutCubic,
+                            curve: BatshMotion.easeOut,
                           );
               },
             ),
@@ -184,7 +184,7 @@ class _PortfolioSkeleton extends StatelessWidget {
               : box.animate().fadeIn(
                   duration: 320.ms,
                   delay: (60 * i.clamp(0, 7)).ms,
-                  curve: Curves.easeOut,
+                  curve: BatshMotion.easeOut,
                 );
         },
       ),

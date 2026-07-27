@@ -246,7 +246,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
                           .fadeIn(
                             delay: BatshMotion.staggerClamped(i),
                             duration: BatshMotion.normal,
-                            curve: Curves.easeOut,
+                            curve: BatshMotion.easeOut,
                           )
                           .slideY(
                             begin: 0.08,
@@ -432,7 +432,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
                                 .fadeIn(
                                   delay: (60 * i.clamp(0, 8)).ms,
                                   duration: BatshMotion.normal,
-                                  curve: Curves.easeOut,
+                                  curve: BatshMotion.easeOut,
                                 )
                                 .slideY(
                                   begin: 0.06,
@@ -466,7 +466,10 @@ class _SectionHeader extends StatelessWidget {
           height: 18,
           decoration: BoxDecoration(
             color: BatshColors.primary,
-            borderRadius: BorderRadius.circular(2),
+            // Half the width: the accent bar's ends are fully round, not
+            // slightly softened. brFull says that; circular(2) only happened
+            // to say it while the bar stayed 4px wide.
+            borderRadius: BatshRadius.brFull,
           ),
         ),
         const SizedBox(width: BatshSpacing.sm),
@@ -526,7 +529,7 @@ class _CategoryStrip extends StatelessWidget {
                     .fadeIn(
                       delay: BatshMotion.staggerClamped(i),
                       duration: BatshMotion.fast,
-                      curve: Curves.easeOut,
+                      curve: BatshMotion.easeOut,
                     )
                     .slideX(begin: 0.15, end: 0, curve: BatshMotion.easeOut);
               },
@@ -839,7 +842,7 @@ class _DiscoverSkeleton extends StatelessWidget {
                 ).animate().fadeIn(
                   duration: BatshMotion.normal,
                   delay: BatshMotion.staggerClamped(i),
-                  curve: Curves.easeOut,
+                  curve: BatshMotion.easeOut,
                 ),
           ),
         ),
@@ -875,7 +878,7 @@ class _DiscoverSkeleton extends StatelessWidget {
                 ).animate().fadeIn(
                   duration: BatshMotion.normal,
                   delay: BatshMotion.staggerClamped(i + 3),
-                  curve: Curves.easeOut,
+                  curve: BatshMotion.easeOut,
                 ),
           ),
         ),
@@ -903,7 +906,7 @@ class _DiscoverSkeleton extends StatelessWidget {
           ).animate().fadeIn(
             duration: BatshMotion.normal,
             delay: BatshMotion.staggerClamped(i),
-            curve: Curves.easeOut,
+            curve: BatshMotion.easeOut,
           ),
           const SizedBox(height: BatshSpacing.md),
         ],

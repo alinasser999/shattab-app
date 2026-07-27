@@ -11,6 +11,7 @@ import '../../../core/widgets/batsh_button.dart';
 import '../pricing.dart';
 import 'payment_flow.dart';
 import '../../../core/theme/batsh_icon_size.dart';
+import '../../../core/theme/batsh_motion.dart';
 
 /// Shattab Pro subscription page. The one surface that earns a Committed /
 /// Drenched treatment (aspirational terracotta hero) inside an otherwise
@@ -174,7 +175,7 @@ class _Medallion extends StatelessWidget {
             begin: 0.85,
             end: 1,
             duration: 420.ms,
-            curve: Curves.easeOutCubic,
+            curve: BatshMotion.easeOut,
           )
           .fadeIn(duration: 320.ms),
     );
@@ -295,7 +296,7 @@ class _PlanToggle extends StatelessWidget {
           onTap: onTap,
           child: AnimatedContainer(
             duration: 180.ms,
-            curve: Curves.easeOut,
+            curve: BatshMotion.easeOut,
             height: 44,
             alignment: Alignment.center,
             decoration: BoxDecoration(
@@ -421,7 +422,7 @@ class _BenefitRow extends StatelessWidget {
     return row
         .animate()
         .fadeIn(delay: (index * 50).ms, duration: 300.ms)
-        .slideX(begin: 0.08, end: 0, curve: Curves.easeOut);
+        .slideX(begin: 0.08, end: 0, curve: BatshMotion.easeOut);
   }
 }
 

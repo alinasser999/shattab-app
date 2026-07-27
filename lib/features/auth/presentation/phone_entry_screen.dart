@@ -232,7 +232,7 @@ class _LogoTagline extends StatelessWidget {
         // Logo settles in: soft fade + gentle scale-down, no bounce.
         logo
             .animate()
-            .fadeIn(duration: 600.ms, curve: Curves.easeOut)
+            .fadeIn(duration: 600.ms, curve: BatshMotion.easeOut)
             .scale(
               begin: const Offset(0.92, 0.92),
               end: const Offset(1, 1),
@@ -248,13 +248,13 @@ class _LogoTagline extends StatelessWidget {
         const SizedBox(height: BatshSpacing.sm),
         tagline
             .animate()
-            .fadeIn(duration: 500.ms, delay: 320.ms, curve: Curves.easeOut)
+            .fadeIn(duration: 500.ms, delay: 320.ms, curve: BatshMotion.easeOut)
             .slideY(
               begin: 0.6,
               end: 0,
               duration: 500.ms,
               delay: 320.ms,
-              curve: Curves.easeOut,
+              curve: BatshMotion.easeOut,
             ),
       ],
     );
@@ -337,7 +337,7 @@ class _WordLine extends StatelessWidget {
                     .fadeIn(
                       duration: 460.ms,
                       delay: (startMs + i * stepMs).ms,
-                      curve: Curves.easeOut,
+                      curve: BatshMotion.easeOut,
                     )
                     .slideY(
                       begin: 0.7,
@@ -351,7 +351,7 @@ class _WordLine extends StatelessWidget {
                       end: 0,
                       duration: 460.ms,
                       delay: (startMs + i * stepMs).ms,
-                      curve: Curves.easeOut,
+                      curve: BatshMotion.easeOut,
                     ),
       ],
     );
@@ -382,13 +382,13 @@ class _HeroSubtitle extends StatelessWidget {
     if (disableMotion) return child;
     return child
         .animate()
-        .fadeIn(duration: 500.ms, delay: 1080.ms, curve: Curves.easeOut)
+        .fadeIn(duration: 500.ms, delay: 1080.ms, curve: BatshMotion.easeOut)
         .slideY(
           begin: 0.5,
           end: 0,
           duration: 500.ms,
           delay: 1080.ms,
-          curve: Curves.easeOut,
+          curve: BatshMotion.easeOut,
         );
   }
 }
@@ -585,7 +585,7 @@ class _LoginCardState extends ConsumerState<_LoginCard> {
       ),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BatshRadius.brXxl,
         border: Border.all(
           color: BatshColors.outlineVariant.withValues(alpha: 0.45),
         ),
@@ -838,7 +838,7 @@ class _LoginCardState extends ConsumerState<_LoginCard> {
     if (widget.disableMotion) return card;
     return card
         .animate()
-        .fadeIn(duration: 550.ms, delay: 1200.ms, curve: Curves.easeOut)
+        .fadeIn(duration: 550.ms, delay: 1200.ms, curve: BatshMotion.easeOut)
         .slideY(
           begin: 0.12,
           end: 0,
@@ -874,7 +874,7 @@ class _AuthSegment extends StatelessWidget {
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
         color: BatshColors.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(15),
+        borderRadius: BatshRadius.brLg,
       ),
       child: LayoutBuilder(
         builder: (context, constraints) {
@@ -892,7 +892,7 @@ class _AuthSegment extends StatelessWidget {
                   height: 40,
                   decoration: BoxDecoration(
                     color: BatshColors.primary,
-                    borderRadius: BorderRadius.circular(11),
+                    borderRadius: BatshRadius.brMd,
                     boxShadow: BatshShadows.soft,
                   ),
                 ),
@@ -960,7 +960,7 @@ class _FieldShell extends StatelessWidget {
       curve: BatshMotion.easeOut,
       decoration: BoxDecoration(
         color: BatshColors.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BatshRadius.brLg,
         border: Border.all(
           color: borderColor,
           width: focused || hasError ? 1.6 : 1,
@@ -1130,13 +1130,13 @@ class _Footer extends StatelessWidget {
     if (disableMotion) return child;
     return child
         .animate()
-        .fadeIn(duration: 500.ms, delay: 1420.ms, curve: Curves.easeOut)
+        .fadeIn(duration: 500.ms, delay: 1420.ms, curve: BatshMotion.easeOut)
         .slideY(
           begin: 0.5,
           end: 0,
           duration: 500.ms,
           delay: 1420.ms,
-          curve: Curves.easeOut,
+          curve: BatshMotion.easeOut,
         );
   }
 }
@@ -1175,7 +1175,7 @@ class _DemoLoginBlockState extends ConsumerState<_DemoLoginBlock> {
       padding: const EdgeInsets.all(BatshSpacing.lg),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BatshRadius.brLg,
         boxShadow: BatshShadows.soft,
       ),
       child: Column(

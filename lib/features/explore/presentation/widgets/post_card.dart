@@ -17,7 +17,7 @@ import '../../../../core/theme/batsh_typography.dart';
 import '../../../../core/utils/image_url.dart';
 import '../../../../core/widgets/batsh_card.dart';
 import '../../../../core/widgets/role_badge.dart';
-import '../../../discovery/presentation/widgets/avatar_with_initials.dart';
+import '../../../../core/widgets/avatar_with_initials.dart';
 import '../../domain/post.dart';
 import 'post_type_icon.dart';
 import '../../../../core/theme/batsh_icon_size.dart';
