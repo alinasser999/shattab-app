@@ -72,6 +72,25 @@ class BatshShadows {
         ),
       ];
 
+  /// Numeric elevation ladder over the named shadows above.
+  ///
+  /// The named getters say what a surface *is* (`raised`, `floating`), which is
+  /// the better thing to reach for and stays the recommended API. This exists
+  /// for the cases where elevation arrives as a number rather than an intent —
+  /// a list index, an animation driving depth on press, a `Material` widget
+  /// whose `elevation` is being mapped across. It delegates rather than
+  /// defining a second set of shadows, so the two cannot drift apart.
+  ///
+  /// Levels above 5 clamp to [floating]; below 0 clamp to [none].
+  static List<BoxShadow> level(int level) => switch (level.clamp(0, 5)) {
+        0 => none,
+        1 => subtle,
+        2 => soft,
+        3 => elevated,
+        4 => raised,
+        _ => floating,
+      };
+
   /// Modal barrier shadow
   static List<BoxShadow> get modal => [
         const BoxShadow(
