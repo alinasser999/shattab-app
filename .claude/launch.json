@@ -12,6 +12,12 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev", "--prefix", "C:/Users/dell/remotion-app"],
       "port": 3000
+    },
+    {
+      "name": "shattab-admin",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--prefix", "admin"],
+      "port": 4321
     }
   ]
 }
