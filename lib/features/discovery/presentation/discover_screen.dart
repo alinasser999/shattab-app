@@ -30,6 +30,7 @@ import '../domain/contractor_listing.dart';
 import 'providers/discovery_providers.dart';
 import '../../../core/theme/batsh_icon_size.dart';
 import '../../../core/widgets/batsh_search_bar.dart';
+import '../../../core/widgets/batsh_section_header.dart';
 
 class DiscoverScreen extends ConsumerStatefulWidget {
   const DiscoverScreen({super.key});
@@ -218,7 +219,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
                   BatshSpacing.marginMobile,
                   0,
                 ),
-                child: _SectionHeader(title: title),
+                child: BatshSectionHeader(title: title),
               ),
             ),
             SliverToBoxAdapter(
@@ -384,7 +385,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
                       BatshSpacing.marginMobile,
                       0,
                     ),
-                    child: _SectionHeader(
+                    child: BatshSectionHeader(
                       title: '${S.allProfessionals} (${rest.length})',
                     ),
                   ),
@@ -452,40 +453,6 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
   }
 }
 
-class _SectionHeader extends StatelessWidget {
-  const _SectionHeader({required this.title});
-
-  final String title;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Container(
-          width: 4,
-          height: 18,
-          decoration: BoxDecoration(
-            color: BatshColors.primary,
-            // Half the width: the accent bar's ends are fully round, not
-            // slightly softened. brFull says that; circular(2) only happened
-            // to say it while the bar stayed 4px wide.
-            borderRadius: BatshRadius.brFull,
-          ),
-        ),
-        const SizedBox(width: BatshSpacing.sm),
-        Expanded(
-          child: Text(
-            title,
-            style: BatshTypography.titleLg.copyWith(
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
 /// Horizontal rail of specialty pills — turns the flat feed into one-tap
 /// browse. Each tap sets the specialty filter (same path as the filter sheet).
 class _CategoryStrip extends StatelessWidget {
@@ -505,7 +472,7 @@ class _CategoryStrip extends StatelessWidget {
             padding: const EdgeInsets.symmetric(
               horizontal: BatshSpacing.marginMobile,
             ),
-            child: _SectionHeader(title: S.browseByCategory),
+            child: BatshSectionHeader(title: S.browseByCategory),
           ),
           const SizedBox(height: BatshSpacing.sm),
           SizedBox(
