@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/l10n/strings.dart';
 import '../../../core/theme/batsh_colors.dart';
-import '../../../core/theme/batsh_radius.dart';
 import '../../../core/theme/batsh_spacing.dart';
 import '../../../core/theme/batsh_typography.dart';
 import '../../../core/widgets/batsh_button.dart';
@@ -11,6 +10,7 @@ import '../../../core/widgets/batsh_stars.dart';
 import '../../../core/widgets/batsh_text_field.dart';
 import '../domain/review.dart';
 import 'providers/reviews_providers.dart';
+import '../../../core/widgets/batsh_sheet.dart';
 
 /// Opens the rate-contractor sheet. [existing] pre-fills when editing.
 Future<void> showWriteReviewSheet(
@@ -19,13 +19,9 @@ Future<void> showWriteReviewSheet(
   required String contractorId,
   Review? existing,
 }) {
-  return showModalBottomSheet<void>(
-    context: context,
-    isScrollControlled: true,
-    backgroundColor: BatshColors.background,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-    ),
+  return BatshSheet.show<void>(
+    context,
+    contentPadding: EdgeInsets.zero,
     builder: (_) => _WriteReviewSheet(
       briefId: briefId,
       contractorId: contractorId,
@@ -51,8 +47,9 @@ class _WriteReviewSheet extends ConsumerStatefulWidget {
 
 class _WriteReviewSheetState extends ConsumerState<_WriteReviewSheet> {
   late int _rating = widget.existing?.rating ?? 0;
-  late final TextEditingController _commentCtrl =
-      TextEditingController(text: widget.existing?.comment ?? '');
+  late final TextEditingController _commentCtrl = TextEditingController(
+    text: widget.existing?.comment ?? '',
+  );
   bool _busy = false;
   String? _error;
 
@@ -73,7 +70,9 @@ class _WriteReviewSheetState extends ConsumerState<_WriteReviewSheet> {
     });
     try {
       final comment = _commentCtrl.text.trim();
-      await ref.read(reviewControllerProvider.notifier).submit(
+      await ref
+          .read(reviewControllerProvider.notifier)
+          .submit(
             briefId: widget.briefId,
             contractorId: widget.contractorId,
             rating: _rating,
@@ -102,25 +101,18 @@ class _WriteReviewSheetState extends ConsumerState<_WriteReviewSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Center(
-            child: Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: BatshColors.outlineVariant,
-                borderRadius: BatshRadius.brFull,
-              ),
-            ),
+          Text(
+            S.rateContractor,
+            textAlign: TextAlign.center,
+            style: BatshTypography.titleLg,
           ),
-          const SizedBox(height: BatshSpacing.lg),
-          Text(S.rateContractor,
-              textAlign: TextAlign.center, style: BatshTypography.titleLg),
           const SizedBox(height: BatshSpacing.xs),
           Text(
             S.ratingHelpsOthers,
             textAlign: TextAlign.center,
-            style: BatshTypography.bodyMd
-                .copyWith(color: BatshColors.onSurfaceVariant),
+            style: BatshTypography.bodyMd.copyWith(
+              color: BatshColors.onSurfaceVariant,
+            ),
           ),
           const SizedBox(height: BatshSpacing.lg),
           BatshStarInput(
@@ -137,9 +129,10 @@ class _WriteReviewSheetState extends ConsumerState<_WriteReviewSheet> {
           ),
           if (_error != null) ...[
             const SizedBox(height: BatshSpacing.sm),
-            Text(_error!,
-                style:
-                    BatshTypography.labelMd.copyWith(color: BatshColors.error)),
+            Text(
+              _error!,
+              style: BatshTypography.labelMd.copyWith(color: BatshColors.error),
+            ),
           ],
           const SizedBox(height: BatshSpacing.lg),
           BatshButton(

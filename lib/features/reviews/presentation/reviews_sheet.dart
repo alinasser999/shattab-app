@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/l10n/strings.dart';
 import '../../../core/theme/batsh_colors.dart';
-import '../../../core/theme/batsh_radius.dart';
 import '../../../core/theme/batsh_spacing.dart';
 import '../../../core/theme/batsh_typography.dart';
 import '../../../core/utils/error_mapper.dart';
@@ -14,6 +13,7 @@ import '../../../core/widgets/batsh_shimmer.dart';
 import '../domain/review.dart';
 import 'providers/reviews_providers.dart';
 import '../../../core/theme/batsh_icon_size.dart';
+import '../../../core/widgets/batsh_sheet.dart';
 
 /// Opens the list of reviews left for a contractor.
 ///
@@ -22,13 +22,9 @@ import '../../../core/theme/batsh_icon_size.dart';
 /// homeowner saw "4.6" with no way to find out why. A number you cannot audit
 /// is a weaker trust signal than three sentences you can read.
 Future<void> showReviewsSheet(BuildContext context, String contractorId) {
-  return showModalBottomSheet<void>(
-    context: context,
-    isScrollControlled: true,
-    backgroundColor: BatshColors.surfaceContainerLowest,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-    ),
+  return BatshSheet.show<void>(
+    context,
+    contentPadding: EdgeInsets.zero,
     builder: (_) => _ReviewsSheet(contractorId: contractorId),
   );
 }
@@ -47,16 +43,6 @@ class _ReviewsSheet extends ConsumerWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const SizedBox(height: BatshSpacing.md),
-          Container(
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: BatshColors.outlineVariant,
-              borderRadius: BatshRadius.brFull,
-            ),
-          ),
-          const SizedBox(height: BatshSpacing.md),
           Text(S.reviewsSheetTitle, style: BatshTypography.titleLg),
           const SizedBox(height: BatshSpacing.md),
           Expanded(
@@ -64,8 +50,8 @@ class _ReviewsSheet extends ConsumerWidget {
               loading: () => const BatshListSkeleton(count: 4),
               error: (e, _) => BatshError(
                 message: ErrorMapper.map(e),
-                onRetry: () => ref
-                    .invalidate(reviewsForContractorProvider(contractorId)),
+                onRetry: () =>
+                    ref.invalidate(reviewsForContractorProvider(contractorId)),
               ),
               data: (reviews) {
                 if (reviews.isEmpty) {
@@ -124,8 +110,9 @@ class _ReviewRow extends StatelessWidget {
             const Spacer(),
             Text(
               formatRelativeTime(review.createdAt),
-              style: BatshTypography.labelSm
-                  .copyWith(color: BatshColors.onSurfaceVariant),
+              style: BatshTypography.labelSm.copyWith(
+                color: BatshColors.onSurfaceVariant,
+              ),
             ),
           ],
         ),

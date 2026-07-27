@@ -6,7 +6,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/l10n/strings.dart';
 import '../../../core/theme/batsh_colors.dart';
 import '../../../core/theme/batsh_motion.dart';
-import '../../../core/theme/batsh_radius.dart';
 import '../../../core/theme/batsh_spacing.dart';
 import '../../../core/theme/batsh_typography.dart';
 import '../../../core/widgets/batsh_button.dart';
@@ -14,6 +13,7 @@ import '../../../core/widgets/batsh_text_field.dart';
 import '../domain/quote.dart';
 import 'providers/quotes_providers.dart';
 import '../../../core/theme/batsh_icon_size.dart';
+import '../../../core/widgets/batsh_sheet.dart';
 import '../../../core/widgets/batsh_snack.dart';
 
 /// Opens the price-quote bottom sheet. Returns true if a quote was submitted.
@@ -22,14 +22,9 @@ Future<bool> showQuoteSheet(
   required String briefId,
   Quote? existing,
 }) async {
-  final result = await showModalBottomSheet<bool>(
-    context: context,
-    isScrollControlled: true,
-    backgroundColor: BatshColors.surfaceContainerLowest,
-    shape: const RoundedRectangleBorder(
-      borderRadius:
-          BorderRadius.vertical(top: Radius.circular(BatshRadius.xl)),
-    ),
+  final result = await BatshSheet.show<bool>(
+    context,
+    contentPadding: EdgeInsets.zero,
     builder: (_) => _QuoteSheet(briefId: briefId, existing: existing),
   );
   return result ?? false;
@@ -91,12 +86,15 @@ class _QuoteSheetState extends ConsumerState<_QuoteSheet> {
       _submitting = true;
     });
     try {
-      await ref.read(quotesControllerProvider.notifier).submit(
+      await ref
+          .read(quotesControllerProvider.notifier)
+          .submit(
             briefId: widget.briefId,
             priceMin: minVal,
             priceMax: maxVal,
-            durationText:
-                _duration.text.trim().isEmpty ? null : _duration.text.trim(),
+            durationText: _duration.text.trim().isEmpty
+                ? null
+                : _duration.text.trim(),
             note: note,
           );
       if (!mounted) return;
@@ -119,8 +117,12 @@ class _QuoteSheetState extends ConsumerState<_QuoteSheet> {
       duration: BatshMotion.fast,
       padding: EdgeInsets.only(bottom: inset),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(BatshSpacing.marginMobile,
-            BatshSpacing.gutter, BatshSpacing.marginMobile, BatshSpacing.lg),
+        padding: const EdgeInsets.fromLTRB(
+          BatshSpacing.marginMobile,
+          BatshSpacing.gutter,
+          BatshSpacing.marginMobile,
+          BatshSpacing.lg,
+        ),
         child: _done ? const _SuccessView() : _buildForm(context),
       ),
     );
@@ -131,19 +133,10 @@ class _QuoteSheetState extends ConsumerState<_QuoteSheet> {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Center(
-          child: Container(
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: BatshColors.outlineVariant,
-              borderRadius: BatshRadius.brFull,
-            ),
-          ),
+        Text(
+          widget.existing == null ? S.sendQuote : S.editQuote,
+          style: BatshTypography.titleLg,
         ),
-        const SizedBox(height: BatshSpacing.gutter),
-        Text(widget.existing == null ? S.sendQuote : S.editQuote,
-            style: BatshTypography.titleLg),
         const SizedBox(height: BatshSpacing.lg),
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -172,8 +165,10 @@ class _QuoteSheetState extends ConsumerState<_QuoteSheet> {
         if (_priceError != null)
           Padding(
             padding: const EdgeInsets.only(top: BatshSpacing.sm),
-            child: Text(_priceError!,
-                style: TextStyle(color: BatshColors.error, fontSize: 12)),
+            child: Text(
+              _priceError!,
+              style: TextStyle(color: BatshColors.error, fontSize: 12),
+            ),
           ),
         const SizedBox(height: BatshSpacing.md),
         BatshTextField(
@@ -214,25 +209,30 @@ class _SuccessView extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            padding: const EdgeInsets.all(BatshSpacing.gutter),
-            decoration: const BoxDecoration(
-              color: BatshColors.successContainer,
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(Icons.check_rounded,
-                color: BatshColors.success, size: BatshIconSize.xxl),
-          )
+                padding: const EdgeInsets.all(BatshSpacing.gutter),
+                decoration: const BoxDecoration(
+                  color: BatshColors.successContainer,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.check_rounded,
+                  color: BatshColors.success,
+                  size: BatshIconSize.xxl,
+                ),
+              )
               .animate()
               .scale(
-                  duration: 400.ms,
-                  curve: Curves.elasticOut,
-                  begin: const Offset(0.4, 0.4),
-                  end: const Offset(1, 1))
+                duration: 400.ms,
+                curve: Curves.elasticOut,
+                begin: const Offset(0.4, 0.4),
+                end: const Offset(1, 1),
+              )
               .fadeIn(duration: 200.ms),
           const SizedBox(height: BatshSpacing.gutter),
-          Text(S.quoteSentSuccess, style: BatshTypography.titleLg)
-              .animate()
-              .fadeIn(delay: 150.ms, duration: 300.ms),
+          Text(
+            S.quoteSentSuccess,
+            style: BatshTypography.titleLg,
+          ).animate().fadeIn(delay: 150.ms, duration: 300.ms),
         ],
       ),
     );

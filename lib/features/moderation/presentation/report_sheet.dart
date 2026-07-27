@@ -3,13 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/l10n/strings.dart';
 import '../../../core/theme/batsh_colors.dart';
-import '../../../core/theme/batsh_radius.dart';
 import '../../../core/theme/batsh_spacing.dart';
 import '../../../core/theme/batsh_typography.dart';
 import '../../../core/utils/error_mapper.dart';
 import '../data/moderation_repository.dart';
 import '../../../core/theme/batsh_icon_size.dart';
 import '../../../core/widgets/batsh_dialog.dart';
+import '../../../core/widgets/batsh_sheet.dart';
 
 String _reasonLabel(ReportReason r) => switch (r) {
   ReportReason.spam => S.reportReasonSpam,
@@ -31,13 +31,9 @@ Future<void> showReportSheet(
   required ReportTarget target,
   required String targetId,
 }) {
-  return showModalBottomSheet<void>(
-    context: context,
-    isScrollControlled: true,
-    backgroundColor: BatshColors.surfaceContainerLowest,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-    ),
+  return BatshSheet.show<void>(
+    context,
+    contentPadding: const EdgeInsets.all(BatshSpacing.gutter),
     builder: (_) => _ReportSheet(target: target, targetId: targetId),
   );
 }
@@ -96,61 +92,42 @@ class _ReportSheetState extends ConsumerState<_ReportSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.all(BatshSpacing.gutter),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: BatshColors.outlineVariant,
-                  borderRadius: BatshRadius.brFull,
-                ),
-              ),
-            ),
-            const SizedBox(height: BatshSpacing.md),
-            Text(
-              S.reportTitle,
-              textAlign: TextAlign.center,
-              style: BatshTypography.titleLg,
-            ),
-            const SizedBox(height: BatshSpacing.xs),
-            Text(
-              S.reportSheetSubtitle,
-              textAlign: TextAlign.center,
-              style: BatshTypography.bodySm.copyWith(
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          S.reportTitle,
+          textAlign: TextAlign.center,
+          style: BatshTypography.titleLg,
+        ),
+        const SizedBox(height: BatshSpacing.xs),
+        Text(
+          S.reportSheetSubtitle,
+          textAlign: TextAlign.center,
+          style: BatshTypography.bodySm.copyWith(
+            color: BatshColors.onSurfaceVariant,
+          ),
+        ),
+        const SizedBox(height: BatshSpacing.md),
+        if (_busy)
+          const Padding(
+            padding: EdgeInsets.all(BatshSpacing.lg),
+            child: Center(child: CircularProgressIndicator()),
+          )
+        else
+          for (final reason in ReportReason.values)
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              title: Text(_reasonLabel(reason), style: BatshTypography.bodyMd),
+              trailing: const Icon(
+                Icons.arrow_forward_ios,
+                size: BatshIconSize.sm,
                 color: BatshColors.onSurfaceVariant,
               ),
+              onTap: () => _submit(reason),
             ),
-            const SizedBox(height: BatshSpacing.md),
-            if (_busy)
-              const Padding(
-                padding: EdgeInsets.all(BatshSpacing.lg),
-                child: Center(child: CircularProgressIndicator()),
-              )
-            else
-              for (final reason in ReportReason.values)
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: Text(
-                    _reasonLabel(reason),
-                    style: BatshTypography.bodyMd,
-                  ),
-                  trailing: const Icon(
-                    Icons.arrow_forward_ios,
-                    size: BatshIconSize.sm,
-                    color: BatshColors.onSurfaceVariant,
-                  ),
-                  onTap: () => _submit(reason),
-                ),
-          ],
-        ),
-      ),
+      ],
     );
   }
 }
