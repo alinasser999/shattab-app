@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/router/routes.dart';
-import '../../../../core/l10n/strings.dart';
+import 'package:batsh/core/l10n/l10n_extension.dart';
 import '../../../../core/theme/batsh_colors.dart';
 import '../../../../core/theme/batsh_motion.dart';
 import '../../../../core/theme/batsh_spacing.dart';
@@ -14,6 +14,8 @@ import '../../../../core/widgets/batsh_scaffold.dart';
 import '../../../../core/widgets/batsh_success_checkmark.dart';
 import '../../../../core/widgets/contact_buttons.dart';
 import '../../../discovery/presentation/providers/discovery_providers.dart';
+
+import 'package:batsh/core/theme/theme_extension.dart';
 
 class BriefSentScreen extends ConsumerWidget {
   const BriefSentScreen({super.key, required this.contractorId});
@@ -27,25 +29,25 @@ class BriefSentScreen extends ConsumerWidget {
     final reduced = MediaQuery.disableAnimationsOf(context);
     final items = <Widget>[
       const SizedBox(height: BatshSpacing.md),
-      BatshSuccessCheckmark(size: 64, message: S.briefSentTitle),
+      BatshSuccessCheckmark(size: 64, message: context.l10n.briefSentTitle),
       const SizedBox(height: BatshSpacing.sm),
       Text(
-        S.briefSentMessageNew,
+        context.l10n.briefSentMessageNew,
         textAlign: TextAlign.center,
         style: BatshTypography.bodyMd.copyWith(
-          color: BatshColors.onSurfaceVariant,
+          color: context.colorScheme.onSurfaceVariant,
         ),
       ),
       const SizedBox(height: BatshSpacing.xl),
       if (contractor != null) ...[
         WhatsAppButton(
           phone: contractor.phone,
-          message: S.whatsappBriefGreeting,
+          message: context.l10n.whatsappBriefGreeting,
         ),
         const SizedBox(height: BatshSpacing.sm),
       ],
       BatshButton(
-        label: S.doneBackToDiscover,
+        label: context.l10n.doneBackToDiscover,
         style: BatshButtonStyle.secondary,
         onPressed: () => context.go(Routes.homeownerDiscover),
       ),

@@ -17,32 +17,24 @@ class AuthRepository {
   Future<AuthResponse> verifyOtp({
     required String phone,
     required String code,
-  }) =>
-      _client.auth.verifyOTP(
-        phone: phone,
-        token: code,
-        type: OtpType.sms,
-      );
+  }) => _client.auth.verifyOTP(phone: phone, token: code, type: OtpType.sms);
 
   Future<AuthResponse> signInWithPassword({
     required String email,
     required String password,
-  }) =>
-      _client.auth.signInWithPassword(email: email, password: password);
+  }) => _client.auth.signInWithPassword(email: email, password: password);
 
   /// Primary (free) auth: phone + password. Requires Supabase "Confirm phone"
   /// to be OFF so no SMS is sent on sign-up.
   Future<AuthResponse> signInWithPhonePassword({
     required String phone,
     required String password,
-  }) =>
-      _client.auth.signInWithPassword(phone: phone, password: password);
+  }) => _client.auth.signInWithPassword(phone: phone, password: password);
 
   Future<AuthResponse> signUpWithPhonePassword({
     required String phone,
     required String password,
-  }) =>
-      _client.auth.signUp(phone: phone, password: password);
+  }) => _client.auth.signUp(phone: phone, password: password);
 
   /// Sets a new password for the signed-in user (used after a forgot-password
   /// SMS OTP restores the session).
@@ -96,7 +88,8 @@ class AuthRepository {
   }
 
   Future<({String name, String phone})?> fetchProfileNameAndPhone(
-      String profileId) async {
+    String profileId,
+  ) async {
     final row = await _client
         .from('profiles')
         .select('full_name, phone')
@@ -114,10 +107,10 @@ class AuthRepository {
     required UserRole role,
     required String fullName,
   }) async {
-    await _client.from('profiles').update({
-      'role': role.name,
-      'full_name': fullName,
-    }).eq('id', userId);
+    await _client
+        .from('profiles')
+        .update({'role': role.name, 'full_name': fullName})
+        .eq('id', userId);
   }
 }
 

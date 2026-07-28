@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../theme/batsh_colors.dart';
 import '../theme/batsh_motion.dart';
 
+import 'package:batsh/core/theme/theme_extension.dart';
+
 class BatshSuccessCheckmark extends StatefulWidget {
   const BatshSuccessCheckmark({super.key, this.size = 80, this.message});
 
@@ -65,13 +67,13 @@ class _BatshSuccessCheckmarkState extends State<BatshSuccessCheckmark>
               width: widget.size,
               height: widget.size,
               decoration: BoxDecoration(
-                color: BatshColors.successContainer,
+                color: context.colorScheme.successContainer,
                 shape: BoxShape.circle,
               ),
               child: CustomPaint(
                 painter: _CheckPainter(
                   progress: _check.value,
-                  color: BatshColors.success,
+                  color: context.colorScheme.success,
                   strokeWidth: 4,
                 ),
               ),
@@ -82,10 +84,10 @@ class _BatshSuccessCheckmarkState extends State<BatshSuccessCheckmark>
           const SizedBox(height: 16),
           Text(
             widget.message!,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w600,
-              color: BatshColors.onSurface,
+              color: context.colorScheme.onSurface,
             ),
           ),
         ],

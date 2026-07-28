@@ -50,8 +50,9 @@ class DiscoverContractors extends _$DiscoverContractors {
   Future<List<ContractorListing>> build() async {
     final filters = ref.watch(discoveryFiltersControllerProvider);
     _loadingMore = false;
-    final page =
-        await ref.read(discoveryRepositoryProvider).fetchContractors(filters);
+    final page = await ref
+        .read(discoveryRepositoryProvider)
+        .fetchContractors(filters);
     _hasMore = page.length == DiscoveryRepository.pageSize;
     return page;
   }

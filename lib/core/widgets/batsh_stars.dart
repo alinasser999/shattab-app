@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../theme/batsh_colors.dart';
+import '../theme/theme_extension.dart';
 
 /// Read-only star row for a fractional rating in [0, 5].
 class BatshStars extends StatelessWidget {
@@ -8,29 +9,36 @@ class BatshStars extends StatelessWidget {
     super.key,
     required this.rating,
     this.size = 16,
-    this.color = BatshColors.tertiary,
+    this.color,
   });
 
   final double rating;
   final double size;
-  final Color color;
+
+  /// Fill colour. Null takes the theme's gold, which is what every call site
+  /// wanted — a default cannot read the theme, since it must be `const`.
+  final Color? color;
 
   @override
   Widget build(BuildContext context) {
+    final fill = color ?? context.colorScheme.tertiary;
     return Semantics(
       label: '${rating.toStringAsFixed(1)} من 5 نجوم',
       child: Row(
-      mainAxisSize: MainAxisSize.min,
-      children: List.generate(5, (i) {
-        final filled = i < rating.floor();
-        final half = !filled && i == rating.floor() && rating % 1 >= 0.4;
-        return Icon(
-          half ? Icons.star_half : (filled ? Icons.star : Icons.star_border),
-          size: size,
-          color: filled || half ? color : BatshColors.surfaceContainerHigh,
-        );
-      }),
-    ));
+        mainAxisSize: MainAxisSize.min,
+        children: List.generate(5, (i) {
+          final filled = i < rating.floor();
+          final half = !filled && i == rating.floor() && rating % 1 >= 0.4;
+          return Icon(
+            half ? Icons.star_half : (filled ? Icons.star : Icons.star_border),
+            size: size,
+            color: filled || half
+                ? fill
+                : context.colorScheme.surfaceContainerHigh,
+          );
+        }),
+      ),
+    );
   }
 }
 
@@ -64,7 +72,9 @@ class BatshStarInput extends StatelessWidget {
           onPressed: () => onChanged(star),
           icon: Icon(
             active ? Icons.star : Icons.star_border,
-            color: active ? BatshColors.tertiary : BatshColors.onSurfaceVariant,
+            color: active
+                ? context.colorScheme.tertiary
+                : context.colorScheme.onSurfaceVariant,
           ),
         );
       }),

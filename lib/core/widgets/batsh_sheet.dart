@@ -4,6 +4,8 @@ import '../theme/batsh_colors.dart';
 import '../theme/batsh_radius.dart';
 import '../theme/batsh_spacing.dart';
 
+import 'package:batsh/core/theme/theme_extension.dart';
+
 /// A bottom sheet with the drag handle, shape, and padding fixed in one
 /// place.
 ///
@@ -55,10 +57,11 @@ class _BatshSheetChrome extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
-        color: BatshColors.surface,
-        borderRadius:
-            BorderRadius.vertical(top: Radius.circular(BatshRadius.xxl)),
+      decoration: BoxDecoration(
+        color: context.colorScheme.surface,
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(BatshRadius.xxl),
+        ),
       ),
       child: SafeArea(
         top: false,
@@ -72,7 +75,7 @@ class _BatshSheetChrome extends StatelessWidget {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: BatshColors.outlineVariant,
+                  color: context.colorScheme.outlineVariant,
                   borderRadius: BatshRadius.brFull,
                 ),
               ),

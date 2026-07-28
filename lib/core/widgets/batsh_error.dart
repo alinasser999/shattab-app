@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../l10n/l10n_extension.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 import '../l10n/strings.dart';
@@ -8,6 +10,8 @@ import '../theme/batsh_typography.dart';
 import 'batsh_button.dart';
 import '../theme/batsh_icon_size.dart';
 import '../theme/batsh_motion.dart';
+
+import 'package:batsh/core/theme/theme_extension.dart';
 
 class BatshError extends StatelessWidget {
   const BatshError({super.key, this.message, this.onRetry});
@@ -20,10 +24,10 @@ class BatshError extends StatelessWidget {
     final reduced = MediaQuery.disableAnimationsOf(context);
 
     final icon = Semantics(
-      label: S.errServerError,
-      child: const Icon(
+      label: context.l10n.errServerError,
+      child: Icon(
         Icons.error_outline_rounded,
-        color: BatshColors.error,
+        color: context.colorScheme.error,
         size: BatshIconSize.xxl,
       ),
     );
@@ -41,7 +45,7 @@ class BatshError extends StatelessWidget {
               );
 
     return Semantics(
-      label: message ?? S.errServerError,
+      label: message ?? context.l10n.errServerError,
       child: Center(
         child: Padding(
           padding: const EdgeInsets.all(BatshSpacing.lg),
@@ -51,7 +55,7 @@ class BatshError extends StatelessWidget {
               animatedIcon,
               const SizedBox(height: BatshSpacing.gutter),
               _AnimatedText(
-                message: message ?? S.unknownErrorRetry,
+                message: message ?? context.l10n.unknownErrorRetry,
                 reduced: reduced,
               ),
               if (onRetry != null) ...[
@@ -100,7 +104,7 @@ class _AnimatedButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final widget = SizedBox(
       child: BatshButton(
-        label: S.tryAgain,
+        label: context.l10n.tryAgain,
         onPressed: onRetry,
         fullWidth: false,
       ),

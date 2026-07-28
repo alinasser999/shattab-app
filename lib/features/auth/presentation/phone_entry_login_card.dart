@@ -74,13 +74,15 @@ class _LoginCardState extends ConsumerState<_LoginCard> {
         Icon(
           Icons.error_outline,
           size: BatshIconSize.sm,
-          color: BatshColors.error,
+          color: context.colorScheme.error,
         ),
         const SizedBox(width: 6),
         Expanded(
           child: Text(
             message,
-            style: BatshTypography.labelMd.copyWith(color: BatshColors.error),
+            style: BatshTypography.labelMd.copyWith(
+              color: context.colorScheme.error,
+            ),
           ),
         ),
       ],
@@ -104,17 +106,17 @@ class _LoginCardState extends ConsumerState<_LoginCard> {
     final password = _passwordController.text;
     setState(_clearErrors);
     if (!Validators.isEgyptianPhone(phone)) {
-      setState(() => _phoneError = S.invalidPhone);
+      setState(() => _phoneError = context.l10n.invalidPhone);
       return;
     }
     if (password.length < 6) {
-      setState(() => _passwordError = S.passwordTooShort);
+      setState(() => _passwordError = context.l10n.passwordTooShort);
       return;
     }
     // Confirm-password guard only in sign-up. A typo here would otherwise lock
     // the user out and push them to the SMS-costing forgot-password path.
     if (_isSignUp && _confirmController.text != password) {
-      setState(() => _confirmError = S.passwordMismatch);
+      setState(() => _confirmError = context.l10n.passwordMismatch);
       return;
     }
     setState(() => _busy = true);
@@ -183,7 +185,7 @@ class _LoginCardState extends ConsumerState<_LoginCard> {
         color: Colors.white,
         borderRadius: BatshRadius.brXxl,
         border: Border.all(
-          color: BatshColors.outlineVariant.withValues(alpha: 0.45),
+          color: context.colorScheme.outlineVariant.withValues(alpha: 0.45),
         ),
         boxShadow: BatshShadows.soft,
       ),
@@ -211,19 +213,23 @@ class _LoginCardState extends ConsumerState<_LoginCard> {
           const SizedBox(height: BatshSpacing.md),
           Row(
             children: [
-              const Expanded(child: Divider(color: BatshColors.outlineVariant)),
+              Expanded(
+                child: Divider(color: context.colorScheme.outlineVariant),
+              ),
               Padding(
                 padding: const EdgeInsets.symmetric(
                   horizontal: BatshSpacing.md,
                 ),
                 child: Text(
-                  S.orDivider,
+                  context.l10n.orDivider,
                   style: BatshTypography.labelSm.copyWith(
-                    color: BatshColors.onSurfaceVariant,
+                    color: context.colorScheme.onSurfaceVariant,
                   ),
                 ),
               ),
-              const Expanded(child: Divider(color: BatshColors.outlineVariant)),
+              Expanded(
+                child: Divider(color: context.colorScheme.outlineVariant),
+              ),
             ],
           ),
           const SizedBox(height: BatshSpacing.md),
@@ -238,9 +244,11 @@ class _LoginCardState extends ConsumerState<_LoginCard> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 14),
                     height: 54,
-                    decoration: const BoxDecoration(
+                    decoration: BoxDecoration(
                       border: Border(
-                        right: BorderSide(color: BatshColors.outlineVariant),
+                        right: BorderSide(
+                          color: context.colorScheme.outlineVariant,
+                        ),
                       ),
                     ),
                     child: Row(
@@ -252,7 +260,7 @@ class _LoginCardState extends ConsumerState<_LoginCard> {
                           '+20',
                           style: BatshTypography.bodyLg.copyWith(
                             fontWeight: FontWeight.w600,
-                            color: BatshColors.onSurface,
+                            color: context.colorScheme.onSurface,
                           ),
                         ),
                       ],
@@ -266,15 +274,14 @@ class _LoginCardState extends ConsumerState<_LoginCard> {
                       textInputAction: TextInputAction.next,
                       autofillHints: const [AutofillHints.telephoneNumber],
                       style: BatshTypography.bodyLg.copyWith(
-                        color: BatshColors.onSurface,
+                        color: context.colorScheme.onSurface,
                         height: 1.4,
                       ),
                       decoration: InputDecoration(
-                        hintText: S.phoneLocalHint,
+                        hintText: context.l10n.phoneLocalHint,
                         hintStyle: BatshTypography.bodyLg.copyWith(
-                          color: BatshColors.onSurfaceVariant.withValues(
-                            alpha: 0.5,
-                          ),
+                          color: context.colorScheme.onSurfaceVariant
+                              .withValues(alpha: 0.5),
                         ),
                         border: InputBorder.none,
                         contentPadding: const EdgeInsets.symmetric(
@@ -304,7 +311,7 @@ class _LoginCardState extends ConsumerState<_LoginCard> {
                 Icon(
                   Icons.lock_outline,
                   size: BatshIconSize.md,
-                  color: BatshColors.onSurfaceVariant,
+                  color: context.colorScheme.onSurfaceVariant,
                 ),
                 const SizedBox(width: BatshSpacing.sm),
                 Expanded(
@@ -320,13 +327,13 @@ class _LoginCardState extends ConsumerState<_LoginCard> {
                         ? const [AutofillHints.newPassword]
                         : const [AutofillHints.password],
                     style: BatshTypography.bodyLg.copyWith(
-                      color: BatshColors.onSurface,
+                      color: context.colorScheme.onSurface,
                       height: 1.4,
                     ),
                     decoration: InputDecoration(
-                      hintText: S.passwordHint,
+                      hintText: context.l10n.passwordHint,
                       hintStyle: BatshTypography.bodyLg.copyWith(
-                        color: BatshColors.onSurfaceVariant.withValues(
+                        color: context.colorScheme.onSurfaceVariant.withValues(
                           alpha: 0.5,
                         ),
                       ),
@@ -345,7 +352,7 @@ class _LoginCardState extends ConsumerState<_LoginCard> {
                         ? Icons.visibility_outlined
                         : Icons.visibility_off_outlined,
                     size: BatshIconSize.md,
-                    color: BatshColors.onSurfaceVariant,
+                    color: context.colorScheme.onSurfaceVariant,
                   ),
                 ),
               ],
@@ -365,7 +372,7 @@ class _LoginCardState extends ConsumerState<_LoginCard> {
                   Icon(
                     Icons.lock_outline,
                     size: BatshIconSize.md,
-                    color: BatshColors.onSurfaceVariant,
+                    color: context.colorScheme.onSurfaceVariant,
                   ),
                   const SizedBox(width: BatshSpacing.sm),
                   Expanded(
@@ -377,15 +384,14 @@ class _LoginCardState extends ConsumerState<_LoginCard> {
                       onSubmitted: (_) => _busy ? null : _submit(),
                       autofillHints: const [AutofillHints.newPassword],
                       style: BatshTypography.bodyLg.copyWith(
-                        color: BatshColors.onSurface,
+                        color: context.colorScheme.onSurface,
                         height: 1.4,
                       ),
                       decoration: InputDecoration(
-                        hintText: S.confirmPasswordHint,
+                        hintText: context.l10n.confirmPasswordHint,
                         hintStyle: BatshTypography.bodyLg.copyWith(
-                          color: BatshColors.onSurfaceVariant.withValues(
-                            alpha: 0.5,
-                          ),
+                          color: context.colorScheme.onSurfaceVariant
+                              .withValues(alpha: 0.5),
                         ),
                         border: InputBorder.none,
                         contentPadding: const EdgeInsets.symmetric(
@@ -406,7 +412,9 @@ class _LoginCardState extends ConsumerState<_LoginCard> {
           ],
           const SizedBox(height: BatshSpacing.lg),
           BatshButton(
-            label: _isSignUp ? S.createAccountAction : S.signInAction,
+            label: _isSignUp
+                ? context.l10n.createAccountAction
+                : context.l10n.signInAction,
             onPressed: _busy ? null : _submit,
             isLoading: _busy,
           ),
@@ -419,9 +427,9 @@ class _LoginCardState extends ConsumerState<_LoginCard> {
                     ? null
                     : widget.onForgot,
                 child: Text(
-                  S.forgotPassword,
+                  context.l10n.forgotPassword,
                   style: BatshTypography.labelMd.copyWith(
-                    color: BatshColors.onSurfaceVariant,
+                    color: context.colorScheme.onSurfaceVariant,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -469,7 +477,7 @@ class _AuthSegment extends StatelessWidget {
       height: 48,
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: BatshColors.surfaceContainerLow,
+        color: context.colorScheme.surfaceContainerLow,
         borderRadius: BatshRadius.brLg,
       ),
       child: LayoutBuilder(
@@ -487,7 +495,7 @@ class _AuthSegment extends StatelessWidget {
                   width: cellWidth,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: BatshColors.primary,
+                    color: context.colorScheme.primary,
                     borderRadius: BatshRadius.brMd,
                     boxShadow: BatshShadows.soft,
                   ),
@@ -495,8 +503,18 @@ class _AuthSegment extends StatelessWidget {
               ),
               Row(
                 children: [
-                  _cell(S.signInAction, !isSignUp, () => onChanged(false)),
-                  _cell(S.createAccountAction, isSignUp, () => onChanged(true)),
+                  _cell(
+                    context,
+                    context.l10n.signInAction,
+                    !isSignUp,
+                    () => onChanged(false),
+                  ),
+                  _cell(
+                    context,
+                    context.l10n.createAccountAction,
+                    isSignUp,
+                    () => onChanged(true),
+                  ),
                 ],
               ),
             ],
@@ -506,7 +524,12 @@ class _AuthSegment extends StatelessWidget {
     );
   }
 
-  Widget _cell(String label, bool selected, VoidCallback onTap) {
+  Widget _cell(
+    BuildContext context,
+    String label,
+    bool selected,
+    VoidCallback onTap,
+  ) {
     return Expanded(
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
@@ -516,8 +539,8 @@ class _AuthSegment extends StatelessWidget {
             duration: BatshMotion.fast,
             style: BatshTypography.labelLg.copyWith(
               color: selected
-                  ? BatshColors.onPrimary
-                  : BatshColors.onSurfaceVariant,
+                  ? context.colorScheme.onPrimary
+                  : context.colorScheme.onSurfaceVariant,
               fontWeight: FontWeight.w700,
             ),
             child: Text(label),
@@ -547,15 +570,15 @@ class _FieldShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final borderColor = hasError
-        ? BatshColors.error
+        ? context.colorScheme.error
         : focused
-        ? BatshColors.primary
-        : BatshColors.outlineVariant.withValues(alpha: 0.7);
+        ? context.colorScheme.primary
+        : context.colorScheme.outlineVariant.withValues(alpha: 0.7);
     return AnimatedContainer(
       duration: BatshMotion.fast,
       curve: BatshMotion.easeOut,
       decoration: BoxDecoration(
-        color: BatshColors.surfaceContainerLow,
+        color: context.colorScheme.surfaceContainerLow,
         borderRadius: BatshRadius.brLg,
         border: Border.all(
           color: borderColor,
@@ -608,7 +631,7 @@ class _AppleButton extends StatelessWidget {
               ),
               const SizedBox(width: BatshSpacing.sm),
               Text(
-                S.continueWithApple,
+                context.l10n.continueWithApple,
                 style: BatshTypography.labelLg.copyWith(
                   color: Colors.white,
                   fontWeight: FontWeight.w700,
@@ -639,7 +662,7 @@ class _GoogleButton extends StatelessWidget {
           onTap: onPressed,
           child: Ink(
             decoration: BoxDecoration(
-              border: Border.all(color: BatshColors.outlineVariant),
+              border: Border.all(color: context.colorScheme.outlineVariant),
               borderRadius: BorderRadius.circular(BatshRadius.md + 2),
             ),
             child: Row(
@@ -655,9 +678,9 @@ class _GoogleButton extends StatelessWidget {
                 ),
                 const SizedBox(width: BatshSpacing.sm),
                 Text(
-                  S.continueWithGoogle,
+                  context.l10n.continueWithGoogle,
                   style: BatshTypography.labelLg.copyWith(
-                    color: BatshColors.onSurface,
+                    color: context.colorScheme.onSurface,
                     fontWeight: FontWeight.w700,
                   ),
                 ),

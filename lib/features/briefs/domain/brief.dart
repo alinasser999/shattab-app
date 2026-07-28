@@ -4,9 +4,10 @@ enum BriefStatus {
   open,
   cancelled;
 
-  static BriefStatus fromString(String value) =>
-      BriefStatus.values.firstWhere((s) => s.name == value,
-          orElse: () => BriefStatus.open);
+  static BriefStatus fromString(String value) => BriefStatus.values.firstWhere(
+    (s) => s.name == value,
+    orElse: () => BriefStatus.open,
+  );
 }
 
 /// Where a brief sits in the hire-to-completion lifecycle.
@@ -120,33 +121,32 @@ class Brief {
   bool get canBeReviewed => isCompleted;
 
   factory Brief.fromJson(Map<String, dynamic> json) => Brief(
-        id: json['id'] as String,
-        homeownerId: json['homeowner_id'] as String,
-        targetContractorId: json['target_contractor_id'] as String?,
-        apartmentType:
-            ApartmentType.fromString(json['apartment_type'] as String?) ??
-                ApartmentType.studio,
-        city: json['city'] as String,
-        district: json['district'] as String?,
-        workDescription: json['work_description'] as String,
-        photoUrls:
-            ((json['photo_urls'] as List?) ?? const []).cast<String>(),
-        targetSpecialties:
-            ((json['target_specialties'] as List?) ?? const []).cast<String>(),
-        status: BriefStatus.fromString(json['status'] as String),
-        createdAt: DateTime.parse(json['created_at'] as String),
-        hiredAt: json['hired_at'] == null
-            ? null
-            : DateTime.parse(json['hired_at'] as String),
-        // Absent on rows written before migration 0019, so both stay nullable.
-        completionRequestedAt: json['completion_requested_at'] == null
-            ? null
-            : DateTime.parse(json['completion_requested_at'] as String),
-        completedAt: json['completed_at'] == null
-            ? null
-            : DateTime.parse(json['completed_at'] as String),
-        editedAt: json['edited_at'] == null
-            ? null
-            : DateTime.parse(json['edited_at'] as String),
-      );
+    id: json['id'] as String,
+    homeownerId: json['homeowner_id'] as String,
+    targetContractorId: json['target_contractor_id'] as String?,
+    apartmentType:
+        ApartmentType.fromString(json['apartment_type'] as String?) ??
+        ApartmentType.studio,
+    city: json['city'] as String,
+    district: json['district'] as String?,
+    workDescription: json['work_description'] as String,
+    photoUrls: ((json['photo_urls'] as List?) ?? const []).cast<String>(),
+    targetSpecialties: ((json['target_specialties'] as List?) ?? const [])
+        .cast<String>(),
+    status: BriefStatus.fromString(json['status'] as String),
+    createdAt: DateTime.parse(json['created_at'] as String),
+    hiredAt: json['hired_at'] == null
+        ? null
+        : DateTime.parse(json['hired_at'] as String),
+    // Absent on rows written before migration 0019, so both stay nullable.
+    completionRequestedAt: json['completion_requested_at'] == null
+        ? null
+        : DateTime.parse(json['completion_requested_at'] as String),
+    completedAt: json['completed_at'] == null
+        ? null
+        : DateTime.parse(json['completed_at'] as String),
+    editedAt: json['edited_at'] == null
+        ? null
+        : DateTime.parse(json['edited_at'] as String),
+  );
 }

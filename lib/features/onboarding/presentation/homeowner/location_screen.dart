@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:flutter_animate/flutter_animate.dart';
 
-import '../../../../core/l10n/strings.dart';
+import 'package:batsh/core/l10n/l10n_extension.dart';
 import '../../../../core/router/routes.dart';
 import '../../../../core/theme/batsh_colors.dart';
 import '../../../../core/theme/batsh_spacing.dart';
@@ -17,6 +17,8 @@ import '../../../../core/widgets/batsh_scaffold.dart';
 import '../../domain/onboarding_models.dart';
 import '../providers/onboarding_provider.dart';
 import '../../../../core/widgets/batsh_snack.dart';
+
+import 'package:batsh/core/theme/theme_extension.dart';
 
 class LocationScreen extends ConsumerStatefulWidget {
   const LocationScreen({super.key});
@@ -42,9 +44,7 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
             district: _selectedDistrict!,
           );
       if (!mounted) return;
-      await ref
-          .read(onboardingControllerProvider.notifier)
-          .markComplete();
+      await ref.read(onboardingControllerProvider.notifier).markComplete();
       if (!mounted) return;
       context.go(Routes.homeownerDiscover);
     } catch (e) {
@@ -76,71 +76,79 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
       _hydrated = true;
     }
     return BatshScaffold(
-      title: S.locationTitle,
+      title: context.l10n.locationTitle,
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const SizedBox(height: BatshSpacing.md),
-            Text(S.cityLabel,
-                style: BatshTypography.labelMd
-                    .copyWith(color: BatshColors.onSurfaceVariant)),
-            const SizedBox(height: BatshSpacing.sm),
-            Wrap(
-              spacing: BatshSpacing.sm,
-              runSpacing: BatshSpacing.sm,
-              children: OnboardingCatalog.citiesAndDistricts
-                  .map(
-                    (entry) => BatshChip(
-                      label: entry.city,
-                      selected: _selectedCity == entry.city,
-                      onTap: () => setState(() {
-                        _selectedCity = entry.city;
-                        _selectedDistrict = null;
-                      }),
-                    ),
-                  )
-                  .toList(),
-            ),
-            if (_districts.isNotEmpty) ...[
-              const SizedBox(height: BatshSpacing.lg),
-              Text(S.districtLabel,
-                  style: BatshTypography.labelMd
-                      .copyWith(color: BatshColors.onSurfaceVariant)),
-              const SizedBox(height: BatshSpacing.sm),
-              Wrap(
-                spacing: BatshSpacing.sm,
-                runSpacing: BatshSpacing.sm,
-                children: _districts
-                    .map(
-                      (d) => BatshChip(
-                        label: d,
-                        selected: _selectedDistrict == d,
-                        onTap: () => setState(() => _selectedDistrict = d),
+          children:
+              [
+                    const SizedBox(height: BatshSpacing.md),
+                    Text(
+                      context.l10n.cityLabel,
+                      style: BatshTypography.labelMd.copyWith(
+                        color: context.colorScheme.onSurfaceVariant,
                       ),
-                    )
-                    .toList(),
-              ),
-            ],
-            const SizedBox(height: BatshSpacing.xl),
-            BatshButton(
-              label: S.next,
-              onPressed: (_selectedCity == null ||
-                      _selectedDistrict == null ||
-                      _busy)
-                  ? null
-                  : _next,
-              isLoading: _busy,
-            ),
-            const SizedBox(height: BatshSpacing.lg),
-          ].animate(interval: 60.ms).fadeIn(
-            duration: BatshMotion.slow,
-            curve: BatshMotion.easeOut,
-          ).slideY(
-            begin: 0.08,
-            end: 0,
-            curve: BatshMotion.easeOut,
-          ),
+                    ),
+                    const SizedBox(height: BatshSpacing.sm),
+                    Wrap(
+                      spacing: BatshSpacing.sm,
+                      runSpacing: BatshSpacing.sm,
+                      children: OnboardingCatalog.citiesAndDistricts
+                          .map(
+                            (entry) => BatshChip(
+                              label: entry.city,
+                              selected: _selectedCity == entry.city,
+                              onTap: () => setState(() {
+                                _selectedCity = entry.city;
+                                _selectedDistrict = null;
+                              }),
+                            ),
+                          )
+                          .toList(),
+                    ),
+                    if (_districts.isNotEmpty) ...[
+                      const SizedBox(height: BatshSpacing.lg),
+                      Text(
+                        context.l10n.districtLabel,
+                        style: BatshTypography.labelMd.copyWith(
+                          color: context.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                      const SizedBox(height: BatshSpacing.sm),
+                      Wrap(
+                        spacing: BatshSpacing.sm,
+                        runSpacing: BatshSpacing.sm,
+                        children: _districts
+                            .map(
+                              (d) => BatshChip(
+                                label: d,
+                                selected: _selectedDistrict == d,
+                                onTap: () =>
+                                    setState(() => _selectedDistrict = d),
+                              ),
+                            )
+                            .toList(),
+                      ),
+                    ],
+                    const SizedBox(height: BatshSpacing.xl),
+                    BatshButton(
+                      label: context.l10n.next,
+                      onPressed:
+                          (_selectedCity == null ||
+                              _selectedDistrict == null ||
+                              _busy)
+                          ? null
+                          : _next,
+                      isLoading: _busy,
+                    ),
+                    const SizedBox(height: BatshSpacing.lg),
+                  ]
+                  .animate(interval: 60.ms)
+                  .fadeIn(
+                    duration: BatshMotion.slow,
+                    curve: BatshMotion.easeOut,
+                  )
+                  .slideY(begin: 0.08, end: 0, curve: BatshMotion.easeOut),
         ),
       ),
     );

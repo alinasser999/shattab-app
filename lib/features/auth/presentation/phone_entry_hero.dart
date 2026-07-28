@@ -27,11 +27,11 @@ class _ScrimLayer extends StatelessWidget {
           end: Alignment.bottomCenter,
           stops: const [0.0, 0.16, 0.44, 0.66, 1.0],
           colors: [
-            BatshColors.surface.withValues(alpha: 0.0),
-            BatshColors.surface.withValues(alpha: 0.0),
-            BatshColors.surface.withValues(alpha: 0.32),
-            BatshColors.surface.withValues(alpha: 0.86),
-            BatshColors.surface,
+            context.colorScheme.surface.withValues(alpha: 0.0),
+            context.colorScheme.surface.withValues(alpha: 0.0),
+            context.colorScheme.surface.withValues(alpha: 0.32),
+            context.colorScheme.surface.withValues(alpha: 0.86),
+            context.colorScheme.surface,
           ],
         ),
       ),
@@ -53,9 +53,9 @@ class _LogoTagline extends StatelessWidget {
       fit: BoxFit.contain,
     );
     final tagline = Text(
-      S.taglineNew,
+      context.l10n.taglineNew,
       style: BatshTypography.labelMd.copyWith(
-        color: BatshColors.onSurfaceVariant,
+        color: context.colorScheme.onSurfaceVariant,
         letterSpacing: 0.8,
       ),
     );
@@ -122,8 +122,8 @@ class _HeroHeadline extends StatelessWidget {
         (isMobile ? BatshTypography.headlineLg : BatshTypography.displayMd)
             .copyWith(fontWeight: FontWeight.w800, height: 1.18);
 
-    final line1 = S.heroLine1.split(' ');
-    final line2 = S.heroLine2.split(' ');
+    final line1 = context.l10n.heroLine1.split(' ');
+    final line2 = context.l10n.heroLine2.split(' ');
     final line2Start = _baseDelayMs + line1.length * _stepMs + 140;
 
     return Column(
@@ -131,7 +131,7 @@ class _HeroHeadline extends StatelessWidget {
       children: [
         _WordLine(
           words: line1,
-          style: base.copyWith(color: BatshColors.onSurface),
+          style: base.copyWith(color: context.colorScheme.onSurface),
           startMs: _baseDelayMs,
           stepMs: _stepMs,
           disableMotion: disableMotion,
@@ -139,7 +139,7 @@ class _HeroHeadline extends StatelessWidget {
         const SizedBox(height: 8),
         _WordLine(
           words: line2,
-          style: base.copyWith(color: BatshColors.primary),
+          style: base.copyWith(color: context.colorScheme.primary),
           startMs: line2Start,
           stepMs: _stepMs,
           disableMotion: disableMotion,
@@ -215,10 +215,10 @@ class _HeroSubtitle extends StatelessWidget {
     final child = ConstrainedBox(
       constraints: const BoxConstraints(maxWidth: 340),
       child: Text(
-        S.heroSubtitle,
+        context.l10n.heroSubtitle,
         textAlign: TextAlign.center,
         style: BatshTypography.bodyLg.copyWith(
-          color: BatshColors.onSurfaceVariant,
+          color: context.colorScheme.onSurfaceVariant,
           height: 1.5,
         ),
       ),

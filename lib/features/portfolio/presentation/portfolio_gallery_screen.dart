@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/l10n/strings.dart';
+import 'package:batsh/core/l10n/l10n_extension.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/batsh_colors.dart';
 import '../../../core/theme/batsh_radius.dart';
@@ -20,6 +20,8 @@ import '../domain/portfolio_project.dart';
 import 'providers/portfolio_providers.dart';
 import '../../../core/theme/batsh_icon_size.dart';
 
+import 'package:batsh/core/theme/theme_extension.dart';
+
 class PortfolioGalleryScreen extends ConsumerWidget {
   const PortfolioGalleryScreen({super.key, required this.contractorId});
 
@@ -27,20 +29,20 @@ class PortfolioGalleryScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final contractor =
-        ref.watch(contractorByIdProvider(contractorId)).value;
-    final projectsAsync =
-        ref.watch(portfolioForContractorProvider(contractorId));
+    final contractor = ref.watch(contractorByIdProvider(contractorId)).value;
+    final projectsAsync = ref.watch(
+      portfolioForContractorProvider(contractorId),
+    );
 
     return BatshScaffold(
-      title: S.portfolioGalleryTitle,
+      title: context.l10n.portfolioGalleryTitle,
       body: projectsAsync.when(
         loading: () => const _GallerySkeleton(),
         error: (e, _) => BatshError(
-              message: ErrorMapper.map(e),
-              onRetry: () =>
-                  ref.invalidate(portfolioForContractorProvider(contractorId)),
-            ),
+          message: ErrorMapper.map(e),
+          onRetry: () =>
+              ref.invalidate(portfolioForContractorProvider(contractorId)),
+        ),
         data: (projects) {
           return RefreshIndicator(
             onRefresh: () async =>
@@ -49,26 +51,29 @@ class PortfolioGalleryScreen extends ConsumerWidget {
                 ? ListView(
                     children: [
                       BatshEmptyState(
-                        title: S.noWorksTitle,
-                        message: S.noWorksMessage,
+                        title: context.l10n.noWorksTitle,
+                        message: context.l10n.noWorksMessage,
                         icon: Icons.photo_library_outlined,
                       ),
                     ],
                   )
                 : ListView(
                     padding: const EdgeInsets.symmetric(
-                        vertical: BatshSpacing.md),
+                      vertical: BatshSpacing.md,
+                    ),
                     children: [
                       if (contractor != null) ...[
                         Padding(
                           padding: const EdgeInsets.only(
-                              bottom: BatshSpacing.md),
+                            bottom: BatshSpacing.md,
+                          ),
                           child: Text(
                             contractor.businessName.isNotEmpty
                                 ? contractor.businessName
                                 : contractor.fullName,
                             style: BatshTypography.titleLg.copyWith(
-                                color: BatshColors.onSurfaceVariant),
+                              color: context.colorScheme.onSurfaceVariant,
+                            ),
                           ),
                         ),
                       ],
@@ -76,8 +81,11 @@ class PortfolioGalleryScreen extends ConsumerWidget {
                         _ProjectMagazineCard(
                           project: p,
                           onTap: () => context.push(
-                              Routes.homeownerProjectDetailPath(
-                                  contractorId, p.id)),
+                            Routes.homeownerProjectDetailPath(
+                              contractorId,
+                              p.id,
+                            ),
+                          ),
                         ),
                         const SizedBox(height: BatshSpacing.lg),
                       ],
@@ -98,7 +106,7 @@ class _ProjectMagazineCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: BatshColors.surfaceContainerLowest,
+      color: context.colorScheme.surfaceContainerLowest,
       borderRadius: BatshRadius.brLg,
       clipBehavior: Clip.antiAlias,
       child: InkWell(
@@ -111,19 +119,22 @@ class _ProjectMagazineCard extends StatelessWidget {
               child: DecoratedBox(
                 decoration: BoxDecoration(boxShadow: BatshShadows.soft),
                 child: Hero(
-                tag: 'portfolio-${project.id}',
-                child: CachedNetworkImage(
-                  imageUrl: project.coverPhotoUrl,
-                  fit: BoxFit.cover,
-                  errorWidget: (_, _, _) => Container(
-                    color: BatshColors.surfaceContainer,
-                    child: const Center(
-                      child: Icon(Icons.image_outlined,
-                          size: BatshIconSize.xxl, color: BatshColors.onSurfaceVariant),
+                  tag: 'portfolio-${project.id}',
+                  child: CachedNetworkImage(
+                    imageUrl: project.coverPhotoUrl,
+                    fit: BoxFit.cover,
+                    errorWidget: (_, _, _) => Container(
+                      color: context.colorScheme.surfaceContainer,
+                      child: Center(
+                        child: Icon(
+                          Icons.image_outlined,
+                          size: BatshIconSize.xxl,
+                          color: context.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
                     ),
                   ),
                 ),
-              ),
               ),
             ),
             Padding(
@@ -132,23 +143,30 @@ class _ProjectMagazineCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   if (project.category != null) ...[
-                    Text(project.category!.toUpperCase(),
-                        style: BatshTypography.labelSm.copyWith(
-                          color: BatshColors.primary,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 1.2,
-                        )),
+                    Text(
+                      project.category!.toUpperCase(),
+                      style: BatshTypography.labelSm.copyWith(
+                        color: context.colorScheme.primary,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 1.2,
+                      ),
+                    ),
                     const SizedBox(height: BatshSpacing.xs),
                   ],
-                  Text(project.title,
-                      style: BatshTypography.headlineMd
-                          .copyWith(fontSize: 22, height: 30 / 22)),
+                  Text(
+                    project.title,
+                    style: BatshTypography.headlineMd.copyWith(
+                      fontSize: 22,
+                      height: 30 / 22,
+                    ),
+                  ),
                   if (project.description != null) ...[
                     const SizedBox(height: BatshSpacing.sm),
                     Text(
                       project.description!,
-                      style: BatshTypography.bodyMd
-                          .copyWith(color: BatshColors.onSurfaceVariant),
+                      style: BatshTypography.bodyMd.copyWith(
+                        color: context.colorScheme.onSurfaceVariant,
+                      ),
                       maxLines: 3,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -187,11 +205,18 @@ class _Specs extends StatelessWidget {
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon, size: BatshIconSize.sm, color: BatshColors.onSurfaceVariant),
+              Icon(
+                icon,
+                size: BatshIconSize.sm,
+                color: context.colorScheme.onSurfaceVariant,
+              ),
               const SizedBox(width: 4),
-              Text(label,
-                  style: BatshTypography.labelMd.copyWith(
-                      color: BatshColors.onSurfaceVariant)),
+              Text(
+                label,
+                style: BatshTypography.labelMd.copyWith(
+                  color: context.colorScheme.onSurfaceVariant,
+                ),
+              ),
             ],
           ),
       ],
@@ -207,23 +232,47 @@ class _GallerySkeleton extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: BatshSpacing.md),
       children: [
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: BatshSpacing.marginMobile),
-          child: BatshShimmerBox(width: 180, height: 18, borderRadius: BatshRadius.brSm),
+          padding: const EdgeInsets.symmetric(
+            horizontal: BatshSpacing.marginMobile,
+          ),
+          child: BatshShimmerBox(
+            width: 180,
+            height: 18,
+            borderRadius: BatshRadius.brSm,
+          ),
         ),
         const SizedBox(height: BatshSpacing.md),
         for (var i = 0; i < 3; i++) ...[
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: BatshSpacing.marginMobile),
+            padding: const EdgeInsets.symmetric(
+              horizontal: BatshSpacing.marginMobile,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                BatshShimmerBox(width: double.infinity, height: 180, borderRadius: BatshRadius.brLg),
+                BatshShimmerBox(
+                  width: double.infinity,
+                  height: 180,
+                  borderRadius: BatshRadius.brLg,
+                ),
                 const SizedBox(height: BatshSpacing.gutter),
-                BatshShimmerBox(width: 100, height: 12, borderRadius: BatshRadius.brSm),
+                BatshShimmerBox(
+                  width: 100,
+                  height: 12,
+                  borderRadius: BatshRadius.brSm,
+                ),
                 const SizedBox(height: BatshSpacing.xs),
-                BatshShimmerBox(width: 200, height: 18, borderRadius: BatshRadius.brSm),
+                BatshShimmerBox(
+                  width: 200,
+                  height: 18,
+                  borderRadius: BatshRadius.brSm,
+                ),
                 const SizedBox(height: BatshSpacing.xs),
-                BatshShimmerBox(width: double.infinity, height: 14, borderRadius: BatshRadius.brSm),
+                BatshShimmerBox(
+                  width: double.infinity,
+                  height: 14,
+                  borderRadius: BatshRadius.brSm,
+                ),
               ],
             ),
           ),

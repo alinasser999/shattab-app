@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/l10n/strings.dart';
+import 'package:batsh/core/l10n/l10n_extension.dart';
 import '../../../core/theme/batsh_spacing.dart';
 import '../../../core/widgets/batsh_empty_state.dart';
 import '../../../core/widgets/batsh_error.dart';
@@ -19,7 +19,7 @@ class SavedPostsScreen extends ConsumerWidget {
     final posts = ref.watch(savedPostsProvider);
 
     return BatshScaffold(
-      title: S.savedPosts,
+      title: context.l10n.savedPosts,
       body: posts.when(
         loading: () => const BatshListSkeleton(count: 3),
         error: (e, _) =>
@@ -27,8 +27,8 @@ class SavedPostsScreen extends ConsumerWidget {
         data: (list) {
           if (list.isEmpty) {
             return BatshEmptyState(
-              title: S.savedPostsEmpty,
-              message: S.savedPostsEmptySub,
+              title: context.l10n.savedPostsEmpty,
+              message: context.l10n.savedPostsEmptySub,
               icon: Icons.bookmark_border,
             );
           }

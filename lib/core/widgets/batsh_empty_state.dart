@@ -7,6 +7,8 @@ import '../theme/batsh_typography.dart';
 import '../theme/batsh_icon_size.dart';
 import '../theme/batsh_motion.dart';
 
+import 'package:batsh/core/theme/theme_extension.dart';
+
 /// Why the screen is empty — which decides what the user should do next.
 ///
 /// The two cases look similar and behave nothing alike. Telling a user who
@@ -71,12 +73,12 @@ class BatshEmptyState extends StatelessWidget {
     // would read as a warning about a state that is not a problem.
     final (medallionColor, glyphColor) = switch (kind) {
       BatshEmptyStateKind.nothingYet => (
-        BatshColors.primaryFixed.withValues(alpha: 0.2),
-        BatshColors.primary.withValues(alpha: 0.65),
+        context.colorScheme.primaryFixed.withValues(alpha: 0.2),
+        context.colorScheme.primary.withValues(alpha: 0.65),
       ),
       BatshEmptyStateKind.noResults => (
-        BatshColors.surfaceContainerHigh,
-        BatshColors.onSurfaceVariant,
+        context.colorScheme.surfaceContainerHigh,
+        context.colorScheme.onSurfaceVariant,
       ),
     };
 
@@ -106,7 +108,9 @@ class BatshEmptyState extends StatelessWidget {
     final titleWidget = Text(
       title,
       textAlign: TextAlign.center,
-      style: BatshTypography.titleLg.copyWith(color: BatshColors.onSurface),
+      style: BatshTypography.titleLg.copyWith(
+        color: context.colorScheme.onSurface,
+      ),
     );
 
     final animatedTitle = reduced
@@ -124,7 +128,7 @@ class BatshEmptyState extends StatelessWidget {
           message,
           textAlign: TextAlign.center,
           style: BatshTypography.bodyMd.copyWith(
-            color: BatshColors.onSurfaceVariant,
+            color: context.colorScheme.onSurfaceVariant,
           ),
         ),
       ),

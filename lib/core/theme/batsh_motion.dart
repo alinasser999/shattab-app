@@ -19,14 +19,19 @@ class BatshMotion {
   // ── Curves — premium feel ─────────────────────────────────────────────
   /// Smooth ease-out for entrances (quart for premium deceleration)
   static const Curve easeOut = Cubic(0.25, 0.46, 0.45, 0.94);
+
   /// Fast ease-in for exits
   static const Curve easeIn = Cubic(0.55, 0.06, 0.68, 0.19);
+
   /// Gentle ease-in-out for transitions
   static const Curve easeInOut = Cubic(0.76, 0, 0.24, 1);
+
   /// Subtle spring for tap feedback
   static const Curve springTap = Cubic(0.34, 1.56, 0.64, 1);
+
   /// Elastic out for celebratory moments
   static const Curve springCelebrate = Curves.elasticOut;
+
   /// Premium deceleration for hero transitions
   static const Curve heroEase = Cubic(0.16, 1, 0.3, 1);
 

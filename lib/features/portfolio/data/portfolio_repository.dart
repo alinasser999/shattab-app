@@ -118,13 +118,17 @@ class PortfolioRepository {
     final path = '$contractorId/$draftId/$seq.jpg';
     final storage = _client.storage.from('portfolio-photos');
     if (file != null) {
-      await storage.upload(path, file,
-          fileOptions:
-              const FileOptions(upsert: true, contentType: 'image/jpeg'));
+      await storage.upload(
+        path,
+        file,
+        fileOptions: const FileOptions(upsert: true, contentType: 'image/jpeg'),
+      );
     } else if (bytes != null) {
-      await storage.uploadBinary(path, bytes,
-          fileOptions:
-              const FileOptions(upsert: true, contentType: 'image/jpeg'));
+      await storage.uploadBinary(
+        path,
+        bytes,
+        fileOptions: const FileOptions(upsert: true, contentType: 'image/jpeg'),
+      );
     } else {
       throw ArgumentError('uploadPhoto needs file or bytes');
     }

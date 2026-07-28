@@ -2,7 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/l10n/strings.dart';
+import 'package:batsh/core/l10n/l10n_extension.dart';
 import '../../../core/theme/batsh_colors.dart';
 import '../../../core/theme/batsh_radius.dart';
 import '../../../core/theme/batsh_spacing.dart';
@@ -12,6 +12,8 @@ import '../../../core/widgets/batsh_shimmer.dart';
 import '../../../core/utils/error_mapper.dart';
 import 'providers/portfolio_providers.dart';
 import '../../../core/theme/batsh_icon_size.dart';
+
+import 'package:batsh/core/theme/theme_extension.dart';
 
 class ProjectDetailScreen extends ConsumerWidget {
   const ProjectDetailScreen({super.key, required this.projectId});
@@ -23,7 +25,7 @@ class ProjectDetailScreen extends ConsumerWidget {
     final async = ref.watch(portfolioProjectProvider(projectId));
 
     return Scaffold(
-      backgroundColor: BatshColors.background,
+      backgroundColor: context.colorScheme.background,
       body: async.when(
         loading: () => const BatshHeroDetailSkeleton(),
         error: (e, _) => BatshError(
@@ -32,15 +34,15 @@ class ProjectDetailScreen extends ConsumerWidget {
         ),
         data: (project) {
           if (project == null) {
-            return BatshError(message: S.projectNotFound);
+            return BatshError(message: context.l10n.projectNotFound);
           }
           return CustomScrollView(
             slivers: [
               SliverAppBar(
                 expandedHeight: 320,
                 pinned: true,
-                backgroundColor: BatshColors.background,
-                foregroundColor: BatshColors.onSurface,
+                backgroundColor: context.colorScheme.background,
+                foregroundColor: context.colorScheme.onSurface,
                 elevation: 0,
                 flexibleSpace: FlexibleSpaceBar(
                   background: Stack(
@@ -60,7 +62,9 @@ class ProjectDetailScreen extends ConsumerWidget {
                             end: Alignment.bottomCenter,
                             colors: [
                               Colors.transparent,
-                              BatshColors.background.withValues(alpha: 0.9),
+                              context.colorScheme.background.withValues(
+                                alpha: 0.9,
+                              ),
                             ],
                             stops: const [0.6, 1.0],
                           ),
@@ -78,7 +82,7 @@ class ProjectDetailScreen extends ConsumerWidget {
                       Text(
                         project.category!.toUpperCase(),
                         style: BatshTypography.labelSm.copyWith(
-                          color: BatshColors.primary,
+                          color: context.colorScheme.primary,
                           fontWeight: FontWeight.w700,
                           letterSpacing: 1.2,
                         ),
@@ -92,7 +96,7 @@ class ProjectDetailScreen extends ConsumerWidget {
                     Container(
                       padding: const EdgeInsets.all(BatshSpacing.gutter),
                       decoration: BoxDecoration(
-                        color: BatshColors.surfaceContainerLow,
+                        color: context.colorScheme.surfaceContainerLow,
                         borderRadius: BatshRadius.brLg,
                       ),
                       child: Wrap(
@@ -102,19 +106,19 @@ class ProjectDetailScreen extends ConsumerWidget {
                           if (project.location != null)
                             _MetaItem(
                               icon: Icons.place_outlined,
-                              label: S.projectLocationLabel,
+                              label: context.l10n.projectLocationLabel,
                               value: project.location!,
                             ),
                           if (project.yearCompleted != null)
                             _MetaItem(
                               icon: Icons.event_outlined,
-                              label: S.projectYearLabel,
+                              label: context.l10n.projectYearLabel,
                               value: '${project.yearCompleted}',
                             ),
                           if (project.apartmentType != null)
                             _MetaItem(
                               icon: Icons.home_outlined,
-                              label: S.apartmentTypeLabel,
+                              label: context.l10n.apartmentTypeLabel,
                               value: project.apartmentType!,
                             ),
                         ],
@@ -162,7 +166,7 @@ class _MetaItem extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, color: BatshColors.primary, size: BatshIconSize.md),
+        Icon(icon, color: context.colorScheme.primary, size: BatshIconSize.md),
         const SizedBox(width: BatshSpacing.sm),
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -170,7 +174,7 @@ class _MetaItem extends StatelessWidget {
             Text(
               label,
               style: BatshTypography.labelSm.copyWith(
-                color: BatshColors.onSurfaceVariant,
+                color: context.colorScheme.onSurfaceVariant,
               ),
             ),
             Text(

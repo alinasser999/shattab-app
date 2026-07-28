@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
-import '../../../core/l10n/strings.dart';
+import 'package:batsh/core/l10n/l10n_extension.dart';
+import 'package:batsh/core/l10n/strings.dart';
 import '../../../core/theme/batsh_colors.dart';
 import '../../../core/theme/batsh_radius.dart';
 import '../../../core/theme/batsh_shadows.dart';
@@ -12,6 +13,8 @@ import '../pricing.dart';
 import 'payment_flow.dart';
 import '../../../core/theme/batsh_icon_size.dart';
 import '../../../core/theme/batsh_motion.dart';
+
+import 'package:batsh/core/theme/theme_extension.dart';
 
 /// Shattab Pro subscription page. The one surface that earns a Committed /
 /// Drenched treatment (aspirational terracotta hero) inside an otherwise
@@ -36,7 +39,7 @@ class _ProScreenState extends State<ProScreen> {
   Widget build(BuildContext context) {
     final motion = !MediaQuery.disableAnimationsOf(context);
     return Scaffold(
-      backgroundColor: BatshColors.surface,
+      backgroundColor: context.colorScheme.surface,
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -91,13 +94,13 @@ class _Hero extends StatelessWidget {
         left: BatshSpacing.gutter,
         right: BatshSpacing.gutter,
       ),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
-            BatshColors.primary,
-            BatshColors.onPrimaryFixedVariant, // deep terracotta
+            context.colorScheme.primary,
+            context.colorScheme.onPrimaryFixedVariant, // deep terracotta
           ],
         ),
         borderRadius: BorderRadius.vertical(
@@ -106,26 +109,26 @@ class _Hero extends StatelessWidget {
       ),
       child: Column(
         children: [
-          const Align(
+          Align(
             alignment: AlignmentDirectional.centerStart,
-            child: BackButton(color: BatshColors.onPrimary),
+            child: BackButton(color: context.colorScheme.onPrimary),
           ),
           const SizedBox(height: BatshSpacing.xs),
           _Medallion(motion: motion),
           const SizedBox(height: BatshSpacing.md),
           Text(
-            S.proScreenTitle,
+            context.l10n.proScreenTitle,
             textAlign: TextAlign.center,
             style: BatshTypography.displayMd.copyWith(
-              color: BatshColors.onPrimary,
+              color: context.colorScheme.onPrimary,
             ),
           ),
           const SizedBox(height: BatshSpacing.xs),
           Text(
-            S.proValueLine,
+            context.l10n.proValueLine,
             textAlign: TextAlign.center,
             style: BatshTypography.bodyLg.copyWith(
-              color: BatshColors.onPrimary.withValues(alpha: 0.88),
+              color: context.colorScheme.onPrimary.withValues(alpha: 0.88),
             ),
           ),
         ],
@@ -145,26 +148,26 @@ class _Medallion extends StatelessWidget {
       height: 92,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            BatshColors.tertiaryContainer, // light gold
-            BatshColors.tertiary, // deep gold
+            context.colorScheme.tertiaryContainer, // light gold
+            context.colorScheme.tertiary, // deep gold
           ],
         ),
         boxShadow: [
           BoxShadow(
-            color: BatshColors.tertiaryContainer.withValues(alpha: 0.5),
+            color: context.colorScheme.tertiaryContainer.withValues(alpha: 0.5),
             blurRadius: 28,
             spreadRadius: 2,
           ),
         ],
       ),
-      child: const Icon(
+      child: Icon(
         Icons.workspace_premium_rounded,
         size: BatshIconSize.xl,
-        color: BatshColors.onTertiaryContainer,
+        color: context.colorScheme.onTertiaryContainer,
       ),
     );
     if (!motion) return ExcludeSemantics(child: seal);
@@ -200,15 +203,15 @@ class _PlanCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final benefits = [
-      S.proBenefitQuotes,
-      S.proBenefitRequests,
-      S.proBenefitRanking,
-      S.proBenefitPhotos,
-      S.proBenefitSeen,
+      context.l10n.proBenefitQuotes,
+      context.l10n.proBenefitRequests,
+      context.l10n.proBenefitRanking,
+      context.l10n.proBenefitPhotos,
+      context.l10n.proBenefitSeen,
     ];
     return Container(
       decoration: BoxDecoration(
-        color: BatshColors.surfaceContainerLowest,
+        color: context.colorScheme.surfaceContainerLowest,
         borderRadius: BatshRadius.brLg,
         boxShadow: BatshShadows.floating,
       ),
@@ -221,10 +224,10 @@ class _PlanCard extends StatelessWidget {
           _PriceBlock(annual: annual),
           const SizedBox(height: BatshSpacing.xs),
           Text(
-            S.proRoiLine,
+            context.l10n.proRoiLine,
             textAlign: TextAlign.center,
             style: BatshTypography.bodySm.copyWith(
-              color: BatshColors.onSurfaceVariant,
+              color: context.colorScheme.onSurfaceVariant,
             ),
           ),
           const SizedBox(height: BatshSpacing.lg),
@@ -232,16 +235,16 @@ class _PlanCard extends StatelessWidget {
             _BenefitRow(text: benefits[i], index: i, motion: motion),
           const SizedBox(height: BatshSpacing.lg),
           BatshButton(
-            label: S.startFreeMonth,
+            label: context.l10n.startFreeMonth,
             icon: Icons.workspace_premium_outlined,
             onPressed: onSubscribe,
           ),
           const SizedBox(height: BatshSpacing.sm),
           Text(
-            S.cancelAnytime,
+            context.l10n.cancelAnytime,
             textAlign: TextAlign.center,
             style: BatshTypography.labelMd.copyWith(
-              color: BatshColors.onSurfaceVariant,
+              color: context.colorScheme.onSurfaceVariant,
             ),
           ),
         ],
@@ -260,28 +263,31 @@ class _PlanToggle extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(BatshSpacing.xxs),
       decoration: BoxDecoration(
-        color: BatshColors.surfaceContainerLow,
+        color: context.colorScheme.surfaceContainerLow,
         borderRadius: BatshRadius.brFull,
       ),
       child: Row(
         children: [
           _seg(
-            label: S.planMonthly,
+            context,
+            label: context.l10n.planMonthly,
             selected: !annual,
             onTap: () => onToggle(false),
           ),
           _seg(
-            label: S.planAnnual,
+            context,
+            label: context.l10n.planAnnual,
             selected: annual,
             onTap: () => onToggle(true),
-            badge: S.annualSaveBadge,
+            badge: context.l10n.annualSaveBadge,
           ),
         ],
       ),
     );
   }
 
-  Widget _seg({
+  Widget _seg(
+    BuildContext context, {
     required String label,
     required bool selected,
     required VoidCallback onTap,
@@ -301,7 +307,7 @@ class _PlanToggle extends StatelessWidget {
             alignment: Alignment.center,
             decoration: BoxDecoration(
               color: selected
-                  ? BatshColors.surfaceContainerLowest
+                  ? context.colorScheme.surfaceContainerLowest
                   : Colors.transparent,
               borderRadius: BatshRadius.brFull,
               boxShadow: selected ? BatshShadows.subtle : null,
@@ -313,8 +319,8 @@ class _PlanToggle extends StatelessWidget {
                   label,
                   style: BatshTypography.labelLg.copyWith(
                     color: selected
-                        ? BatshColors.primary
-                        : BatshColors.onSurfaceVariant,
+                        ? context.colorScheme.primary
+                        : context.colorScheme.onSurfaceVariant,
                   ),
                 ),
                 if (badge != null) ...[
@@ -325,13 +331,13 @@ class _PlanToggle extends StatelessWidget {
                       vertical: 1,
                     ),
                     decoration: BoxDecoration(
-                      color: BatshColors.secondaryContainer,
+                      color: context.colorScheme.secondaryContainer,
                       borderRadius: BatshRadius.brFull,
                     ),
                     child: Text(
                       badge,
                       style: BatshTypography.labelSm.copyWith(
-                        color: BatshColors.onSecondaryContainer,
+                        color: context.colorScheme.onSecondaryContainer,
                       ),
                     ),
                   ),
@@ -354,7 +360,7 @@ class _PriceBlock extends StatelessWidget {
     final price = annual
         ? BatshPricing.proAnnualEgp
         : BatshPricing.proMonthlyEgp;
-    final unit = annual ? S.perYear : S.perMonth;
+    final unit = annual ? context.l10n.perYear : context.l10n.perMonth;
     return AnimatedSwitcher(
       duration: 200.ms,
       transitionBuilder: (child, anim) =>
@@ -369,20 +375,22 @@ class _PriceBlock extends StatelessWidget {
             _digits('$price'),
             style: BatshTypography.displayLg.copyWith(
               fontSize: 48,
-              color: BatshColors.primary,
+              color: context.colorScheme.primary,
               fontWeight: FontWeight.w800,
             ),
           ),
           const SizedBox(width: BatshSpacing.xxs),
           Text(
-            S.egpUnit,
-            style: BatshTypography.titleLg.copyWith(color: BatshColors.primary),
+            context.l10n.egpUnit,
+            style: BatshTypography.titleLg.copyWith(
+              color: context.colorScheme.primary,
+            ),
           ),
           const SizedBox(width: BatshSpacing.xxs),
           Text(
             unit,
             style: BatshTypography.bodyMd.copyWith(
-              color: BatshColors.onSurfaceVariant,
+              color: context.colorScheme.onSurfaceVariant,
             ),
           ),
         ],
@@ -408,10 +416,10 @@ class _BenefitRow extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(
+          Icon(
             Icons.check_circle_rounded,
             size: BatshIconSize.md,
-            color: BatshColors.tertiary,
+            color: context.colorScheme.tertiary,
           ),
           const SizedBox(width: BatshSpacing.sm),
           Expanded(child: Text(text, style: BatshTypography.bodyMd)),
@@ -435,7 +443,7 @@ class _CompareTable extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: BatshColors.surfaceContainerLow,
+        color: context.colorScheme.surfaceContainerLow,
         borderRadius: BatshRadius.brLg,
       ),
       padding: const EdgeInsets.all(BatshSpacing.lg),
@@ -443,43 +451,68 @@ class _CompareTable extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            S.comparePlans,
+            context.l10n.comparePlans,
             style: BatshTypography.titleMd,
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: BatshSpacing.md),
-          _header(),
-          const Divider(height: BatshSpacing.lg, color: BatshColors.divider),
-          _row(S.cmpQuotes, S.cmpQuotesFree, S.cmpUnlimited),
-          _row(S.cmpRequests, S.cmpRequestsFree, S.cmpRequestsPro),
-          _row(S.cmpRanking, S.cmpRankingFree, S.cmpRankingPro),
-          _row(S.cmpPortfolio, S.cmpPortfolioFree, S.cmpUnlimited),
-          _row(S.cmpSeenRow, null, null),
+          _header(context),
+          Divider(
+            height: BatshSpacing.lg,
+            color: context.colorScheme.outlineVariant,
+          ),
+          _row(
+            context,
+            context.l10n.cmpQuotes,
+            context.l10n.cmpQuotesFree,
+            context.l10n.cmpUnlimited,
+          ),
+          _row(
+            context,
+            context.l10n.cmpRequests,
+            context.l10n.cmpRequestsFree,
+            context.l10n.cmpRequestsPro,
+          ),
+          _row(
+            context,
+            context.l10n.cmpRanking,
+            context.l10n.cmpRankingFree,
+            context.l10n.cmpRankingPro,
+          ),
+          _row(
+            context,
+            context.l10n.cmpPortfolio,
+            context.l10n.cmpPortfolioFree,
+            context.l10n.cmpUnlimited,
+          ),
+          _row(context, context.l10n.cmpSeenRow, null, null),
         ],
       ),
     );
   }
 
-  Widget _header() {
+  Widget _header(BuildContext context) {
     return Row(
       children: [
         const Expanded(flex: 4, child: SizedBox()),
         Expanded(
           flex: 3,
           child: Text(
-            S.freePlanName,
+            context.l10n.freePlanName,
             textAlign: TextAlign.center,
             style: BatshTypography.labelMd.copyWith(
-              color: BatshColors.onSurfaceVariant,
+              color: context.colorScheme.onSurfaceVariant,
             ),
           ),
         ),
         Expanded(
           flex: 3,
           child: Text(
-            S.proPlanName,
+            context.l10n.proPlanName,
             textAlign: TextAlign.center,
-            style: BatshTypography.labelLg.copyWith(color: BatshColors.primary),
+            style: BatshTypography.labelLg.copyWith(
+              color: context.colorScheme.primary,
+            ),
           ),
         ),
       ],
@@ -487,34 +520,38 @@ class _CompareTable extends StatelessWidget {
   }
 
   /// Null values render as ✕ (free) / ✓ (pro) for boolean rows.
-  Widget _row(String label, String? free, String? pro) {
+  Widget _row(BuildContext context, String label, String? free, String? pro) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: BatshSpacing.xs),
       child: Row(
         children: [
           Expanded(flex: 4, child: Text(label, style: BatshTypography.bodyMd)),
-          Expanded(flex: 3, child: _cell(free, isPro: false)),
-          Expanded(flex: 3, child: _cell(pro, isPro: true)),
+          Expanded(flex: 3, child: _cell(context, free, isPro: false)),
+          Expanded(flex: 3, child: _cell(context, pro, isPro: true)),
         ],
       ),
     );
   }
 
-  Widget _cell(String? value, {required bool isPro}) {
+  Widget _cell(BuildContext context, String? value, {required bool isPro}) {
     if (value == null) {
       return Icon(
         isPro
             ? Icons.check_circle_rounded
             : Icons.remove_circle_outline_rounded,
         size: BatshIconSize.md,
-        color: isPro ? BatshColors.tertiary : BatshColors.outlineVariant,
+        color: isPro
+            ? context.colorScheme.tertiary
+            : context.colorScheme.outlineVariant,
       );
     }
     return Text(
       value,
       textAlign: TextAlign.center,
       style: BatshTypography.labelMd.copyWith(
-        color: isPro ? BatshColors.onSurface : BatshColors.onSurfaceVariant,
+        color: isPro
+            ? context.colorScheme.onSurface
+            : context.colorScheme.onSurfaceVariant,
         fontWeight: isPro ? FontWeight.w700 : FontWeight.w500,
       ),
     );
@@ -531,16 +568,16 @@ class _TrustFooter extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        const Icon(
+        Icon(
           Icons.lock_outline_rounded,
           size: BatshIconSize.sm,
-          color: BatshColors.onSurfaceVariant,
+          color: context.colorScheme.onSurfaceVariant,
         ),
         const SizedBox(width: BatshSpacing.xs),
         Text(
-          S.trustPaymob,
+          context.l10n.trustPaymob,
           style: BatshTypography.labelMd.copyWith(
-            color: BatshColors.onSurfaceVariant,
+            color: context.colorScheme.onSurfaceVariant,
           ),
         ),
       ],

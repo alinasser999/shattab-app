@@ -8,6 +8,8 @@ import '../theme/batsh_spacing.dart';
 import '../theme/batsh_typography.dart';
 import '../theme/batsh_icon_size.dart';
 
+import 'package:batsh/core/theme/theme_extension.dart';
+
 enum BatshButtonStyle { primary, secondary, ghost }
 
 class BatshButton extends StatelessWidget {
@@ -47,9 +49,9 @@ class BatshButton extends StatelessWidget {
             child: CircularProgressIndicator(
               strokeWidth: 2.5,
               color: switch (style) {
-                BatshButtonStyle.primary => BatshColors.onPrimary,
-                BatshButtonStyle.secondary => BatshColors.primary,
-                BatshButtonStyle.ghost => BatshColors.onSurfaceVariant,
+                BatshButtonStyle.primary => context.colorScheme.onPrimary,
+                BatshButtonStyle.secondary => context.colorScheme.primary,
+                BatshButtonStyle.ghost => context.colorScheme.onSurfaceVariant,
               },
             ),
           )
@@ -79,10 +81,10 @@ class BatshButton extends StatelessWidget {
                 onPressed?.call();
               },
         style: ElevatedButton.styleFrom(
-          backgroundColor: backgroundColor ?? BatshColors.primary,
-          foregroundColor: foregroundColor ?? BatshColors.onPrimary,
-          disabledBackgroundColor: BatshColors.surfaceContainerHigh,
-          disabledForegroundColor: BatshColors.onSurfaceVariant,
+          backgroundColor: backgroundColor ?? context.colorScheme.primary,
+          foregroundColor: foregroundColor ?? context.colorScheme.onPrimary,
+          disabledBackgroundColor: context.colorScheme.surfaceContainerHigh,
+          disabledForegroundColor: context.colorScheme.onSurfaceVariant,
           minimumSize: const Size.fromHeight(56),
           padding: const EdgeInsets.symmetric(
             horizontal: BatshSpacing.lg,
@@ -103,14 +105,14 @@ class BatshButton extends StatelessWidget {
                 onPressed?.call();
               },
         style: OutlinedButton.styleFrom(
-          foregroundColor: foregroundColor ?? BatshColors.primary,
+          foregroundColor: foregroundColor ?? context.colorScheme.primary,
           backgroundColor: backgroundColor,
           side: BorderSide(
-            color: BatshColors.outline.withValues(alpha: 0.5),
+            color: context.colorScheme.outline.withValues(alpha: 0.5),
             width: 1.5,
           ),
-          disabledBackgroundColor: BatshColors.surfaceContainerHigh,
-          disabledForegroundColor: BatshColors.onSurfaceVariant,
+          disabledBackgroundColor: context.colorScheme.surfaceContainerHigh,
+          disabledForegroundColor: context.colorScheme.onSurfaceVariant,
           minimumSize: const Size.fromHeight(56),
           padding: const EdgeInsets.symmetric(
             horizontal: BatshSpacing.lg,
@@ -128,7 +130,8 @@ class BatshButton extends StatelessWidget {
                 onPressed?.call();
               },
         style: TextButton.styleFrom(
-          foregroundColor: foregroundColor ?? BatshColors.onSurfaceVariant,
+          foregroundColor:
+              foregroundColor ?? context.colorScheme.onSurfaceVariant,
           minimumSize: const Size(0, 48),
           padding: const EdgeInsets.symmetric(
             horizontal: BatshSpacing.gutter,

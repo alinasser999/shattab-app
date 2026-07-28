@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/l10n/strings.dart';
+import 'package:batsh/core/l10n/l10n_extension.dart';
 import '../../../core/theme/batsh_colors.dart';
 import '../../../core/theme/batsh_spacing.dart';
 import '../../../core/theme/batsh_typography.dart';
@@ -14,6 +14,8 @@ import '../domain/review.dart';
 import 'providers/reviews_providers.dart';
 import '../../../core/theme/batsh_icon_size.dart';
 import '../../../core/widgets/batsh_sheet.dart';
+
+import 'package:batsh/core/theme/theme_extension.dart';
 
 /// Opens the list of reviews left for a contractor.
 ///
@@ -43,7 +45,7 @@ class _ReviewsSheet extends ConsumerWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(S.reviewsSheetTitle, style: BatshTypography.titleLg),
+          Text(context.l10n.reviewsSheetTitle, style: BatshTypography.titleLg),
           const SizedBox(height: BatshSpacing.md),
           Expanded(
             child: async.when(
@@ -56,8 +58,8 @@ class _ReviewsSheet extends ConsumerWidget {
               data: (reviews) {
                 if (reviews.isEmpty) {
                   return BatshEmptyState(
-                    title: S.noReviewsYet,
-                    message: S.noReviewsYetSub,
+                    title: context.l10n.noReviewsYet,
+                    message: context.l10n.noReviewsYetSub,
                     icon: Icons.rate_review_outlined,
                   );
                 }
@@ -104,14 +106,14 @@ class _ReviewRow extends StatelessWidget {
                     : Icons.star_outline_rounded,
                 size: BatshIconSize.sm,
                 color: i < review.rating
-                    ? BatshColors.tertiary
-                    : BatshColors.outlineVariant,
+                    ? context.colorScheme.tertiary
+                    : context.colorScheme.outlineVariant,
               ),
             const Spacer(),
             Text(
               formatRelativeTime(review.createdAt),
               style: BatshTypography.labelSm.copyWith(
-                color: BatshColors.onSurfaceVariant,
+                color: context.colorScheme.onSurfaceVariant,
               ),
             ),
           ],

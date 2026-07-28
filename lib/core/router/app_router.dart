@@ -19,7 +19,8 @@ import '../../features/discovery/presentation/discover_screen.dart';
 import '../../features/explore/presentation/create_post_screen.dart' as create;
 import '../../features/explore/presentation/explore_screen.dart';
 import '../../features/explore/presentation/my_posts_screen.dart';
-import '../../features/explore/presentation/post_detail_screen.dart' as explore_detail;
+import '../../features/explore/presentation/post_detail_screen.dart'
+    as explore_detail;
 import '../../features/explore/presentation/saved_posts_screen.dart';
 import '../../features/inbox/presentation/inbox_screen.dart';
 import '../../features/inbox/presentation/request_detail_screen.dart';
@@ -58,24 +59,23 @@ GoRouter appRouter(Ref ref) {
     redirect: (context, state) => roleGuard(ref, state),
     routes: [
       GoRoute(
-          path: Routes.splash,
-          pageBuilder: (_, state) =>
-              fadeSlidePage(const SplashScreen(), state)),
+        path: Routes.splash,
+        pageBuilder: (_, state) => fadeSlidePage(const SplashScreen(), state),
+      ),
       GoRoute(
         path: Routes.login,
         pageBuilder: (_, state) =>
             fadeSlidePage(const PhoneEntryScreen(), state),
         routes: [
           GoRoute(
-              path: 'otp',
-              pageBuilder: (_, state) =>
-                  fadeSlidePage(const OtpScreen(), state)),
+            path: 'otp',
+            pageBuilder: (_, state) => fadeSlidePage(const OtpScreen(), state),
+          ),
         ],
       ),
       GoRoute(
         path: Routes.onboardingRoleSelect,
-        pageBuilder: (_, state) =>
-            slideUpPage(const RoleSelectScreen(), state),
+        pageBuilder: (_, state) => slideUpPage(const RoleSelectScreen(), state),
       ),
       GoRoute(
         path: Routes.onboardingHomeownerDetails,
@@ -84,8 +84,7 @@ GoRouter appRouter(Ref ref) {
       ),
       GoRoute(
         path: Routes.onboardingHomeownerLocation,
-        pageBuilder: (_, state) =>
-            slideUpPage(const LocationScreen(), state),
+        pageBuilder: (_, state) => slideUpPage(const LocationScreen(), state),
       ),
       GoRoute(
         path: Routes.onboardingContractorProfile,
@@ -99,8 +98,7 @@ GoRouter appRouter(Ref ref) {
       ),
       GoRoute(
         path: Routes.onboardingContractorExperience,
-        pageBuilder: (_, state) =>
-            slideUpPage(const ExperienceScreen(), state),
+        pageBuilder: (_, state) => slideUpPage(const ExperienceScreen(), state),
       ),
       GoRoute(
         path: Routes.pro,
@@ -110,240 +108,274 @@ GoRouter appRouter(Ref ref) {
         builder: (context, state, navShell) =>
             HomeownerShell(navigationShell: navShell),
         branches: [
-          StatefulShellBranch(routes: [
-            GoRoute(
-              path: Routes.homeownerExplore,
-              pageBuilder: (_, state) =>
-                  fadeSlidePage(const ExploreScreen(), state),
-              routes: [
-                GoRoute(
-                  path: 'post/:id',
-                  pageBuilder: (_, state) => fadeSlidePage(
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: Routes.homeownerExplore,
+                pageBuilder: (_, state) =>
+                    fadeSlidePage(const ExploreScreen(), state),
+                routes: [
+                  GoRoute(
+                    path: 'post/:id',
+                    pageBuilder: (_, state) => fadeSlidePage(
                       explore_detail.PostDetailScreen(
-                          postId: state.pathParameters['id']!),
-                      state),
-                ),
-                GoRoute(
-                  path: 'new',
-                  pageBuilder: (_, state) =>
-                      slideUpPage(const create.CreatePostScreen(), state),
-                ),
-                GoRoute(
-                  path: 'my-posts',
-                  pageBuilder: (_, state) =>
-                      fadeSlidePage(const MyPostsScreen(), state),
-                ),
-                GoRoute(
-                  path: 'saved-posts',
-                  pageBuilder: (_, state) =>
-                      fadeSlidePage(const SavedPostsScreen(), state),
-                ),
-              ],
-            ),
-          ]),
-          StatefulShellBranch(routes: [
-            GoRoute(
-              path: Routes.homeownerDiscover,
-              pageBuilder: (_, state) =>
-                  fadeSlidePage(const DiscoverScreen(), state),
-              routes: [
-                GoRoute(
-                  path: 'contractor/:id',
-                  pageBuilder: (_, state) => fadeSlidePage(
-                      ContractorProfileScreen(
-                          contractorId: state.pathParameters['id']!),
-                      state),
-                  routes: [
-                    GoRoute(
-                      path: 'brief',
-                      pageBuilder: (_, state) => slideUpPage(
-                          SendBriefScreen(
-                              contractorId: state.pathParameters['id']!),
-                          state),
-                      routes: [
-                        GoRoute(
-                          path: 'sent',
-                          pageBuilder: (_, state) => fadeSlidePage(
-                              BriefSentScreen(
-                                  contractorId:
-                                      state.pathParameters['id']!),
-                              state),
-                        ),
-                      ],
+                        postId: state.pathParameters['id']!,
+                      ),
+                      state,
                     ),
-                    GoRoute(
-                      path: 'portfolio',
-                      pageBuilder: (_, state) => zoomInPage(
-                          PortfolioGalleryScreen(
-                              contractorId: state.pathParameters['id']!),
-                          state),
-                      routes: [
-                        GoRoute(
-                          path: ':projectId',
-                          pageBuilder: (_, state) => zoomInPage(
-                              ProjectDetailScreen(
-                                  projectId:
-                                      state.pathParameters['projectId']!),
-                              state),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ]),
-          StatefulShellBranch(routes: [
-            GoRoute(
-              path: Routes.homeownerRequests,
-              pageBuilder: (_, state) =>
-                  fadeSlidePage(const MyBriefsScreen(), state),
-              routes: [
-                GoRoute(
-                  path: 'new-post',
-                  pageBuilder: (_, state) =>
-                      slideUpPage(const CreatePostScreen(), state),
-                ),
-                GoRoute(
-                  path: ':id',
-                  pageBuilder: (_, state) => fadeSlidePage(
-                      BriefDetailScreen(
-                          briefId: state.pathParameters['id']!),
-                      state),
-                ),
-              ],
-            ),
-          ]),
-          StatefulShellBranch(routes: [
-            GoRoute(
-              path: Routes.homeownerSaved,
-              pageBuilder: (_, state) =>
-                  fadeSlidePage(const SavedScreen(), state),
-            ),
-          ]),
-          StatefulShellBranch(routes: [
-            GoRoute(
-              path: Routes.homeownerProfile,
-              pageBuilder: (_, state) =>
-                  fadeSlidePage(const ProfileScreen(), state),
-              routes: [
-                GoRoute(
-                  path: 'edit',
+                  ),
+                  GoRoute(
+                    path: 'new',
                     pageBuilder: (_, state) =>
-                      slideUpPage(const HomeownerEditProfileScreen(), state),
-                ),
-              ],
-            ),
-          ]),
+                        slideUpPage(const create.CreatePostScreen(), state),
+                  ),
+                  GoRoute(
+                    path: 'my-posts',
+                    pageBuilder: (_, state) =>
+                        fadeSlidePage(const MyPostsScreen(), state),
+                  ),
+                  GoRoute(
+                    path: 'saved-posts',
+                    pageBuilder: (_, state) =>
+                        fadeSlidePage(const SavedPostsScreen(), state),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: Routes.homeownerDiscover,
+                pageBuilder: (_, state) =>
+                    fadeSlidePage(const DiscoverScreen(), state),
+                routes: [
+                  GoRoute(
+                    path: 'contractor/:id',
+                    pageBuilder: (_, state) => fadeSlidePage(
+                      ContractorProfileScreen(
+                        contractorId: state.pathParameters['id']!,
+                      ),
+                      state,
+                    ),
+                    routes: [
+                      GoRoute(
+                        path: 'brief',
+                        pageBuilder: (_, state) => slideUpPage(
+                          SendBriefScreen(
+                            contractorId: state.pathParameters['id']!,
+                          ),
+                          state,
+                        ),
+                        routes: [
+                          GoRoute(
+                            path: 'sent',
+                            pageBuilder: (_, state) => fadeSlidePage(
+                              BriefSentScreen(
+                                contractorId: state.pathParameters['id']!,
+                              ),
+                              state,
+                            ),
+                          ),
+                        ],
+                      ),
+                      GoRoute(
+                        path: 'portfolio',
+                        pageBuilder: (_, state) => zoomInPage(
+                          PortfolioGalleryScreen(
+                            contractorId: state.pathParameters['id']!,
+                          ),
+                          state,
+                        ),
+                        routes: [
+                          GoRoute(
+                            path: ':projectId',
+                            pageBuilder: (_, state) => zoomInPage(
+                              ProjectDetailScreen(
+                                projectId: state.pathParameters['projectId']!,
+                              ),
+                              state,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: Routes.homeownerRequests,
+                pageBuilder: (_, state) =>
+                    fadeSlidePage(const MyBriefsScreen(), state),
+                routes: [
+                  GoRoute(
+                    path: 'new-post',
+                    pageBuilder: (_, state) =>
+                        slideUpPage(const CreatePostScreen(), state),
+                  ),
+                  GoRoute(
+                    path: ':id',
+                    pageBuilder: (_, state) => fadeSlidePage(
+                      BriefDetailScreen(briefId: state.pathParameters['id']!),
+                      state,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: Routes.homeownerSaved,
+                pageBuilder: (_, state) =>
+                    fadeSlidePage(const SavedScreen(), state),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: Routes.homeownerProfile,
+                pageBuilder: (_, state) =>
+                    fadeSlidePage(const ProfileScreen(), state),
+                routes: [
+                  GoRoute(
+                    path: 'edit',
+                    pageBuilder: (_, state) =>
+                        slideUpPage(const HomeownerEditProfileScreen(), state),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ],
       ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navShell) =>
             ContractorShell(navigationShell: navShell),
         branches: [
-          StatefulShellBranch(routes: [
-            GoRoute(
-              path: Routes.contractorExplore,
-              pageBuilder: (_, state) =>
-                  fadeSlidePage(const ExploreScreen(), state),
-              routes: [
-                GoRoute(
-                  path: 'post/:id',
-                  pageBuilder: (_, state) => fadeSlidePage(
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: Routes.contractorExplore,
+                pageBuilder: (_, state) =>
+                    fadeSlidePage(const ExploreScreen(), state),
+                routes: [
+                  GoRoute(
+                    path: 'post/:id',
+                    pageBuilder: (_, state) => fadeSlidePage(
                       explore_detail.PostDetailScreen(
-                          postId: state.pathParameters['id']!),
-                      state),
-                ),
-                GoRoute(
-                  path: 'new',
-                  pageBuilder: (_, state) =>
-                      slideUpPage(const create.CreatePostScreen(), state),
-                ),
-                GoRoute(
-                  path: 'my-posts',
-                  pageBuilder: (_, state) =>
-                      fadeSlidePage(const MyPostsScreen(), state),
-                ),
-                GoRoute(
-                  path: 'saved-posts',
-                  pageBuilder: (_, state) =>
-                      fadeSlidePage(const SavedPostsScreen(), state),
-                ),
-              ],
-            ),
-          ]),
-          StatefulShellBranch(routes: [
-            GoRoute(
-              path: Routes.contractorDashboard,
-              pageBuilder: (_, state) =>
-                  fadeSlidePage(const JobOpportunitiesScreen(), state),
-              routes: [
-                GoRoute(
-                  path: 'my-quotes',
-                  pageBuilder: (_, state) =>
-                      fadeSlidePage(const MyQuotesScreen(), state),
-                ),
-                GoRoute(
-                  path: 'post/:id',
-                  pageBuilder: (_, state) => fadeSlidePage(
-                      PostDetailScreen(
-                          postId: state.pathParameters['id']!),
-                      state),
-                ),
-              ],
-            ),
-          ]),
-          StatefulShellBranch(routes: [
-            GoRoute(
-              path: Routes.contractorInbox,
-              pageBuilder: (_, state) =>
-                  fadeSlidePage(const InboxScreen(), state),
-              routes: [
-                GoRoute(
-                  path: ':id',
-                  pageBuilder: (_, state) => fadeSlidePage(
-                      RequestDetailScreen(
-                          briefId: state.pathParameters['id']!),
-                      state),
-                ),
-              ],
-            ),
-          ]),
-          StatefulShellBranch(routes: [
-            GoRoute(
-              path: Routes.contractorPortfolio,
-              pageBuilder: (_, state) =>
-                  fadeSlidePage(const MyPortfolioScreen(), state),
-              routes: [
-                GoRoute(
-                  path: 'new',
-                      pageBuilder: (_, state) =>
-                      slideUpPage(const ProjectEditorScreen(), state),
-                ),
-                GoRoute(
-                  path: ':id/edit',
-                  pageBuilder: (_, state) => slideUpPage(
-                      ProjectEditorScreen(
-                          projectId: state.pathParameters['id']!),
-                      state),
-                ),
-              ],
-            ),
-          ]),
-          StatefulShellBranch(routes: [
-            GoRoute(
-              path: Routes.contractorProfile,
-              pageBuilder: (_, state) =>
-                  fadeSlidePage(const ProfileScreen(), state),
-              routes: [
-                GoRoute(
-                  path: 'edit',
+                        postId: state.pathParameters['id']!,
+                      ),
+                      state,
+                    ),
+                  ),
+                  GoRoute(
+                    path: 'new',
                     pageBuilder: (_, state) =>
-                      slideUpPage(const EditProfileScreen(), state),
-                ),
-              ],
-            ),
-          ]),
+                        slideUpPage(const create.CreatePostScreen(), state),
+                  ),
+                  GoRoute(
+                    path: 'my-posts',
+                    pageBuilder: (_, state) =>
+                        fadeSlidePage(const MyPostsScreen(), state),
+                  ),
+                  GoRoute(
+                    path: 'saved-posts',
+                    pageBuilder: (_, state) =>
+                        fadeSlidePage(const SavedPostsScreen(), state),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: Routes.contractorDashboard,
+                pageBuilder: (_, state) =>
+                    fadeSlidePage(const JobOpportunitiesScreen(), state),
+                routes: [
+                  GoRoute(
+                    path: 'my-quotes',
+                    pageBuilder: (_, state) =>
+                        fadeSlidePage(const MyQuotesScreen(), state),
+                  ),
+                  GoRoute(
+                    path: 'post/:id',
+                    pageBuilder: (_, state) => fadeSlidePage(
+                      PostDetailScreen(postId: state.pathParameters['id']!),
+                      state,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: Routes.contractorInbox,
+                pageBuilder: (_, state) =>
+                    fadeSlidePage(const InboxScreen(), state),
+                routes: [
+                  GoRoute(
+                    path: ':id',
+                    pageBuilder: (_, state) => fadeSlidePage(
+                      RequestDetailScreen(briefId: state.pathParameters['id']!),
+                      state,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: Routes.contractorPortfolio,
+                pageBuilder: (_, state) =>
+                    fadeSlidePage(const MyPortfolioScreen(), state),
+                routes: [
+                  GoRoute(
+                    path: 'new',
+                    pageBuilder: (_, state) =>
+                        slideUpPage(const ProjectEditorScreen(), state),
+                  ),
+                  GoRoute(
+                    path: ':id/edit',
+                    pageBuilder: (_, state) => slideUpPage(
+                      ProjectEditorScreen(
+                        projectId: state.pathParameters['id']!,
+                      ),
+                      state,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: Routes.contractorProfile,
+                pageBuilder: (_, state) =>
+                    fadeSlidePage(const ProfileScreen(), state),
+                routes: [
+                  GoRoute(
+                    path: 'edit',
+                    pageBuilder: (_, state) =>
+                        slideUpPage(const EditProfileScreen(), state),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ],
       ),
     ],

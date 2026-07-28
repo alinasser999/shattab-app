@@ -4,7 +4,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/l10n/strings.dart';
+import 'package:batsh/core/l10n/l10n_extension.dart';
 import '../../../core/theme/batsh_colors.dart';
 import '../../../core/theme/batsh_motion.dart';
 import '../../../core/theme/batsh_radius.dart';
@@ -22,6 +22,8 @@ import '../domain/portfolio_project.dart';
 import 'providers/my_portfolio_providers.dart';
 import 'providers/portfolio_providers.dart';
 import '../../../core/widgets/batsh_snack.dart';
+
+import 'package:batsh/core/theme/theme_extension.dart';
 
 /// Create / edit one portfolio project. [projectId] null means a new project.
 class ProjectEditorScreen extends ConsumerStatefulWidget {
@@ -71,14 +73,14 @@ class _ProjectEditorScreenState extends ConsumerState<ProjectEditorScreen> {
     final title = _titleCtrl.text.trim();
     if (title.isEmpty) {
       setState(() {
-        _titleError = S.titleRequired;
+        _titleError = context.l10n.titleRequired;
         _coverError = null;
       });
       return;
     }
     if (_photos.isEmpty) {
       setState(() {
-        _coverError = S.coverRequired;
+        _coverError = context.l10n.coverRequired;
         _titleError = null;
       });
       return;
@@ -101,7 +103,7 @@ class _ProjectEditorScreenState extends ConsumerState<ProjectEditorScreen> {
             photos: _photos,
           );
       if (!mounted) return;
-      BatshSnack.success(context, S.projectSavedSuccess);
+      BatshSnack.success(context, context.l10n.projectSavedSuccess);
       context.pop();
     } catch (e) {
       if (!mounted) return;
@@ -122,11 +124,11 @@ class _ProjectEditorScreenState extends ConsumerState<ProjectEditorScreen> {
       final projAsync = ref.watch(portfolioProjectProvider(widget.projectId!));
       return projAsync.when(
         loading: () => BatshScaffold(
-          title: S.editWorkTitle,
+          title: context.l10n.editWorkTitle,
           body: const _EditorSkeleton(),
         ),
         error: (e, _) => BatshScaffold(
-          title: S.editWorkTitle,
+          title: context.l10n.editWorkTitle,
           body: BatshError(
             message: ErrorMapper.map(e),
             onRetry: () =>
@@ -136,7 +138,7 @@ class _ProjectEditorScreenState extends ConsumerState<ProjectEditorScreen> {
         data: (project) {
           if (project == null) {
             return BatshScaffold(
-              title: S.editWorkTitle,
+              title: context.l10n.editWorkTitle,
               body: const BatshError(message: 'Project not found'),
             );
           }
@@ -144,11 +146,11 @@ class _ProjectEditorScreenState extends ConsumerState<ProjectEditorScreen> {
             _hydrate(project);
             _hydrated = true;
           }
-          return _form(S.editWorkTitle);
+          return _form(context.l10n.editWorkTitle);
         },
       );
     }
-    return _form(S.newWorkTitle);
+    return _form(context.l10n.newWorkTitle);
   }
 
   Widget _form(String title) {
@@ -157,16 +159,16 @@ class _ProjectEditorScreenState extends ConsumerState<ProjectEditorScreen> {
       const SizedBox(height: BatshSpacing.md),
       BatshTextField(
         controller: _titleCtrl,
-        label: '${S.workTitleLabel} *',
-        hint: S.workTitleHint,
+        label: '${context.l10n.workTitleLabel} *',
+        hint: context.l10n.workTitleHint,
         maxLength: 80,
         errorText: _titleError,
       ),
       const SizedBox(height: BatshSpacing.gutter),
       BatshTextField(
         controller: _categoryCtrl,
-        label: S.workCategoryLabel,
-        hint: S.workCategoryHint,
+        label: context.l10n.workCategoryLabel,
+        hint: context.l10n.workCategoryHint,
         maxLength: 40,
       ),
       const SizedBox(height: BatshSpacing.gutter),
@@ -176,8 +178,8 @@ class _ProjectEditorScreenState extends ConsumerState<ProjectEditorScreen> {
           Expanded(
             child: BatshTextField(
               controller: _yearCtrl,
-              label: S.workYearLabel,
-              hint: S.workYearHint,
+              label: context.l10n.workYearLabel,
+              hint: context.l10n.workYearHint,
               keyboardType: TextInputType.number,
               inputFormatters: [
                 FilteringTextInputFormatter.digitsOnly,
@@ -189,8 +191,8 @@ class _ProjectEditorScreenState extends ConsumerState<ProjectEditorScreen> {
           Expanded(
             child: BatshTextField(
               controller: _locationCtrl,
-              label: S.workLocationLabel,
-              hint: S.workLocationHint,
+              label: context.l10n.workLocationLabel,
+              hint: context.l10n.workLocationHint,
               maxLength: 60,
             ),
           ),
@@ -199,8 +201,8 @@ class _ProjectEditorScreenState extends ConsumerState<ProjectEditorScreen> {
       const SizedBox(height: BatshSpacing.gutter),
       BatshTextField(
         controller: _descCtrl,
-        label: S.workDescriptionLabel,
-        hint: S.workDescriptionHint,
+        label: context.l10n.workDescriptionLabel,
+        hint: context.l10n.workDescriptionHint,
         maxLines: 5,
         maxLength: 1000,
       ),
@@ -212,21 +214,23 @@ class _ProjectEditorScreenState extends ConsumerState<ProjectEditorScreen> {
       ),
       const SizedBox(height: BatshSpacing.sm),
       Text(
-        S.coverPhotoHint,
+        context.l10n.coverPhotoHint,
         style: BatshTypography.labelSm.copyWith(
-          color: BatshColors.onSurfaceVariant,
+          color: context.colorScheme.onSurfaceVariant,
         ),
       ),
       if (_coverError != null) ...[
         const SizedBox(height: BatshSpacing.sm),
         Text(
           _coverError!,
-          style: BatshTypography.labelSm.copyWith(color: BatshColors.error),
+          style: BatshTypography.labelSm.copyWith(
+            color: context.colorScheme.error,
+          ),
         ),
       ],
       const SizedBox(height: BatshSpacing.lg),
       BatshButton(
-        label: S.saveWork,
+        label: context.l10n.saveWork,
         icon: Icons.check,
         isLoading: _busy,
         onPressed: _busy ? null : _submit,

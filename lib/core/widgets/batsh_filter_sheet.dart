@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../l10n/l10n_extension.dart';
 import 'package:flutter/services.dart';
 
 import '../l10n/strings.dart';
@@ -9,6 +11,8 @@ import '../theme/batsh_spacing.dart';
 import '../theme/batsh_typography.dart';
 import '../theme/batsh_icon_size.dart';
 import 'batsh_sheet.dart';
+
+import 'package:batsh/core/theme/theme_extension.dart';
 
 class FilterOption {
   const FilterOption({
@@ -47,14 +51,14 @@ class BatshFilterButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bgColor = activeCount > 0
-        ? BatshColors.primaryFixed
-        : BatshColors.surfaceContainer;
+        ? context.colorScheme.primaryFixed
+        : context.colorScheme.surfaceContainer;
     final fgColor = activeCount > 0
-        ? BatshColors.primary
-        : BatshColors.onSurfaceVariant;
+        ? context.colorScheme.primary
+        : context.colorScheme.onSurfaceVariant;
     final borderColor = activeCount > 0
-        ? BatshColors.primary.withValues(alpha: 0.3)
-        : BatshColors.outlineVariant.withValues(alpha: 0.6);
+        ? context.colorScheme.primary.withValues(alpha: 0.3)
+        : context.colorScheme.outlineVariant.withValues(alpha: 0.6);
     return Material(
       color: bgColor,
       borderRadius: BatshRadius.brFull,
@@ -77,7 +81,9 @@ class BatshFilterButton extends StatelessWidget {
               Icon(Icons.tune_rounded, size: BatshIconSize.md, color: fgColor),
               const SizedBox(width: BatshSpacing.xs),
               Text(
-                activeCount > 0 ? S.filterWithCount(activeCount) : S.filter,
+                activeCount > 0
+                    ? context.l10n.filterWithCount(activeCount)
+                    : context.l10n.filter,
                 style: BatshTypography.labelMd.copyWith(
                   color: fgColor,
                   fontWeight: FontWeight.w600,
@@ -107,9 +113,11 @@ class BatshActiveFilterChip extends StatelessWidget {
       height: 30,
       padding: const EdgeInsets.only(right: BatshSpacing.xs),
       decoration: BoxDecoration(
-        color: BatshColors.primaryFixed,
+        color: context.colorScheme.primaryFixed,
         borderRadius: BatshRadius.brFull,
-        border: Border.all(color: BatshColors.primary.withValues(alpha: 0.25)),
+        border: Border.all(
+          color: context.colorScheme.primary.withValues(alpha: 0.25),
+        ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -119,7 +127,7 @@ class BatshActiveFilterChip extends StatelessWidget {
             child: Text(
               label,
               style: BatshTypography.labelSm.copyWith(
-                color: BatshColors.primary,
+                color: context.colorScheme.primary,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -128,7 +136,7 @@ class BatshActiveFilterChip extends StatelessWidget {
             width: 22,
             height: 22,
             child: Material(
-              color: BatshColors.primary.withValues(alpha: 0.12),
+              color: context.colorScheme.primary.withValues(alpha: 0.12),
               shape: const CircleBorder(),
               child: InkWell(
                 customBorder: const CircleBorder(),
@@ -136,10 +144,10 @@ class BatshActiveFilterChip extends StatelessWidget {
                   HapticFeedback.lightImpact();
                   onRemove();
                 },
-                child: const Icon(
+                child: Icon(
                   Icons.close_rounded,
                   size: BatshIconSize.sm,
-                  color: BatshColors.primary,
+                  color: context.colorScheme.primary,
                 ),
               ),
             ),
@@ -259,7 +267,7 @@ class _BatshFilterSheetState extends State<BatshFilterSheet> {
       child: Row(
         children: [
           Text(
-            S.filter,
+            context.l10n.filter,
             style: BatshTypography.titleLg.copyWith(
               fontWeight: FontWeight.w700,
             ),
@@ -272,9 +280,9 @@ class _BatshFilterSheetState extends State<BatshFilterSheet> {
                 _clear();
               },
               child: Text(
-                S.clearAll,
+                context.l10n.clearAll,
                 style: BatshTypography.labelMd.copyWith(
-                  color: BatshColors.primary,
+                  color: context.colorScheme.primary,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -294,7 +302,7 @@ class _BatshFilterSheetState extends State<BatshFilterSheet> {
               Icon(
                 section.icon,
                 size: BatshIconSize.sm,
-                color: BatshColors.primary,
+                color: context.colorScheme.primary,
               ),
               const SizedBox(width: BatshSpacing.xs),
             ],
@@ -327,13 +335,15 @@ class _BatshFilterSheetState extends State<BatshFilterSheet> {
                 ),
                 decoration: BoxDecoration(
                   color: isSelected
-                      ? BatshColors.primaryFixed
-                      : BatshColors.surfaceContainer,
+                      ? context.colorScheme.primaryFixed
+                      : context.colorScheme.surfaceContainer,
                   borderRadius: BatshRadius.brFull,
                   border: Border.all(
                     color: isSelected
-                        ? BatshColors.primary.withValues(alpha: 0.4)
-                        : BatshColors.outlineVariant.withValues(alpha: 0.6),
+                        ? context.colorScheme.primary.withValues(alpha: 0.4)
+                        : context.colorScheme.outlineVariant.withValues(
+                            alpha: 0.6,
+                          ),
                     width: isSelected ? 1.5 : 1,
                   ),
                 ),
@@ -345,8 +355,8 @@ class _BatshFilterSheetState extends State<BatshFilterSheet> {
                         opt.icon,
                         size: BatshIconSize.sm,
                         color: isSelected
-                            ? BatshColors.primary
-                            : BatshColors.onSurfaceVariant,
+                            ? context.colorScheme.primary
+                            : context.colorScheme.onSurfaceVariant,
                       ),
                       const SizedBox(width: BatshSpacing.xs),
                     ],
@@ -354,8 +364,8 @@ class _BatshFilterSheetState extends State<BatshFilterSheet> {
                       opt.label,
                       style: BatshTypography.labelMd.copyWith(
                         color: isSelected
-                            ? BatshColors.primary
-                            : BatshColors.onSurfaceVariant,
+                            ? context.colorScheme.primary
+                            : context.colorScheme.onSurfaceVariant,
                         fontWeight: isSelected
                             ? FontWeight.w600
                             : FontWeight.w500,
@@ -395,13 +405,15 @@ class _BatshFilterSheetState extends State<BatshFilterSheet> {
                   height: 50,
                   decoration: BoxDecoration(
                     borderRadius: BatshRadius.brMd,
-                    border: Border.all(color: BatshColors.outlineVariant),
+                    border: Border.all(
+                      color: context.colorScheme.outlineVariant,
+                    ),
                   ),
                   alignment: Alignment.center,
                   child: Text(
-                    S.cancel,
+                    context.l10n.cancel,
                     style: BatshTypography.labelMd.copyWith(
-                      color: BatshColors.onSurfaceVariant,
+                      color: context.colorScheme.onSurfaceVariant,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -413,7 +425,7 @@ class _BatshFilterSheetState extends State<BatshFilterSheet> {
           Expanded(
             flex: 2,
             child: Material(
-              color: BatshColors.primary,
+              color: context.colorScheme.primary,
               borderRadius: BatshRadius.brMd,
               child: InkWell(
                 borderRadius: BatshRadius.brMd,
@@ -425,9 +437,9 @@ class _BatshFilterSheetState extends State<BatshFilterSheet> {
                   height: 50,
                   alignment: Alignment.center,
                   child: Text(
-                    '${S.apply} (${_selected.length})',
+                    '${context.l10n.apply} (${_selected.length})',
                     style: BatshTypography.labelMd.copyWith(
-                      color: BatshColors.onPrimary,
+                      color: context.colorScheme.onPrimary,
                       fontWeight: FontWeight.w600,
                     ),
                   ),

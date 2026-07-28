@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../core/l10n/strings.dart';
+import 'package:batsh/core/l10n/l10n_extension.dart';
 
 /// Joined view of a contractor — `profiles` row + `contractor_profiles` row.
 class ContractorListing {
@@ -107,7 +107,8 @@ class ContractorListing {
       coverPhotoUrl: cp?['cover_photo_url'] as String?,
       headline: cp?['headline'] as String?,
       specialties: ((cp?['specialties'] as List?) ?? const []).cast<String>(),
-      serviceAreas: ((cp?['service_areas'] as List?) ?? const []).cast<String>(),
+      serviceAreas: ((cp?['service_areas'] as List?) ?? const [])
+          .cast<String>(),
       yearsExperience: cp?['years_experience'] as int?,
       projectsCompleted: (cp?['projects_completed'] as int?) ?? 0,
       reviewCount: reviewCount,
@@ -133,11 +134,11 @@ enum ContractorTier {
   silver,
   gold;
 
-  String get label => switch (this) {
-        ContractorTier.gold => S.tierGold,
-        ContractorTier.silver => S.tierSilver,
-        ContractorTier.bronze => S.tierBronze,
-      };
+  String label(BuildContext context) => switch (this) {
+    ContractorTier.gold => context.l10n.tierGold,
+    ContractorTier.silver => context.l10n.tierSilver,
+    ContractorTier.bronze => context.l10n.tierBronze,
+  };
 
   /// Whether the tier is worth showing to a homeowner.
   ///
@@ -162,44 +163,45 @@ enum ProviderKind {
 
   /// snake_case value as stored in Postgres.
   String get wire => switch (this) {
-        ProviderKind.contractor => 'contractor',
-        ProviderKind.engineer => 'engineer',
-        ProviderKind.engineeringOffice => 'engineering_office',
-        ProviderKind.finishingCompany => 'finishing_company',
-        ProviderKind.interiorDesigner => 'interior_designer',
-        ProviderKind.tradesman => 'tradesman',
-      };
+    ProviderKind.contractor => 'contractor',
+    ProviderKind.engineer => 'engineer',
+    ProviderKind.engineeringOffice => 'engineering_office',
+    ProviderKind.finishingCompany => 'finishing_company',
+    ProviderKind.interiorDesigner => 'interior_designer',
+    ProviderKind.tradesman => 'tradesman',
+  };
 
   /// Unknown values fall back to `contractor` rather than throwing: a value
   /// added to the CHECK by a newer migration must not crash an older client.
   static ProviderKind fromWire(String? value) => switch (value) {
-        'engineer' => ProviderKind.engineer,
-        'engineering_office' => ProviderKind.engineeringOffice,
-        'finishing_company' => ProviderKind.finishingCompany,
-        'interior_designer' => ProviderKind.interiorDesigner,
-        'tradesman' => ProviderKind.tradesman,
-        _ => ProviderKind.contractor,
-      };
+    'engineer' => ProviderKind.engineer,
+    'engineering_office' => ProviderKind.engineeringOffice,
+    'finishing_company' => ProviderKind.finishingCompany,
+    'interior_designer' => ProviderKind.interiorDesigner,
+    'tradesman' => ProviderKind.tradesman,
+    _ => ProviderKind.contractor,
+  };
 
   /// Localised label. Kept here so every surface that shows a kind reads the
   /// same words.
-  String get label => switch (this) {
-        ProviderKind.contractor => S.providerKindContractor,
-        ProviderKind.engineer => S.providerKindEngineer,
-        ProviderKind.engineeringOffice => S.providerKindEngineeringOffice,
-        ProviderKind.finishingCompany => S.providerKindFinishingCompany,
-        ProviderKind.interiorDesigner => S.providerKindInteriorDesigner,
-        ProviderKind.tradesman => S.providerKindTradesman,
-      };
+  String label(BuildContext context) => switch (this) {
+    ProviderKind.contractor => context.l10n.providerKindContractor,
+    ProviderKind.engineer => context.l10n.providerKindEngineer,
+    ProviderKind.engineeringOffice =>
+      context.l10n.providerKindEngineeringOffice,
+    ProviderKind.finishingCompany => context.l10n.providerKindFinishingCompany,
+    ProviderKind.interiorDesigner => context.l10n.providerKindInteriorDesigner,
+    ProviderKind.tradesman => context.l10n.providerKindTradesman,
+  };
 
   /// Icon paired with the label. Never rely on the icon alone — the pairing is
   /// what keeps the badge readable in greyscale and to screen readers.
   IconData get icon => switch (this) {
-        ProviderKind.contractor => Icons.construction_outlined,
-        ProviderKind.engineer => Icons.architecture_outlined,
-        ProviderKind.engineeringOffice => Icons.domain_outlined,
-        ProviderKind.finishingCompany => Icons.business_outlined,
-        ProviderKind.interiorDesigner => Icons.chair_outlined,
-        ProviderKind.tradesman => Icons.handyman_outlined,
-      };
+    ProviderKind.contractor => Icons.construction_outlined,
+    ProviderKind.engineer => Icons.architecture_outlined,
+    ProviderKind.engineeringOffice => Icons.domain_outlined,
+    ProviderKind.finishingCompany => Icons.business_outlined,
+    ProviderKind.interiorDesigner => Icons.chair_outlined,
+    ProviderKind.tradesman => Icons.handyman_outlined,
+  };
 }

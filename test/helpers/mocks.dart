@@ -11,15 +11,14 @@ Profile createTestProfile({
   String phone = '+201001234567',
   bool onboardingComplete = true,
   String? avatarUrl,
-}) =>
-    Profile(
-      id: id,
-      role: role,
-      fullName: fullName,
-      phone: phone,
-      onboardingComplete: onboardingComplete,
-      avatarUrl: avatarUrl,
-    );
+}) => Profile(
+  id: id,
+  role: role,
+  fullName: fullName,
+  phone: phone,
+  onboardingComplete: onboardingComplete,
+  avatarUrl: avatarUrl,
+);
 
 Brief createTestBrief({
   String id = 'test-brief-id',
@@ -33,20 +32,19 @@ Brief createTestBrief({
   List<String> targetSpecialties = const ['paint'],
   BriefStatus status = BriefStatus.open,
   DateTime? createdAt,
-}) =>
-    Brief(
-      id: id,
-      homeownerId: homeownerId,
-      targetContractorId: targetContractorId,
-      apartmentType: apartmentType,
-      city: city,
-      district: district,
-      workDescription: workDescription,
-      photoUrls: photoUrls,
-      targetSpecialties: targetSpecialties,
-      status: status,
-      createdAt: createdAt ?? DateTime(2026, 6, 1),
-    );
+}) => Brief(
+  id: id,
+  homeownerId: homeownerId,
+  targetContractorId: targetContractorId,
+  apartmentType: apartmentType,
+  city: city,
+  district: district,
+  workDescription: workDescription,
+  photoUrls: photoUrls,
+  targetSpecialties: targetSpecialties,
+  status: status,
+  createdAt: createdAt ?? DateTime(2026, 6, 1),
+);
 
 Quote createTestQuote({
   String id = 'test-quote-id',
@@ -59,19 +57,18 @@ Quote createTestQuote({
   QuoteStatus status = QuoteStatus.sent,
   DateTime? createdAt,
   DateTime? updatedAt,
-}) =>
-    Quote(
-      id: id,
-      briefId: briefId,
-      contractorId: contractorId,
-      priceMin: priceMin,
-      priceMax: priceMax,
-      durationText: durationText,
-      note: note,
-      status: status,
-      createdAt: createdAt ?? DateTime(2026, 6, 1),
-      updatedAt: updatedAt ?? DateTime(2026, 6, 1),
-    );
+}) => Quote(
+  id: id,
+  briefId: briefId,
+  contractorId: contractorId,
+  priceMin: priceMin,
+  priceMax: priceMax,
+  durationText: durationText,
+  note: note,
+  status: status,
+  createdAt: createdAt ?? DateTime(2026, 6, 1),
+  updatedAt: updatedAt ?? DateTime(2026, 6, 1),
+);
 
 PortfolioProject createTestPortfolioProject({
   String id = 'test-project-id',
@@ -85,17 +82,16 @@ PortfolioProject createTestPortfolioProject({
   String? location,
   int? yearCompleted,
   int position = 0,
-}) =>
-    PortfolioProject(
-      id: id,
-      contractorId: contractorId,
-      title: title,
-      description: description,
-      coverPhotoUrl: coverPhotoUrl,
-      photoUrls: photoUrls,
-      category: category,
-      apartmentType: apartmentType,
-      location: location,
-      yearCompleted: yearCompleted,
-      position: position,
-    );
+}) => PortfolioProject(
+  id: id,
+  contractorId: contractorId,
+  title: title,
+  description: description,
+  coverPhotoUrl: coverPhotoUrl,
+  photoUrls: photoUrls,
+  category: category,
+  apartmentType: apartmentType,
+  location: location,
+  yearCompleted: yearCompleted,
+  position: position,
+);

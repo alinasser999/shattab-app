@@ -30,7 +30,9 @@ class ReviewController extends _$ReviewController {
     required int rating,
     String? comment,
   }) async {
-    await ref.read(reviewsRepositoryProvider).submit(
+    await ref
+        .read(reviewsRepositoryProvider)
+        .submit(
           briefId: briefId,
           contractorId: contractorId,
           rating: rating,

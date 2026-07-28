@@ -20,8 +20,10 @@ Future<void> debugSignIn(SupabaseClient client) async {
   if (!kDebugAuth) return;
   if (client.auth.currentSession != null) return;
   try {
-    await client.auth
-        .signInWithPassword(email: kDebugEmail, password: kDebugPassword);
+    await client.auth.signInWithPassword(
+      email: kDebugEmail,
+      password: kDebugPassword,
+    );
   } catch (e) {
     debugPrint('debug sign-in failed: $e');
   }

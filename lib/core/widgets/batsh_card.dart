@@ -7,6 +7,8 @@ import '../theme/batsh_radius.dart';
 import '../theme/batsh_shadows.dart';
 import '../theme/batsh_spacing.dart';
 
+import 'package:batsh/core/theme/theme_extension.dart';
+
 class BatshCard extends StatefulWidget {
   const BatshCard({
     super.key,
@@ -79,15 +81,15 @@ class _BatshCardState extends State<BatshCard>
   Widget build(BuildContext context) {
     final Color bgColor;
     if (widget.primary) {
-      bgColor = BatshColors.primaryContainer;
+      bgColor = context.colorScheme.primaryContainer;
     } else if (widget.selected) {
-      bgColor = BatshColors.primaryFixed.withValues(alpha: 0.35);
+      bgColor = context.colorScheme.primaryFixed.withValues(alpha: 0.35);
     } else {
-      bgColor = BatshColors.cardBackground;
+      bgColor = context.colorScheme.surface;
     }
 
     final border = widget.selected
-        ? Border.all(color: BatshColors.primary, width: 2)
+        ? Border.all(color: context.colorScheme.primary, width: 2)
         : null;
 
     final defaultShadow = widget.elevated

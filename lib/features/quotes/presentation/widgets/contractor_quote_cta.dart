@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/l10n/strings.dart';
+import 'package:batsh/core/l10n/l10n_extension.dart';
 import '../../../../core/theme/batsh_colors.dart';
 import '../../../../core/theme/batsh_spacing.dart';
 import '../../../../core/theme/batsh_typography.dart';
@@ -15,6 +15,8 @@ import '../quote_format.dart';
 import '../quote_sheet.dart';
 import 'quote_status_badge.dart';
 import '../../../../core/theme/batsh_icon_size.dart';
+
+import 'package:batsh/core/theme/theme_extension.dart';
 
 /// Contractor-side CTA on a brief/post: "send a quote", or a summary card with
 /// an edit action when a quote already exists.
@@ -31,20 +33,21 @@ class ContractorQuoteCta extends ConsumerWidget {
     // be sent: briefly flashing the paywall at a paying contractor is worse
     // than a rejected insert, which the sheet already reports.
     final quota = ref.watch(myQuoteQuotaProvider).value;
-    final remaining =
-        quota == null ? null : (quota.quota - quota.used).clamp(0, 9999);
+    final remaining = quota == null
+        ? null
+        : (quota.quota - quota.used).clamp(0, 9999);
     final canSend = quota == null || quota.isPro || remaining! > 0;
 
     Widget sendCta() {
       if (!canSend) {
         return BatshButton(
-          label: S.upgradeToProShort,
+          label: context.l10n.upgradeToProShort,
           icon: Icons.workspace_premium_outlined,
           onPressed: () => showPaywallSheet(context),
         );
       }
       final button = BatshButton(
-        label: S.sendQuote,
+        label: context.l10n.sendQuote,
         icon: Icons.request_quote_outlined,
         onPressed: () => showQuoteSheet(context, briefId: briefId),
       );
@@ -56,10 +59,11 @@ class ContractorQuoteCta extends ConsumerWidget {
           button,
           const SizedBox(height: BatshSpacing.xs),
           Text(
-            S.quotesLeftThisMonth(remaining!),
+            context.l10n.quotesLeftThisMonth(remaining!),
             textAlign: TextAlign.center,
-            style: BatshTypography.labelSm
-                .copyWith(color: BatshColors.onSurfaceVariant),
+            style: BatshTypography.labelSm.copyWith(
+              color: context.colorScheme.onSurfaceVariant,
+            ),
           ),
         ],
       );
@@ -89,9 +93,12 @@ class _CurrentQuoteCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Text(S.yourQuote,
-                  style: BatshTypography.labelMd
-                      .copyWith(color: BatshColors.onSurfaceVariant)),
+              Text(
+                context.l10n.yourQuote,
+                style: BatshTypography.labelMd.copyWith(
+                  color: context.colorScheme.onSurfaceVariant,
+                ),
+              ),
               const Spacer(),
               QuoteStatusBadge(status: quote.status),
             ],
@@ -102,12 +109,18 @@ class _CurrentQuoteCard extends StatelessWidget {
             const SizedBox(height: BatshSpacing.xs),
             Row(
               children: [
-                const Icon(Icons.schedule,
-                    size: BatshIconSize.sm, color: BatshColors.onSurfaceVariant),
+                Icon(
+                  Icons.schedule,
+                  size: BatshIconSize.sm,
+                  color: context.colorScheme.onSurfaceVariant,
+                ),
                 const SizedBox(width: BatshSpacing.xs),
-                Text(quote.durationText!,
-                    style: BatshTypography.labelMd
-                        .copyWith(color: BatshColors.onSurfaceVariant)),
+                Text(
+                  quote.durationText!,
+                  style: BatshTypography.labelMd.copyWith(
+                    color: context.colorScheme.onSurfaceVariant,
+                  ),
+                ),
               ],
             ),
           ],
@@ -120,12 +133,15 @@ class _CurrentQuoteCard extends StatelessWidget {
             Align(
               alignment: AlignmentDirectional.centerStart,
               child: BatshButton(
-                label: S.editQuote,
+                label: context.l10n.editQuote,
                 icon: Icons.edit_outlined,
                 style: BatshButtonStyle.ghost,
                 fullWidth: false,
-                onPressed: () => showQuoteSheet(context,
-                    briefId: quote.briefId, existing: quote),
+                onPressed: () => showQuoteSheet(
+                  context,
+                  briefId: quote.briefId,
+                  existing: quote,
+                ),
               ),
             ),
           ],

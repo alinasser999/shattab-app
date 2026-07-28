@@ -1,3 +1,4 @@
+import 'package:batsh/l10n/app_localizations.dart';
 import 'package:batsh/core/l10n/strings.dart';
 import 'package:batsh/core/widgets/contact_buttons.dart';
 import 'package:flutter/material.dart';
@@ -8,9 +9,11 @@ void main() {
     testWidgets('renders WhatsApp label', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
-          home: Scaffold(
-            body: WhatsAppButton(phone: '+201001234567'),
-          ),
+          locale: const Locale('ar'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+
+          home: Scaffold(body: WhatsAppButton(phone: '+201001234567')),
         ),
       );
 
@@ -20,9 +23,11 @@ void main() {
     testWidgets('renders with empty phone without crashing', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
-          home: Scaffold(
-            body: WhatsAppButton(phone: ''),
-          ),
+          locale: const Locale('ar'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+
+          home: Scaffold(body: WhatsAppButton(phone: '')),
         ),
       );
 
@@ -34,9 +39,11 @@ void main() {
     testWidgets('renders call label', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
-          home: Scaffold(
-            body: CallButton(phone: '+201001234567'),
-          ),
+          locale: const Locale('ar'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+
+          home: Scaffold(body: CallButton(phone: '+201001234567')),
         ),
       );
 
@@ -46,9 +53,11 @@ void main() {
     testWidgets('renders with empty phone without crashing', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
-          home: Scaffold(
-            body: CallButton(phone: ''),
-          ),
+          locale: const Locale('ar'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+
+          home: Scaffold(body: CallButton(phone: '')),
         ),
       );
 
@@ -60,9 +69,11 @@ void main() {
     testWidgets('renders phone label and number', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
-          home: Scaffold(
-            body: PhoneInline(phone: '+201001234567'),
-          ),
+          locale: const Locale('ar'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+
+          home: Scaffold(body: PhoneInline(phone: '+201001234567')),
         ),
       );
 

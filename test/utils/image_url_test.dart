@@ -31,8 +31,10 @@ void main() {
     test('honours a custom quality', () {
       _setTransforms(enabled: true);
 
-      expect(sizedImageUrl(_supabaseUrl, width: 200, quality: 50),
-          endsWith('?width=200&quality=50'));
+      expect(
+        sizedImageUrl(_supabaseUrl, width: 200, quality: 50),
+        endsWith('?width=200&quality=50'),
+      );
     });
 
     test('returns the URL untouched when transforms are disabled', () {

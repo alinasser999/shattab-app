@@ -13,8 +13,9 @@ class LocaleNotifier extends Notifier<Locale> {
   }
 
   void toggle() {
-    final next =
-        state.languageCode == 'en' ? const Locale('ar', 'EG') : const Locale('en', 'US');
+    final next = state.languageCode == 'en'
+        ? const Locale('ar', 'EG')
+        : const Locale('en', 'US');
     setLocale(next);
   }
 }

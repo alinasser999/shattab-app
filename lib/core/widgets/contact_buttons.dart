@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../l10n/l10n_extension.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -9,6 +11,8 @@ import '../theme/batsh_spacing.dart';
 import '../theme/batsh_typography.dart';
 import '../theme/batsh_icon_size.dart';
 import 'batsh_snack.dart';
+
+import 'package:batsh/core/theme/theme_extension.dart';
 
 /// Big primary WhatsApp CTA. Opens whatsapp://send?phone=...
 class WhatsAppButton extends StatelessWidget {
@@ -30,41 +34,50 @@ class WhatsAppButton extends StatelessWidget {
       ok = false;
     }
     if (!ok && context.mounted) {
-      BatshSnack.error(context, S.couldNotOpenApp);
+      BatshSnack.error(context, context.l10n.couldNotOpenApp);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Semantics(button: true, label: S.contactViaWhatsApp, child: Material(
-      color: BatshColors.whatsApp,
-      borderRadius: BatshRadius.brDefault,
-      child: InkWell(
+    return Semantics(
+      button: true,
+      label: context.l10n.contactViaWhatsApp,
+      child: Material(
+        color: const Color(0xFF25D366),
         borderRadius: BatshRadius.brDefault,
-        onTap: () => _open(context),
-        child: Container(
-          height: BatshSpacing.minHitArea,
-          alignment: Alignment.center,
-          padding: const EdgeInsets.symmetric(horizontal: BatshSpacing.gutter),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.chat_bubble_outline,
-                  color: Colors.white, size: BatshIconSize.md),
-              const SizedBox(width: BatshSpacing.sm),
-              Text(
-                S.contactViaWhatsApp,
-                style: BatshTypography.labelMd.copyWith(
+        child: InkWell(
+          borderRadius: BatshRadius.brDefault,
+          onTap: () => _open(context),
+          child: Container(
+            height: BatshSpacing.minHitArea,
+            alignment: Alignment.center,
+            padding: const EdgeInsets.symmetric(
+              horizontal: BatshSpacing.gutter,
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(
+                  Icons.chat_bubble_outline,
                   color: Colors.white,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 16,
+                  size: BatshIconSize.md,
                 ),
-              ),
-            ],
+                const SizedBox(width: BatshSpacing.sm),
+                Text(
+                  context.l10n.contactViaWhatsApp,
+                  style: BatshTypography.labelMd.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 16,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
-    ));
+    );
   }
 }
 
@@ -85,22 +98,26 @@ class CallButton extends StatelessWidget {
       ok = false;
     }
     if (!ok && context.mounted) {
-      BatshSnack.error(context, S.couldNotOpenApp);
+      BatshSnack.error(context, context.l10n.couldNotOpenApp);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Semantics(button: true, label: S.call, child: OutlinedButton.icon(
-      onPressed: () => _open(context),
-      icon: const Icon(Icons.call_outlined, size: BatshIconSize.md),
-      label: Text(S.call),
-      style: OutlinedButton.styleFrom(
-        foregroundColor: BatshColors.primary,
-        side: const BorderSide(color: BatshColors.outline),
-        minimumSize: const Size.fromHeight(BatshSpacing.minHitArea),
+    return Semantics(
+      button: true,
+      label: context.l10n.call,
+      child: OutlinedButton.icon(
+        onPressed: () => _open(context),
+        icon: const Icon(Icons.call_outlined, size: BatshIconSize.md),
+        label: Text(context.l10n.call),
+        style: OutlinedButton.styleFrom(
+          foregroundColor: context.colorScheme.primary,
+          side: BorderSide(color: context.colorScheme.outline),
+          minimumSize: const Size.fromHeight(BatshSpacing.minHitArea),
+        ),
       ),
-    ));
+    );
   }
 }
 
@@ -113,9 +130,10 @@ class PhoneInline extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Text(
-      '${S.phone}: $phone',
-      style: BatshTypography.bodyMd
-          .copyWith(color: BatshColors.onSurfaceVariant),
+      '${context.l10n.phone}: $phone',
+      style: BatshTypography.bodyMd.copyWith(
+        color: context.colorScheme.onSurfaceVariant,
+      ),
     );
   }
 }

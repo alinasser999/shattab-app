@@ -6,7 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
-import '../../../core/l10n/strings.dart';
+import 'package:batsh/core/l10n/l10n_extension.dart';
 import '../../../core/theme/batsh_colors.dart';
 import '../../../core/theme/batsh_radius.dart';
 import '../../../core/theme/batsh_spacing.dart';
@@ -21,6 +21,8 @@ import '../domain/post.dart';
 import 'providers/explore_providers.dart';
 import '../../../core/theme/batsh_icon_size.dart';
 import '../../../core/widgets/batsh_snack.dart';
+
+import 'package:batsh/core/theme/theme_extension.dart';
 
 class CreatePostScreen extends ConsumerStatefulWidget {
   const CreatePostScreen({super.key});
@@ -73,7 +75,7 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
   Future<void> _submit() async {
     final caption = _captionCtrl.text.trim();
     if (caption.isEmpty) {
-      BatshSnack.error(context, S.captionRequired);
+      BatshSnack.error(context, context.l10n.captionRequired);
       return;
     }
 
@@ -120,7 +122,7 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
             return Dialog(
               backgroundColor: Colors.transparent,
               elevation: 0,
-              child: BatshSuccessCheckmark(message: S.postCreated),
+              child: BatshSuccessCheckmark(message: context.l10n.postCreated),
             );
           },
         );
@@ -128,7 +130,7 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
       }
     } catch (e) {
       if (mounted) {
-        BatshSnack.error(context, S.unknownErrorRetry);
+        BatshSnack.error(context, context.l10n.unknownErrorRetry);
       }
     } finally {
       if (mounted) setState(() => _uploading = false);
@@ -141,7 +143,7 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
     final isContractor = profile?.role.name == 'contractor';
 
     return BatshScaffold(
-      title: S.createPost,
+      title: context.l10n.createPost,
       actions: [
         TextButton(
           onPressed: (_uploading || _captionCtrl.text.trim().isEmpty)
@@ -150,8 +152,8 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
           child: _uploading
               ? const BatshShimmerBox(width: 40, height: 16)
               : Text(
-                  S.postComment,
-                  style: TextStyle(color: BatshColors.primary),
+                  context.l10n.postComment,
+                  style: TextStyle(color: context.colorScheme.primary),
                 ),
         ),
       ],
@@ -161,7 +163,7 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (isContractor) ...[
-              Text(S.postTypeLabel, style: BatshTypography.labelMd),
+              Text(context.l10n.postTypeLabel, style: BatshTypography.labelMd),
               const SizedBox(height: BatshSpacing.sm),
               Wrap(
                 spacing: BatshSpacing.sm,
@@ -181,7 +183,7 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
             ],
             BatshTextField(
               controller: _captionCtrl,
-              hint: S.postCaptionHint,
+              hint: context.l10n.postCaptionHint,
               maxLines: 5,
               maxLength: 2000,
             ),
@@ -214,7 +216,7 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
                         // for an action that destroys a photo.
                         child: Semantics(
                           button: true,
-                          label: S.removePhoto,
+                          label: context.l10n.removePhoto,
                           child: GestureDetector(
                             onTap: () => _removeImage(i),
                             behavior: HitTestBehavior.opaque,
@@ -222,14 +224,14 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
                               padding: const EdgeInsets.all(BatshSpacing.sm),
                               child: Container(
                                 padding: const EdgeInsets.all(2),
-                                decoration: const BoxDecoration(
-                                  color: BatshColors.error,
+                                decoration: BoxDecoration(
+                                  color: context.colorScheme.error,
                                   shape: BoxShape.circle,
                                 ),
-                                child: const Icon(
+                                child: Icon(
                                   Icons.close,
                                   size: BatshIconSize.sm,
-                                  color: BatshColors.onError,
+                                  color: context.colorScheme.onError,
                                 ),
                               ),
                             ),
@@ -245,7 +247,7 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
             OutlinedButton.icon(
               onPressed: _pickImages,
               icon: const Icon(Icons.add_photo_alternate),
-              label: Text(S.addMedia),
+              label: Text(context.l10n.addMedia),
             ),
           ],
         ),
@@ -256,13 +258,13 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
   String _typeLabel(PostType t) {
     switch (t) {
       case PostType.projectShowcase:
-        return S.postTypeProjectShowcase;
+        return context.l10n.postTypeProjectShowcase;
       case PostType.tip:
-        return S.postTypeTip;
+        return context.l10n.postTypeTip;
       case PostType.milestone:
-        return S.postTypeMilestone;
+        return context.l10n.postTypeMilestone;
       case PostType.renovationUpdate:
-        return S.postTypeRenovationUpdate;
+        return context.l10n.postTypeRenovationUpdate;
     }
   }
 }

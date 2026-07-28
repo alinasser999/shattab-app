@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
-import '../../../core/l10n/strings.dart';
+import 'package:batsh/core/l10n/l10n_extension.dart';
 import '../../../core/theme/batsh_colors.dart';
 import '../../../core/theme/batsh_typography.dart';
 import '../../../core/theme/batsh_motion.dart';
+
+import 'package:batsh/core/theme/theme_extension.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -19,7 +21,7 @@ class _SplashScreenState extends State<SplashScreen>
   Widget build(BuildContext context) {
     final reduced = MediaQuery.disableAnimationsOf(context);
     return Scaffold(
-      backgroundColor: BatshColors.background,
+      backgroundColor: context.colorScheme.background,
       body: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -50,7 +52,7 @@ class _SplashScreenState extends State<SplashScreen>
       height: 120,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: BatshColors.primaryFixed.withValues(alpha: 0.15),
+        color: context.colorScheme.primaryFixed.withValues(alpha: 0.15),
       ),
     );
     if (reduced) return circle;
@@ -67,9 +69,9 @@ class _SplashScreenState extends State<SplashScreen>
 
   Widget _animatedBrand(bool reduced) {
     final brand = Text(
-      S.appName,
+      context.l10n.appName,
       style: BatshTypography.displayLg.copyWith(
-        color: BatshColors.primary,
+        color: context.colorScheme.primary,
         fontWeight: FontWeight.w800,
         height: 1.1,
       ),
@@ -94,9 +96,9 @@ class _SplashScreenState extends State<SplashScreen>
 
   Widget _animatedTagline(bool reduced) {
     final tagline = Text(
-      S.taglineNew,
+      context.l10n.taglineNew,
       style: BatshTypography.bodyMd.copyWith(
-        color: BatshColors.onSurfaceVariant,
+        color: context.colorScheme.onSurfaceVariant,
       ),
     );
     if (reduced) return tagline;
@@ -117,7 +119,7 @@ class _SplashScreenState extends State<SplashScreen>
       width: 24,
       height: 24,
       child: CircularProgressIndicator(
-        color: BatshColors.primary.withValues(alpha: 0.6),
+        color: context.colorScheme.primary.withValues(alpha: 0.6),
         strokeWidth: 2.5,
       ),
     );
@@ -128,7 +130,7 @@ class _SplashScreenState extends State<SplashScreen>
         .shimmer(
           duration: 1200.ms,
           delay: 600.ms,
-          color: BatshColors.primaryContainer,
+          color: context.colorScheme.primaryContainer,
         );
   }
 
@@ -143,8 +145,8 @@ class _SplashScreenState extends State<SplashScreen>
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: i == 1
-                ? BatshColors.primary
-                : BatshColors.primary.withValues(alpha: 0.3),
+                ? context.colorScheme.primary
+                : context.colorScheme.primary.withValues(alpha: 0.3),
           ),
         );
         if (reduced) return dot;

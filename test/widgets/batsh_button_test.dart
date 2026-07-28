@@ -1,3 +1,4 @@
+import 'package:batsh/l10n/app_localizations.dart';
 import 'package:batsh/core/widgets/batsh_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -7,6 +8,10 @@ void main() {
     testWidgets('renders label text', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
+          locale: const Locale('ar'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+
           home: Scaffold(
             body: BatshButton(
               label: 'احفظ',
@@ -21,9 +26,15 @@ void main() {
       expect(find.text('احفظ'), findsOneWidget);
     });
 
-    testWidgets('shows CircularProgressIndicator when isLoading', (tester) async {
+    testWidgets('shows CircularProgressIndicator when isLoading', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         MaterialApp(
+          locale: const Locale('ar'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+
           home: Scaffold(
             body: BatshButton(
               label: 'احفظ',
@@ -44,6 +55,10 @@ void main() {
       var pressed = false;
       await tester.pumpWidget(
         MaterialApp(
+          locale: const Locale('ar'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+
           home: Scaffold(
             body: BatshButton(
               label: 'اضغط',
@@ -63,6 +78,10 @@ void main() {
       var pressed = false;
       await tester.pumpWidget(
         MaterialApp(
+          locale: const Locale('ar'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+
           home: Scaffold(
             body: BatshButton(
               label: 'اضغط',
@@ -79,9 +98,15 @@ void main() {
       expect(pressed, isFalse);
     });
 
-    testWidgets('does not fire onPressed when onPressed is null', (tester) async {
+    testWidgets('does not fire onPressed when onPressed is null', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         MaterialApp(
+          locale: const Locale('ar'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+
           home: Scaffold(
             body: BatshButton(
               label: 'معطل',
@@ -100,6 +125,10 @@ void main() {
     testWidgets('renders with fullWidth by default', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
+          locale: const Locale('ar'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+
           home: Scaffold(
             body: BatshButton(
               label: 'عرض كامل',
@@ -122,6 +151,10 @@ void main() {
     testWidgets('renders secondary style', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
+          locale: const Locale('ar'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+
           home: Scaffold(
             body: BatshButton(
               label: 'ثانوي',
@@ -140,6 +173,10 @@ void main() {
     testWidgets('renders ghost style', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
+          locale: const Locale('ar'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+
           home: Scaffold(
             body: BatshButton(
               label: 'نصي',

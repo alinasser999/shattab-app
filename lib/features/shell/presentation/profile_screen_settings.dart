@@ -12,11 +12,11 @@ class _SettingsGroup extends StatelessWidget {
       rows.add(children[i]);
       if (i != children.length - 1) {
         rows.add(
-          const Divider(
+          Divider(
             height: 1,
             thickness: 1,
             indent: 64,
-            color: BatshColors.outlineVariant,
+            color: context.colorScheme.outlineVariant,
           ),
         );
       }
@@ -29,7 +29,7 @@ class _SettingsGroup extends StatelessWidget {
       child: ClipRRect(
         borderRadius: BatshRadius.brXl,
         child: ColoredBox(
-          color: BatshColors.surfaceContainerLowest,
+          color: context.colorScheme.surfaceContainerLowest,
           child: Column(children: rows),
         ),
       ),
@@ -49,12 +49,12 @@ class _LogoutRow extends StatelessWidget {
         boxShadow: BatshShadows.soft,
       ),
       child: Material(
-        color: BatshColors.surfaceContainerLowest,
+        color: context.colorScheme.surfaceContainerLowest,
         borderRadius: BatshRadius.brXl,
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: onTap,
-          splashColor: BatshColors.error.withValues(alpha: 0.08),
+          splashColor: context.colorScheme.error.withValues(alpha: 0.08),
           child: Padding(
             padding: const EdgeInsets.symmetric(
               horizontal: BatshSpacing.lg,
@@ -66,28 +66,28 @@ class _LogoutRow extends StatelessWidget {
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: BatshColors.error.withValues(alpha: 0.1),
+                    color: context.colorScheme.error.withValues(alpha: 0.1),
                     borderRadius: BatshRadius.brMd,
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.logout,
-                    color: BatshColors.error,
+                    color: context.colorScheme.error,
                     size: BatshIconSize.md,
                   ),
                 ),
                 const SizedBox(width: BatshSpacing.gutter),
                 Expanded(
                   child: Text(
-                    S.signOutButton,
+                    context.l10n.signOutButton,
                     style: BatshTypography.bodyLg.copyWith(
-                      color: BatshColors.error,
+                      color: context.colorScheme.error,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),
-                const Icon(
+                Icon(
                   Icons.chevron_left,
-                  color: BatshColors.error,
+                  color: context.colorScheme.error,
                   size: BatshIconSize.md,
                 ),
               ],
@@ -117,7 +117,7 @@ class _SettingsTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: BatshColors.surfaceContainerLowest,
+      color: context.colorScheme.surfaceContainerLowest,
       borderRadius: BatshRadius.brLg,
       clipBehavior: Clip.antiAlias,
       child: InkWell(
@@ -133,12 +133,14 @@ class _SettingsTile extends StatelessWidget {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: BatshColors.primaryFixed.withValues(alpha: 0.2),
+                  color: context.colorScheme.primaryFixed.withValues(
+                    alpha: 0.2,
+                  ),
                   borderRadius: BatshRadius.brMd,
                 ),
                 child: Icon(
                   icon,
-                  color: BatshColors.primary,
+                  color: context.colorScheme.primary,
                   size: BatshIconSize.md,
                 ),
               ),
@@ -161,7 +163,7 @@ class _SettingsTile extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: BatshTypography.labelSm.copyWith(
-                          color: BatshColors.onSurfaceVariant,
+                          color: context.colorScheme.onSurfaceVariant,
                         ),
                       ),
                     ],
@@ -191,8 +193,8 @@ class _DarkModeTile extends ConsumerWidget {
 
     return _SettingsTile(
       icon: isDark ? Icons.dark_mode_outlined : Icons.light_mode_outlined,
-      label: isDark ? S.darkModeTitle : S.lightModeTitle,
-      subtitle: S.darkModeSubtitle,
+      label: isDark ? context.l10n.darkModeTitle : context.l10n.lightModeTitle,
+      subtitle: context.l10n.darkModeSubtitle,
       trailing: BatshSwitch(
         value: isDark,
         onChanged: (_) => ref.read(themeModeProvider.notifier).toggle(),
@@ -212,21 +214,23 @@ class _LanguageTile extends ConsumerWidget {
 
     return _SettingsTile(
       icon: isEnglish ? Icons.language : Icons.translate,
-      label: S.languageTitle,
-      subtitle: S.languageSubtitle,
+      label: context.l10n.languageTitle,
+      subtitle: context.l10n.languageSubtitle,
       trailing: Container(
         padding: const EdgeInsets.symmetric(
           horizontal: BatshSpacing.sm,
           vertical: BatshSpacing.xxs,
         ),
         decoration: BoxDecoration(
-          color: BatshColors.primaryContainer,
+          color: context.colorScheme.primaryContainer,
           borderRadius: BatshRadius.brSm,
         ),
         child: Text(
-          isEnglish ? S.languageEnglish : S.languageArabic,
+          isEnglish
+              ? context.l10n.languageEnglish
+              : context.l10n.languageArabic,
           style: BatshTypography.labelSm.copyWith(
-            color: BatshColors.onPrimaryContainer,
+            color: context.colorScheme.onPrimaryContainer,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -250,20 +254,20 @@ class _MotionModeTile extends ConsumerWidget {
 
     return _SettingsTile(
       icon: icon,
-      label: S.motionLabel,
+      label: context.l10n.motionLabel,
       trailing: Container(
         padding: const EdgeInsets.symmetric(
           horizontal: BatshSpacing.sm,
           vertical: BatshSpacing.xxs,
         ),
         decoration: BoxDecoration(
-          color: BatshColors.primaryContainer,
+          color: context.colorScheme.primaryContainer,
           borderRadius: BatshRadius.brSm,
         ),
         child: Text(
           ref.read(motionModeProvider.notifier).label,
           style: BatshTypography.labelSm.copyWith(
-            color: BatshColors.onPrimaryContainer,
+            color: context.colorScheme.onPrimaryContainer,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -299,7 +303,7 @@ class _HelpTile extends StatelessWidget {
       ok = false;
     }
     if (!ok && context.mounted) {
-      BatshSnack.error(context, S.couldNotOpenApp);
+      BatshSnack.error(context, context.l10n.couldNotOpenApp);
     }
   }
 
@@ -307,11 +311,11 @@ class _HelpTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return _SettingsTile(
       icon: Icons.support_agent_outlined,
-      label: S.helpSupport,
-      subtitle: S.helpSubtitle,
-      trailing: const Icon(
+      label: context.l10n.helpSupport,
+      subtitle: context.l10n.helpSubtitle,
+      trailing: Icon(
         Icons.chevron_left,
-        color: BatshColors.onSurfaceVariant,
+        color: context.colorScheme.onSurfaceVariant,
         size: BatshIconSize.md,
       ),
       onTap: () => _open(context),
@@ -342,7 +346,7 @@ class _LegalTile extends StatelessWidget {
       ok = false;
     }
     if (!ok && context.mounted) {
-      BatshSnack.error(context, S.couldNotOpenApp);
+      BatshSnack.error(context, context.l10n.couldNotOpenApp);
     }
   }
 
@@ -351,9 +355,9 @@ class _LegalTile extends StatelessWidget {
     return _SettingsTile(
       icon: icon,
       label: label,
-      trailing: const Icon(
+      trailing: Icon(
         Icons.chevron_left,
-        color: BatshColors.onSurfaceVariant,
+        color: context.colorScheme.onSurfaceVariant,
         size: BatshIconSize.md,
       ),
       onTap: () => _open(context),
@@ -379,24 +383,24 @@ class _DeleteAccountTile extends ConsumerStatefulWidget {
 class _DeleteAccountTileState extends ConsumerState<_DeleteAccountTile> {
   Future<void> _confirm() async {
     final controller = TextEditingController();
-    final word = S.deleteAccountConfirmWord;
+    final word = context.l10n.deleteAccountConfirmWord;
 
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setLocal) => AlertDialog(
-          title: Text(S.deleteAccountTitle),
+          title: Text(context.l10n.deleteAccountTitle),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(S.deleteAccountBody),
+              Text(context.l10n.deleteAccountBody),
               const SizedBox(height: BatshSpacing.md),
               TextField(
                 controller: controller,
                 autofocus: true,
                 decoration: InputDecoration(
-                  hintText: S.deleteAccountConfirmHint,
+                  hintText: context.l10n.deleteAccountConfirmHint,
                 ),
                 onChanged: (_) => setLocal(() {}),
               ),
@@ -405,7 +409,7 @@ class _DeleteAccountTileState extends ConsumerState<_DeleteAccountTile> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(ctx).pop(false),
-              child: Text(S.cancel),
+              child: Text(context.l10n.cancel),
             ),
             TextButton(
               // Disabled until the word matches exactly.
@@ -413,8 +417,8 @@ class _DeleteAccountTileState extends ConsumerState<_DeleteAccountTile> {
                   ? () => Navigator.of(ctx).pop(true)
                   : null,
               child: Text(
-                S.deleteAccount,
-                style: const TextStyle(color: BatshColors.error),
+                context.l10n.deleteAccount,
+                style: TextStyle(color: context.colorScheme.error),
               ),
             ),
           ],
@@ -429,7 +433,7 @@ class _DeleteAccountTileState extends ConsumerState<_DeleteAccountTile> {
       await ref.read(authRepositoryProvider).deleteAccount();
       messenger
         ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(content: Text(S.accountDeleted)));
+        ..showSnackBar(SnackBar(content: Text(context.l10n.accountDeleted)));
       // The router's auth listener returns the user to the landing screen once
       // the session is gone, so there is no manual navigation here.
     } catch (e) {
@@ -444,10 +448,10 @@ class _DeleteAccountTileState extends ConsumerState<_DeleteAccountTile> {
   Widget build(BuildContext context) {
     return _SettingsTile(
       icon: Icons.delete_forever_outlined,
-      label: S.deleteAccount,
-      trailing: const Icon(
+      label: context.l10n.deleteAccount,
+      trailing: Icon(
         Icons.chevron_left,
-        color: BatshColors.onSurfaceVariant,
+        color: context.colorScheme.onSurfaceVariant,
         size: BatshIconSize.md,
       ),
       onTap: _confirm,

@@ -96,28 +96,29 @@ class Post {
   }
 
   factory Post.fromJson(Map<String, dynamic> json) => Post(
-        id: json['id'] as String,
-        authorId: json['author_id'] as String,
-        authorRole: json['author_role'] as String,
-        postType: PostType.fromDb(json['post_type'] as String),
-        caption: json['caption'] as String,
-        mediaUrls: (json['media_urls'] as List<dynamic>?)
-                ?.map((e) => e as String)
-                .toList() ??
-            [],
-        category: json['category'] as String?,
-        governorate: json['governorate'] as String?,
-        city: json['city'] as String?,
-        portfolioProjectId: json['portfolio_project_id'] as String?,
-        createdAt: DateTime.parse(json['created_at'] as String),
-        likeCount: (json['like_count'] as num?)?.toInt() ?? 0,
-        commentCount: (json['comment_count'] as num?)?.toInt() ?? 0,
-        isLiked: json['is_liked'] as bool? ?? false,
-        isSaved: json['is_saved'] as bool? ?? false,
-        authorName: json['author_name'] as String?,
-        authorAvatarUrl: json['author_avatar_url'] as String?,
-        authorPhone: json['author_phone'] as String?,
-      );
+    id: json['id'] as String,
+    authorId: json['author_id'] as String,
+    authorRole: json['author_role'] as String,
+    postType: PostType.fromDb(json['post_type'] as String),
+    caption: json['caption'] as String,
+    mediaUrls:
+        (json['media_urls'] as List<dynamic>?)
+            ?.map((e) => e as String)
+            .toList() ??
+        [],
+    category: json['category'] as String?,
+    governorate: json['governorate'] as String?,
+    city: json['city'] as String?,
+    portfolioProjectId: json['portfolio_project_id'] as String?,
+    createdAt: DateTime.parse(json['created_at'] as String),
+    likeCount: (json['like_count'] as num?)?.toInt() ?? 0,
+    commentCount: (json['comment_count'] as num?)?.toInt() ?? 0,
+    isLiked: json['is_liked'] as bool? ?? false,
+    isSaved: json['is_saved'] as bool? ?? false,
+    authorName: json['author_name'] as String?,
+    authorAvatarUrl: json['author_avatar_url'] as String?,
+    authorPhone: json['author_phone'] as String?,
+  );
 }
 
 class PostComment {
@@ -140,12 +141,12 @@ class PostComment {
   final String? userAvatarUrl;
 
   factory PostComment.fromJson(Map<String, dynamic> json) => PostComment(
-        id: json['id'] as String,
-        postId: json['post_id'] as String,
-        userId: json['user_id'] as String,
-        content: json['content'] as String,
-        createdAt: DateTime.parse(json['created_at'] as String),
-        userName: json['user_name'] as String?,
-        userAvatarUrl: json['user_avatar_url'] as String?,
-      );
+    id: json['id'] as String,
+    postId: json['post_id'] as String,
+    userId: json['user_id'] as String,
+    content: json['content'] as String,
+    createdAt: DateTime.parse(json['created_at'] as String),
+    userName: json['user_name'] as String?,
+    userAvatarUrl: json['user_avatar_url'] as String?,
+  );
 }

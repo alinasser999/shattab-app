@@ -3,7 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/l10n/strings.dart';
+import 'package:batsh/core/l10n/l10n_extension.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/batsh_colors.dart';
 import '../../../core/theme/batsh_spacing.dart';
@@ -26,6 +26,8 @@ import '../../../core/widgets/batsh_snack.dart';
 import '../../../core/widgets/batsh_dialog.dart';
 import '../../../core/theme/batsh_motion.dart';
 
+import 'package:batsh/core/theme/theme_extension.dart';
+
 /// Contractor's own quotes across every brief — the one place a quote sent on
 /// a public post stays trackable after the post leaves the opportunities feed.
 class MyQuotesScreen extends ConsumerWidget {
@@ -37,7 +39,7 @@ class MyQuotesScreen extends ConsumerWidget {
     // the row builder made this N+1.
     final async = ref.watch(myQuotesWithBriefsProvider);
     return BatshScaffold(
-      title: S.myQuotesTitle,
+      title: context.l10n.myQuotesTitle,
       body: async.when(
         loading: () => const BatshListSkeleton(count: 4),
         error: (e, _) => BatshError(
@@ -47,8 +49,8 @@ class MyQuotesScreen extends ConsumerWidget {
         data: (quotes) {
           if (quotes.isEmpty) {
             return BatshEmptyState(
-              title: S.myQuotesEmptyTitle,
-              message: S.myQuotesEmptyMessage,
+              title: context.l10n.myQuotesEmptyTitle,
+              message: context.l10n.myQuotesEmptyMessage,
               icon: Icons.request_quote_outlined,
             );
           }
@@ -85,10 +87,10 @@ class _QuoteOwnerMenu extends ConsumerWidget {
   Future<void> _withdraw(BuildContext context, WidgetRef ref) async {
     final ok = await BatshDialog.confirm(
       context,
-      title: S.withdrawQuoteTitle,
-      message: S.withdrawQuoteBody,
-      confirmLabel: S.withdrawQuote,
-      cancelLabel: S.cancel,
+      title: context.l10n.withdrawQuoteTitle,
+      message: context.l10n.withdrawQuoteBody,
+      confirmLabel: context.l10n.withdrawQuote,
+      cancelLabel: context.l10n.cancel,
       isDestructive: true,
     );
     if (ok != true || !context.mounted) return;
@@ -102,7 +104,7 @@ class _QuoteOwnerMenu extends ConsumerWidget {
             status: QuoteStatus.withdrawn,
           );
       if (!context.mounted) return;
-      BatshSnack.info(context, S.quoteWithdrawn);
+      BatshSnack.info(context, context.l10n.quoteWithdrawn);
     } catch (e) {
       if (!context.mounted) return;
       BatshSnack.error(context, ErrorMapper.map(e));
@@ -112,11 +114,11 @@ class _QuoteOwnerMenu extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return PopupMenuButton<String>(
-      tooltip: S.editPost,
-      icon: const Icon(
+      tooltip: context.l10n.editPost,
+      icon: Icon(
         Icons.more_horiz_rounded,
         size: BatshIconSize.md,
-        color: BatshColors.onSurfaceVariant,
+        color: context.colorScheme.onSurfaceVariant,
       ),
       onSelected: (v) {
         if (v == 'edit') {
@@ -133,7 +135,7 @@ class _QuoteOwnerMenu extends ConsumerWidget {
             children: [
               const Icon(Icons.edit_outlined, size: BatshIconSize.md),
               const SizedBox(width: BatshSpacing.sm),
-              Text(S.editQuote),
+              Text(context.l10n.editQuote),
             ],
           ),
         ),
@@ -141,15 +143,15 @@ class _QuoteOwnerMenu extends ConsumerWidget {
           value: 'withdraw',
           child: Row(
             children: [
-              const Icon(
+              Icon(
                 Icons.undo_rounded,
                 size: BatshIconSize.md,
-                color: BatshColors.error,
+                color: context.colorScheme.error,
               ),
               const SizedBox(width: BatshSpacing.sm),
               Text(
-                S.withdrawQuote,
-                style: const TextStyle(color: BatshColors.error),
+                context.l10n.withdrawQuote,
+                style: TextStyle(color: context.colorScheme.error),
               ),
             ],
           ),
@@ -170,7 +172,7 @@ class _QuoteRow extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     // Best-effort title; falls back to a generic label when the brief is gone.
-    final title = brief?.workDescription ?? S.postDetailTitle;
+    final title = brief?.workDescription ?? context.l10n.postDetailTitle;
     // Only the winning quote gets the completion step; the others have no work
     // to finish.
     final completionBrief = quote.status == QuoteStatus.accepted ? brief : null;
@@ -203,7 +205,7 @@ class _QuoteRow extends ConsumerWidget {
           Text(
             quotePriceLabel(quote),
             style: BatshTypography.labelMd.copyWith(
-              color: BatshColors.primary,
+              color: context.colorScheme.primary,
               fontWeight: FontWeight.w700,
             ),
           ),
@@ -211,16 +213,16 @@ class _QuoteRow extends ConsumerWidget {
             const SizedBox(height: BatshSpacing.xs),
             Row(
               children: [
-                const Icon(
+                Icon(
                   Icons.schedule,
                   size: BatshIconSize.sm,
-                  color: BatshColors.onSurfaceVariant,
+                  color: context.colorScheme.onSurfaceVariant,
                 ),
                 const SizedBox(width: BatshSpacing.xs),
                 Text(
                   quote.durationText!,
                   style: BatshTypography.labelMd.copyWith(
-                    color: BatshColors.onSurfaceVariant,
+                    color: context.colorScheme.onSurfaceVariant,
                   ),
                 ),
               ],

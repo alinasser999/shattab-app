@@ -27,20 +27,24 @@ class PostRepository {
   /// empty for guests. Used to fill is_liked / is_saved on non-RPC reads.
   Future<(Set<String>, Set<String>)> _userInteractions(String userId) async {
     if (userId.isEmpty) return (<String>{}, <String>{});
-    final likes =
-        await _client.from('post_likes').select('post_id').eq('user_id', userId);
-    final saves =
-        await _client.from('post_saves').select('post_id').eq('user_id', userId);
+    final likes = await _client
+        .from('post_likes')
+        .select('post_id')
+        .eq('user_id', userId);
+    final saves = await _client
+        .from('post_saves')
+        .select('post_id')
+        .eq('user_id', userId);
     return (
       {for (final r in likes as List) r['post_id'] as String},
       {for (final r in saves as List) r['post_id'] as String},
     );
   }
 
-  Post _fromRow(
-      Map<String, dynamic> m, Set<String> liked, Set<String> saved) {
+  Post _fromRow(Map<String, dynamic> m, Set<String> liked, Set<String> saved) {
     final profile = m['profiles'] as Map<String, dynamic>?;
-    final likeAgg = (m['post_likes'] as List?)?.firstOrNull as Map<String, dynamic>?;
+    final likeAgg =
+        (m['post_likes'] as List?)?.firstOrNull as Map<String, dynamic>?;
     final commentAgg =
         (m['post_comments'] as List?)?.firstOrNull as Map<String, dynamic>?;
     final id = m['id'] as String;
@@ -75,13 +79,16 @@ class PostRepository {
     DateTime? beforeCreatedAt,
     String? beforeId,
   }) async {
-    final rows = await _client.rpc('get_for_you_feed', params: {
-      // Guests have no uuid — null keeps is_liked/is_saved false server-side.
-      'p_user_id': userId.isEmpty ? null : userId,
-      'p_limit': limit,
-      'p_before_created_at': beforeCreatedAt?.toIso8601String(),
-      'p_before_id': beforeId,
-    });
+    final rows = await _client.rpc(
+      'get_for_you_feed',
+      params: {
+        // Guests have no uuid — null keeps is_liked/is_saved false server-side.
+        'p_user_id': userId.isEmpty ? null : userId,
+        'p_limit': limit,
+        'p_before_created_at': beforeCreatedAt?.toIso8601String(),
+        'p_before_id': beforeId,
+      },
+    );
     return (rows as List)
         .map((r) => Post.fromJson(r as Map<String, dynamic>))
         .toList();
@@ -109,24 +116,26 @@ class PostRepository {
     String? city,
     String? portfolioProjectId,
   }) async {
-    final row = await _client.from('posts').insert({
-      'author_id': authorId,
-      'author_role': authorRole,
-      'post_type': postType,
-      'caption': caption,
-      'media_urls': mediaUrls,
-      'category': ?category,
-      'governorate': ?governorate,
-      'city': ?city,
-      'portfolio_project_id': ?portfolioProjectId,
-    }).select().single();
+    final row = await _client
+        .from('posts')
+        .insert({
+          'author_id': authorId,
+          'author_role': authorRole,
+          'post_type': postType,
+          'caption': caption,
+          'media_urls': mediaUrls,
+          'category': ?category,
+          'governorate': ?governorate,
+          'city': ?city,
+          'portfolio_project_id': ?portfolioProjectId,
+        })
+        .select()
+        .single();
     return Post.fromJson(row);
   }
 
   Future<void> update(String postId, {String? caption}) async {
-    await _client.from('posts').update({
-      'caption': ?caption,
-    }).eq('id', postId);
+    await _client.from('posts').update({'caption': ?caption}).eq('id', postId);
   }
 
   Future<void> delete(String postId) async {
@@ -137,11 +146,13 @@ class PostRepository {
     if (liked) {
       // Idempotent: a double-tap / rapid re-like hits the (post_id,user_id) PK.
       // ignoreDuplicates makes the second insert a no-op instead of a 23505.
-      await _client.from('post_likes').upsert(
-        {'post_id': postId, 'user_id': userId},
-        onConflict: 'post_id,user_id',
-        ignoreDuplicates: true,
-      );
+      await _client
+          .from('post_likes')
+          .upsert(
+            {'post_id': postId, 'user_id': userId},
+            onConflict: 'post_id,user_id',
+            ignoreDuplicates: true,
+          );
     } else {
       await _client
           .from('post_likes')
@@ -154,11 +165,13 @@ class PostRepository {
   Future<void> toggleSave(String postId, String userId, bool saved) async {
     if (saved) {
       // Idempotent for the same reason as toggleLike (see above).
-      await _client.from('post_saves').upsert(
-        {'post_id': postId, 'user_id': userId},
-        onConflict: 'post_id,user_id',
-        ignoreDuplicates: true,
-      );
+      await _client
+          .from('post_saves')
+          .upsert(
+            {'post_id': postId, 'user_id': userId},
+            onConflict: 'post_id,user_id',
+            ignoreDuplicates: true,
+          );
     } else {
       await _client
           .from('post_saves')
@@ -173,11 +186,11 @@ class PostRepository {
     required String userId,
     required String content,
   }) async {
-    final row = await _client.from('post_comments').insert({
-      'post_id': postId,
-      'user_id': userId,
-      'content': content,
-    }).select().single();
+    final row = await _client
+        .from('post_comments')
+        .insert({'post_id': postId, 'user_id': userId, 'content': content})
+        .select()
+        .single();
     return PostComment.fromJson(row);
   }
 
@@ -236,7 +249,10 @@ class PostRepository {
   }
 
   Future<String> uploadImage(
-      String userId, Uint8List bytes, String fileName) async {
+    String userId,
+    Uint8List bytes,
+    String fileName,
+  ) async {
     final path = '$userId/${DateTime.now().millisecondsSinceEpoch}_$fileName';
     await _client.storage.from('post-media').uploadBinary(path, bytes);
     return _client.storage.from('post-media').getPublicUrl(path);

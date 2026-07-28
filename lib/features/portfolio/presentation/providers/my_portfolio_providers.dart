@@ -57,13 +57,15 @@ class PortfolioController extends _$PortfolioController {
         // (which may be a small positional index from a prior save) —
         // upsert:true on storage.upload would otherwise silently overwrite
         // the kept photo's file.
-        urls.add(await repo.uploadPhoto(
-          contractorId: contractorId,
-          draftId: draftId,
-          seq: uploadSeqBase + uploadCount++,
-          file: p.file,
-          bytes: p.bytes,
-        ));
+        urls.add(
+          await repo.uploadPhoto(
+            contractorId: contractorId,
+            draftId: draftId,
+            seq: uploadSeqBase + uploadCount++,
+            file: p.file,
+            bytes: p.bytes,
+          ),
+        );
       }
     }
     final cover = urls.first;

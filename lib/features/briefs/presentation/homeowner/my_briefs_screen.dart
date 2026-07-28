@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/l10n/strings.dart';
+import 'package:batsh/core/l10n/l10n_extension.dart';
 import '../../../../core/utils/error_mapper.dart';
 import '../../../../core/router/routes.dart';
 import '../../../../core/theme/batsh_colors.dart';
@@ -18,6 +18,8 @@ import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../auth/presentation/sign_in_sheet.dart';
 import '../providers/briefs_providers.dart';
 
+import 'package:batsh/core/theme/theme_extension.dart';
+
 class MyBriefsScreen extends ConsumerWidget {
   const MyBriefsScreen({super.key});
 
@@ -27,13 +29,13 @@ class MyBriefsScreen extends ConsumerWidget {
     final isGuest = ref.watch(currentSessionProvider) == null;
 
     return BatshScaffold(
-      title: S.tabRequests,
+      title: context.l10n.tabRequests,
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => context.push(Routes.homeownerNewPost),
-        backgroundColor: BatshColors.primary,
-        foregroundColor: BatshColors.onPrimary,
+        backgroundColor: context.colorScheme.primary,
+        foregroundColor: context.colorScheme.onPrimary,
         icon: const Icon(Icons.add),
-        label: Text(S.createNewPostButton),
+        label: Text(context.l10n.createNewPostButton),
       ),
       body: async.when(
         loading: () => const BatshListSkeleton(),
@@ -51,20 +53,20 @@ class MyBriefsScreen extends ConsumerWidget {
                     children: [
                       isGuest
                           ? BatshEmptyState(
-                              title: S.signInToSeeRequests,
-                              message: S.signInEmptyMessage,
+                              title: context.l10n.signInToSeeRequests,
+                              message: context.l10n.signInEmptyMessage,
                               icon: Icons.assignment_outlined,
                               action: BatshButton(
-                                label: S.signInSheetTitle,
+                                label: context.l10n.signInSheetTitle,
                                 onPressed: () => showSignInSheet(
                                   context,
-                                  reason: S.signInToSeeRequests,
+                                  reason: context.l10n.signInToSeeRequests,
                                 ),
                               ),
                             )
                           : BatshEmptyState(
-                              title: S.noBriefsHere,
-                              message: S.noBriefsHereMessage,
+                              title: context.l10n.noBriefsHere,
+                              message: context.l10n.noBriefsHereMessage,
                               icon: Icons.assignment_outlined,
                             ),
                     ],
@@ -74,7 +76,7 @@ class MyBriefsScreen extends ConsumerWidget {
                     children: [
                       if (posts.isNotEmpty) ...[
                         const SizedBox(height: BatshSpacing.md),
-                        _Section(S.sectionOpenPosts),
+                        _Section(context.l10n.sectionOpenPosts),
                         const SizedBox(height: BatshSpacing.sm),
                         for (final b in posts) ...[
                           BriefCard(
@@ -88,7 +90,7 @@ class MyBriefsScreen extends ConsumerWidget {
                       ],
                       if (direct.isNotEmpty) ...[
                         const SizedBox(height: BatshSpacing.md),
-                        _Section(S.sectionDirectRequests),
+                        _Section(context.l10n.sectionDirectRequests),
                         const SizedBox(height: BatshSpacing.sm),
                         for (final b in direct) ...[
                           BriefCard(
@@ -117,7 +119,7 @@ class _Section extends StatelessWidget {
     return Text(
       label,
       style: BatshTypography.titleLg.copyWith(
-        color: BatshColors.onSurfaceVariant,
+        color: context.colorScheme.onSurfaceVariant,
       ),
     );
   }

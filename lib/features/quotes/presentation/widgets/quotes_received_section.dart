@@ -5,7 +5,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/l10n/strings.dart';
+import 'package:batsh/core/l10n/l10n_extension.dart';
 import '../../../../core/router/routes.dart';
 import '../../../../core/theme/batsh_colors.dart';
 import '../../../../core/theme/batsh_radius.dart';
@@ -31,6 +31,8 @@ import '../../../../core/widgets/batsh_snack.dart';
 import '../../../../core/widgets/batsh_badge.dart';
 import '../../../../core/theme/batsh_motion.dart';
 
+import 'package:batsh/core/theme/theme_extension.dart';
+
 /// Homeowner-side section listing every quote received on a brief, with
 /// accept/decline actions and contact shortcuts once accepted.
 class QuotesReceivedSection extends ConsumerWidget {
@@ -53,7 +55,10 @@ class QuotesReceivedSection extends ConsumerWidget {
       children: [
         Row(
           children: [
-            Text(S.quotesSectionTitle, style: BatshTypography.titleLg),
+            Text(
+              context.l10n.quotesSectionTitle,
+              style: BatshTypography.titleLg,
+            ),
             const SizedBox(width: BatshSpacing.sm),
             async.maybeWhen(
               data: (q) => q.isEmpty
@@ -62,7 +67,8 @@ class QuotesReceivedSection extends ConsumerWidget {
                       label: '${q.length}',
                       tone: BatshBadgeTone.brand,
                       compact: true,
-                      semanticLabel: '${q.length} ${S.quotesSectionTitle}',
+                      semanticLabel:
+                          '${q.length} ${context.l10n.quotesSectionTitle}',
                     ),
               orElse: () => const SizedBox.shrink(),
             ),
@@ -94,9 +100,9 @@ class QuotesReceivedSection extends ConsumerWidget {
                   physics: const AlwaysScrollableScrollPhysics(),
                   children: [
                     Text(
-                      S.noQuotesYet,
+                      context.l10n.noQuotesYet,
                       style: BatshTypography.bodyMd.copyWith(
-                        color: BatshColors.onSurfaceVariant,
+                        color: context.colorScheme.onSurfaceVariant,
                       ),
                     ),
                   ],
@@ -237,17 +243,17 @@ class _QuoteCard extends ConsumerWidget {
       builder: (ctx) => AlertDialog(
         title: Text(
           status == QuoteStatus.accepted
-              ? S.quoteAcceptConfirm
-              : S.quoteDeclineConfirm,
+              ? context.l10n.quoteAcceptConfirm
+              : context.l10n.quoteDeclineConfirm,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text(S.cancel),
+            child: Text(context.l10n.cancel),
           ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text(S.confirm),
+            child: Text(context.l10n.confirm),
           ),
         ],
       ),
@@ -260,7 +266,7 @@ class _QuoteCard extends ConsumerWidget {
       if (status == QuoteStatus.accepted) HapticFeedback.mediumImpact();
     } catch (_) {
       if (context.mounted) {
-        BatshSnack.error(context, S.unknownErrorRetry);
+        BatshSnack.error(context, context.l10n.unknownErrorRetry);
       }
     }
   }
@@ -297,7 +303,7 @@ class _QuoteCard extends ConsumerWidget {
                     Text(
                       quotePriceLabel(quote),
                       style: BatshTypography.labelMd.copyWith(
-                        color: BatshColors.primary,
+                        color: context.colorScheme.primary,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -312,16 +318,16 @@ class _QuoteCard extends ConsumerWidget {
             const SizedBox(height: BatshSpacing.md),
             Row(
               children: [
-                const Icon(
+                Icon(
                   Icons.schedule,
                   size: BatshIconSize.sm,
-                  color: BatshColors.onSurfaceVariant,
+                  color: context.colorScheme.onSurfaceVariant,
                 ),
                 const SizedBox(width: BatshSpacing.xs),
                 Text(
                   quote.durationText!,
                   style: BatshTypography.labelMd.copyWith(
-                    color: BatshColors.onSurfaceVariant,
+                    color: context.colorScheme.onSurfaceVariant,
                   ),
                 ),
               ],
@@ -335,10 +341,10 @@ class _QuoteCard extends ConsumerWidget {
               children: [
                 Expanded(
                   child: BatshButton(
-                    label: S.quoteAccept,
+                    label: context.l10n.quoteAccept,
                     icon: Icons.check,
                     style: BatshButtonStyle.primary,
-                    backgroundColor: BatshColors.success,
+                    backgroundColor: context.colorScheme.success,
                     onPressed: () =>
                         _confirmAndSet(context, ref, QuoteStatus.accepted),
                   ),
@@ -346,9 +352,9 @@ class _QuoteCard extends ConsumerWidget {
                 const SizedBox(width: BatshSpacing.md),
                 Expanded(
                   child: BatshButton(
-                    label: S.quoteDecline,
+                    label: context.l10n.quoteDecline,
                     style: BatshButtonStyle.ghost,
-                    foregroundColor: BatshColors.error,
+                    foregroundColor: context.colorScheme.error,
                     onPressed: () =>
                         _confirmAndSet(context, ref, QuoteStatus.declined),
                   ),
@@ -371,7 +377,7 @@ class _QuoteCard extends ConsumerWidget {
                 Routes.homeownerContractorProfilePath(quote.contractorId),
               ),
               icon: const Icon(Icons.person_outline, size: BatshIconSize.md),
-              label: Text(S.viewContractorProfile),
+              label: Text(context.l10n.viewContractorProfile),
             ),
           ),
         ],
@@ -390,7 +396,7 @@ class _Avatar extends StatelessWidget {
       width: 44,
       height: 44,
       decoration: BoxDecoration(
-        color: BatshColors.surfaceContainer,
+        color: context.colorScheme.surfaceContainer,
         shape: BoxShape.circle,
         image: hasUrl
             ? DecorationImage(
@@ -401,9 +407,9 @@ class _Avatar extends StatelessWidget {
       ),
       child: hasUrl
           ? null
-          : const Icon(
+          : Icon(
               Icons.handyman_outlined,
-              color: BatshColors.onSurfaceVariant,
+              color: context.colorScheme.onSurfaceVariant,
               size: BatshIconSize.md,
             ),
     );
@@ -433,14 +439,14 @@ class _ReviewBlock extends ConsumerWidget {
               Icon(
                 Icons.info_outline,
                 size: BatshIconSize.sm,
-                color: BatshColors.onSurfaceVariant,
+                color: context.colorScheme.onSurfaceVariant,
               ),
               const SizedBox(width: BatshSpacing.xs),
               Expanded(
                 child: Text(
-                  S.reviewAfterCompletionHint,
+                  context.l10n.reviewAfterCompletionHint,
                   style: BatshTypography.labelSm.copyWith(
-                    color: BatshColors.onSurfaceVariant,
+                    color: context.colorScheme.onSurfaceVariant,
                   ),
                 ),
               ),
@@ -451,7 +457,7 @@ class _ReviewBlock extends ConsumerWidget {
       return Padding(
         padding: const EdgeInsets.only(top: BatshSpacing.sm),
         child: BatshButton(
-          label: S.rateContractor,
+          label: context.l10n.rateContractor,
           style: BatshButtonStyle.secondary,
           icon: Icons.star_outline,
           onPressed: () => showWriteReviewSheet(
@@ -469,9 +475,9 @@ class _ReviewBlock extends ConsumerWidget {
           BatshStars(rating: existing.rating.toDouble(), size: 18),
           const SizedBox(width: BatshSpacing.sm),
           Text(
-            S.yourReview,
+            context.l10n.yourReview,
             style: BatshTypography.labelMd.copyWith(
-              color: BatshColors.onSurfaceVariant,
+              color: context.colorScheme.onSurfaceVariant,
             ),
           ),
           const Spacer(),
@@ -482,7 +488,7 @@ class _ReviewBlock extends ConsumerWidget {
               contractorId: contractorId,
               existing: existing,
             ),
-            child: Text(S.editReview),
+            child: Text(context.l10n.editReview),
           ),
         ],
       ),

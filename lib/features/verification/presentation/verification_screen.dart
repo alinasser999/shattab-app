@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/l10n/strings.dart';
+import 'package:batsh/core/l10n/l10n_extension.dart';
 import '../../../core/models/draft_photo.dart';
 import '../../../core/theme/batsh_colors.dart';
 import '../../../core/theme/batsh_radius.dart';
@@ -13,6 +13,8 @@ import '../../../core/widgets/photo_picker.dart';
 import '../data/verification_repository.dart';
 import '../../../core/theme/batsh_icon_size.dart';
 import '../../../core/widgets/batsh_snack.dart';
+
+import 'package:batsh/core/theme/theme_extension.dart';
 
 /// Free "Verified" flow: contractor uploads ID + optional trade licence, we file
 /// a pending request, a founder reviews it and flips the badge. Mirrors the
@@ -38,20 +40,19 @@ class _VerificationScreenState extends ConsumerState<VerificationScreen> {
 
   Future<void> _submit() async {
     if (_docs.isEmpty) {
-      BatshSnack.error(context, S.verifyDocsRequired);
+      BatshSnack.error(context, context.l10n.verifyDocsRequired);
       return;
     }
     setState(() => _loading = true);
     try {
-      await ref.read(verificationRepositoryProvider).submit(
-            docs: _docs,
-            note: _noteController.text,
-          );
+      await ref
+          .read(verificationRepositoryProvider)
+          .submit(docs: _docs, note: _noteController.text);
       ref.invalidate(verificationStatusProvider);
       if (mounted) setState(() => _submitted = true);
     } catch (_) {
       if (mounted) {
-        BatshSnack.error(context, S.verifyError);
+        BatshSnack.error(context, context.l10n.verifyError);
       }
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -62,13 +63,13 @@ class _VerificationScreenState extends ConsumerState<VerificationScreen> {
   Widget build(BuildContext context) {
     final status = ref.watch(verificationStatusProvider).value;
     return Scaffold(
-      backgroundColor: BatshColors.surface,
-      appBar: AppBar(title: Text(S.verifyTitle)),
+      backgroundColor: context.colorScheme.surface,
+      appBar: AppBar(title: Text(context.l10n.verifyTitle)),
       body: _submitted || status == VerificationStatus.pending
           ? _pending()
           : status == VerificationStatus.approved
-              ? _approved()
-              : _form(),
+          ? _approved()
+          : _form(),
     );
   }
 
@@ -82,7 +83,7 @@ class _VerificationScreenState extends ConsumerState<VerificationScreen> {
           Container(
             padding: const EdgeInsets.all(BatshSpacing.lg),
             decoration: BoxDecoration(
-              color: BatshColors.surfaceContainerLowest,
+              color: context.colorScheme.surfaceContainerLowest,
               borderRadius: BatshRadius.brLg,
               boxShadow: BatshShadows.soft,
             ),
@@ -95,37 +96,48 @@ class _VerificationScreenState extends ConsumerState<VerificationScreen> {
                       width: 44,
                       height: 44,
                       alignment: Alignment.center,
-                      decoration: const BoxDecoration(
+                      decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        gradient: LinearGradient(colors: [
-                          BatshColors.tertiaryContainer,
-                          BatshColors.tertiary,
-                        ]),
+                        gradient: LinearGradient(
+                          colors: [
+                            context.colorScheme.tertiaryContainer,
+                            context.colorScheme.tertiary,
+                          ],
+                        ),
                       ),
-                      child: const Icon(Icons.verified_rounded,
-                          color: BatshColors.onTertiaryContainer, size: BatshIconSize.lg),
+                      child: Icon(
+                        Icons.verified_rounded,
+                        color: context.colorScheme.onTertiaryContainer,
+                        size: BatshIconSize.lg,
+                      ),
                     ),
                     const SizedBox(width: BatshSpacing.md),
                     Expanded(
-                      child: Text(S.verifyHeadline,
-                          style: BatshTypography.titleMd
-                              .copyWith(fontWeight: FontWeight.w700)),
+                      child: Text(
+                        context.l10n.verifyHeadline,
+                        style: BatshTypography.titleMd.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
                     ),
                   ],
                 ),
                 const SizedBox(height: BatshSpacing.md),
-                _Bullet(S.verifyBenefitTrust),
-                _Bullet(S.verifyBenefitRanking),
-                _Bullet(S.verifyBenefitFree),
+                _Bullet(context.l10n.verifyBenefitTrust),
+                _Bullet(context.l10n.verifyBenefitRanking),
+                _Bullet(context.l10n.verifyBenefitFree),
               ],
             ),
           ),
           const SizedBox(height: BatshSpacing.lg),
-          Text(S.verifyUploadLabel, style: BatshTypography.labelLg),
+          Text(context.l10n.verifyUploadLabel, style: BatshTypography.labelLg),
           const SizedBox(height: BatshSpacing.xxs),
-          Text(S.verifyUploadHint,
-              style: BatshTypography.bodySm
-                  .copyWith(color: BatshColors.onSurfaceVariant)),
+          Text(
+            context.l10n.verifyUploadHint,
+            style: BatshTypography.bodySm.copyWith(
+              color: context.colorScheme.onSurfaceVariant,
+            ),
+          ),
           const SizedBox(height: BatshSpacing.sm),
           PhotoPicker(
             maxPhotos: 3,
@@ -135,38 +147,43 @@ class _VerificationScreenState extends ConsumerState<VerificationScreen> {
           TextField(
             controller: _noteController,
             maxLines: 2,
-            decoration: InputDecoration(labelText: S.verifyNoteLabel),
+            decoration: InputDecoration(
+              labelText: context.l10n.verifyNoteLabel,
+            ),
           ),
           const SizedBox(height: BatshSpacing.xl),
           BatshButton(
-            label: S.verifySubmit,
+            label: context.l10n.verifySubmit,
             icon: Icons.send_rounded,
             isLoading: _loading,
             onPressed: _submit,
           ),
           const SizedBox(height: BatshSpacing.sm),
-          Text(S.verifyPrivacyNote,
-              textAlign: TextAlign.center,
-              style: BatshTypography.labelSm
-                  .copyWith(color: BatshColors.onSurfaceVariant)),
+          Text(
+            context.l10n.verifyPrivacyNote,
+            textAlign: TextAlign.center,
+            style: BatshTypography.labelSm.copyWith(
+              color: context.colorScheme.onSurfaceVariant,
+            ),
+          ),
         ],
       ),
     );
   }
 
   Widget _pending() => _StatusView(
-        icon: Icons.hourglass_top_rounded,
-        color: BatshColors.tertiary,
-        title: S.verifyPendingTitle,
-        body: S.verifyPendingBody,
-      );
+    icon: Icons.hourglass_top_rounded,
+    color: context.colorScheme.tertiary,
+    title: context.l10n.verifyPendingTitle,
+    body: context.l10n.verifyPendingBody,
+  );
 
   Widget _approved() => _StatusView(
-        icon: Icons.verified_rounded,
-        color: BatshColors.secondary,
-        title: S.verifyApprovedTitle,
-        body: S.verifyApprovedBody,
-      );
+    icon: Icons.verified_rounded,
+    color: context.colorScheme.secondary,
+    title: context.l10n.verifyApprovedTitle,
+    body: context.l10n.verifyApprovedBody,
+  );
 }
 
 class _Bullet extends StatelessWidget {
@@ -179,8 +196,11 @@ class _Bullet extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.check_circle_rounded,
-              size: BatshIconSize.md, color: BatshColors.secondary),
+          Icon(
+            Icons.check_circle_rounded,
+            size: BatshIconSize.md,
+            color: context.colorScheme.secondary,
+          ),
           const SizedBox(width: BatshSpacing.sm),
           Expanded(child: Text(text, style: BatshTypography.bodyMd)),
         ],
@@ -211,17 +231,22 @@ class _StatusView extends StatelessWidget {
           children: [
             Icon(icon, size: BatshIconSize.xxl, color: color),
             const SizedBox(height: BatshSpacing.lg),
-            Text(title,
-                textAlign: TextAlign.center,
-                style: BatshTypography.headlineSm),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: BatshTypography.headlineSm,
+            ),
             const SizedBox(height: BatshSpacing.sm),
-            Text(body,
-                textAlign: TextAlign.center,
-                style: BatshTypography.bodyMd
-                    .copyWith(color: BatshColors.onSurfaceVariant)),
+            Text(
+              body,
+              textAlign: TextAlign.center,
+              style: BatshTypography.bodyMd.copyWith(
+                color: context.colorScheme.onSurfaceVariant,
+              ),
+            ),
             const SizedBox(height: BatshSpacing.xl),
             BatshButton(
-              label: S.verifyDone,
+              label: context.l10n.verifyDone,
               onPressed: () => Navigator.of(context).maybePop(),
             ),
           ],

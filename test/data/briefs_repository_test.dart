@@ -30,10 +30,7 @@ void main() {
     });
 
     test('leaves ordinary Arabic and Latin text untouched', () {
-      expect(
-        BriefsRepository.sanitizeLikePattern('تشطيب شقة'),
-        'تشطيب شقة',
-      );
+      expect(BriefsRepository.sanitizeLikePattern('تشطيب شقة'), 'تشطيب شقة');
       expect(BriefsRepository.sanitizeLikePattern('full reno'), 'full reno');
     });
   });

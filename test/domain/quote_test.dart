@@ -166,16 +166,15 @@ Quote createTestQuote({
   QuoteStatus status = QuoteStatus.sent,
   DateTime? createdAt,
   DateTime? updatedAt,
-}) =>
-    Quote(
-      id: id,
-      briefId: briefId,
-      contractorId: contractorId,
-      priceMin: priceMin,
-      priceMax: priceMax,
-      durationText: durationText,
-      note: note,
-      status: status,
-      createdAt: createdAt ?? DateTime(2026, 6, 1),
-      updatedAt: updatedAt ?? DateTime(2026, 6, 1),
-    );
+}) => Quote(
+  id: id,
+  briefId: briefId,
+  contractorId: contractorId,
+  priceMin: priceMin,
+  priceMax: priceMax,
+  durationText: durationText,
+  note: note,
+  status: status,
+  createdAt: createdAt ?? DateTime(2026, 6, 1),
+  updatedAt: updatedAt ?? DateTime(2026, 6, 1),
+);

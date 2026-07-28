@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/l10n/strings.dart';
+import 'package:batsh/core/l10n/l10n_extension.dart';
 import '../../../core/theme/batsh_colors.dart';
 import '../../../core/theme/batsh_spacing.dart';
 import '../../../core/theme/batsh_typography.dart';
@@ -10,15 +10,16 @@ import '../data/moderation_repository.dart';
 import '../../../core/theme/batsh_icon_size.dart';
 import '../../../core/widgets/batsh_dialog.dart';
 import '../../../core/widgets/batsh_sheet.dart';
+import '../../../core/theme/theme_extension.dart';
 
-String _reasonLabel(ReportReason r) => switch (r) {
-  ReportReason.spam => S.reportReasonSpam,
-  ReportReason.scam => S.reportReasonScam,
-  ReportReason.offensive => S.reportReasonOffensive,
-  ReportReason.sexual => S.reportReasonSexual,
-  ReportReason.violence => S.reportReasonViolence,
-  ReportReason.impersonation => S.reportReasonImpersonation,
-  ReportReason.other => S.reportReasonOther,
+String _reasonLabel(BuildContext context, ReportReason r) => switch (r) {
+  ReportReason.spam => context.l10n.reportReasonSpam,
+  ReportReason.scam => context.l10n.reportReasonScam,
+  ReportReason.offensive => context.l10n.reportReasonOffensive,
+  ReportReason.sexual => context.l10n.reportReasonSexual,
+  ReportReason.violence => context.l10n.reportReasonViolence,
+  ReportReason.impersonation => context.l10n.reportReasonImpersonation,
+  ReportReason.other => context.l10n.reportReasonOther,
 };
 
 /// Reason picker for reporting a piece of content.
@@ -72,7 +73,9 @@ class _ReportSheetState extends ConsumerState<_ReportSheet> {
         ..hideCurrentSnackBar()
         ..showSnackBar(
           SnackBar(
-            content: Text(filed ? S.reportSent : S.reportAlreadySent),
+            content: Text(
+              filed ? context.l10n.reportSent : context.l10n.reportAlreadySent,
+            ),
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -97,16 +100,16 @@ class _ReportSheetState extends ConsumerState<_ReportSheet> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
-          S.reportTitle,
+          context.l10n.reportTitle,
           textAlign: TextAlign.center,
           style: BatshTypography.titleLg,
         ),
         const SizedBox(height: BatshSpacing.xs),
         Text(
-          S.reportSheetSubtitle,
+          context.l10n.reportSheetSubtitle,
           textAlign: TextAlign.center,
           style: BatshTypography.bodySm.copyWith(
-            color: BatshColors.onSurfaceVariant,
+            color: context.colorScheme.onSurfaceVariant,
           ),
         ),
         const SizedBox(height: BatshSpacing.md),
@@ -119,11 +122,14 @@ class _ReportSheetState extends ConsumerState<_ReportSheet> {
           for (final reason in ReportReason.values)
             ListTile(
               contentPadding: EdgeInsets.zero,
-              title: Text(_reasonLabel(reason), style: BatshTypography.bodyMd),
-              trailing: const Icon(
+              title: Text(
+                _reasonLabel(context, reason),
+                style: BatshTypography.bodyMd,
+              ),
+              trailing: Icon(
                 Icons.arrow_forward_ios,
                 size: BatshIconSize.sm,
-                color: BatshColors.onSurfaceVariant,
+                color: context.colorScheme.onSurfaceVariant,
               ),
               onTap: () => _submit(reason),
             ),
@@ -141,10 +147,10 @@ Future<bool> confirmAndBlock(
 ) async {
   final ok = await BatshDialog.confirm(
     context,
-    title: S.blockUserTitle,
-    message: S.blockUserBody,
-    confirmLabel: S.blockUser,
-    cancelLabel: S.cancel,
+    title: context.l10n.blockUserTitle,
+    message: context.l10n.blockUserBody,
+    confirmLabel: context.l10n.blockUser,
+    cancelLabel: context.l10n.cancel,
     isDestructive: true,
   );
   if (ok != true || !context.mounted) return false;
@@ -157,7 +163,7 @@ Future<bool> confirmAndBlock(
       ..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
-          content: Text(S.userBlocked),
+          content: Text(context.l10n.userBlocked),
           behavior: SnackBarBehavior.floating,
         ),
       );

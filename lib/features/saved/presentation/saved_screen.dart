@@ -3,7 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/l10n/strings.dart';
+import 'package:batsh/core/l10n/l10n_extension.dart';
 import '../../../core/utils/error_mapper.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/batsh_colors.dart';
@@ -19,6 +19,8 @@ import '../../auth/presentation/sign_in_sheet.dart';
 import 'providers/saved_providers.dart';
 import '../../../core/theme/batsh_motion.dart';
 
+import 'package:batsh/core/theme/theme_extension.dart';
+
 class SavedScreen extends ConsumerWidget {
   const SavedScreen({super.key});
 
@@ -28,7 +30,7 @@ class SavedScreen extends ConsumerWidget {
     final isGuest = ref.watch(currentSessionProvider) == null;
 
     return BatshScaffold(
-      title: S.tabSaved,
+      title: context.l10n.tabSaved,
       body: async.when(
         loading: () => const BatshListSkeleton(),
         error: (e, _) => BatshError(
@@ -37,7 +39,7 @@ class SavedScreen extends ConsumerWidget {
         ),
         data: (list) {
           return RefreshIndicator(
-            backgroundColor: BatshColors.surface,
+            backgroundColor: context.colorScheme.surface,
             onRefresh: () async => ref.invalidate(savedContractorsProvider),
             child: list.isEmpty
                 ? LayoutBuilder(
@@ -52,20 +54,20 @@ class SavedScreen extends ConsumerWidget {
                           ),
                           child: isGuest
                               ? BatshEmptyState(
-                                  title: S.signInToSeeSaved,
-                                  message: S.signInEmptyMessage,
+                                  title: context.l10n.signInToSeeSaved,
+                                  message: context.l10n.signInEmptyMessage,
                                   icon: Icons.bookmark_border,
                                   action: BatshButton(
-                                    label: S.signInSheetTitle,
+                                    label: context.l10n.signInSheetTitle,
                                     onPressed: () => showSignInSheet(
                                       context,
-                                      reason: S.signInToSeeSaved,
+                                      reason: context.l10n.signInToSeeSaved,
                                     ),
                                   ),
                                 )
                               : BatshEmptyState(
-                                  title: S.noSavedContractors,
-                                  message: S.noSavedContractorsMsg,
+                                  title: context.l10n.noSavedContractors,
+                                  message: context.l10n.noSavedContractorsMsg,
                                   icon: Icons.bookmark_border,
                                 ),
                         ),

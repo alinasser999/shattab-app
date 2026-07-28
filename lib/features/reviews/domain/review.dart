@@ -20,12 +20,12 @@ class Review {
   final DateTime createdAt;
 
   factory Review.fromJson(Map<String, dynamic> json) => Review(
-        id: json['id'] as String,
-        briefId: json['brief_id'] as String,
-        contractorId: json['contractor_id'] as String,
-        homeownerId: json['homeowner_id'] as String,
-        rating: (json['rating'] as num).toInt(),
-        comment: json['comment'] as String?,
-        createdAt: DateTime.parse(json['created_at'] as String),
-      );
+    id: json['id'] as String,
+    briefId: json['brief_id'] as String,
+    contractorId: json['contractor_id'] as String,
+    homeownerId: json['homeowner_id'] as String,
+    rating: (json['rating'] as num).toInt(),
+    comment: json['comment'] as String?,
+    createdAt: DateTime.parse(json['created_at'] as String),
+  );
 }

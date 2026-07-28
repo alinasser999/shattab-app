@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:flutter_animate/flutter_animate.dart';
 
-import '../../../core/l10n/strings.dart';
+import 'package:batsh/core/l10n/l10n_extension.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/batsh_colors.dart';
 import '../../../core/theme/batsh_spacing.dart';
@@ -18,6 +18,8 @@ import '../../auth/domain/profile.dart';
 import 'providers/onboarding_provider.dart';
 import '../../../core/utils/error_mapper.dart';
 import '../../../core/theme/batsh_icon_size.dart';
+
+import 'package:batsh/core/theme/theme_extension.dart';
 
 class RoleSelectScreen extends ConsumerStatefulWidget {
   const RoleSelectScreen({super.key});
@@ -42,7 +44,7 @@ class _RoleSelectScreenState extends ConsumerState<RoleSelectScreen> {
     if (_selectedRole == null) return;
     final name = _nameController.text.trim();
     if (name.length < 2) {
-      setState(() => _error = S.nameNotEnough);
+      setState(() => _error = context.l10n.nameNotEnough);
       return;
     }
     setState(() {
@@ -50,10 +52,9 @@ class _RoleSelectScreenState extends ConsumerState<RoleSelectScreen> {
       _error = null;
     });
     try {
-      await ref.read(onboardingControllerProvider.notifier).selectRole(
-            _selectedRole!,
-            name,
-          );
+      await ref
+          .read(onboardingControllerProvider.notifier)
+          .selectRole(_selectedRole!, name);
       if (!mounted) return;
       if (_selectedRole == UserRole.homeowner) {
         context.go(Routes.onboardingHomeownerDetails);
@@ -77,57 +78,61 @@ class _RoleSelectScreenState extends ConsumerState<RoleSelectScreen> {
           padding: const EdgeInsets.symmetric(vertical: BatshSpacing.lg),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                S.chooseRoleTitle,
-              style: BatshTypography.headlineLg,
-              ),
-              const SizedBox(height: BatshSpacing.sm),
-              Text(
-                S.chooseRoleSubtitle,
-                style: BatshTypography.bodyMd
-                    .copyWith(color: BatshColors.onSurfaceVariant),
-              ),
-              const SizedBox(height: BatshSpacing.lg),
-              _RoleCard(
-                role: UserRole.homeowner,
-                title: S.roleHomeowner,
-                subtitle: S.roleHomeownerSub,
-                icon: Icons.home_outlined,
-                selected: _selectedRole == UserRole.homeowner,
-                onTap: () => setState(() => _selectedRole = UserRole.homeowner),
-              ),
-              const SizedBox(height: BatshSpacing.gutter),
-              _RoleCard(
-                role: UserRole.contractor,
-                title: S.roleProfessional,
-                subtitle: S.roleContractorSub,
-                icon: Icons.engineering_outlined,
-                selected: _selectedRole == UserRole.contractor,
-                onTap: () =>
-                    setState(() => _selectedRole = UserRole.contractor),
-              ),
-              const SizedBox(height: BatshSpacing.xl),
-              BatshTextField(
-                controller: _nameController,
-                label: S.displayNameLabel,
-                hint: S.nameExample,
-                errorText: _error,
-              ),
-              const SizedBox(height: BatshSpacing.lg),
-              BatshButton(
-                label: S.continueLabel,
-                onPressed: (_selectedRole == null || _busy) ? null : _continue,
-                isLoading: _busy,
-              ),
-            ].animate(interval: 60.ms).fadeIn(
-              duration: BatshMotion.slow,
-              curve: BatshMotion.easeOut,
-            ).slideY(
-              begin: 0.08,
-              end: 0,
-              curve: BatshMotion.easeOut,
-            ),
+            children:
+                [
+                      Text(
+                        context.l10n.chooseRoleTitle,
+                        style: BatshTypography.headlineLg,
+                      ),
+                      const SizedBox(height: BatshSpacing.sm),
+                      Text(
+                        context.l10n.chooseRoleSubtitle,
+                        style: BatshTypography.bodyMd.copyWith(
+                          color: context.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                      const SizedBox(height: BatshSpacing.lg),
+                      _RoleCard(
+                        role: UserRole.homeowner,
+                        title: context.l10n.roleHomeowner,
+                        subtitle: context.l10n.roleHomeownerSub,
+                        icon: Icons.home_outlined,
+                        selected: _selectedRole == UserRole.homeowner,
+                        onTap: () =>
+                            setState(() => _selectedRole = UserRole.homeowner),
+                      ),
+                      const SizedBox(height: BatshSpacing.gutter),
+                      _RoleCard(
+                        role: UserRole.contractor,
+                        title: context.l10n.roleProfessional,
+                        subtitle: context.l10n.roleContractorSub,
+                        icon: Icons.engineering_outlined,
+                        selected: _selectedRole == UserRole.contractor,
+                        onTap: () =>
+                            setState(() => _selectedRole = UserRole.contractor),
+                      ),
+                      const SizedBox(height: BatshSpacing.xl),
+                      BatshTextField(
+                        controller: _nameController,
+                        label: context.l10n.displayNameLabel,
+                        hint: context.l10n.nameExample,
+                        errorText: _error,
+                      ),
+                      const SizedBox(height: BatshSpacing.lg),
+                      BatshButton(
+                        label: context.l10n.continueLabel,
+                        onPressed: (_selectedRole == null || _busy)
+                            ? null
+                            : _continue,
+                        isLoading: _busy,
+                      ),
+                    ]
+                    .animate(interval: 60.ms)
+                    .fadeIn(
+                      duration: BatshMotion.slow,
+                      curve: BatshMotion.easeOut,
+                    )
+                    .slideY(begin: 0.08, end: 0, curve: BatshMotion.easeOut),
           ),
         ),
       ),
@@ -165,14 +170,16 @@ class _RoleCard extends StatelessWidget {
             height: 56,
             decoration: BoxDecoration(
               color: selected
-                  ? BatshColors.primary
-                  : BatshColors.surfaceContainer,
+                  ? context.colorScheme.primary
+                  : context.colorScheme.surfaceContainer,
               shape: BoxShape.circle,
             ),
             child: Icon(
               icon,
               size: BatshIconSize.lg,
-              color: selected ? BatshColors.onPrimary : BatshColors.primary,
+              color: selected
+                  ? context.colorScheme.onPrimary
+                  : context.colorScheme.primary,
             ),
           ),
           const SizedBox(width: BatshSpacing.gutter),
@@ -184,8 +191,9 @@ class _RoleCard extends StatelessWidget {
                 const SizedBox(height: BatshSpacing.xs),
                 Text(
                   subtitle,
-                  style: BatshTypography.bodyMd
-                      .copyWith(color: BatshColors.onSurfaceVariant),
+                  style: BatshTypography.bodyMd.copyWith(
+                    color: context.colorScheme.onSurfaceVariant,
+                  ),
                 ),
               ],
             ),
@@ -194,10 +202,10 @@ class _RoleCard extends StatelessWidget {
             scale: selected ? 1 : 0,
             duration: BatshMotion.fast,
             curve: BatshMotion.easeOut,
-            child: const Icon(
+            child: Icon(
               Icons.check_circle_rounded,
               size: BatshIconSize.md,
-              color: BatshColors.primary,
+              color: context.colorScheme.primary,
             ),
           ),
         ],

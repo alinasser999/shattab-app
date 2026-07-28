@@ -9,6 +9,8 @@ import '../theme/batsh_spacing.dart';
 import '../theme/batsh_typography.dart';
 import '../theme/batsh_icon_size.dart';
 
+import 'package:batsh/core/theme/theme_extension.dart';
+
 class BatshBottomNavItem {
   const BatshBottomNavItem({
     required this.icon,
@@ -50,10 +52,10 @@ class BatshBottomNav extends StatelessWidget {
         ),
         child: DecoratedBox(
           decoration: BoxDecoration(
-            color: BatshColors.surfaceContainerLowest,
+            color: context.colorScheme.surfaceContainerLowest,
             borderRadius: BatshRadius.brFull,
             border: Border.all(
-              color: BatshColors.outlineVariant.withValues(alpha: 0.4),
+              color: context.colorScheme.outlineVariant.withValues(alpha: 0.4),
               width: 1,
             ),
             boxShadow: BatshShadows.floating,
@@ -173,8 +175,9 @@ class _NavItemState extends State<_NavItem>
                       width: 30 + (_pillAnim.value * 26),
                       height: 34,
                       decoration: BoxDecoration(
-                        color: BatshColors.primaryContainer
-                            .withValues(alpha: _pillAnim.value),
+                        color: context.colorScheme.primaryContainer.withValues(
+                          alpha: _pillAnim.value,
+                        ),
                         borderRadius: BatshRadius.brFull,
                       ),
                     ),
@@ -185,8 +188,10 @@ class _NavItemState extends State<_NavItem>
                         : widget.item.icon,
                     size: BatshIconSize.md + (_pillAnim.value * 3),
                     color: Color.lerp(
-                      BatshColors.onSurfaceVariant.withValues(alpha: 0.75),
-                      BatshColors.primary,
+                      context.colorScheme.onSurfaceVariant.withValues(
+                        alpha: 0.75,
+                      ),
+                      context.colorScheme.primary,
                       _pillAnim.value,
                     ),
                   ),
@@ -209,10 +214,11 @@ class _NavItemState extends State<_NavItem>
                   // 4.5:1 body-text contrast floor on the white bar.
                   style: BatshTypography.labelSm.copyWith(
                     color: widget.isSelected
-                        ? BatshColors.primary
-                        : BatshColors.onSurfaceVariant,
-                    fontWeight:
-                        widget.isSelected ? FontWeight.w700 : FontWeight.w500,
+                        ? context.colorScheme.primary
+                        : context.colorScheme.onSurfaceVariant,
+                    fontWeight: widget.isSelected
+                        ? FontWeight.w700
+                        : FontWeight.w500,
                   ),
                   child: Text(widget.item.label, textAlign: TextAlign.center),
                 ),

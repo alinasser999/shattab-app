@@ -38,10 +38,7 @@ class VerificationRepository {
 
   /// Uploads the document photos and inserts a pending verification request.
   /// Throws if not signed in or no docs provided.
-  Future<void> submit({
-    required List<DraftPhoto> docs,
-    String? note,
-  }) async {
+  Future<void> submit({required List<DraftPhoto> docs, String? note}) async {
     final uid = _client.auth.currentUser?.id;
     if (uid == null) throw StateError('not signed in');
     if (docs.isEmpty) throw ArgumentError('at least one document required');
@@ -52,13 +49,23 @@ class VerificationRepository {
       final name = '$uid/${DateTime.now().millisecondsSinceEpoch}_$i.jpg';
       final d = docs[i];
       if (d.file != null) {
-        await storage.upload(name, d.file!,
-            fileOptions:
-                const FileOptions(upsert: true, contentType: 'image/jpeg'));
+        await storage.upload(
+          name,
+          d.file!,
+          fileOptions: const FileOptions(
+            upsert: true,
+            contentType: 'image/jpeg',
+          ),
+        );
       } else if (d.bytes != null) {
-        await storage.uploadBinary(name, d.bytes!,
-            fileOptions:
-                const FileOptions(upsert: true, contentType: 'image/jpeg'));
+        await storage.uploadBinary(
+          name,
+          d.bytes!,
+          fileOptions: const FileOptions(
+            upsert: true,
+            contentType: 'image/jpeg',
+          ),
+        );
       } else {
         continue;
       }
@@ -75,9 +82,11 @@ class VerificationRepository {
 }
 
 final verificationRepositoryProvider = Provider<VerificationRepository>(
-    (ref) => VerificationRepository(ref.watch(supabaseClientProvider)));
+  (ref) => VerificationRepository(ref.watch(supabaseClientProvider)),
+);
 
 /// Latest verification status for the current contractor. Auto-disposes so it
 /// re-fetches whenever the account screen is reopened after submitting.
 final verificationStatusProvider = FutureProvider<VerificationStatus>(
-    (ref) => ref.watch(verificationRepositoryProvider).currentStatus());
+  (ref) => ref.watch(verificationRepositoryProvider).currentStatus(),
+);

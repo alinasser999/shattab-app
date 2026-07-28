@@ -186,7 +186,9 @@ class BriefsController extends _$BriefsController {
     required String workDescription,
     required List<String> targetSpecialties,
   }) async {
-    await ref.read(briefsRepositoryProvider).updateBrief(
+    await ref
+        .read(briefsRepositoryProvider)
+        .updateBrief(
           briefId,
           apartmentType: apartmentType,
           city: city,
@@ -202,8 +204,9 @@ class BriefsController extends _$BriefsController {
   /// removed, or `'cancelled'` when contractors had already quoted and the
   /// brief was kept so their work survives.
   Future<String> deleteOrCancelBrief(String briefId) async {
-    final outcome =
-        await ref.read(briefsRepositoryProvider).deleteOrCancelBrief(briefId);
+    final outcome = await ref
+        .read(briefsRepositoryProvider)
+        .deleteOrCancelBrief(briefId);
     ref.invalidate(myBriefsProvider);
     ref.invalidate(briefByIdProvider(briefId));
     return outcome;

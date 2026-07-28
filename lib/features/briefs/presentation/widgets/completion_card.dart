@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/l10n/strings.dart';
+import 'package:batsh/core/l10n/l10n_extension.dart';
 import '../../../../core/theme/batsh_colors.dart';
 import '../../../../core/theme/batsh_radius.dart';
 import '../../../../core/theme/batsh_spacing.dart';
@@ -15,6 +15,8 @@ import '../providers/briefs_providers.dart';
 import '../../../../core/theme/batsh_icon_size.dart';
 import '../../../../core/widgets/batsh_snack.dart';
 import '../../../../core/widgets/batsh_dialog.dart';
+
+import 'package:batsh/core/theme/theme_extension.dart';
 
 /// Which side of the job is looking at the card.
 enum CompletionRole { homeowner, contractor }
@@ -73,17 +75,17 @@ class _CompletionCardState extends ConsumerState<CompletionCard> {
     () => ref
         .read(briefsControllerProvider.notifier)
         .requestCompletion(widget.brief.id),
-    S.workDoneRequested,
+    context.l10n.workDoneRequested,
   );
 
   Future<void> _confirmCompletion() async {
     // Irreversible, and it mints a public project count, so it asks first.
     final ok = await BatshDialog.confirm(
       context,
-      title: S.confirmCompletionTitle,
-      message: S.confirmCompletionBody,
-      confirmLabel: S.confirmWorkDone,
-      cancelLabel: S.cancel,
+      title: context.l10n.confirmCompletionTitle,
+      message: context.l10n.confirmCompletionBody,
+      confirmLabel: context.l10n.confirmWorkDone,
+      cancelLabel: context.l10n.cancel,
     );
     if (ok != true) return;
 
@@ -91,7 +93,7 @@ class _CompletionCardState extends ConsumerState<CompletionCard> {
       () => ref
           .read(briefsControllerProvider.notifier)
           .confirmCompletion(widget.brief.id),
-      S.workCompletedNow,
+      context.l10n.workCompletedNow,
       onSuccess: () {
         HapticFeedback.mediumImpact();
         final contractorId = widget.acceptedContractorId;
@@ -115,22 +117,22 @@ class _CompletionCardState extends ConsumerState<CompletionCard> {
       BriefStage.open => const SizedBox.shrink(),
       BriefStage.completed => _Banner(
         icon: Icons.verified_rounded,
-        color: BatshColors.secondary,
-        title: S.completedLabel,
+        color: context.colorScheme.secondary,
+        title: context.l10n.completedLabel,
       ),
       BriefStage.hired =>
         isHomeowner
             ? _ActionCard(
                 icon: Icons.handyman_outlined,
-                message: S.reviewAfterCompletionHint,
-                actionLabel: S.confirmWorkDone,
+                message: context.l10n.reviewAfterCompletionHint,
+                actionLabel: context.l10n.confirmWorkDone,
                 busy: _busy,
                 onPressed: _confirmCompletion,
               )
             : _ActionCard(
                 icon: Icons.handyman_outlined,
-                message: S.markWorkDone,
-                actionLabel: S.markWorkDone,
+                message: context.l10n.markWorkDone,
+                actionLabel: context.l10n.markWorkDone,
                 busy: _busy,
                 onPressed: _requestCompletion,
               ),
@@ -140,16 +142,16 @@ class _CompletionCardState extends ConsumerState<CompletionCard> {
             // primary action rather than a passive option.
             ? _ActionCard(
                 icon: Icons.notifications_active_outlined,
-                message: S.contractorSaysDone,
-                actionLabel: S.confirmWorkDone,
+                message: context.l10n.contractorSaysDone,
+                actionLabel: context.l10n.confirmWorkDone,
                 emphasised: true,
                 busy: _busy,
                 onPressed: _confirmCompletion,
               )
             : _Banner(
                 icon: Icons.hourglass_top_rounded,
-                color: BatshColors.onSurfaceVariant,
-                title: S.awaitingHomeownerConfirm,
+                color: context.colorScheme.onSurfaceVariant,
+                title: context.l10n.awaitingHomeownerConfirm,
               ),
     };
   }
@@ -178,13 +180,13 @@ class _ActionCard extends StatelessWidget {
       padding: const EdgeInsets.all(BatshSpacing.gutter),
       decoration: BoxDecoration(
         color: emphasised
-            ? BatshColors.secondaryContainer
-            : BatshColors.surfaceContainerLow,
+            ? context.colorScheme.secondaryContainer
+            : context.colorScheme.surfaceContainerLow,
         borderRadius: BatshRadius.brCard,
         border: Border.all(
           color: emphasised
-              ? BatshColors.secondary
-              : BatshColors.outlineVariant.withValues(alpha: 0.6),
+              ? context.colorScheme.secondary
+              : context.colorScheme.outlineVariant.withValues(alpha: 0.6),
         ),
       ),
       child: Column(
@@ -196,8 +198,8 @@ class _ActionCard extends StatelessWidget {
                 icon,
                 size: BatshIconSize.md,
                 color: emphasised
-                    ? BatshColors.onSecondaryContainer
-                    : BatshColors.onSurfaceVariant,
+                    ? context.colorScheme.onSecondaryContainer
+                    : context.colorScheme.onSurfaceVariant,
               ),
               const SizedBox(width: BatshSpacing.sm),
               Expanded(
@@ -205,8 +207,8 @@ class _ActionCard extends StatelessWidget {
                   message,
                   style: BatshTypography.bodyMd.copyWith(
                     color: emphasised
-                        ? BatshColors.onSecondaryContainer
-                        : BatshColors.onSurfaceVariant,
+                        ? context.colorScheme.onSecondaryContainer
+                        : context.colorScheme.onSurfaceVariant,
                   ),
                 ),
               ),
@@ -243,7 +245,7 @@ class _Banner extends StatelessWidget {
         vertical: BatshSpacing.md,
       ),
       decoration: BoxDecoration(
-        color: BatshColors.surfaceContainerLow,
+        color: context.colorScheme.surfaceContainerLow,
         borderRadius: BatshRadius.brCard,
         border: Border.all(color: color.withValues(alpha: 0.4)),
       ),
@@ -255,7 +257,7 @@ class _Banner extends StatelessWidget {
             child: Text(
               title,
               style: BatshTypography.labelLg.copyWith(
-                color: BatshColors.onSurface,
+                color: context.colorScheme.onSurface,
               ),
             ),
           ),

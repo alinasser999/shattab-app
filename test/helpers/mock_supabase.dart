@@ -4,7 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 class MockSupabaseQuery implements Future<List<Map<String, dynamic>>> {
   MockSupabaseQuery(String table, List<Map<String, dynamic>>? rows)
-      : _rows = rows ?? [];
+    : _rows = rows ?? [];
 
   final List<Map<String, dynamic>> _rows;
   final Map<String, dynamic> _eqConditions = {};
@@ -20,7 +20,9 @@ class MockSupabaseQuery implements Future<List<Map<String, dynamic>>> {
       results = results.map((r) => {...r, ..._updateData!}).toList();
     }
     if (_upsertData != null) {
-      results = [{..._upsertData!}];
+      results = [
+        {..._upsertData!},
+      ];
     }
     return results;
   }
@@ -55,24 +57,21 @@ class MockSupabaseQuery implements Future<List<Map<String, dynamic>>> {
   Future<R> then<R>(
     FutureOr<R> Function(List<Map<String, dynamic>>) onValue, {
     Function? onError,
-  }) =>
-      Future.value(_filtered).then(
-        onValue,
-        onError: onError as FutureOr<R> Function(Object, StackTrace)?,
-      );
+  }) => Future.value(_filtered).then(
+    onValue,
+    onError: onError as FutureOr<R> Function(Object, StackTrace)?,
+  );
 
   @override
   Future<List<Map<String, dynamic>>> catchError(
     Function onError, {
     bool Function(Object)? test,
-  }) =>
-      Future.value(_filtered).catchError(onError, test: test);
+  }) => Future.value(_filtered).catchError(onError, test: test);
 
   @override
   Future<List<Map<String, dynamic>>> whenComplete(
     FutureOr<void> Function() action,
-  ) =>
-      Future.value(_filtered).whenComplete(action);
+  ) => Future.value(_filtered).whenComplete(action);
 
   @override
   Stream<List<Map<String, dynamic>>> asStream() =>
@@ -82,8 +81,7 @@ class MockSupabaseQuery implements Future<List<Map<String, dynamic>>> {
   Future<List<Map<String, dynamic>>> timeout(
     Duration timeLimit, {
     FutureOr<List<Map<String, dynamic>>> Function()? onTimeout,
-  }) =>
-      Future.value(_filtered).timeout(timeLimit, onTimeout: onTimeout);
+  }) => Future.value(_filtered).timeout(timeLimit, onTimeout: onTimeout);
 }
 
 class MockSupabaseAuth {
@@ -92,8 +90,8 @@ class MockSupabaseAuth {
   final _stateController = StreamController<AuthState>.broadcast();
 
   MockSupabaseAuth({Session? session, User? user})
-      : _currentSession = session,
-        _currentUser = user;
+    : _currentSession = session,
+      _currentUser = user;
 
   Session? get currentSession => _currentSession;
   User? get currentUser => _currentUser;
@@ -131,7 +129,7 @@ class MockSupabaseClient {
   final MockSupabaseAuth _auth;
 
   MockSupabaseClient({Session? session, User? user})
-      : _auth = MockSupabaseAuth(session: session, user: user);
+    : _auth = MockSupabaseAuth(session: session, user: user);
 
   MockSupabaseAuth get auth => _auth;
 

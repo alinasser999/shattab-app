@@ -2,7 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/l10n/strings.dart';
+import 'package:batsh/core/l10n/l10n_extension.dart';
 import '../../../../core/theme/batsh_colors.dart';
 import '../../../../core/theme/batsh_motion.dart';
 import '../../../../core/theme/batsh_radius.dart';
@@ -25,6 +25,8 @@ import '../../domain/brief.dart';
 import '../providers/briefs_providers.dart';
 import '../../../../core/theme/batsh_icon_size.dart';
 import '../../../../core/widgets/batsh_badge.dart';
+
+import 'package:batsh/core/theme/theme_extension.dart';
 
 class PostDetailScreen extends ConsumerStatefulWidget {
   const PostDetailScreen({super.key, required this.postId});
@@ -58,7 +60,7 @@ class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
     final async = ref.watch(briefByIdProvider(widget.postId));
 
     return BatshScaffold(
-      title: S.postDetailTitle,
+      title: context.l10n.postDetailTitle,
       body: async.when(
         loading: () => const _PostDetailSkeleton(),
         error: (e, _) => BatshError(
@@ -67,7 +69,7 @@ class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
         ),
         data: (brief) {
           if (brief == null) {
-            return BatshError(message: S.postNotFound);
+            return BatshError(message: context.l10n.postNotFound);
           }
           return _PostDetailBody(
             brief: brief,
@@ -124,7 +126,7 @@ class _PostDetailBody extends StatelessWidget {
       if (brief.photoUrls.length > 1) ...[
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: BatshSpacing.gutter),
-          child: BatshSectionHeader(title: S.photos),
+          child: BatshSectionHeader(title: context.l10n.photos),
         ),
         _GallerySection(photoUrls: brief.photoUrls),
       ],
@@ -163,11 +165,11 @@ class _StickyQuoteBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: BatshColors.cardBackground,
+        color: context.colorScheme.surface,
         boxShadow: BatshShadows.raised,
         border: Border(
           top: BorderSide(
-            color: BatshColors.outlineVariant.withValues(alpha: 0.4),
+            color: context.colorScheme.outlineVariant.withValues(alpha: 0.4),
             width: 1,
           ),
         ),
@@ -182,7 +184,7 @@ class _StickyQuoteBar extends StatelessWidget {
             BatshSpacing.sm,
           ),
           child: BatshButton(
-            label: S.sendQuoteButton,
+            label: context.l10n.sendQuoteButton,
             icon: Icons.request_quote_outlined,
             onPressed: onQuote,
           ),
@@ -226,7 +228,7 @@ class _GallerySection extends StatelessWidget {
           final showOverflow = isLastTile && overflow > 0;
           return Semantics(
             button: true,
-            label: S.openPhotoViewer,
+            label: context.l10n.openPhotoViewer,
             child: GestureDetector(
               onTap: () => BatshPhotoViewer.show(
                 context,
@@ -243,17 +245,19 @@ class _GallerySection extends StatelessWidget {
                       fit: BoxFit.cover,
                       // Thumbnail tile — a quarter of the screen width.
                       memCacheWidth: 320,
-                      placeholder: (_, _) =>
-                          Container(color: BatshColors.surfaceContainer),
-                      errorWidget: (_, _, _) =>
-                          Container(color: BatshColors.surfaceContainer),
+                      placeholder: (_, _) => Container(
+                        color: context.colorScheme.surfaceContainer,
+                      ),
+                      errorWidget: (_, _, _) => Container(
+                        color: context.colorScheme.surfaceContainer,
+                      ),
                     ),
                     if (showOverflow)
                       ColoredBox(
-                        color: BatshColors.scrim.withValues(alpha: 0.6),
+                        color: context.colorScheme.scrim.withValues(alpha: 0.6),
                         child: Center(
                           child: Text(
-                            S.morePhotosCount(overflow),
+                            context.l10n.morePhotosCount(overflow),
                             style: BatshTypography.titleMd.copyWith(
                               color: Colors.white,
                               fontWeight: FontWeight.w700,
@@ -408,7 +412,7 @@ class _HeroImageSectionState extends State<_HeroImageSection> {
                 onPageChanged: (i) => setState(() => _index = i),
                 itemBuilder: (_, i) => Semantics(
                   button: true,
-                  label: S.openPhotoViewer,
+                  label: context.l10n.openPhotoViewer,
                   child: GestureDetector(
                     onTap: () => BatshPhotoViewer.show(
                       context,
@@ -418,10 +422,12 @@ class _HeroImageSectionState extends State<_HeroImageSection> {
                     child: CachedNetworkImage(
                       imageUrl: urls[i],
                       fit: BoxFit.cover,
-                      placeholder: (_, _) =>
-                          Container(color: BatshColors.surfaceContainer),
-                      errorWidget: (_, _, _) =>
-                          Container(color: BatshColors.surfaceContainer),
+                      placeholder: (_, _) => Container(
+                        color: context.colorScheme.surfaceContainer,
+                      ),
+                      errorWidget: (_, _, _) => Container(
+                        color: context.colorScheme.surfaceContainer,
+                      ),
                     ),
                   ),
                 ),
@@ -494,7 +500,7 @@ class _HeroImageSectionState extends State<_HeroImageSection> {
               end: BatshSpacing.gutter,
               child: IgnorePointer(
                 child: BatshBadge(
-                  label: S.photoIndexOf(_index + 1, urls.length),
+                  label: context.l10n.photoIndexOf(_index + 1, urls.length),
                   emphasis: BatshBadgeEmphasis.onImage,
                   compact: true,
                 ),
@@ -570,7 +576,7 @@ class _NoHeroHeader extends StatelessWidget {
               Icon(
                 Icons.place_outlined,
                 size: BatshIconSize.sm,
-                color: BatshColors.onSurfaceVariant,
+                color: context.colorScheme.onSurfaceVariant,
               ),
               const SizedBox(width: 4),
               Expanded(
@@ -579,7 +585,7 @@ class _NoHeroHeader extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: BatshTypography.labelMd.copyWith(
-                    color: BatshColors.onSurfaceVariant,
+                    color: context.colorScheme.onSurfaceVariant,
                   ),
                 ),
               ),
@@ -598,13 +604,13 @@ class _NoHeroHeader extends StatelessWidget {
               Icon(
                 Icons.access_time,
                 size: BatshIconSize.sm,
-                color: BatshColors.onSurfaceVariant,
+                color: context.colorScheme.onSurfaceVariant,
               ),
               const SizedBox(width: 4),
               Text(
                 time,
                 style: BatshTypography.labelSm.copyWith(
-                  color: BatshColors.onSurfaceVariant,
+                  color: context.colorScheme.onSurfaceVariant,
                 ),
               ),
             ],
@@ -638,7 +644,7 @@ class _BriefInfoCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(BatshSpacing.gutter),
         decoration: BoxDecoration(
-          color: BatshColors.cardBackground,
+          color: context.colorScheme.surface,
           borderRadius: BatshRadius.brCard,
           boxShadow: BatshShadows.soft,
         ),
@@ -654,7 +660,7 @@ class _BriefInfoCard extends StatelessWidget {
                 Expanded(
                   child: _SpecTile(
                     icon: Icons.handyman_outlined,
-                    label: S.workTypeSpecLabel,
+                    label: context.l10n.workTypeSpecLabel,
                     value: _workTypeValue(brief.targetSpecialties),
                   ),
                 ),
@@ -662,7 +668,7 @@ class _BriefInfoCard extends StatelessWidget {
                 Expanded(
                   child: _SpecTile(
                     icon: Icons.home_outlined,
-                    label: S.apartmentTypeLabel,
+                    label: context.l10n.apartmentTypeLabel,
                     value: apt,
                   ),
                 ),
@@ -670,7 +676,7 @@ class _BriefInfoCard extends StatelessWidget {
                 Expanded(
                   child: _SpecTile(
                     icon: Icons.schedule_outlined,
-                    label: S.publishedSpecLabel,
+                    label: context.l10n.publishedSpecLabel,
                     value: time,
                   ),
                 ),
@@ -678,9 +684,9 @@ class _BriefInfoCard extends StatelessWidget {
             ),
             const SizedBox(height: BatshSpacing.lg),
             Text(
-              S.postDescriptionLabel,
+              context.l10n.postDescriptionLabel,
               style: BatshTypography.labelMd.copyWith(
-                color: BatshColors.onSurfaceVariant,
+                color: context.colorScheme.onSurfaceVariant,
               ),
             ),
             const SizedBox(height: BatshSpacing.sm),
@@ -718,10 +724,10 @@ class _SpecTile extends StatelessWidget {
         vertical: BatshSpacing.md,
       ),
       decoration: BoxDecoration(
-        color: BatshColors.surfaceContainerLow,
+        color: context.colorScheme.surfaceContainerLow,
         borderRadius: BatshRadius.brMd,
         border: Border.all(
-          color: BatshColors.outlineVariant.withValues(alpha: 0.6),
+          color: context.colorScheme.outlineVariant.withValues(alpha: 0.6),
         ),
       ),
       child: Column(
@@ -732,7 +738,7 @@ class _SpecTile extends StatelessWidget {
               Icon(
                 icon,
                 size: BatshIconSize.xs,
-                color: BatshColors.onSurfaceVariant,
+                color: context.colorScheme.onSurfaceVariant,
               ),
               const SizedBox(width: 4),
               Flexible(
@@ -741,7 +747,7 @@ class _SpecTile extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: BatshTypography.labelSm.copyWith(
-                    color: BatshColors.onSurfaceVariant,
+                    color: context.colorScheme.onSurfaceVariant,
                   ),
                 ),
               ),
@@ -753,7 +759,7 @@ class _SpecTile extends StatelessWidget {
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: BatshTypography.labelLg.copyWith(
-              color: BatshColors.onSurface,
+              color: context.colorScheme.onSurface,
               fontWeight: FontWeight.w700,
               height: 1.35,
             ),
@@ -791,7 +797,7 @@ class _HomeownerCard extends StatelessWidget {
           return Container(
             padding: const EdgeInsets.all(BatshSpacing.gutter),
             decoration: BoxDecoration(
-              color: BatshColors.cardBackground,
+              color: context.colorScheme.surface,
               borderRadius: BorderRadius.circular(BatshRadius.lg),
               boxShadow: BatshShadows.soft,
             ),
@@ -801,7 +807,7 @@ class _HomeownerCard extends StatelessWidget {
                   width: 48,
                   height: 48,
                   decoration: BoxDecoration(
-                    color: BatshColors.secondaryContainer,
+                    color: context.colorScheme.secondaryContainer,
                     borderRadius: BatshRadius.brMd,
                   ),
                   alignment: Alignment.center,
@@ -810,7 +816,7 @@ class _HomeownerCard extends StatelessWidget {
                         ? h.name.characters.first
                         : '?',
                     style: BatshTypography.titleMd.copyWith(
-                      color: BatshColors.onSecondaryContainer,
+                      color: context.colorScheme.onSecondaryContainer,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
@@ -860,7 +866,7 @@ class _ContactSection extends StatelessWidget {
             children: [
               WhatsAppButton(
                 phone: homeowner.phone,
-                message: S.whatsappPostGreeting,
+                message: context.l10n.whatsappPostGreeting,
               ),
               const SizedBox(height: BatshSpacing.sm),
               CallButton(phone: homeowner.phone),

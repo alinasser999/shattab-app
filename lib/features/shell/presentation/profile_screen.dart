@@ -6,7 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../../../../core/l10n/strings.dart';
+import 'package:batsh/core/l10n/l10n_extension.dart';
 import '../../../../core/utils/error_mapper.dart';
 import '../../../../core/router/routes.dart';
 import '../../briefs/presentation/providers/briefs_providers.dart';
@@ -37,6 +37,7 @@ import '../../../core/theme/batsh_icon_size.dart';
 import '../../../core/widgets/batsh_snack.dart';
 import '../../../core/theme/batsh_motion.dart';
 
+import 'package:batsh/core/theme/theme_extension.dart';
 part 'profile_screen_contractor.dart';
 part 'profile_screen_settings.dart';
 
@@ -48,10 +49,12 @@ class ProfileScreen extends ConsumerWidget {
     final profileAsync = ref.watch(currentProfileProvider);
 
     return profileAsync.when(
-      loading: () =>
-          BatshScaffold(title: S.profileTitle, body: const _ProfileSkeleton()),
+      loading: () => BatshScaffold(
+        title: context.l10n.profileTitle,
+        body: const _ProfileSkeleton(),
+      ),
       error: (e, _) => BatshScaffold(
-        title: S.profileTitle,
+        title: context.l10n.profileTitle,
         body: BatshError(
           message: ErrorMapper.map(e),
           onRetry: () => ref.invalidate(currentProfileProvider),
@@ -59,7 +62,10 @@ class ProfileScreen extends ConsumerWidget {
       ),
       data: (profile) {
         if (profile == null) {
-          return BatshScaffold(title: S.profileTitle, body: _GuestProfile());
+          return BatshScaffold(
+            title: context.l10n.profileTitle,
+            body: _GuestProfile(),
+          );
         }
         if (profile.role == UserRole.contractor) {
           return _ContractorProfile(profile: profile);
@@ -79,24 +85,26 @@ class _GuestProfile extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             BatshEmptyState(
-              title: S.signInOrCreateAccount,
-              message: S.signInEmptyMessage,
+              title: context.l10n.signInOrCreateAccount,
+              message: context.l10n.signInEmptyMessage,
               icon: Icons.person_outline,
               action: BatshButton(
-                label: S.signInSheetTitle,
-                onPressed: () =>
-                    showSignInSheet(context, reason: S.signInOrCreateAccount),
+                label: context.l10n.signInSheetTitle,
+                onPressed: () => showSignInSheet(
+                  context,
+                  reason: context.l10n.signInOrCreateAccount,
+                ),
               ),
             ),
             TextButton(
               onPressed: () => context.push(Routes.login),
               child: Text(
-                S.contractorSignInLink,
+                context.l10n.contractorSignInLink,
                 style: BatshTypography.labelMd.copyWith(
-                  color: BatshColors.primary,
+                  color: context.colorScheme.primary,
                   fontWeight: FontWeight.w600,
                   decoration: TextDecoration.underline,
-                  decorationColor: BatshColors.primary,
+                  decorationColor: context.colorScheme.primary,
                 ),
               ),
             ),
@@ -116,7 +124,7 @@ class _ContractorProfile extends ConsumerWidget {
     final listingAsync = ref.watch(contractorByIdProvider(profile.id));
 
     return Scaffold(
-      backgroundColor: BatshColors.background,
+      backgroundColor: context.colorScheme.background,
       body: listingAsync.when(
         loading: () => const BatshProfileSkeleton(),
         error: (_, _) => _ProfileFallback(
@@ -165,7 +173,7 @@ class _HomeownerProfile extends ConsumerWidget {
             Expanded(
               child: _StatBig(
                 value: requestsCount,
-                label: S.myRequests,
+                label: context.l10n.myRequests,
                 icon: Icons.assignment_outlined,
                 reduced: reduced,
               ),
@@ -174,7 +182,7 @@ class _HomeownerProfile extends ConsumerWidget {
             Expanded(
               child: _StatBig(
                 value: savedCount,
-                label: S.mySaved,
+                label: context.l10n.mySaved,
                 icon: Icons.bookmark_outline,
                 reduced: reduced,
               ),
@@ -183,7 +191,7 @@ class _HomeownerProfile extends ConsumerWidget {
         ),
       ),
       const SizedBox(height: BatshSpacing.xl),
-      _SectionLabel(S.quickActionsTitle),
+      _SectionLabel(context.l10n.quickActionsTitle),
       const SizedBox(height: BatshSpacing.md),
       Padding(
         padding: const EdgeInsets.symmetric(horizontal: BatshSpacing.lg),
@@ -192,7 +200,7 @@ class _HomeownerProfile extends ConsumerWidget {
             Expanded(
               child: _QuickAction(
                 icon: Icons.assignment_outlined,
-                label: S.myRequests,
+                label: context.l10n.myRequests,
                 onTap: () => context.go(Routes.homeownerRequests),
               ),
             ),
@@ -200,7 +208,7 @@ class _HomeownerProfile extends ConsumerWidget {
             Expanded(
               child: _QuickAction(
                 icon: Icons.bookmark_outline,
-                label: S.mySaved,
+                label: context.l10n.mySaved,
                 onTap: () => context.go(Routes.homeownerSaved),
               ),
             ),
@@ -208,7 +216,7 @@ class _HomeownerProfile extends ConsumerWidget {
             Expanded(
               child: _QuickAction(
                 icon: Icons.explore_outlined,
-                label: S.discoverContractors,
+                label: context.l10n.discoverContractors,
                 onTap: () => context.go(Routes.homeownerDiscover),
               ),
             ),
@@ -216,7 +224,7 @@ class _HomeownerProfile extends ConsumerWidget {
         ),
       ),
       const SizedBox(height: BatshSpacing.xl),
-      _SectionLabel(S.accountSettingsTitle),
+      _SectionLabel(context.l10n.accountSettingsTitle),
       const SizedBox(height: BatshSpacing.md),
       Padding(
         padding: const EdgeInsets.symmetric(horizontal: BatshSpacing.lg),
@@ -227,12 +235,12 @@ class _HomeownerProfile extends ConsumerWidget {
             const _LanguageTile(),
             _LegalTile(
               icon: Icons.privacy_tip_outlined,
-              label: S.privacyPolicy,
+              label: context.l10n.privacyPolicy,
               url: _privacyPolicyUrl,
             ),
             _LegalTile(
               icon: Icons.description_outlined,
-              label: S.termsOfService,
+              label: context.l10n.termsOfService,
               url: _termsUrl,
             ),
             const _DeleteAccountTile(),
@@ -248,7 +256,7 @@ class _HomeownerProfile extends ConsumerWidget {
     ];
 
     return BatshScaffold(
-      title: S.profileTitle,
+      title: context.l10n.profileTitle,
       animateEntrance: false,
       body: ListView(
         children: reduced
@@ -262,8 +270,9 @@ class _HomeownerProfile extends ConsumerWidget {
   }
 }
 
-String _greeting() =>
-    DateTime.now().hour < 17 ? S.greetingMorning : S.greetingEvening;
+String _greeting(BuildContext context) => DateTime.now().hour < 17
+    ? context.l10n.greetingMorning
+    : context.l10n.greetingEvening;
 
 class _ProfileHero extends StatelessWidget {
   const _ProfileHero({required this.profile, required this.onEdit});
@@ -278,7 +287,7 @@ class _ProfileHero extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(BatshSpacing.lg),
         decoration: BoxDecoration(
-          color: BatshColors.surfaceContainerLowest,
+          color: context.colorScheme.surfaceContainerLowest,
           borderRadius: BatshRadius.brXxl,
           boxShadow: BatshShadows.soft,
         ),
@@ -295,9 +304,9 @@ class _ProfileHero extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    _greeting(),
+                    _greeting(context),
                     style: BatshTypography.labelMd.copyWith(
-                      color: BatshColors.onSurfaceVariant,
+                      color: context.colorScheme.onSurfaceVariant,
                     ),
                   ),
                   const SizedBox(height: 2),
@@ -316,13 +325,15 @@ class _ProfileHero extends StatelessWidget {
                       vertical: 3,
                     ),
                     decoration: BoxDecoration(
-                      color: BatshColors.primaryFixed.withValues(alpha: 0.4),
+                      color: context.colorScheme.primaryFixed.withValues(
+                        alpha: 0.4,
+                      ),
                       borderRadius: BatshRadius.brFull,
                     ),
                     child: Text(
-                      S.roleHomeowner,
+                      context.l10n.roleHomeowner,
                       style: BatshTypography.labelSm.copyWith(
-                        color: BatshColors.primary,
+                        color: context.colorScheme.primary,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -360,9 +371,9 @@ class _HeroAvatar extends StatelessWidget {
             height: 84,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: BatshColors.primaryContainer,
+              color: context.colorScheme.primaryContainer,
               border: Border.all(
-                color: BatshColors.onSurface.withValues(alpha: 0.06),
+                color: context.colorScheme.onSurface.withValues(alpha: 0.06),
                 width: 1,
               ),
               boxShadow: BatshShadows.soft,
@@ -376,7 +387,7 @@ class _HeroAvatar extends StatelessWidget {
                           ? name.characters.first
                           : '',
                       style: BatshTypography.headlineMd.copyWith(
-                        color: BatshColors.onPrimaryContainer,
+                        color: context.colorScheme.onPrimaryContainer,
                       ),
                     ),
                   ),
@@ -385,7 +396,7 @@ class _HeroAvatar extends StatelessWidget {
             bottom: -2,
             right: -2,
             child: Material(
-              color: BatshColors.primary,
+              color: context.colorScheme.primary,
               shape: const CircleBorder(),
               elevation: 0,
               child: InkWell(
@@ -398,14 +409,14 @@ class _HeroAvatar extends StatelessWidget {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: BatshColors.surfaceContainerLowest,
+                      color: context.colorScheme.surfaceContainerLowest,
                       width: 2.5,
                     ),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.edit_outlined,
                     size: BatshIconSize.sm,
-                    color: BatshColors.onPrimary,
+                    color: context.colorScheme.onPrimary,
                   ),
                 ),
               ),
@@ -451,7 +462,7 @@ class _StatBig extends StatelessWidget {
             '$value',
             style: BatshTypography.displayMd.copyWith(
               fontWeight: FontWeight.w700,
-              color: BatshColors.onSurface,
+              color: context.colorScheme.onSurface,
             ),
           )
         : TweenAnimationBuilder<double>(
@@ -462,28 +473,32 @@ class _StatBig extends StatelessWidget {
               '${v.round()}',
               style: BatshTypography.displayMd.copyWith(
                 fontWeight: FontWeight.w700,
-                color: BatshColors.onSurface,
+                color: context.colorScheme.onSurface,
               ),
             ),
           );
     return Container(
       padding: const EdgeInsets.all(BatshSpacing.lg),
       decoration: BoxDecoration(
-        color: BatshColors.surfaceContainerLowest,
+        color: context.colorScheme.surfaceContainerLowest,
         borderRadius: BatshRadius.brXl,
         boxShadow: BatshShadows.soft,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: BatshIconSize.md, color: BatshColors.primary),
+          Icon(
+            icon,
+            size: BatshIconSize.md,
+            color: context.colorScheme.primary,
+          ),
           const SizedBox(height: BatshSpacing.md),
           number,
           const SizedBox(height: BatshSpacing.xxs),
           Text(
             label,
             style: BatshTypography.labelMd.copyWith(
-              color: BatshColors.onSurfaceVariant,
+              color: context.colorScheme.onSurfaceVariant,
             ),
           ),
         ],
@@ -510,7 +525,7 @@ class _QuickAction extends StatelessWidget {
         boxShadow: BatshShadows.soft,
       ),
       child: Material(
-        color: BatshColors.surfaceContainerLowest,
+        color: context.colorScheme.surfaceContainerLowest,
         borderRadius: BatshRadius.brXl,
         clipBehavior: Clip.antiAlias,
         child: InkWell(
@@ -527,12 +542,14 @@ class _QuickAction extends StatelessWidget {
                   height: 44,
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: BatshColors.primaryFixed.withValues(alpha: 0.35),
+                    color: context.colorScheme.primaryFixed.withValues(
+                      alpha: 0.35,
+                    ),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
                     icon,
-                    color: BatshColors.primary,
+                    color: context.colorScheme.primary,
                     size: BatshIconSize.md,
                   ),
                 ),
@@ -675,12 +692,12 @@ void _confirmSignOut(BuildContext context, WidgetRef ref) {
   showDialog(
     context: context,
     builder: (ctx) => AlertDialog(
-      title: Text(S.signOutTitle),
-      content: Text(S.signOutConfirmation),
+      title: Text(context.l10n.signOutTitle),
+      content: Text(context.l10n.signOutConfirmation),
       actions: [
         TextButton(
           onPressed: () => Navigator.of(ctx).pop(),
-          child: Text(S.cancel),
+          child: Text(context.l10n.cancel),
         ),
         TextButton(
           onPressed: () {
@@ -688,8 +705,8 @@ void _confirmSignOut(BuildContext context, WidgetRef ref) {
             ref.read(authRepositoryProvider).signOut();
           },
           child: Text(
-            S.signOutButton,
-            style: const TextStyle(color: BatshColors.error),
+            context.l10n.signOutButton,
+            style: TextStyle(color: context.colorScheme.error),
           ),
         ),
       ],

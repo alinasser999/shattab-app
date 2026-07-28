@@ -24,10 +24,7 @@ void main() {
     });
 
     test('handles missing optional fields with defaults', () {
-      final json = <String, dynamic>{
-        'id': 'user-2',
-        'role': 'homeowner',
-      };
+      final json = <String, dynamic>{'id': 'user-2', 'role': 'homeowner'};
 
       final profile = Profile.fromJson(json);
 
@@ -40,10 +37,7 @@ void main() {
     });
 
     test('falls back to homeowner for unknown role', () {
-      final json = <String, dynamic>{
-        'id': 'user-3',
-        'role': 'unknown',
-      };
+      final json = <String, dynamic>{'id': 'user-3', 'role': 'unknown'};
 
       final profile = Profile.fromJson(json);
 
@@ -102,12 +96,11 @@ Profile createTestProfile({
   String phone = '+201000000000',
   bool onboardingComplete = true,
   String? avatarUrl,
-}) =>
-    Profile(
-      id: id,
-      role: role,
-      fullName: fullName,
-      phone: phone,
-      onboardingComplete: onboardingComplete,
-      avatarUrl: avatarUrl,
-    );
+}) => Profile(
+  id: id,
+  role: role,
+  fullName: fullName,
+  phone: phone,
+  onboardingComplete: onboardingComplete,
+  avatarUrl: avatarUrl,
+);

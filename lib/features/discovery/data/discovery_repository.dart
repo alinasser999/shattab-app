@@ -8,11 +8,7 @@ import '../domain/contractor_listing.dart';
 part 'discovery_repository.g.dart';
 
 class DiscoveryFilters {
-  const DiscoveryFilters({
-    this.specialty,
-    this.city,
-    this.searchQuery,
-  });
+  const DiscoveryFilters({this.specialty, this.city, this.searchQuery});
 
   final String? specialty;
   final String? city;
@@ -43,16 +39,20 @@ class DiscoveryRepository {
     int offset = 0,
     int limit = pageSize,
   }) async {
-    var query =
-        _client.from('profiles').select(_joinedColumns).eq('role', 'contractor');
+    var query = _client
+        .from('profiles')
+        .select(_joinedColumns)
+        .eq('role', 'contractor');
 
     if (filters.specialty != null) {
-      query = query.contains(
-          'contractor_profiles.specialties', [filters.specialty]);
+      query = query.contains('contractor_profiles.specialties', [
+        filters.specialty,
+      ]);
     }
     if (filters.city != null) {
-      query = query.contains(
-          'contractor_profiles.service_areas', [filters.city]);
+      query = query.contains('contractor_profiles.service_areas', [
+        filters.city,
+      ]);
     }
     if (filters.searchQuery != null && filters.searchQuery!.trim().isNotEmpty) {
       final q = filters.searchQuery!.trim();
@@ -66,8 +66,9 @@ class DiscoveryRepository {
 
     // `.range` bounds the result to one page — without it this fetches every
     // contractor row (+ embedded reviews) and OOMs the client at scale.
-    final rows =
-        await query.order('full_name').range(offset, offset + limit - 1);
+    final rows = await query
+        .order('full_name')
+        .range(offset, offset + limit - 1);
     return rows.map(ContractorListing.fromJoined).toList();
   }
 

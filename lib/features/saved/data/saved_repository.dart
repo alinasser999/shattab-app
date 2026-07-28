@@ -19,33 +19,40 @@ class SavedRepository {
     return rows.map((r) => r['contractor_id'] as String).toSet();
   }
 
-  Future<List<ContractorListing>> fetchSavedListings(
-      String homeownerId) async {
+  Future<List<ContractorListing>> fetchSavedListings(String homeownerId) async {
     final saved = await _client
         .from('saved_contractors')
         .select(
-            'contractor:profiles!contractor_id(id, full_name, phone, contractor_profiles!inner(business_name, bio, logo_url, cover_photo_url, headline, specialties, service_areas, years_experience, projects_completed, response_rate))')
+          'contractor:profiles!contractor_id(id, full_name, phone, contractor_profiles!inner(business_name, bio, logo_url, cover_photo_url, headline, specialties, service_areas, years_experience, projects_completed, response_rate))',
+        )
         .eq('homeowner_id', homeownerId)
         .order('saved_at', ascending: false)
         // Bounded: this join pulls a full contractor profile per saved row, so
         // an unbounded read gets expensive faster than the row count suggests.
         .limit(100);
     return saved
-        .map((r) => ContractorListing.fromJoined(
-            r['contractor'] as Map<String, dynamic>))
+        .map(
+          (r) => ContractorListing.fromJoined(
+            r['contractor'] as Map<String, dynamic>,
+          ),
+        )
         .toList();
   }
 
-  Future<void> save(
-      {required String homeownerId, required String contractorId}) async {
+  Future<void> save({
+    required String homeownerId,
+    required String contractorId,
+  }) async {
     await _client.from('saved_contractors').upsert({
       'homeowner_id': homeownerId,
       'contractor_id': contractorId,
     }, onConflict: 'homeowner_id, contractor_id');
   }
 
-  Future<void> unsave(
-      {required String homeownerId, required String contractorId}) async {
+  Future<void> unsave({
+    required String homeownerId,
+    required String contractorId,
+  }) async {
     await _client
         .from('saved_contractors')
         .delete()

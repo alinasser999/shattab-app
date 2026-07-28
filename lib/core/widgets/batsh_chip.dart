@@ -6,6 +6,8 @@ import '../theme/batsh_radius.dart';
 import '../theme/batsh_spacing.dart';
 import '../theme/batsh_typography.dart';
 
+import 'package:batsh/core/theme/theme_extension.dart';
+
 class BatshChip extends StatefulWidget {
   const BatshChip({
     super.key,
@@ -33,10 +35,7 @@ class _BatshChipState extends State<BatshChip>
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      duration: BatshMotion.fast,
-      vsync: this,
-    );
+    _controller = AnimationController(duration: BatshMotion.fast, vsync: this);
     if (widget.selected) _controller.value = 1.0;
   }
 
@@ -67,10 +66,7 @@ class _BatshChipState extends State<BatshChip>
         animation: _controller,
         builder: (_, child) {
           final t = _controller.value;
-          return Transform.scale(
-            scale: 0.92 + (t * 0.08),
-            child: child,
-          );
+          return Transform.scale(scale: 0.92 + (t * 0.08), child: child);
         },
         child: GestureDetector(
           onTap: widget.onTap,
@@ -83,13 +79,13 @@ class _BatshChipState extends State<BatshChip>
             ),
             decoration: BoxDecoration(
               color: widget.selected
-                  ? BatshColors.primaryFixed
-                  : BatshColors.surfaceContainer,
+                  ? context.colorScheme.primaryFixed
+                  : context.colorScheme.surfaceContainer,
               borderRadius: BatshRadius.brFull,
               border: Border.all(
                 color: widget.selected
-                    ? BatshColors.primary
-                    : BatshColors.outlineVariant.withValues(alpha: 0.6),
+                    ? context.colorScheme.primary
+                    : context.colorScheme.outlineVariant.withValues(alpha: 0.6),
                 width: widget.selected ? 1.5 : 1.0,
               ),
             ),
@@ -101,23 +97,27 @@ class _BatshChipState extends State<BatshChip>
                     widget.icon,
                     size: widget.compact ? 14 : 16,
                     color: widget.selected
-                        ? BatshColors.primary
-                        : BatshColors.onSurfaceVariant.withValues(alpha: 0.6),
+                        ? context.colorScheme.primary
+                        : context.colorScheme.onSurfaceVariant.withValues(
+                            alpha: 0.6,
+                          ),
                   ),
                   SizedBox(width: widget.compact ? 4 : 6),
                 ],
                 Text(
                   widget.label,
-                  style: (widget.compact
-                          ? BatshTypography.labelSm
-                          : BatshTypography.labelMd)
-                      .copyWith(
-                    color: widget.selected
-                        ? BatshColors.primary
-                        : BatshColors.onSurfaceVariant,
-                    fontWeight:
-                        widget.selected ? FontWeight.w600 : FontWeight.w500,
-                  ),
+                  style:
+                      (widget.compact
+                              ? BatshTypography.labelSm
+                              : BatshTypography.labelMd)
+                          .copyWith(
+                            color: widget.selected
+                                ? context.colorScheme.primary
+                                : context.colorScheme.onSurfaceVariant,
+                            fontWeight: widget.selected
+                                ? FontWeight.w600
+                                : FontWeight.w500,
+                          ),
                 ),
               ],
             ),

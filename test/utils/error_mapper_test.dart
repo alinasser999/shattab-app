@@ -37,10 +37,7 @@ void main() {
       expect(ErrorMapper.map('permission denied'), S.errPermissionDenied);
       expect(ErrorMapper.map('unauthorized access'), S.errPermissionDenied);
       expect(ErrorMapper.map('policy violation'), S.errPermissionDenied);
-      expect(
-        ErrorMapper.map('row level security'),
-        S.errPermissionDenied,
-      );
+      expect(ErrorMapper.map('row level security'), S.errPermissionDenied);
     });
 
     test('maps not-found errors to S.errNotFound', () {
@@ -62,7 +59,10 @@ void main() {
     });
 
     test('returns S.errServerError for unknown errors', () {
-      expect(ErrorMapper.map('something completely unexpected'), S.errServerError);
+      expect(
+        ErrorMapper.map('something completely unexpected'),
+        S.errServerError,
+      );
       expect(ErrorMapper.map(''), S.errServerError);
       expect(ErrorMapper.map(Object()), S.errServerError);
     });

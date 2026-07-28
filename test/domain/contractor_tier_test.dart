@@ -1,3 +1,5 @@
+import 'package:batsh/l10n/app_localizations.dart';
+import 'package:flutter/material.dart';
 import 'package:batsh/features/discovery/domain/contractor_listing.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -10,38 +12,43 @@ ContractorListing listing({
   int projectsCompleted = 0,
   int reviewCount = 0,
   String plan = 'free',
-}) =>
-    ContractorListing(
-      id: 'c1',
-      fullName: 'Test',
-      businessName: 'Test',
-      phone: '+201000000000',
-      specialties: const [],
-      serviceAreas: const [],
-      projectsCompleted: projectsCompleted,
-      reviewCount: reviewCount,
-      verified: verified,
-      plan: plan,
-    );
+}) => ContractorListing(
+  id: 'c1',
+  fullName: 'Test',
+  businessName: 'Test',
+  phone: '+201000000000',
+  specialties: const [],
+  serviceAreas: const [],
+  projectsCompleted: projectsCompleted,
+  reviewCount: reviewCount,
+  verified: verified,
+  plan: plan,
+);
 
 void main() {
   group('ContractorTier', () {
     test('gold requires verification plus a track record', () {
-      expect(listing(verified: true, projectsCompleted: 10).tier,
-          ContractorTier.gold);
+      expect(
+        listing(verified: true, projectsCompleted: 10).tier,
+        ContractorTier.gold,
+      );
       expect(listing(verified: true, reviewCount: 5).tier, ContractorTier.gold);
     });
 
     test('a track record alone never reaches gold', () {
-      expect(listing(projectsCompleted: 50, reviewCount: 50).tier,
-          ContractorTier.silver);
+      expect(
+        listing(projectsCompleted: 50, reviewCount: 50).tier,
+        ContractorTier.silver,
+      );
     });
 
     test('paying for Pro moves nothing', () {
       // The whole point of the badge: money must not buy it.
       expect(listing(plan: 'pro').tier, ContractorTier.bronze);
-      expect(listing(plan: 'pro', projectsCompleted: 10).tier,
-          ContractorTier.silver);
+      expect(
+        listing(plan: 'pro', projectsCompleted: 10).tier,
+        ContractorTier.silver,
+      );
     });
 
     test('silver comes from three jobs or from verification', () {
@@ -56,9 +63,23 @@ void main() {
       expect(ContractorTier.gold.isPublic, isTrue);
     });
 
-    test('every tier has a label', () {
+    testWidgets('every tier has a label', (tester) async {
+      late BuildContext context;
+      await tester.pumpWidget(
+        MaterialApp(
+          locale: const Locale('ar'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Builder(
+            builder: (c) {
+              context = c;
+              return const SizedBox();
+            },
+          ),
+        ),
+      );
       for (final t in ContractorTier.values) {
-        expect(t.label, isNotEmpty);
+        expect(t.label(context), isNotEmpty);
       }
     });
   });

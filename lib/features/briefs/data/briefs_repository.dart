@@ -43,8 +43,11 @@ class BriefsRepository {
   }
 
   Future<Brief?> fetchById(String id) async {
-    final row =
-        await _client.from('briefs').select().eq('id', id).maybeSingle();
+    final row = await _client
+        .from('briefs')
+        .select()
+        .eq('id', id)
+        .maybeSingle();
     if (row == null) return null;
     return Brief.fromJson(row);
   }
@@ -79,7 +82,10 @@ class BriefsRepository {
         .from('briefs')
         .select()
         .isFilter('target_contractor_id', null)
-        .isFilter('hired_at', null) // hired jobs leave the feed (migration 0009)
+        .isFilter(
+          'hired_at',
+          null,
+        ) // hired jobs leave the feed (migration 0009)
         .eq('status', 'open');
 
     if (specialties.isNotEmpty) {
@@ -123,13 +129,16 @@ class BriefsRepository {
     required String workDescription,
     required List<String> targetSpecialties,
   }) async {
-    await _client.from('briefs').update({
-      'apartment_type': apartmentType.name,
-      'city': city,
-      'district': district,
-      'work_description': workDescription,
-      'target_specialties': targetSpecialties,
-    }).eq('id', briefId);
+    await _client
+        .from('briefs')
+        .update({
+          'apartment_type': apartmentType.name,
+          'city': city,
+          'district': district,
+          'work_description': workDescription,
+          'target_specialties': targetSpecialties,
+        })
+        .eq('id', briefId);
   }
 
   /// Removes a brief, degrading to cancel when contractors have already quoted.
@@ -140,8 +149,10 @@ class BriefsRepository {
   /// quote arriving in between — and losing that race destroys a contractor's
   /// work through the `on delete cascade`.
   Future<String> deleteOrCancelBrief(String briefId) async {
-    final result = await _client
-        .rpc('delete_or_cancel_brief', params: {'p_brief_id': briefId});
+    final result = await _client.rpc(
+      'delete_or_cancel_brief',
+      params: {'p_brief_id': briefId},
+    );
     return result as String? ?? 'cancelled';
   }
 
@@ -222,13 +233,12 @@ class BriefsRepository {
   Future<void> cancelBrief(String briefId) async {
     await _client
         .from('briefs')
-        .update({'status': 'cancelled'}).eq('id', briefId);
+        .update({'status': 'cancelled'})
+        .eq('id', briefId);
   }
 
   Future<void> setPhotoUrls(String briefId, List<String> urls) async {
-    await _client
-        .from('briefs')
-        .update({'photo_urls': urls}).eq('id', briefId);
+    await _client.from('briefs').update({'photo_urls': urls}).eq('id', briefId);
   }
 
   /// Uploads a single photo to brief-photos bucket. Returns the public URL.
@@ -243,11 +253,17 @@ class BriefsRepository {
     final path = '$homeownerId/$draftId/$seq.jpg';
     final storage = _client.storage.from('brief-photos');
     if (file != null) {
-      await storage.upload(path, file,
-          fileOptions: const FileOptions(upsert: true, contentType: 'image/jpeg'));
+      await storage.upload(
+        path,
+        file,
+        fileOptions: const FileOptions(upsert: true, contentType: 'image/jpeg'),
+      );
     } else if (bytes != null) {
-      await storage.uploadBinary(path, bytes,
-          fileOptions: const FileOptions(upsert: true, contentType: 'image/jpeg'));
+      await storage.uploadBinary(
+        path,
+        bytes,
+        fileOptions: const FileOptions(upsert: true, contentType: 'image/jpeg'),
+      );
     } else {
       throw ArgumentError('uploadPhoto needs either file or bytes');
     }

@@ -42,7 +42,8 @@ class OnboardingRepository {
     List<String>? renovationInterests,
   }) async {
     final payload = <String, dynamic>{'profile_id': profileId};
-    if (apartmentType != null) payload['apartment_type'] = apartmentType.dbValue;
+    if (apartmentType != null)
+      payload['apartment_type'] = apartmentType.dbValue;
     if (city != null) payload['city'] = city;
     if (district != null) payload['district'] = district;
     if (renovationInterests != null) {
@@ -88,13 +89,15 @@ class OnboardingRepository {
   }) async {
     await _client
         .from('profiles')
-        .update({'full_name': fullName}).eq('id', profileId);
+        .update({'full_name': fullName})
+        .eq('id', profileId);
   }
 
   Future<void> markOnboardingComplete(String profileId) async {
     await _client
         .from('profiles')
-        .update({'onboarding_complete': true}).eq('id', profileId);
+        .update({'onboarding_complete': true})
+        .eq('id', profileId);
   }
 
   Future<String> uploadContractorLogo({
@@ -102,11 +105,9 @@ class OnboardingRepository {
     required File file,
   }) async {
     final path = '$profileId/logo.jpg';
-    await _client.storage.from('contractor-logos').upload(
-          path,
-          file,
-          fileOptions: const FileOptions(upsert: true),
-        );
+    await _client.storage
+        .from('contractor-logos')
+        .upload(path, file, fileOptions: const FileOptions(upsert: true));
     return _client.storage.from('contractor-logos').getPublicUrl(path);
   }
 
@@ -115,11 +116,9 @@ class OnboardingRepository {
     required File file,
   }) async {
     final path = '$profileId/cover.jpg';
-    await _client.storage.from('contractor-logos').upload(
-          path,
-          file,
-          fileOptions: const FileOptions(upsert: true),
-        );
+    await _client.storage
+        .from('contractor-logos')
+        .upload(path, file, fileOptions: const FileOptions(upsert: true));
     // Cache-bust so a re-upload to the same path refreshes in CachedNetworkImage.
     final url = _client.storage.from('contractor-logos').getPublicUrl(path);
     return '$url?v=${DateTime.now().millisecondsSinceEpoch}';

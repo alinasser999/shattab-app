@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/l10n/strings.dart';
+import 'package:batsh/core/l10n/l10n_extension.dart';
 import '../../../core/theme/batsh_colors.dart';
 import '../../../core/theme/batsh_spacing.dart';
 import '../../../core/theme/batsh_typography.dart';
@@ -13,6 +13,8 @@ import '../../onboarding/data/onboarding_repository.dart';
 import 'providers/auth_provider.dart';
 import 'providers/otp_provider.dart';
 import '../../../core/widgets/batsh_sheet.dart';
+
+import 'package:batsh/core/theme/theme_extension.dart';
 
 /// Sign-in bottom sheet shown to a guest-browsing homeowner at the moment
 /// of a write action (save / send request / create post). The screen
@@ -80,7 +82,7 @@ class _SignInSheetState extends ConsumerState<_SignInSheet> {
   Future<void> _sendCode() async {
     final phone = _normalizeToE164(_phoneCtrl.text);
     if (!Validators.isEgyptianPhone(phone)) {
-      setState(() => _error = S.invalidPhone);
+      setState(() => _error = context.l10n.invalidPhone);
       return;
     }
     setState(() => _error = null);
@@ -91,7 +93,8 @@ class _SignInSheetState extends ConsumerState<_SignInSheet> {
     } else {
       setState(
         () => _error =
-            ref.read(otpControllerProvider).errorMessage ?? S.unknownErrorRetry,
+            ref.read(otpControllerProvider).errorMessage ??
+            context.l10n.unknownErrorRetry,
       );
     }
   }
@@ -99,7 +102,7 @@ class _SignInSheetState extends ConsumerState<_SignInSheet> {
   Future<void> _verifyCode() async {
     final code = _otpCtrl.text.trim();
     if (!Validators.isOtpCode(code)) {
-      setState(() => _error = S.invalidOtp);
+      setState(() => _error = context.l10n.invalidOtp);
       return;
     }
     setState(() => _error = null);
@@ -108,7 +111,8 @@ class _SignInSheetState extends ConsumerState<_SignInSheet> {
     if (!ok) {
       setState(
         () => _error =
-            ref.read(otpControllerProvider).errorMessage ?? S.invalidOtp,
+            ref.read(otpControllerProvider).errorMessage ??
+            context.l10n.invalidOtp,
       );
       return;
     }
@@ -125,7 +129,7 @@ class _SignInSheetState extends ConsumerState<_SignInSheet> {
   Future<void> _saveName() async {
     final name = _nameCtrl.text.trim();
     if (name.isEmpty) {
-      setState(() => _error = S.nameRequired);
+      setState(() => _error = context.l10n.nameRequired);
       return;
     }
     final profile = ref.read(currentProfileProvider).value;
@@ -155,7 +159,7 @@ class _SignInSheetState extends ConsumerState<_SignInSheet> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            S.signInSheetTitle,
+            context.l10n.signInSheetTitle,
             textAlign: TextAlign.center,
             style: BatshTypography.titleLg,
           ),
@@ -164,15 +168,15 @@ class _SignInSheetState extends ConsumerState<_SignInSheet> {
             widget.reason,
             textAlign: TextAlign.center,
             style: BatshTypography.bodyMd.copyWith(
-              color: BatshColors.onSurfaceVariant,
+              color: context.colorScheme.onSurfaceVariant,
             ),
           ),
           const SizedBox(height: BatshSpacing.lg),
           if (_step == _Step.phone) ...[
             BatshTextField(
               controller: _phoneCtrl,
-              label: S.phoneLabel,
-              hint: S.phoneLocalHint,
+              label: context.l10n.phoneLabel,
+              hint: context.l10n.phoneLocalHint,
               keyboardType: TextInputType.phone,
               textInputAction: TextInputAction.done,
               onSubmitted: (_) => _sendCode(),
@@ -185,7 +189,7 @@ class _SignInSheetState extends ConsumerState<_SignInSheet> {
             ),
             const SizedBox(height: BatshSpacing.lg),
             BatshButton(
-              label: S.continueLabel,
+              label: context.l10n.continueLabel,
               onPressed: otpState.isSending ? null : _sendCode,
               isLoading: otpState.isSending,
             ),
@@ -194,13 +198,13 @@ class _SignInSheetState extends ConsumerState<_SignInSheet> {
               otpState.phone ?? '',
               textAlign: TextAlign.center,
               style: BatshTypography.bodyMd.copyWith(
-                color: BatshColors.onSurfaceVariant,
+                color: context.colorScheme.onSurfaceVariant,
               ),
             ),
             const SizedBox(height: BatshSpacing.md),
             BatshTextField(
               controller: _otpCtrl,
-              hint: S.otpHint,
+              hint: context.l10n.otpHint,
               keyboardType: TextInputType.number,
               textInputAction: TextInputAction.done,
               onSubmitted: (_) => _verifyCode(),
@@ -213,7 +217,7 @@ class _SignInSheetState extends ConsumerState<_SignInSheet> {
             ),
             const SizedBox(height: BatshSpacing.lg),
             BatshButton(
-              label: S.continueLabel,
+              label: context.l10n.continueLabel,
               onPressed: otpState.isVerifying ? null : _verifyCode,
               isLoading: otpState.isVerifying,
             ),
@@ -227,8 +231,8 @@ class _SignInSheetState extends ConsumerState<_SignInSheet> {
                     : null,
                 child: Text(
                   otpState.canResend
-                      ? S.resendCode
-                      : S.resendInSeconds.replaceAll(
+                      ? context.l10n.resendCode
+                      : context.l10n.resendInSeconds.replaceAll(
                           '%s',
                           '${otpState.cooldownSeconds}',
                         ),
@@ -237,22 +241,22 @@ class _SignInSheetState extends ConsumerState<_SignInSheet> {
             ),
           ] else ...[
             Text(
-              S.whatsYourName,
+              context.l10n.whatsYourName,
               textAlign: TextAlign.center,
               style: BatshTypography.bodyMd,
             ),
             const SizedBox(height: BatshSpacing.md),
             BatshTextField(
               controller: _nameCtrl,
-              label: S.profileNameLabel,
-              hint: S.fullNameHint,
+              label: context.l10n.profileNameLabel,
+              hint: context.l10n.fullNameHint,
               textInputAction: TextInputAction.done,
               onSubmitted: (_) => _saveName(),
               errorText: _error,
               autofocus: true,
             ),
             const SizedBox(height: BatshSpacing.lg),
-            BatshButton(label: S.saveProfile, onPressed: _saveName),
+            BatshButton(label: context.l10n.saveProfile, onPressed: _saveName),
           ],
         ],
       ),

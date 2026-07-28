@@ -5,7 +5,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/l10n/strings.dart';
+import 'package:batsh/core/l10n/l10n_extension.dart';
 import '../../../../core/router/routes.dart';
 import '../../../../core/theme/batsh_colors.dart';
 import '../../../../core/theme/batsh_motion.dart';
@@ -30,6 +30,8 @@ import 'widgets/job_card_skeleton.dart';
 import '../../../../core/theme/batsh_icon_size.dart';
 import '../../../../core/widgets/batsh_search_bar.dart';
 
+import 'package:batsh/core/theme/theme_extension.dart';
+
 class JobOpportunitiesScreen extends ConsumerStatefulWidget {
   const JobOpportunitiesScreen({super.key});
 
@@ -50,77 +52,77 @@ class _JobOpportunitiesScreenState
 
   /// Display label per stable filter key. Kept beside the sections so a new
   /// option can't be added without a label.
-  static final Map<String, String> _filterLabels = {
-    SpecialtyFilter.painting.key: S.filterPainting,
-    SpecialtyFilter.electrical.key: S.filterElectrical,
-    SpecialtyFilter.plumbing.key: S.filterPlumbing,
-    SpecialtyFilter.finishing.key: S.filterFinishing,
-    SpecialtyFilter.bathrooms.key: S.filterBathrooms,
-    SpecialtyFilter.kitchens.key: S.filterKitchens,
-    RecencyFilter.today.key: S.filterToday,
-    RecencyFilter.thisWeek.key: S.filterThisWeek,
-    RecencyFilter.thisMonth.key: S.filterThisMonth,
+  Map<String, String> _filterLabels(BuildContext context) => {
+    SpecialtyFilter.painting.key: context.l10n.filterPainting,
+    SpecialtyFilter.electrical.key: context.l10n.filterElectrical,
+    SpecialtyFilter.plumbing.key: context.l10n.filterPlumbing,
+    SpecialtyFilter.finishing.key: context.l10n.filterFinishing,
+    SpecialtyFilter.bathrooms.key: context.l10n.filterBathrooms,
+    SpecialtyFilter.kitchens.key: context.l10n.filterKitchens,
+    RecencyFilter.today.key: context.l10n.filterToday,
+    RecencyFilter.thisWeek.key: context.l10n.filterThisWeek,
+    RecencyFilter.thisMonth.key: context.l10n.filterThisMonth,
   };
 
   // The "الترتيب" section that used to sit on top is gone: "الأقرب" needs
   // coordinates the app never collects, "أعلى ميزانية" needs a budget column
   // `briefs` does not have, and "الأحدث" is already the query's order. Three
   // options, none of which did anything.
-  static final _filterSections = [
+  List<BatshFilterSheetSection> _filterSections(BuildContext context) => [
     BatshFilterSheetSection(
-      title: S.filterCategory,
+      title: context.l10n.filterCategory,
       icon: Icons.category_rounded,
       options: [
         FilterOption(
           value: SpecialtyFilter.painting.key,
-          label: S.filterPainting,
+          label: context.l10n.filterPainting,
           icon: Icons.format_paint,
         ),
         FilterOption(
           value: SpecialtyFilter.electrical.key,
-          label: S.filterElectrical,
+          label: context.l10n.filterElectrical,
           icon: Icons.electrical_services,
         ),
         FilterOption(
           value: SpecialtyFilter.plumbing.key,
-          label: S.filterPlumbing,
+          label: context.l10n.filterPlumbing,
           icon: Icons.plumbing,
         ),
         FilterOption(
           value: SpecialtyFilter.finishing.key,
-          label: S.filterFinishing,
+          label: context.l10n.filterFinishing,
           icon: Icons.build,
         ),
         FilterOption(
           value: SpecialtyFilter.bathrooms.key,
-          label: S.filterBathrooms,
+          label: context.l10n.filterBathrooms,
           icon: Icons.bathtub_outlined,
         ),
         FilterOption(
           value: SpecialtyFilter.kitchens.key,
-          label: S.filterKitchens,
+          label: context.l10n.filterKitchens,
           icon: Icons.countertops_outlined,
         ),
       ],
     ),
     BatshFilterSheetSection(
-      title: S.filterTime,
+      title: context.l10n.filterTime,
       icon: Icons.schedule_rounded,
       singleSelect: true,
       options: [
         FilterOption(
           value: RecencyFilter.today.key,
-          label: S.filterToday,
+          label: context.l10n.filterToday,
           icon: Icons.today,
         ),
         FilterOption(
           value: RecencyFilter.thisWeek.key,
-          label: S.filterThisWeek,
+          label: context.l10n.filterThisWeek,
           icon: Icons.date_range_rounded,
         ),
         FilterOption(
           value: RecencyFilter.thisMonth.key,
-          label: S.filterThisMonth,
+          label: context.l10n.filterThisMonth,
           icon: Icons.calendar_month_rounded,
         ),
       ],
@@ -161,7 +163,7 @@ class _JobOpportunitiesScreenState
     final greeting = _greeting();
 
     return Scaffold(
-      backgroundColor: BatshColors.background,
+      backgroundColor: context.colorScheme.background,
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: () async =>
@@ -189,7 +191,7 @@ class _JobOpportunitiesScreenState
                     children: [
                       Expanded(
                         child: BatshSearchBar(
-                          hintText: S.searchJobs,
+                          hintText: context.l10n.searchJobs,
                           controller: _searchController,
                           onChanged: _onQueryChanged,
                           onClear: _clearQuery,
@@ -202,7 +204,7 @@ class _JobOpportunitiesScreenState
                       ),
                       const SizedBox(width: BatshSpacing.sm),
                       Material(
-                        color: BatshColors.cardBackground,
+                        color: context.colorScheme.surface,
                         borderRadius: BatshRadius.brFull,
                         child: InkWell(
                           borderRadius: BatshRadius.brFull,
@@ -217,7 +219,7 @@ class _JobOpportunitiesScreenState
                             ),
                             child: Icon(
                               Icons.receipt_long_outlined,
-                              color: BatshColors.primary,
+                              color: context.colorScheme.primary,
                               size: BatshIconSize.md,
                             ),
                           ),
@@ -249,13 +251,13 @@ class _JobOpportunitiesScreenState
                             return BatshActiveFilterChip(
                               // Chips are keyed on stable values now, so the
                               // label has to be resolved for display.
-                              label: _filterLabels[filter] ?? filter,
+                              label: _filterLabels(context)[filter] ?? filter,
                               onRemove: () =>
                                   setState(() => _activeFilters.remove(filter)),
                             );
                           }
                           return BatshActiveFilterChip(
-                            label: S.clearAll,
+                            label: context.l10n.clearAll,
                             onRemove: () => setState(_activeFilters.clear),
                           );
                         },
@@ -305,11 +307,11 @@ class _JobOpportunitiesScreenState
                     return SliverFillRemaining(
                       child: query.isEmpty
                           ? BatshEmptyState(
-                              title: S.noJobsTitle,
-                              message: S.noJobsMessage,
+                              title: context.l10n.noJobsTitle,
+                              message: context.l10n.noJobsMessage,
                               icon: Icons.work_outline,
                               action: BatshButton(
-                                label: S.tryAgain,
+                                label: context.l10n.tryAgain,
                                 icon: Icons.refresh,
                                 fullWidth: false,
                                 onPressed: () => ref.invalidate(
@@ -321,11 +323,11 @@ class _JobOpportunitiesScreenState
                           // action undoes the search rather than offering work.
                           : BatshEmptyState(
                               kind: BatshEmptyStateKind.noResults,
-                              title: S.noJobsMatchSearchTitle,
-                              message: S.noJobsMatchSearchMessage,
+                              title: context.l10n.noJobsMatchSearchTitle,
+                              message: context.l10n.noJobsMatchSearchMessage,
                               icon: Icons.search_off_rounded,
                               action: BatshButton(
-                                label: S.clearSearch,
+                                label: context.l10n.clearSearch,
                                 icon: Icons.close_rounded,
                                 fullWidth: false,
                                 onPressed: _clearQuery,
@@ -395,7 +397,7 @@ class _JobOpportunitiesScreenState
   Future<void> _openFilterSheet(BuildContext context) async {
     final result = await BatshFilterSheet.show(
       context,
-      sections: _filterSections,
+      sections: _filterSections(context),
       initialSelected: _activeFilters,
     );
     if (result != null) {
@@ -409,9 +411,9 @@ class _JobOpportunitiesScreenState
 
   String _greeting() {
     final hour = DateTime.now().hour;
-    if (hour < 12) return S.greetingMorning;
-    if (hour < 17) return S.greetingAfternoon;
-    return S.greetingEvening;
+    if (hour < 12) return context.l10n.greetingMorning;
+    if (hour < 17) return context.l10n.greetingAfternoon;
+    return context.l10n.greetingEvening;
   }
 
   // Free-text search now runs in the query (BriefsRepository.
@@ -487,11 +489,11 @@ class _PremiumAppBar extends StatelessWidget {
                 Text(
                   '$greeting ${name.isNotEmpty ? name.split(' ')[0] : ''}',
                   style: BatshTypography.bodyMd.copyWith(
-                    color: BatshColors.onSurfaceVariant,
+                    color: context.colorScheme.onSurfaceVariant,
                   ),
                 ),
                 Text(
-                  S.newJobs,
+                  context.l10n.newJobs,
                   style: BatshTypography.titleMd.copyWith(
                     fontWeight: FontWeight.w700,
                   ),

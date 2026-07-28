@@ -17,7 +17,9 @@ part 'onboarding_provider.g.dart';
 Future<HomeownerProfile?> homeownerProfile(Ref ref) async {
   final session = ref.watch(currentSessionProvider);
   if (session == null) return null;
-  return ref.watch(onboardingRepositoryProvider).fetchHomeowner(session.user.id);
+  return ref
+      .watch(onboardingRepositoryProvider)
+      .fetchHomeowner(session.user.id);
 }
 
 @Riverpod(keepAlive: true)
@@ -47,11 +49,9 @@ class OnboardingController extends _$OnboardingController {
 
   Future<void> selectRole(UserRole role, String fullName) async {
     final userId = _requireUserId();
-    await ref.read(authRepositoryProvider).updateRole(
-          userId: userId,
-          role: role,
-          fullName: fullName,
-        );
+    await ref
+        .read(authRepositoryProvider)
+        .updateRole(userId: userId, role: role, fullName: fullName);
     await ref.read(currentProfileProvider.notifier).refresh();
   }
 
@@ -61,7 +61,9 @@ class OnboardingController extends _$OnboardingController {
     required ApartmentType apartmentType,
     required List<String> interests,
   }) async {
-    await ref.read(onboardingRepositoryProvider).upsertHomeowner(
+    await ref
+        .read(onboardingRepositoryProvider)
+        .upsertHomeowner(
           profileId: _requireUserId(),
           apartmentType: apartmentType,
           renovationInterests: interests,
@@ -73,7 +75,9 @@ class OnboardingController extends _$OnboardingController {
     required String city,
     required String district,
   }) async {
-    await ref.read(onboardingRepositoryProvider).upsertHomeowner(
+    await ref
+        .read(onboardingRepositoryProvider)
+        .upsertHomeowner(
           profileId: _requireUserId(),
           city: city,
           district: district,
@@ -87,10 +91,7 @@ class OnboardingController extends _$OnboardingController {
   }) async {
     final userId = _requireUserId();
     final repo = ref.read(onboardingRepositoryProvider);
-    await repo.upsertContractor(
-      profileId: userId,
-      businessName: businessName,
-    );
+    await repo.upsertContractor(profileId: userId, businessName: businessName);
     await repo.updateFullName(profileId: userId, fullName: displayName);
     ref.invalidate(contractorProfileProvider);
     await ref.read(currentProfileProvider.notifier).refresh();
@@ -102,7 +103,9 @@ class OnboardingController extends _$OnboardingController {
     required List<String> specialties,
     required List<String> serviceAreas,
   }) async {
-    await ref.read(onboardingRepositoryProvider).upsertContractor(
+    await ref
+        .read(onboardingRepositoryProvider)
+        .upsertContractor(
           profileId: _requireUserId(),
           specialties: specialties,
           serviceAreas: serviceAreas,
@@ -124,7 +127,9 @@ class OnboardingController extends _$OnboardingController {
     required int yearsExperience,
     required String bio,
   }) async {
-    await ref.read(onboardingRepositoryProvider).upsertContractor(
+    await ref
+        .read(onboardingRepositoryProvider)
+        .upsertContractor(
           profileId: _requireUserId(),
           yearsExperience: yearsExperience,
           bio: bio,
@@ -141,7 +146,9 @@ class OnboardingController extends _$OnboardingController {
     int? yearsExperience,
     ProviderKind? providerKind,
   }) async {
-    await ref.read(onboardingRepositoryProvider).upsertContractor(
+    await ref
+        .read(onboardingRepositoryProvider)
+        .upsertContractor(
           profileId: _requireUserId(),
           businessName: businessName,
           headline: headline,

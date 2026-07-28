@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:share_plus/share_plus.dart';
 
-import '../../../core/l10n/strings.dart';
+import 'package:batsh/core/l10n/l10n_extension.dart';
 import '../../../core/theme/batsh_colors.dart';
 import '../../../core/theme/batsh_motion.dart';
 import '../../../core/theme/batsh_radius.dart';
@@ -29,6 +29,8 @@ import '../../../core/theme/batsh_icon_size.dart';
 import '../../../core/widgets/batsh_snack.dart';
 import '../../../core/widgets/batsh_pressable.dart';
 
+import 'package:batsh/core/theme/theme_extension.dart';
+
 class PostDetailScreen extends ConsumerWidget {
   const PostDetailScreen({super.key, required this.postId});
 
@@ -40,7 +42,7 @@ class PostDetailScreen extends ConsumerWidget {
     final commentsAsync = ref.watch(postCommentsProvider(postId));
 
     return BatshScaffold(
-      title: S.exploreTitle,
+      title: context.l10n.exploreTitle,
       body: postAsync.when(
         loading: () => const BatshPostSkeleton(),
         error: (e, _) =>
@@ -50,8 +52,8 @@ class PostDetailScreen extends ConsumerWidget {
             // Not a failure: the post is gone. Nothing to retry — retrying
             // resolves to null again — so this stays an absence, not an error.
             return BatshEmptyState(
-              title: S.postUnavailable,
-              message: S.postUnavailableSub,
+              title: context.l10n.postUnavailable,
+              message: context.l10n.postUnavailableSub,
               icon: Icons.hide_source_outlined,
             );
           }
@@ -109,7 +111,12 @@ class _PostDetailContentState extends ConsumerState<_PostDetailContent> {
   }
 
   void _ensureAuth(VoidCallback action) {
-    runSignedIn(context, ref, reason: S.signInToInteract, action: action);
+    runSignedIn(
+      context,
+      ref,
+      reason: context.l10n.signInToInteract,
+      action: action,
+    );
   }
 
   void _sharePost(Post post) {
@@ -141,14 +148,14 @@ class _PostDetailContentState extends ConsumerState<_PostDetailContent> {
           _commentCtrl.clear();
           _commentFocus.unfocus();
           if (mounted) {
-            BatshSnack.success(context, S.commentPosted);
+            BatshSnack.success(context, context.l10n.commentPosted);
           }
         })
         .catchError((e) {
           if (mounted) {
             final msg = e.toString().contains('rate_limit')
-                ? S.commentRateLimitError
-                : S.unknownErrorRetry;
+                ? context.l10n.commentRateLimitError
+                : context.l10n.unknownErrorRetry;
             BatshSnack.error(context, msg);
           }
         })
@@ -189,13 +196,14 @@ class _PostDetailContentState extends ConsumerState<_PostDetailContent> {
                           imageUrl: post.mediaUrls[i],
                           width: double.infinity,
                           fit: BoxFit.cover,
-                          placeholder: (_, __) =>
-                              Container(color: BatshColors.surfaceVariant),
+                          placeholder: (_, __) => Container(
+                            color: context.colorScheme.surfaceVariant,
+                          ),
                           errorWidget: (_, __, ___) => Container(
-                            color: BatshColors.surfaceVariant,
+                            color: context.colorScheme.surfaceVariant,
                             child: Icon(
                               Icons.broken_image,
-                              color: BatshColors.onSurfaceVariant,
+                              color: context.colorScheme.onSurfaceVariant,
                             ),
                           ),
                         ),
@@ -206,7 +214,7 @@ class _PostDetailContentState extends ConsumerState<_PostDetailContent> {
                 if (post.mediaUrls.length > 1)
                   Center(
                     child: Text(
-                      S.photoCount.replaceFirst(
+                      context.l10n.photoCount.replaceFirst(
                         '%s',
                         '${post.mediaUrls.length}',
                       ),
@@ -220,13 +228,13 @@ class _PostDetailContentState extends ConsumerState<_PostDetailContent> {
                 const SizedBox(height: BatshSpacing.gutter),
                 WhatsAppButton(
                   phone: post.authorPhone!,
-                  message: S.whatsappPostGreeting,
+                  message: context.l10n.whatsappPostGreeting,
                 ),
                 const SizedBox(height: BatshSpacing.sm),
                 CallButton(phone: post.authorPhone!),
               ],
               const SizedBox(height: BatshSpacing.gutter),
-              Text(S.commentsTitle, style: BatshTypography.labelMd),
+              Text(context.l10n.commentsTitle, style: BatshTypography.labelMd),
               const SizedBox(height: BatshSpacing.sm),
               if (widget.commentsLoading)
                 const BatshCommentsSkeleton()
@@ -236,7 +244,7 @@ class _PostDetailContentState extends ConsumerState<_PostDetailContent> {
                     vertical: BatshSpacing.gutter,
                   ),
                   child: Text(
-                    S.noComments,
+                    context.l10n.noComments,
                     style: BatshTypography.bodyMd,
                     textAlign: TextAlign.center,
                   ),
@@ -311,12 +319,12 @@ class _PostDetailContentState extends ConsumerState<_PostDetailContent> {
                             // context resolves to the shell branch navigator
                             // and would pop the screen, not the dialog.
                             builder: (ctx) => AlertDialog(
-                              title: Text(S.deletePost),
-                              content: Text(S.deletePostConfirm),
+                              title: Text(context.l10n.deletePost),
+                              content: Text(context.l10n.deletePostConfirm),
                               actions: [
                                 TextButton(
                                   onPressed: () => Navigator.pop(ctx),
-                                  child: Text(S.cancel),
+                                  child: Text(context.l10n.cancel),
                                 ),
                                 TextButton(
                                   onPressed: () {
@@ -327,9 +335,9 @@ class _PostDetailContentState extends ConsumerState<_PostDetailContent> {
                                     context.pop();
                                   },
                                   child: Text(
-                                    S.deletePost,
-                                    style: const TextStyle(
-                                      color: BatshColors.error,
+                                    context.l10n.deletePost,
+                                    style: TextStyle(
+                                      color: context.colorScheme.error,
                                     ),
                                   ),
                                 ),
@@ -346,10 +354,10 @@ class _PostDetailContentState extends ConsumerState<_PostDetailContent> {
                               Icon(
                                 Icons.delete_outline,
                                 size: BatshIconSize.md,
-                                color: BatshColors.error,
+                                color: context.colorScheme.error,
                               ),
                               const SizedBox(width: 8),
-                              Text(S.deletePost),
+                              Text(context.l10n.deletePost),
                             ],
                           ),
                         ),
@@ -393,8 +401,10 @@ class _PostDetailContentState extends ConsumerState<_PostDetailContent> {
       children: [
         _ActionBtn(
           icon: post.isLiked ? Icons.favorite : Icons.favorite_border,
-          color: post.isLiked ? BatshColors.error : null,
-          label: post.likeCount > 0 ? '${post.likeCount}' : S.likeLabel,
+          color: post.isLiked ? context.colorScheme.error : null,
+          label: post.likeCount > 0
+              ? '${post.likeCount}'
+              : context.l10n.likeLabel,
           onTap: () => _ensureAuth(
             () => ref.read(postControllerProvider.notifier).toggleLike(post),
           ),
@@ -404,19 +414,19 @@ class _PostDetailContentState extends ConsumerState<_PostDetailContent> {
           icon: Icons.chat_bubble_outline,
           label: post.commentCount > 0
               ? '${post.commentCount}'
-              : S.commentLabel,
+              : context.l10n.commentLabel,
           onTap: () => _commentFocus.requestFocus(),
         ),
         const Spacer(),
         _ActionBtn(
           icon: Icons.share_outlined,
-          label: S.sharePost,
+          label: context.l10n.sharePost,
           onTap: () => _sharePost(post),
         ),
         const SizedBox(width: BatshSpacing.xs),
         _ActionBtn(
           icon: post.isSaved ? Icons.bookmark : Icons.bookmark_border,
-          color: post.isSaved ? BatshColors.tertiary : null,
+          color: post.isSaved ? context.colorScheme.tertiary : null,
           onTap: () => _ensureAuth(
             () => ref.read(postControllerProvider.notifier).toggleSave(post),
           ),
@@ -476,8 +486,10 @@ class _PostDetailContentState extends ConsumerState<_PostDetailContent> {
         bottom: MediaQuery.of(context).padding.bottom + BatshSpacing.sm,
       ),
       decoration: BoxDecoration(
-        color: BatshColors.surface,
-        border: Border(top: BorderSide(color: BatshColors.outlineVariant)),
+        color: context.colorScheme.surface,
+        border: Border(
+          top: BorderSide(color: context.colorScheme.outlineVariant),
+        ),
       ),
       child: Row(
         children: [
@@ -486,7 +498,7 @@ class _PostDetailContentState extends ConsumerState<_PostDetailContent> {
               controller: _commentCtrl,
               focusNode: _commentFocus,
               decoration: InputDecoration(
-                hintText: S.commentHint,
+                hintText: context.l10n.commentHint,
                 border: InputBorder.none,
                 isDense: true,
               ),
@@ -505,9 +517,9 @@ class _PostDetailContentState extends ConsumerState<_PostDetailContent> {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : Text(
-                      S.postComment,
+                      context.l10n.postComment,
                       style: BatshTypography.labelMd.copyWith(
-                        color: BatshColors.primary,
+                        color: context.colorScheme.primary,
                       ),
                     ),
             ),
@@ -520,29 +532,35 @@ class _PostDetailContentState extends ConsumerState<_PostDetailContent> {
   String _postTypeLabel(PostType type) {
     switch (type) {
       case PostType.projectShowcase:
-        return S.postTypeProjectShowcase;
+        return context.l10n.postTypeProjectShowcase;
       case PostType.tip:
-        return S.postTypeTip;
+        return context.l10n.postTypeTip;
       case PostType.milestone:
-        return S.postTypeMilestone;
+        return context.l10n.postTypeMilestone;
       case PostType.renovationUpdate:
-        return S.postTypeRenovationUpdate;
+        return context.l10n.postTypeRenovationUpdate;
     }
   }
 
   String _timeAgo(DateTime dt) {
     final diff = DateTime.now().difference(dt);
-    if (diff.inSeconds < 60) return S.agoNow;
+    if (diff.inSeconds < 60) return context.l10n.agoNow;
     if (diff.inMinutes < 60) {
       final m = diff.inMinutes;
-      return m == 1 ? S.agoMin : S.agoMins.replaceFirst('%s', '$m');
+      return m == 1
+          ? context.l10n.agoMin
+          : context.l10n.agoMins.replaceFirst('%s', '$m');
     }
     if (diff.inHours < 24) {
       final h = diff.inHours;
-      return h == 1 ? S.agoHour : S.agoHours.replaceFirst('%s', '$h');
+      return h == 1
+          ? context.l10n.agoHour
+          : context.l10n.agoHours.replaceFirst('%s', '$h');
     }
     final d = diff.inDays;
-    return d == 1 ? S.agoDay : S.agoDays.replaceFirst('%s', '$d');
+    return d == 1
+        ? context.l10n.agoDay
+        : context.l10n.agoDays.replaceFirst('%s', '$d');
   }
 }
 
@@ -592,7 +610,7 @@ class _ActionBtnState extends State<_ActionBtn>
                 Icon(
                   widget.icon,
                   size: BatshIconSize.md,
-                  color: widget.color ?? BatshColors.onSurfaceVariant,
+                  color: widget.color ?? context.colorScheme.onSurfaceVariant,
                 ),
                 if (widget.label != null) ...[
                   const SizedBox(width: 3),

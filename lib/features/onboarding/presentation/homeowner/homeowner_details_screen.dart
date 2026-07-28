@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:flutter_animate/flutter_animate.dart';
 
-import '../../../../core/l10n/strings.dart';
+import 'package:batsh/core/l10n/l10n_extension.dart';
 import '../../../../core/router/routes.dart';
 import '../../../../core/theme/batsh_colors.dart';
 import '../../../../core/theme/batsh_motion.dart';
@@ -20,6 +20,8 @@ import '../../domain/onboarding_models.dart';
 import '../providers/onboarding_provider.dart';
 import '../../../../core/theme/batsh_icon_size.dart';
 import '../../../../core/widgets/batsh_snack.dart';
+
+import 'package:batsh/core/theme/theme_extension.dart';
 
 class HomeownerDetailsScreen extends ConsumerStatefulWidget {
   const HomeownerDetailsScreen({super.key});
@@ -93,99 +95,101 @@ class _HomeownerDetailsScreenState
       _hydrated = true;
     }
     return BatshScaffold(
-      title: S.yourData,
+      title: context.l10n.yourData,
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const SizedBox(height: BatshSpacing.sm),
-            Text(
-              S.homeownerDetailsHint,
-              style: BatshTypography.bodyMd.copyWith(
-                color: BatshColors.onSurfaceVariant,
-              ),
-            ),
-            const SizedBox(height: BatshSpacing.md),
-            BatshSectionHeader(title: S.apartmentType),
-            const SizedBox(height: BatshSpacing.sm),
-            GridView.count(
-              crossAxisCount: 2,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              crossAxisSpacing: BatshSpacing.gutter,
-              mainAxisSpacing: BatshSpacing.gutter,
-              childAspectRatio: 1.1,
-              children: ApartmentType.values.map((type) {
-                final label = OnboardingCatalog.apartmentLabels[type] ?? '';
-                final isSelected = _aptType == type;
-                return BatshCard(
-                  selected: isSelected,
-                  onTap: () => setState(() => _aptType = type),
-                  padding: const EdgeInsets.all(BatshSpacing.gutter),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        _apartmentIcons[type],
-                        size: BatshIconSize.lg,
-                        color: isSelected
-                            ? BatshColors.primary
-                            : BatshColors.onSurfaceVariant,
+          children:
+              [
+                    const SizedBox(height: BatshSpacing.sm),
+                    Text(
+                      context.l10n.homeownerDetailsHint,
+                      style: BatshTypography.bodyMd.copyWith(
+                        color: context.colorScheme.onSurfaceVariant,
                       ),
-                      const SizedBox(height: BatshSpacing.sm),
-                      Text(
-                        label,
-                        textAlign: TextAlign.center,
-                        style: BatshTypography.titleLg.copyWith(
-                          color: isSelected
-                              ? BatshColors.primary
-                              : BatshColors.onSurface,
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              }).toList(),
-            ),
-            const SizedBox(height: BatshSpacing.lg),
-            BatshSectionHeader(title: S.interestAreas),
-            const SizedBox(height: BatshSpacing.sm),
-            Wrap(
-              spacing: BatshSpacing.sm,
-              runSpacing: BatshSpacing.sm,
-              children: OnboardingCatalog.interestsCatalog.entries
-                  .map(
-                    (e) => BatshChip(
-                      label: e.value,
-                      icon: _interestIcons[e.key],
-                      selected: _interests.contains(e.key),
-                      onTap: () => setState(() {
-                        if (_interests.contains(e.key)) {
-                          _interests.remove(e.key);
-                        } else {
-                          _interests.add(e.key);
-                        }
-                      }),
                     ),
+                    const SizedBox(height: BatshSpacing.md),
+                    BatshSectionHeader(title: context.l10n.apartmentType),
+                    const SizedBox(height: BatshSpacing.sm),
+                    GridView.count(
+                      crossAxisCount: 2,
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      crossAxisSpacing: BatshSpacing.gutter,
+                      mainAxisSpacing: BatshSpacing.gutter,
+                      childAspectRatio: 1.1,
+                      children: ApartmentType.values.map((type) {
+                        final label =
+                            OnboardingCatalog.apartmentLabels[type] ?? '';
+                        final isSelected = _aptType == type;
+                        return BatshCard(
+                          selected: isSelected,
+                          onTap: () => setState(() => _aptType = type),
+                          padding: const EdgeInsets.all(BatshSpacing.gutter),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                _apartmentIcons[type],
+                                size: BatshIconSize.lg,
+                                color: isSelected
+                                    ? context.colorScheme.primary
+                                    : context.colorScheme.onSurfaceVariant,
+                              ),
+                              const SizedBox(height: BatshSpacing.sm),
+                              Text(
+                                label,
+                                textAlign: TextAlign.center,
+                                style: BatshTypography.titleLg.copyWith(
+                                  color: isSelected
+                                      ? context.colorScheme.primary
+                                      : context.colorScheme.onSurface,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: BatshSpacing.lg),
+                    BatshSectionHeader(title: context.l10n.interestAreas),
+                    const SizedBox(height: BatshSpacing.sm),
+                    Wrap(
+                      spacing: BatshSpacing.sm,
+                      runSpacing: BatshSpacing.sm,
+                      children: OnboardingCatalog.interestsCatalog.entries
+                          .map(
+                            (e) => BatshChip(
+                              label: e.value,
+                              icon: _interestIcons[e.key],
+                              selected: _interests.contains(e.key),
+                              onTap: () => setState(() {
+                                if (_interests.contains(e.key)) {
+                                  _interests.remove(e.key);
+                                } else {
+                                  _interests.add(e.key);
+                                }
+                              }),
+                            ),
+                          )
+                          .toList(),
+                    ),
+                    const SizedBox(height: BatshSpacing.xl),
+                    BatshButton(
+                      label: context.l10n.done,
+                      onPressed: _aptType == null || _interests.isEmpty || _busy
+                          ? null
+                          : _next,
+                      isLoading: _busy,
+                    ),
+                    const SizedBox(height: BatshSpacing.lg),
+                  ]
+                  .animate(interval: 60.ms)
+                  .fadeIn(
+                    duration: BatshMotion.slow,
+                    curve: BatshMotion.easeOut,
                   )
-                  .toList(),
-            ),
-            const SizedBox(height: BatshSpacing.xl),
-            BatshButton(
-              label: S.done,
-              onPressed:
-                  _aptType == null || _interests.isEmpty || _busy ? null : _next,
-              isLoading: _busy,
-            ),
-            const SizedBox(height: BatshSpacing.lg),
-          ].animate(interval: 60.ms).fadeIn(
-            duration: BatshMotion.slow,
-            curve: BatshMotion.easeOut,
-          ).slideY(
-            begin: 0.08,
-            end: 0,
-            curve: BatshMotion.easeOut,
-          ),
+                  .slideY(begin: 0.08, end: 0, curve: BatshMotion.easeOut),
         ),
       ),
     );

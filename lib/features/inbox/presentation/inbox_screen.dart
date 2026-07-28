@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart' as intl;
 
-import '../../../core/l10n/strings.dart';
+import 'package:batsh/core/l10n/l10n_extension.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/batsh_colors.dart';
 import '../../../core/theme/batsh_radius.dart';
@@ -25,6 +25,8 @@ import '../../../core/theme/batsh_icon_size.dart';
 import '../../../core/widgets/batsh_badge.dart';
 import '../../../core/theme/batsh_motion.dart';
 
+import 'package:batsh/core/theme/theme_extension.dart';
+
 class InboxScreen extends ConsumerWidget {
   const InboxScreen({super.key});
 
@@ -32,7 +34,7 @@ class InboxScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(inboxRequestsProvider);
     return BatshScaffold(
-      title: S.inboxTitle,
+      title: context.l10n.inboxTitle,
       headerStyle: BatshHeaderStyle.primary,
       body: async.when(
         loading: () => const _InboxSkeleton(),
@@ -43,8 +45,8 @@ class InboxScreen extends ConsumerWidget {
         data: (items) {
           if (items.isEmpty) {
             return BatshEmptyState(
-              title: S.inboxEmptyTitle,
-              message: S.inboxEmptyMessage,
+              title: context.l10n.inboxEmptyTitle,
+              message: context.l10n.inboxEmptyMessage,
               icon: Icons.inbox_outlined,
             );
           }
@@ -160,24 +162,27 @@ class _RequestCard extends StatelessWidget {
               // A cancelled request is dead — surface that instead of a quote
               // badge so the contractor doesn't quote into a closed job.
               brief.status == BriefStatus.cancelled
-                  ? BatshBadge(label: S.statusCancelled, compact: true)
+                  ? BatshBadge(
+                      label: context.l10n.statusCancelled,
+                      compact: true,
+                    )
                   : QuoteStatusBadge(status: request.quoteStatus),
             ],
           ),
           const SizedBox(height: BatshSpacing.sm),
           Row(
             children: [
-              const Icon(
+              Icon(
                 Icons.place_outlined,
                 size: BatshIconSize.sm,
-                color: BatshColors.onSurfaceVariant,
+                color: context.colorScheme.onSurfaceVariant,
               ),
               const SizedBox(width: BatshSpacing.xs),
               Expanded(
                 child: Text(
                   place,
                   style: BatshTypography.labelMd.copyWith(
-                    color: BatshColors.onSurfaceVariant,
+                    color: context.colorScheme.onSurfaceVariant,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -186,7 +191,7 @@ class _RequestCard extends StatelessWidget {
               Text(
                 date,
                 style: BatshTypography.labelSm.copyWith(
-                  color: BatshColors.onSurfaceVariant,
+                  color: context.colorScheme.onSurfaceVariant,
                 ),
               ),
             ],

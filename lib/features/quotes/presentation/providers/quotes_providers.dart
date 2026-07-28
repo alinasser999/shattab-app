@@ -53,7 +53,9 @@ class QuotesController extends _$QuotesController {
     String? durationText,
     required String note,
   }) async {
-    await ref.read(quotesRepositoryProvider).submit(
+    await ref
+        .read(quotesRepositoryProvider)
+        .submit(
           briefId: briefId,
           priceMin: priceMin,
           priceMax: priceMax,

@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import '../theme/batsh_colors.dart';
 import '../theme/batsh_typography.dart';
 
+import 'package:batsh/core/theme/theme_extension.dart';
+
 class AvatarWithInitials extends StatelessWidget {
   const AvatarWithInitials({
     super.key,
@@ -35,11 +37,11 @@ class AvatarWithInitials extends StatelessWidget {
     }
     return CircleAvatar(
       radius: radius,
-      backgroundColor: BatshColors.primaryContainer,
+      backgroundColor: context.colorScheme.primaryContainer,
       child: Text(
         _initials,
         style: BatshTypography.labelSm.copyWith(
-          color: BatshColors.onPrimaryContainer,
+          color: context.colorScheme.onPrimaryContainer,
         ),
       ),
     );

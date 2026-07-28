@@ -71,8 +71,9 @@ class QuotesRepository {
       final embedded = row['briefs'];
       return (
         quote: Quote.fromJson(row),
-        brief:
-            embedded is Map<String, dynamic> ? Brief.fromJson(embedded) : null,
+        brief: embedded is Map<String, dynamic>
+            ? Brief.fromJson(embedded)
+            : null,
       );
     }).toList();
   }
@@ -120,18 +121,15 @@ class QuotesRepository {
   }) async {
     final row = await _client
         .from('quotes')
-        .upsert(
-          {
-            'brief_id': briefId,
-            'contractor_id': _uid,
-            'price_min': priceMin,
-            'price_max': priceMax,
-            'duration_text': durationText,
-            'note': note,
-            'status': 'sent',
-          },
-          onConflict: 'brief_id,contractor_id',
-        )
+        .upsert({
+          'brief_id': briefId,
+          'contractor_id': _uid,
+          'price_min': priceMin,
+          'price_max': priceMax,
+          'duration_text': durationText,
+          'note': note,
+          'status': 'sent',
+        }, onConflict: 'brief_id,contractor_id')
         .select()
         .single();
     return Quote.fromJson(row);
@@ -150,7 +148,9 @@ class QuotesRepository {
     }
     final rows = await _client
         .from('quotes')
-        .update({'status': status.name}).eq('id', quoteId).select();
+        .update({'status': status.name})
+        .eq('id', quoteId)
+        .select();
     if (rows.isEmpty) {
       throw StateError('Quote not found or cannot be updated.');
     }

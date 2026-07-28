@@ -32,8 +32,7 @@ class PortfolioProject {
         title: json['title'] as String,
         description: json['description'] as String?,
         coverPhotoUrl: json['cover_photo_url'] as String,
-        photoUrls:
-            ((json['photo_urls'] as List?) ?? const []).cast<String>(),
+        photoUrls: ((json['photo_urls'] as List?) ?? const []).cast<String>(),
         category: json['category'] as String?,
         apartmentType: json['apartment_type'] as String?,
         location: json['location'] as String?,

@@ -107,5 +107,5 @@ String _nextOnboardingStep(Ref ref, Profile profile) {
   if (!co.hasSpecialties || !co.hasServiceAreas) {
     return Routes.onboardingContractorServices;
   }
-    return Routes.onboardingContractorExperience;
+  return Routes.onboardingContractorExperience;
 }

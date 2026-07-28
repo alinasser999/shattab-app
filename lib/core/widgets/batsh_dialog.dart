@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/l10n_extension.dart';
+
 import '../l10n/strings.dart';
 import '../theme/batsh_colors.dart';
 import '../theme/batsh_radius.dart';
 import '../theme/batsh_spacing.dart';
 import '../theme/batsh_typography.dart';
+
+import 'package:batsh/core/theme/theme_extension.dart';
 
 /// A confirmation or destructive-confirmation dialog.
 ///
@@ -17,9 +21,9 @@ import '../theme/batsh_typography.dart';
 /// ```dart
 /// final ok = await BatshDialog.confirm(
 ///   context,
-///   title: S.signOutTitle,
-///   message: S.signOutConfirmation,
-///   confirmLabel: S.signOutButton,
+///   title: context.l10n.signOutTitle,
+///   message: context.l10n.signOutConfirmation,
+///   confirmLabel: context.l10n.signOutButton,
 ///   isDestructive: true,
 /// );
 /// if (ok == true) ref.read(authRepositoryProvider).signOut();
@@ -41,7 +45,7 @@ class BatshDialog {
       context: context,
       builder: (ctx) => AlertDialog(
         shape: const RoundedRectangleBorder(borderRadius: BatshRadius.brXl),
-        backgroundColor: BatshColors.surface,
+        backgroundColor: context.colorScheme.surface,
         title: Text(title, style: BatshTypography.titleMd),
         content: Text(message, style: BatshTypography.bodyMd),
         actionsPadding: const EdgeInsets.fromLTRB(
@@ -53,14 +57,16 @@ class BatshDialog {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text(cancelLabel ?? S.cancel),
+            child: Text(cancelLabel ?? context.l10n.cancel),
           ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
             child: Text(
-              confirmLabel ?? S.confirm,
+              confirmLabel ?? context.l10n.confirm,
               style: TextStyle(
-                color: isDestructive ? BatshColors.error : BatshColors.primary,
+                color: isDestructive
+                    ? context.colorScheme.error
+                    : context.colorScheme.primary,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -82,7 +88,7 @@ class BatshDialog {
       context: context,
       builder: (ctx) => AlertDialog(
         shape: const RoundedRectangleBorder(borderRadius: BatshRadius.brXl),
-        backgroundColor: BatshColors.surface,
+        backgroundColor: context.colorScheme.surface,
         title: Text(title, style: BatshTypography.titleMd),
         content: Text(message, style: BatshTypography.bodyMd),
         actionsPadding: const EdgeInsets.fromLTRB(
@@ -94,7 +100,7 @@ class BatshDialog {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: Text(dismissLabel ?? S.ok),
+            child: Text(dismissLabel ?? context.l10n.ok),
           ),
         ],
       ),

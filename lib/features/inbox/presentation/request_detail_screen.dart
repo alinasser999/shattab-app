@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart' as intl;
-import '../../../core/l10n/strings.dart';
+import 'package:batsh/core/l10n/l10n_extension.dart';
 import '../../../core/theme/batsh_colors.dart';
 import '../../../core/theme/batsh_motion.dart';
 import '../../../core/theme/batsh_radius.dart';
@@ -19,6 +19,8 @@ import '../../auth/data/auth_repository.dart';
 import '../../briefs/presentation/providers/briefs_providers.dart';
 import '../../onboarding/domain/onboarding_models.dart';
 import '../../quotes/presentation/widgets/contractor_quote_cta.dart';
+
+import 'package:batsh/core/theme/theme_extension.dart';
 
 class RequestDetailScreen extends ConsumerStatefulWidget {
   const RequestDetailScreen({super.key, required this.briefId});
@@ -47,7 +49,7 @@ class _RequestDetailScreenState extends ConsumerState<RequestDetailScreen> {
     } catch (_) {
       if (!mounted) return;
       setState(() {
-        _homeownerError = S.clientInfoFailed;
+        _homeownerError = context.l10n.clientInfoFailed;
         _homeownerLoading = false;
       });
     }
@@ -57,7 +59,7 @@ class _RequestDetailScreenState extends ConsumerState<RequestDetailScreen> {
   Widget build(BuildContext context) {
     final async = ref.watch(briefByIdProvider(widget.briefId));
     return BatshScaffold(
-      title: S.requestDetailTitle,
+      title: context.l10n.requestDetailTitle,
       body: async.when(
         loading: () => const _RequestDetailSkeleton(),
         error: (e, _) => BatshError(
@@ -89,16 +91,16 @@ class _RequestDetailScreenState extends ConsumerState<RequestDetailScreen> {
               const SizedBox(height: BatshSpacing.lg),
             ],
             _LabeledCard(
-              label: S.workDescriptionLabel,
+              label: context.l10n.workDescriptionLabel,
               value: brief.workDescription,
             ),
             const SizedBox(height: BatshSpacing.gutter),
-            _LabeledCard(label: S.workLocationLabel, value: place),
+            _LabeledCard(label: context.l10n.workLocationLabel, value: place),
             const SizedBox(height: BatshSpacing.xs),
             Text(
               '  $date',
               style: BatshTypography.labelSm.copyWith(
-                color: BatshColors.onSurfaceVariant,
+                color: context.colorScheme.onSurfaceVariant,
               ),
             ),
             const SizedBox(height: BatshSpacing.xl),
@@ -106,9 +108,9 @@ class _RequestDetailScreenState extends ConsumerState<RequestDetailScreen> {
             const SizedBox(height: BatshSpacing.lg),
             if (showContact) ...[
               Text(
-                S.contactClient,
+                context.l10n.contactClient,
                 style: BatshTypography.labelMd.copyWith(
-                  color: BatshColors.onSurfaceVariant,
+                  color: context.colorScheme.onSurfaceVariant,
                 ),
               ),
               const SizedBox(height: BatshSpacing.sm),
@@ -122,7 +124,7 @@ class _RequestDetailScreenState extends ConsumerState<RequestDetailScreen> {
                 child: Text(
                   _homeownerError!,
                   style: BatshTypography.labelSm.copyWith(
-                    color: BatshColors.error,
+                    color: context.colorScheme.error,
                   ),
                 ),
               ),
@@ -218,7 +220,7 @@ class _LabeledCard extends StatelessWidget {
           Text(
             label,
             style: BatshTypography.labelMd.copyWith(
-              color: BatshColors.onSurfaceVariant,
+              color: context.colorScheme.onSurfaceVariant,
             ),
           ),
           const SizedBox(height: BatshSpacing.sm),

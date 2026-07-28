@@ -1,4 +1,6 @@
+import 'package:batsh/l10n/app_localizations.dart';
 import 'package:batsh/core/theme/batsh_border_width.dart';
+import 'package:batsh/core/theme/batsh_colors.dart';
 import 'package:batsh/core/theme/batsh_icon_size.dart';
 import 'package:batsh/core/theme/batsh_shadows.dart';
 import 'package:batsh/core/widgets/batsh_badge.dart';
@@ -85,7 +87,11 @@ void main() {
   group('BatshBadge', () {
     testWidgets('renders its label', (tester) async {
       await tester.pumpWidget(
-        const MaterialApp(
+        MaterialApp(
+          locale: const Locale('ar'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+
           home: Scaffold(body: BatshBadge(label: 'مفتوح')),
         ),
       );
@@ -94,14 +100,22 @@ void main() {
 
     testWidgets('renders a leading icon only when given one', (tester) async {
       await tester.pumpWidget(
-        const MaterialApp(
+        MaterialApp(
+          locale: const Locale('ar'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+
           home: Scaffold(body: BatshBadge(label: '4.8')),
         ),
       );
       expect(find.byType(Icon), findsNothing);
 
       await tester.pumpWidget(
-        const MaterialApp(
+        MaterialApp(
+          locale: const Locale('ar'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+
           home: Scaffold(
             body: BatshBadge(label: '4.8', icon: Icons.star_rounded),
           ),
@@ -114,7 +128,11 @@ void main() {
       tester,
     ) async {
       await tester.pumpWidget(
-        const MaterialApp(
+        MaterialApp(
+          locale: const Locale('ar'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+
           home: Scaffold(
             body: BatshBadge(label: '12', semanticLabel: '12 عرض سعر'),
           ),
@@ -128,7 +146,11 @@ void main() {
       // that does nothing. This is the line between BatshBadge and BatshChip.
       final handle = tester.ensureSemantics();
       await tester.pumpWidget(
-        const MaterialApp(
+        MaterialApp(
+          locale: const Locale('ar'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+
           home: Scaffold(body: BatshBadge(label: 'ملغي')),
         ),
       );
@@ -145,6 +167,10 @@ void main() {
       bool? result;
       await tester.pumpWidget(
         MaterialApp(
+          locale: const Locale('ar'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+
           home: Scaffold(
             body: Builder(
               builder: (context) => TextButton(
@@ -174,6 +200,10 @@ void main() {
       bool? result;
       await tester.pumpWidget(
         MaterialApp(
+          locale: const Locale('ar'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+
           home: Scaffold(
             body: Builder(
               builder: (context) => TextButton(
@@ -200,6 +230,10 @@ void main() {
     testWidgets('info dismisses on its single action', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
+          locale: const Locale('ar'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+
           home: Scaffold(
             body: Builder(
               builder: (context) => TextButton(
@@ -223,7 +257,11 @@ void main() {
   group('BatshEmptyState', () {
     testWidgets('shows the message alongside the title', (tester) async {
       await tester.pumpWidget(
-        const MaterialApp(
+        MaterialApp(
+          locale: const Locale('ar'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+
           home: Scaffold(
             body: BatshEmptyState(title: 'مفيش حاجة', message: 'ابدأ من هنا'),
           ),
@@ -239,7 +277,11 @@ void main() {
       // then stop, which is the half that carries no instruction.
       final handle = tester.ensureSemantics();
       await tester.pumpWidget(
-        const MaterialApp(
+        MaterialApp(
+          locale: const Locale('ar'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+
           home: Scaffold(
             body: BatshEmptyState(title: 'مفيش حاجة', message: 'ابدأ من هنا'),
           ),
@@ -269,7 +311,11 @@ void main() {
       }
 
       await tester.pumpWidget(
-        const MaterialApp(
+        MaterialApp(
+          locale: const Locale('ar'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+
           home: Scaffold(
             body: BatshEmptyState(title: 't', message: 'm'),
           ),
@@ -279,7 +325,11 @@ void main() {
       final nothingYet = medallionOf(tester);
 
       await tester.pumpWidget(
-        const MaterialApp(
+        MaterialApp(
+          locale: const Locale('ar'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+
           home: Scaffold(
             body: BatshEmptyState(
               title: 't',
@@ -361,6 +411,10 @@ void main() {
     testWidgets('shows its content above the drag handle', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
+          locale: const Locale('ar'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+
           home: Scaffold(
             body: Builder(
               builder: (context) => TextButton(
@@ -383,6 +437,10 @@ void main() {
       String? result;
       await tester.pumpWidget(
         MaterialApp(
+          locale: const Locale('ar'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+
           home: Scaffold(
             body: Builder(
               builder: (context) => TextButton(
@@ -410,37 +468,44 @@ void main() {
   });
 
   group('BatshBadge', () {
-    test('every tone and emphasis pairing clears 4.5:1 contrast', () {
-      // Badge text sits at labelMd (13) and labelSm (11). Both are below the
-      // WCAG large-text threshold, so the full 4.5:1 applies to all of them.
-      for (final tone in BatshBadgeTone.values) {
-        for (final emphasis in BatshBadgeEmphasis.values) {
-          final (foreground, background, _) = BatshBadge(
-            label: 'x',
-            tone: tone,
-            emphasis: emphasis,
-          ).debugPalette;
-          // What the text actually sits on differs per emphasis:
-          // - outline has no fill, so it inherits the app background;
-          // - onImage is a translucent scrim, so the effective colour is the
-          //   scrim composited over the brightest photo it could cover. A
-          //   blown-out white sky is that worst case, and asserting against the
-          //   raw scrim colour would pass on alpha the user never sees.
-          final behind = switch (emphasis) {
-            BatshBadgeEmphasis.outline => const Color(0xFFFFF8F3),
-            BatshBadgeEmphasis.onImage => Color.alphaBlend(
-              background,
-              const Color(0xFFFFFFFF),
-            ),
-            _ => background,
-          };
-          expect(
-            _contrast(foreground, behind),
-            greaterThanOrEqualTo(4.5),
-            reason: '$tone / $emphasis fails contrast',
-          );
+    // Both schemes, because a badge that clears contrast in light and fails in
+    // dark is still a badge that fails.
+    for (final (schemeName, scheme) in [
+      ('light', BatshColors.scheme),
+      ('dark', BatshColors.darkScheme),
+    ]) {
+      test('$schemeName: every tone and emphasis pairing clears 4.5:1', () {
+        // Badge text sits at labelMd (13) and labelSm (11). Both are below the
+        // WCAG large-text threshold, so the full 4.5:1 applies to all of them.
+        for (final tone in BatshBadgeTone.values) {
+          for (final emphasis in BatshBadgeEmphasis.values) {
+            final (foreground, background, _) = BatshBadge(
+              label: 'x',
+              tone: tone,
+              emphasis: emphasis,
+            ).debugPalette(scheme);
+            // What the text actually sits on differs per emphasis:
+            // - outline has no fill, so it inherits the app surface;
+            // - onImage is a translucent scrim, so the effective colour is the
+            //   scrim composited over the brightest photo it could cover. A
+            //   blown-out white sky is that worst case, and asserting against
+            //   the raw scrim colour would pass on alpha the user never sees.
+            final behind = switch (emphasis) {
+              BatshBadgeEmphasis.outline => scheme.surface,
+              BatshBadgeEmphasis.onImage => Color.alphaBlend(
+                background,
+                const Color(0xFFFFFFFF),
+              ),
+              _ => background,
+            };
+            expect(
+              _contrast(foreground, behind),
+              greaterThanOrEqualTo(4.5),
+              reason: '$schemeName / $tone / $emphasis fails contrast',
+            );
+          }
         }
-      }
-    });
+      });
+    }
   });
 }

@@ -5,7 +5,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/l10n/strings.dart';
+import 'package:batsh/core/l10n/l10n_extension.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/batsh_colors.dart';
 import '../../../core/theme/batsh_motion.dart';
@@ -23,6 +23,7 @@ import '../../../core/utils/error_mapper.dart';
 import 'providers/otp_provider.dart';
 import '../../../core/theme/batsh_icon_size.dart';
 
+import 'package:batsh/core/theme/theme_extension.dart';
 part 'phone_entry_hero.dart';
 part 'phone_entry_login_card.dart';
 
@@ -65,7 +66,7 @@ class _PhoneEntryScreenState extends ConsumerState<PhoneEntryScreen> {
   Future<void> _forgotPassword() async {
     final phone = normalizeEgyptPhoneToE164(_controller.text);
     if (!Validators.isEgyptianPhone(phone)) {
-      setState(() => _errorText = S.invalidPhone);
+      setState(() => _errorText = context.l10n.invalidPhone);
       return;
     }
     setState(() => _errorText = null);
@@ -77,7 +78,7 @@ class _PhoneEntryScreenState extends ConsumerState<PhoneEntryScreen> {
       context.push(Routes.otp);
     } else {
       final error = ref.read(otpControllerProvider).errorMessage;
-      setState(() => _errorText = error ?? S.unknownErrorRetry);
+      setState(() => _errorText = error ?? context.l10n.unknownErrorRetry);
     }
   }
 
@@ -175,13 +176,13 @@ class _Footer extends StatelessWidget {
             Icon(
               Icons.lock_outline,
               size: BatshIconSize.xs,
-              color: BatshColors.onSurfaceVariant,
+              color: context.colorScheme.onSurfaceVariant,
             ),
             const SizedBox(width: 6),
             Text(
-              S.dataSecure,
+              context.l10n.dataSecure,
               style: BatshTypography.labelSm.copyWith(
-                color: BatshColors.onSurfaceVariant,
+                color: context.colorScheme.onSurfaceVariant,
               ),
             ),
           ],
@@ -191,17 +192,17 @@ class _Footer extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              '${S.loginPrompt} ',
+              '${context.l10n.loginPrompt} ',
               style: BatshTypography.bodyMd.copyWith(
-                color: BatshColors.onSurfaceVariant,
+                color: context.colorScheme.onSurfaceVariant,
               ),
             ),
             GestureDetector(
               onTap: onLoginTap,
               child: Text(
-                S.loginAction,
+                context.l10n.loginAction,
                 style: BatshTypography.bodyMd.copyWith(
-                  color: BatshColors.primary,
+                  color: context.colorScheme.primary,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -265,22 +266,22 @@ class _DemoLoginBlockState extends ConsumerState<_DemoLoginBlock> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            S.debugMode,
+            context.l10n.debugMode,
             textAlign: TextAlign.center,
             style: BatshTypography.labelMd.copyWith(
-              color: BatshColors.onSurfaceVariant,
+              color: context.colorScheme.onSurfaceVariant,
             ),
           ),
           const SizedBox(height: BatshSpacing.md),
           BatshButton(
-            label: S.demoLoginHomeowner,
+            label: context.l10n.demoLoginHomeowner,
             style: BatshButtonStyle.secondary,
             onPressed: _busy ? null : () => _signInAs('homeowner@batsh.demo'),
             isLoading: _busy,
           ),
           const SizedBox(height: BatshSpacing.sm),
           BatshButton(
-            label: S.demoLoginContractor,
+            label: context.l10n.demoLoginContractor,
             style: BatshButtonStyle.secondary,
             onPressed: _busy ? null : () => _signInAs('contractor@batsh.demo'),
           ),
@@ -289,7 +290,9 @@ class _DemoLoginBlockState extends ConsumerState<_DemoLoginBlock> {
             Text(
               _error!,
               textAlign: TextAlign.center,
-              style: BatshTypography.labelMd.copyWith(color: BatshColors.error),
+              style: BatshTypography.labelMd.copyWith(
+                color: context.colorScheme.error,
+              ),
             ),
           ],
         ],

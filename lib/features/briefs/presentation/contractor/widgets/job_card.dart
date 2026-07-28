@@ -1,6 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import '../../../../../core/l10n/strings.dart';
+import 'package:batsh/core/l10n/l10n_extension.dart';
 import '../../../../../core/utils/time_format.dart';
 import '../../../../../core/theme/batsh_colors.dart';
 import '../../../../../core/theme/batsh_motion.dart';
@@ -13,6 +13,7 @@ import '../../../../onboarding/domain/onboarding_models.dart';
 import '../../../domain/brief.dart';
 import '../../../../../core/theme/batsh_icon_size.dart';
 import '../../../../../core/widgets/batsh_badge.dart';
+import '../../../../../core/theme/theme_extension.dart';
 
 class JobCardData {
   JobCardData.fromBrief(Brief brief)
@@ -78,7 +79,7 @@ class PremiumJobCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: BatshColors.cardBackground,
+        color: context.colorScheme.surface,
         borderRadius: BatshRadius.brCard,
         boxShadow: BatshShadows.soft,
       ),
@@ -118,7 +119,9 @@ class PremiumJobCard extends StatelessWidget {
                     Divider(
                       height: 1,
                       thickness: 1,
-                      color: BatshColors.outlineVariant.withValues(alpha: 0.4),
+                      color: context.colorScheme.outlineVariant.withValues(
+                        alpha: 0.4,
+                      ),
                     ),
                     const SizedBox(height: BatshSpacing.md),
                     _CtaRow(
@@ -195,14 +198,14 @@ class _Hero extends StatelessWidget {
               children: [
                 if (isNew)
                   BatshBadge(
-                    label: S.newBadge,
+                    label: context.l10n.newBadge,
                     tone: BatshBadgeTone.success,
                     compact: true,
                   ),
                 if (isNew && isUrgent) const SizedBox(width: BatshSpacing.xs),
                 if (isUrgent)
                   BatshBadge(
-                    label: S.urgentBadge,
+                    label: context.l10n.urgentBadge,
                     tone: BatshBadgeTone.warning,
                     compact: true,
                   ),
@@ -230,13 +233,13 @@ class _Hero extends StatelessWidget {
                   vertical: 5,
                 ),
                 decoration: BoxDecoration(
-                  color: BatshColors.primary,
+                  color: context.colorScheme.primary,
                   borderRadius: BatshRadius.brFull,
                 ),
                 child: Text(
                   budgetLabel!,
                   style: BatshTypography.labelMd.copyWith(
-                    color: BatshColors.onPrimary,
+                    color: context.colorScheme.onPrimary,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
@@ -260,8 +263,8 @@ class _HeroPlaceholder extends StatelessWidget {
           begin: AlignmentDirectional.topStart,
           end: AlignmentDirectional.bottomEnd,
           colors: [
-            BatshColors.primaryFixed.withValues(alpha: 0.55),
-            BatshColors.surfaceContainer,
+            context.colorScheme.primaryFixed.withValues(alpha: 0.55),
+            context.colorScheme.surfaceContainer,
           ],
         ),
       ),
@@ -271,7 +274,7 @@ class _HeroPlaceholder extends StatelessWidget {
               child: Icon(
                 Icons.home_work_outlined,
                 size: BatshIconSize.xl,
-                color: BatshColors.primary.withValues(alpha: 0.35),
+                color: context.colorScheme.primary.withValues(alpha: 0.35),
               ),
             ),
     );
@@ -300,8 +303,8 @@ class _BookmarkButton extends StatelessWidget {
               key: ValueKey(isBookmarked),
               size: BatshIconSize.md,
               color: isBookmarked
-                  ? BatshColors.primary
-                  : BatshColors.onSurfaceVariant,
+                  ? context.colorScheme.primary
+                  : context.colorScheme.onSurfaceVariant,
             ),
           ),
         ),
@@ -324,7 +327,7 @@ class _MetaRow extends StatelessWidget {
         Icon(
           Icons.place_outlined,
           size: BatshIconSize.sm,
-          color: BatshColors.onSurfaceVariant,
+          color: context.colorScheme.onSurfaceVariant,
         ),
         const SizedBox(width: BatshSpacing.xxs),
         Flexible(
@@ -333,7 +336,7 @@ class _MetaRow extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: BatshTypography.bodySm.copyWith(
-              color: BatshColors.onSurfaceVariant,
+              color: context.colorScheme.onSurfaceVariant,
             ),
           ),
         ),
@@ -344,25 +347,29 @@ class _MetaRow extends StatelessWidget {
             vertical: 3,
           ),
           decoration: BoxDecoration(
-            color: BatshColors.primaryFixed.withValues(alpha: 0.3),
+            color: context.colorScheme.primaryFixed.withValues(alpha: 0.3),
             borderRadius: BatshRadius.brFull,
           ),
           child: Text(
             job.apartmentLabel,
             style: BatshTypography.labelSm.copyWith(
-              color: BatshColors.primary,
+              color: context.colorScheme.primary,
               fontWeight: FontWeight.w700,
             ),
           ),
         ),
         const Spacer(),
         if (clientRating != null) ...[
-          Icon(Icons.star, size: BatshIconSize.sm, color: BatshColors.tertiary),
+          Icon(
+            Icons.star,
+            size: BatshIconSize.sm,
+            color: context.colorScheme.tertiary,
+          ),
           const SizedBox(width: BatshSpacing.xxs),
           Text(
             clientRating!.toStringAsFixed(1),
             style: BatshTypography.labelSm.copyWith(
-              color: BatshColors.onSurface,
+              color: context.colorScheme.onSurface,
               fontWeight: FontWeight.w700,
             ),
           ),
@@ -370,13 +377,13 @@ class _MetaRow extends StatelessWidget {
           Icon(
             Icons.access_time,
             size: BatshIconSize.sm,
-            color: BatshColors.onSurfaceVariant,
+            color: context.colorScheme.onSurfaceVariant,
           ),
           const SizedBox(width: BatshSpacing.xxs),
           Text(
             job.relativeTime,
             style: BatshTypography.labelSm.copyWith(
-              color: BatshColors.onSurfaceVariant,
+              color: context.colorScheme.onSurfaceVariant,
             ),
           ),
         ],
@@ -404,7 +411,7 @@ class _CtaRow extends StatelessWidget {
       children: [
         Expanded(
           child: _CtaButton(
-            label: S.postDetailTitle,
+            label: context.l10n.postDetailTitle,
             onTap: onTap,
             filled: false,
           ),
@@ -413,15 +420,15 @@ class _CtaRow extends StatelessWidget {
         Expanded(
           child: alreadyQuoted
               ? _CtaButton(
-                  label: S.quoteSentShort,
+                  label: context.l10n.quoteSentShort,
                   icon: Icons.check_circle,
                   onTap: onQuote,
                   filled: true,
-                  bgColor: BatshColors.successContainer,
-                  fgColor: BatshColors.onSecondaryContainer,
+                  bgColor: context.colorScheme.successContainer,
+                  fgColor: context.colorScheme.onSecondaryContainer,
                 )
               : _CtaButton(
-                  label: S.sendQuoteButton,
+                  label: context.l10n.sendQuoteButton,
                   onTap: onQuote,
                   filled: true,
                 ),
@@ -451,9 +458,14 @@ class _CtaButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final fg =
-        fgColor ?? (filled ? BatshColors.onPrimary : BatshColors.onSurface);
+        fgColor ??
+        (filled
+            ? context.colorScheme.onPrimary
+            : context.colorScheme.onSurface);
     return Material(
-      color: filled ? (bgColor ?? BatshColors.primary) : Colors.transparent,
+      color: filled
+          ? (bgColor ?? context.colorScheme.primary)
+          : Colors.transparent,
       borderRadius: BatshRadius.brDefault,
       child: InkWell(
         borderRadius: BatshRadius.brDefault,
@@ -466,7 +478,7 @@ class _CtaButton extends StatelessWidget {
             border: filled
                 ? null
                 : Border.all(
-                    color: BatshColors.outline.withValues(alpha: 0.5),
+                    color: context.colorScheme.outline.withValues(alpha: 0.5),
                     width: 1.5,
                   ),
           ),

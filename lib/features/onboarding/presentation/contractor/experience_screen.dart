@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:flutter_animate/flutter_animate.dart';
 
-import '../../../../core/l10n/strings.dart';
+import 'package:batsh/core/l10n/l10n_extension.dart';
 import '../../../../core/router/routes.dart';
 import '../../../../core/theme/batsh_spacing.dart';
 import '../../../../core/theme/batsh_motion.dart';
@@ -40,7 +40,7 @@ class _ExperienceScreenState extends ConsumerState<ExperienceScreen> {
     final years = int.tryParse(_yearsCtrl.text.trim());
     final bio = _bioCtrl.text.trim();
     if (years == null || years < 0 || years > 80) {
-      setState(() => _error = S.yearsExperienceInvalid);
+      setState(() => _error = context.l10n.yearsExperienceInvalid);
       return;
     }
     setState(() {
@@ -72,45 +72,45 @@ class _ExperienceScreenState extends ConsumerState<ExperienceScreen> {
       _hydrated = true;
     }
     return BatshScaffold(
-      title: S.experienceTitle,
+      title: context.l10n.experienceTitle,
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const SizedBox(height: BatshSpacing.md),
-            BatshTextField(
-              controller: _yearsCtrl,
-              label: S.yearsExperience,
-              keyboardType: TextInputType.number,
-              inputFormatters: [
-                FilteringTextInputFormatter.digitsOnly,
-                LengthLimitingTextInputFormatter(2),
-              ],
-              errorText: _error,
-            ),
-            const SizedBox(height: BatshSpacing.gutter),
-            BatshTextField(
-              controller: _bioCtrl,
-              label: S.bioLabel,
-              hint: S.bioHint,
-              maxLines: 4,
-              maxLength: 400,
-            ),
-            const SizedBox(height: BatshSpacing.xl),
-            BatshButton(
-              label: S.done,
-              onPressed: _busy ? null : _finish,
-              isLoading: _busy,
-            ),
-            const SizedBox(height: BatshSpacing.lg),
-          ].animate(interval: 60.ms).fadeIn(
-            duration: BatshMotion.slow,
-            curve: BatshMotion.easeOut,
-          ).slideY(
-            begin: 0.08,
-            end: 0,
-            curve: BatshMotion.easeOut,
-          ),
+          children:
+              [
+                    const SizedBox(height: BatshSpacing.md),
+                    BatshTextField(
+                      controller: _yearsCtrl,
+                      label: context.l10n.yearsExperience,
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                        LengthLimitingTextInputFormatter(2),
+                      ],
+                      errorText: _error,
+                    ),
+                    const SizedBox(height: BatshSpacing.gutter),
+                    BatshTextField(
+                      controller: _bioCtrl,
+                      label: context.l10n.bioLabel,
+                      hint: context.l10n.bioHint,
+                      maxLines: 4,
+                      maxLength: 400,
+                    ),
+                    const SizedBox(height: BatshSpacing.xl),
+                    BatshButton(
+                      label: context.l10n.done,
+                      onPressed: _busy ? null : _finish,
+                      isLoading: _busy,
+                    ),
+                    const SizedBox(height: BatshSpacing.lg),
+                  ]
+                  .animate(interval: 60.ms)
+                  .fadeIn(
+                    duration: BatshMotion.slow,
+                    curve: BatshMotion.easeOut,
+                  )
+                  .slideY(begin: 0.08, end: 0, curve: BatshMotion.easeOut),
         ),
       ),
     );

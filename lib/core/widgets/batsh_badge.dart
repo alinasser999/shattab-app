@@ -6,6 +6,7 @@ import '../theme/batsh_icon_size.dart';
 import '../theme/batsh_radius.dart';
 import '../theme/batsh_spacing.dart';
 import '../theme/batsh_typography.dart';
+import '../theme/theme_extension.dart';
 
 /// What a badge is saying about the thing it sits on.
 enum BatshBadgeTone {
@@ -81,9 +82,9 @@ enum BatshBadgeEmphasis {
 /// apart is what stops a status label from looking tappable.
 ///
 /// ```dart
-/// BatshBadge(label: S.statusOpen, tone: BatshBadgeTone.success)
+/// BatshBadge(label: context.l10n.statusOpen, tone: BatshBadgeTone.success)
 /// BatshBadge(label: '4.8', icon: Icons.star_rounded, tone: BatshBadgeTone.warning)
-/// BatshBadge(label: S.pro, tone: BatshBadgeTone.brand, emphasis: BatshBadgeEmphasis.solid)
+/// BatshBadge(label: context.l10n.pro, tone: BatshBadgeTone.brand, emphasis: BatshBadgeEmphasis.solid)
 /// ```
 class BatshBadge extends StatelessWidget {
   const BatshBadge({
@@ -118,70 +119,75 @@ class BatshBadge extends StatelessWidget {
   /// colour rather than a transparency of the base. Transparency over a
   /// surface whose colour is not known at build time is how contrast quietly
   /// fails.
+  /// Takes the scheme rather than a `BuildContext` so the contrast test can
+  /// check a palette without pumping a widget tree.
   @visibleForTesting
-  (Color, Color, Color) get debugPalette => switch ((tone, emphasis)) {
-    // Deliberately ignores tone. Over a photo the only job is legibility,
-    // and a tinted scrim would tint the photograph rather than the badge.
-    (_, BatshBadgeEmphasis.onImage) => (
-      Colors.white,
-      Colors.black.withValues(alpha: 0.6),
-      Colors.transparent,
-    ),
-    (BatshBadgeTone.neutral, BatshBadgeEmphasis.solid) => (
-      BatshColors.inverseOnSurface,
-      BatshColors.inverseSurface,
-      BatshColors.inverseSurface,
-    ),
-    (BatshBadgeTone.neutral, _) => (
-      BatshColors.onSurfaceVariant,
-      BatshColors.surfaceContainerHigh,
-      BatshColors.outlineVariant,
-    ),
-    (BatshBadgeTone.brand, BatshBadgeEmphasis.solid) => (
-      BatshColors.onPrimary,
-      BatshColors.primary,
-      BatshColors.primary,
-    ),
-    (BatshBadgeTone.brand, _) => (
-      BatshColors.onPrimaryContainer,
-      BatshColors.primaryContainer,
-      BatshColors.primary,
-    ),
-    (BatshBadgeTone.success, BatshBadgeEmphasis.solid) => (
-      BatshColors.onSuccess,
-      BatshColors.success,
-      BatshColors.success,
-    ),
-    (BatshBadgeTone.success, _) => (
-      BatshColors.onSecondaryContainer,
-      BatshColors.successContainer,
-      BatshColors.success,
-    ),
-    (BatshBadgeTone.warning, BatshBadgeEmphasis.solid) => (
-      BatshColors.onWarning,
-      BatshColors.warning,
-      BatshColors.warning,
-    ),
-    (BatshBadgeTone.warning, _) => (
-      BatshColors.onTertiaryContainer,
-      BatshColors.warningContainer,
-      BatshColors.warning,
-    ),
-    (BatshBadgeTone.danger, BatshBadgeEmphasis.solid) => (
-      BatshColors.onError,
-      BatshColors.error,
-      BatshColors.error,
-    ),
-    (BatshBadgeTone.danger, _) => (
-      BatshColors.onErrorContainer,
-      BatshColors.errorContainer,
-      BatshColors.error,
-    ),
-  };
+  (Color, Color, Color) debugPalette(ColorScheme cs) =>
+      switch ((tone, emphasis)) {
+        // Deliberately ignores tone. Over a photo the only job is legibility,
+        // and a tinted scrim would tint the photograph rather than the badge.
+        (_, BatshBadgeEmphasis.onImage) => (
+          Colors.white,
+          Colors.black.withValues(alpha: 0.6),
+          Colors.transparent,
+        ),
+        (BatshBadgeTone.neutral, BatshBadgeEmphasis.solid) => (
+          cs.inverseOnSurface,
+          cs.inverseSurface,
+          cs.inverseSurface,
+        ),
+        (BatshBadgeTone.neutral, _) => (
+          cs.onSurfaceVariant,
+          cs.surfaceContainerHigh,
+          cs.outlineVariant,
+        ),
+        (BatshBadgeTone.brand, BatshBadgeEmphasis.solid) => (
+          cs.onPrimary,
+          cs.primary,
+          cs.primary,
+        ),
+        (BatshBadgeTone.brand, _) => (
+          cs.onPrimaryContainer,
+          cs.primaryContainer,
+          cs.primary,
+        ),
+        (BatshBadgeTone.success, BatshBadgeEmphasis.solid) => (
+          cs.onSuccess,
+          cs.success,
+          cs.success,
+        ),
+        (BatshBadgeTone.success, _) => (
+          cs.onSecondaryContainer,
+          cs.successContainer,
+          cs.success,
+        ),
+        (BatshBadgeTone.warning, BatshBadgeEmphasis.solid) => (
+          cs.onWarning,
+          cs.warning,
+          cs.warning,
+        ),
+        (BatshBadgeTone.warning, _) => (
+          cs.onTertiaryContainer,
+          cs.warningContainer,
+          cs.warning,
+        ),
+        (BatshBadgeTone.danger, BatshBadgeEmphasis.solid) => (
+          cs.onError,
+          cs.error,
+          cs.error,
+        ),
+        (BatshBadgeTone.danger, _) => (
+          cs.onErrorContainer,
+          cs.errorContainer,
+          cs.error,
+        ),
+      };
 
   @override
   Widget build(BuildContext context) {
-    final (foreground, background, borderColor) = debugPalette;
+    final (foreground, background, borderColor) = debugPalette(
+      context.colorScheme,
+    );
     final outlined = emphasis == BatshBadgeEmphasis.outline;
 
     return Semantics(

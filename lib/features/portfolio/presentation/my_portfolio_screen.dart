@@ -4,7 +4,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/l10n/strings.dart';
+import 'package:batsh/core/l10n/l10n_extension.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/batsh_colors.dart';
 import '../../../core/theme/batsh_motion.dart';
@@ -24,6 +24,8 @@ import 'providers/my_portfolio_providers.dart';
 import '../../../core/theme/batsh_icon_size.dart';
 import '../../../core/widgets/batsh_snack.dart';
 
+import 'package:batsh/core/theme/theme_extension.dart';
+
 /// Contractor-facing portfolio manager (Tab 3). Grid of own projects;
 /// tap to edit, long-press to delete, FAB to add.
 class MyPortfolioScreen extends ConsumerWidget {
@@ -37,17 +39,19 @@ class MyPortfolioScreen extends ConsumerWidget {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(S.deleteWork),
-        content: Text(S.deleteWorkConfirm),
+        title: Text(context.l10n.deleteWork),
+        content: Text(context.l10n.deleteWorkConfirm),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: Text(S.cancel),
+            child: Text(context.l10n.cancel),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            style: TextButton.styleFrom(foregroundColor: BatshColors.error),
-            child: Text(S.delete),
+            style: TextButton.styleFrom(
+              foregroundColor: context.colorScheme.error,
+            ),
+            child: Text(context.l10n.delete),
           ),
         ],
       ),
@@ -56,11 +60,11 @@ class MyPortfolioScreen extends ConsumerWidget {
     try {
       await ref.read(portfolioControllerProvider.notifier).remove(p.id);
       if (context.mounted) {
-        BatshSnack.success(context, S.projectDeletedSuccess);
+        BatshSnack.success(context, context.l10n.projectDeletedSuccess);
       }
     } catch (_) {
       if (context.mounted) {
-        BatshSnack.error(context, S.unknownErrorRetry);
+        BatshSnack.error(context, context.l10n.unknownErrorRetry);
       }
     }
   }
@@ -70,7 +74,7 @@ class MyPortfolioScreen extends ConsumerWidget {
     final projectsAsync = ref.watch(myPortfolioProvider);
 
     return BatshScaffold(
-      title: S.myPortfolioTitle,
+      title: context.l10n.myPortfolioTitle,
       headerStyle: BatshHeaderStyle.primary,
       floatingActionButton: projectsAsync.maybeWhen(
         data: (projects) => projects.isEmpty
@@ -89,7 +93,7 @@ class MyPortfolioScreen extends ConsumerWidget {
                 child: FloatingActionButton.extended(
                   onPressed: () => context.push(Routes.contractorPortfolioNew),
                   icon: const Icon(Icons.add),
-                  label: Text(S.addWork),
+                  label: Text(context.l10n.addWork),
                 ),
               ),
         orElse: () => null,
@@ -103,11 +107,11 @@ class MyPortfolioScreen extends ConsumerWidget {
         data: (projects) {
           if (projects.isEmpty) {
             return BatshEmptyState(
-              title: S.portfolioEmptyTitle,
-              message: S.portfolioEmptyMessage,
+              title: context.l10n.portfolioEmptyTitle,
+              message: context.l10n.portfolioEmptyMessage,
               icon: Icons.photo_library_outlined,
               action: BatshButton(
-                label: S.addWork,
+                label: context.l10n.addWork,
                 icon: Icons.add,
                 fullWidth: false,
                 onPressed: () => context.push(Routes.contractorPortfolioNew),
@@ -210,7 +214,7 @@ class _PortfolioTile extends StatelessWidget {
       onLongPress: onLongPress,
       semanticLabel: project.title,
       child: Material(
-        color: BatshColors.surfaceContainerLowest,
+        color: context.colorScheme.surfaceContainerLowest,
         borderRadius: BatshRadius.brLg,
         clipBehavior: Clip.antiAlias,
         child: Stack(
@@ -221,12 +225,12 @@ class _PortfolioTile extends StatelessWidget {
               fit: BoxFit.cover,
               memCacheWidth: 480,
               errorWidget: (_, _, _) => Container(
-                color: BatshColors.surfaceContainer,
-                child: const Center(
+                color: context.colorScheme.surfaceContainer,
+                child: Center(
                   child: Icon(
                     Icons.image_outlined,
                     size: BatshIconSize.xl,
-                    color: BatshColors.onSurfaceVariant,
+                    color: context.colorScheme.onSurfaceVariant,
                   ),
                 ),
               ),
@@ -254,7 +258,7 @@ class _PortfolioTile extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: BatshTypography.labelSm.copyWith(
-                        color: BatshColors.tertiaryFixed,
+                        color: context.colorScheme.tertiaryFixed,
                         fontWeight: FontWeight.w700,
                         letterSpacing: 1.1,
                       ),

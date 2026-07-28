@@ -8,8 +8,9 @@ part 'portfolio_providers.g.dart';
 
 @riverpod
 Future<List<PortfolioProject>> portfolioForContractor(
-        Ref ref, String contractorId) =>
-    ref.watch(portfolioRepositoryProvider).fetchForContractor(contractorId);
+  Ref ref,
+  String contractorId,
+) => ref.watch(portfolioRepositoryProvider).fetchForContractor(contractorId);
 
 @riverpod
 Future<PortfolioProject?> portfolioProject(Ref ref, String projectId) =>

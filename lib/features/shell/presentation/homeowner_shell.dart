@@ -1,23 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/l10n/strings.dart';
+import 'package:batsh/core/l10n/l10n_extension.dart';
 import '../../../core/theme/batsh_colors.dart';
 import '../../../core/widgets/batsh_bottom_nav.dart';
+
+import 'package:batsh/core/theme/theme_extension.dart';
 
 class HomeownerShell extends StatelessWidget {
   const HomeownerShell({super.key, required this.navigationShell});
   final StatefulNavigationShell navigationShell;
 
   void _goToTab(int i) {
-    navigationShell.goBranch(i,
-        initialLocation: i == navigationShell.currentIndex);
+    navigationShell.goBranch(
+      i,
+      initialLocation: i == navigationShell.currentIndex,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: BatshColors.background,
+      backgroundColor: context.colorScheme.background,
       body: navigationShell,
       bottomNavigationBar: BatshBottomNav(
         currentIndex: navigationShell.currentIndex,
@@ -26,27 +30,27 @@ class HomeownerShell extends StatelessWidget {
           BatshBottomNavItem(
             icon: Icons.rocket_launch_outlined,
             selectedIcon: Icons.rocket_launch,
-            label: S.tabExplore,
+            label: context.l10n.tabExplore,
           ),
           BatshBottomNavItem(
             icon: Icons.explore_outlined,
             selectedIcon: Icons.explore,
-            label: S.tabDiscover,
+            label: context.l10n.tabDiscover,
           ),
           BatshBottomNavItem(
             icon: Icons.assignment_outlined,
             selectedIcon: Icons.assignment,
-            label: S.tabRequests,
+            label: context.l10n.tabRequests,
           ),
           BatshBottomNavItem(
             icon: Icons.bookmark_outline,
             selectedIcon: Icons.bookmark,
-            label: S.tabSaved,
+            label: context.l10n.tabSaved,
           ),
           BatshBottomNavItem(
             icon: Icons.person_outline,
             selectedIcon: Icons.person,
-            label: S.tabProfile,
+            label: context.l10n.tabProfile,
           ),
         ],
       ),

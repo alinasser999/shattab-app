@@ -16,7 +16,7 @@ import '../../../../core/widgets/batsh_scaffold.dart';
 import '../../../../core/widgets/batsh_shimmer.dart';
 import '../../../../core/widgets/photo_picker.dart';
 import '../../../../core/utils/error_mapper.dart';
-import '../../../../core/l10n/strings.dart';
+import 'package:batsh/core/l10n/l10n_extension.dart';
 import '../../../onboarding/domain/onboarding_models.dart';
 import '../../../quotes/domain/quote.dart';
 import '../../../quotes/presentation/providers/quotes_providers.dart';
@@ -28,6 +28,8 @@ import 'create_post_screen.dart';
 import '../../../../core/theme/batsh_icon_size.dart';
 import '../../../../core/widgets/batsh_snack.dart';
 import '../../../../core/widgets/batsh_dialog.dart';
+
+import 'package:batsh/core/theme/theme_extension.dart';
 
 /// Resolves the hired contractor so confirming completion can open the review
 /// sheet for them immediately. Falls back to confirming without the prompt if
@@ -60,10 +62,10 @@ class BriefDetailScreen extends ConsumerWidget {
   Future<bool> _cancel(BuildContext context, WidgetRef ref) async {
     final confirmed = await BatshDialog.confirm(
       context,
-      title: S.cancelBriefTitle,
-      message: S.cancelBriefMessage,
-      confirmLabel: S.cancelBriefYes,
-      cancelLabel: S.cancelBriefNo,
+      title: context.l10n.cancelBriefTitle,
+      message: context.l10n.cancelBriefMessage,
+      confirmLabel: context.l10n.cancelBriefYes,
+      cancelLabel: context.l10n.cancelBriefNo,
     );
     if (confirmed != true) return false;
     await ref.read(briefsControllerProvider.notifier).cancel(briefId);
@@ -75,7 +77,7 @@ class BriefDetailScreen extends ConsumerWidget {
     final async = ref.watch(briefByIdProvider(briefId));
 
     return BatshScaffold(
-      title: S.briefDetailTitle,
+      title: context.l10n.briefDetailTitle,
       body: async.when(
         loading: () => const _BriefDetailSkeleton(),
         error: (e, _) => BatshError(
@@ -84,7 +86,7 @@ class BriefDetailScreen extends ConsumerWidget {
         ),
         data: (brief) {
           if (brief == null) {
-            return BatshError(message: S.briefNotFound);
+            return BatshError(message: context.l10n.briefNotFound);
           }
           final date = intl.DateFormat.yMMMd('ar').format(brief.createdAt);
           final children = <Widget>[
@@ -104,9 +106,9 @@ class BriefDetailScreen extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    S.workDescriptionLabel,
+                    context.l10n.workDescriptionLabel,
                     style: BatshTypography.labelMd.copyWith(
-                      color: BatshColors.onSurfaceVariant,
+                      color: context.colorScheme.onSurfaceVariant,
                     ),
                   ),
                   const SizedBox(height: BatshSpacing.sm),
@@ -120,9 +122,9 @@ class BriefDetailScreen extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    S.locationDetailsLabel,
+                    context.l10n.locationDetailsLabel,
                     style: BatshTypography.labelMd.copyWith(
-                      color: BatshColors.onSurfaceVariant,
+                      color: context.colorScheme.onSurfaceVariant,
                     ),
                   ),
                   const SizedBox(height: BatshSpacing.sm),
@@ -142,9 +144,9 @@ class BriefDetailScreen extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      S.lookingForLabel,
+                      context.l10n.lookingForLabel,
                       style: BatshTypography.labelMd.copyWith(
-                        color: BatshColors.onSurfaceVariant,
+                        color: context.colorScheme.onSurfaceVariant,
                       ),
                     ),
                     const SizedBox(height: BatshSpacing.sm),
@@ -183,7 +185,7 @@ class BriefDetailScreen extends ConsumerWidget {
           if (brief.isActive) {
             children.add(
               BatshButton(
-                label: S.cancelButton,
+                label: context.l10n.cancelButton,
                 style: BatshButtonStyle.secondary,
                 onPressed: () async {
                   try {
@@ -191,7 +193,7 @@ class BriefDetailScreen extends ConsumerWidget {
                     if (cancelled && context.mounted) context.pop();
                   } catch (_) {
                     if (context.mounted) {
-                      BatshSnack.error(context, S.unknownErrorRetry);
+                      BatshSnack.error(context, context.l10n.unknownErrorRetry);
                     }
                   }
                 },
@@ -297,10 +299,12 @@ class _StatusRow extends ConsumerWidget {
 
     final ok = await BatshDialog.confirm(
       context,
-      title: S.deleteBriefTitle,
-      message: willCancel ? S.deleteBriefWithQuotesBody : S.deleteBriefBody,
-      confirmLabel: S.deletePost,
-      cancelLabel: S.cancel,
+      title: context.l10n.deleteBriefTitle,
+      message: willCancel
+          ? context.l10n.deleteBriefWithQuotesBody
+          : context.l10n.deleteBriefBody,
+      confirmLabel: context.l10n.deletePost,
+      cancelLabel: context.l10n.cancel,
       isDestructive: true,
     );
     if (ok != true || !context.mounted) return;
@@ -312,7 +316,9 @@ class _StatusRow extends ConsumerWidget {
       if (!context.mounted) return;
       BatshSnack.success(
         context,
-        outcome == 'deleted' ? S.briefDeleted : S.briefCancelledInstead,
+        outcome == 'deleted'
+            ? context.l10n.briefDeleted
+            : context.l10n.briefCancelledInstead,
       );
       // The row is gone when it was truly deleted; stay put when cancelled so
       // the homeowner can still see the quotes that survived.
@@ -328,11 +334,11 @@ class _StatusRow extends ConsumerWidget {
     final isPost = brief.isPost;
     final isCancelled = brief.status == BriefStatus.cancelled;
     final color = isCancelled
-        ? BatshColors.onSurfaceVariant
-        : (isPost ? BatshColors.tertiary : BatshColors.primary);
+        ? context.colorScheme.onSurfaceVariant
+        : (isPost ? context.colorScheme.tertiary : context.colorScheme.primary);
     final label = isCancelled
-        ? S.statusCancelled
-        : (isPost ? S.statusPost : S.statusDirectRequest);
+        ? context.l10n.statusCancelled
+        : (isPost ? context.l10n.statusPost : context.l10n.statusDirectRequest);
     return Row(
       children: [
         Icon(Icons.circle, color: color, size: BatshIconSize.xs),
@@ -349,9 +355,9 @@ class _StatusRow extends ConsumerWidget {
           // Contractors see this too: a quote written against the original
           // wording may no longer fit the scope.
           Text(
-            '· ${S.editedMarker}',
+            '· ${context.l10n.editedMarker}',
             style: BatshTypography.labelSm.copyWith(
-              color: BatshColors.onSurfaceVariant,
+              color: context.colorScheme.onSurfaceVariant,
             ),
           ),
         ],
@@ -359,16 +365,16 @@ class _StatusRow extends ConsumerWidget {
         Text(
           date,
           style: BatshTypography.labelMd.copyWith(
-            color: BatshColors.onSurfaceVariant,
+            color: context.colorScheme.onSurfaceVariant,
           ),
         ),
         if (!isCancelled)
           PopupMenuButton<String>(
-            tooltip: S.editPost,
-            icon: const Icon(
+            tooltip: context.l10n.editPost,
+            icon: Icon(
               Icons.more_horiz_rounded,
               size: BatshIconSize.md,
-              color: BatshColors.onSurfaceVariant,
+              color: context.colorScheme.onSurfaceVariant,
             ),
             onSelected: (v) {
               if (v == 'delete') {
@@ -394,7 +400,7 @@ class _StatusRow extends ConsumerWidget {
                     children: [
                       const Icon(Icons.edit_outlined, size: BatshIconSize.md),
                       const SizedBox(width: BatshSpacing.sm),
-                      Text(S.editBriefTitle),
+                      Text(context.l10n.editBriefTitle),
                     ],
                   ),
                 ),
@@ -402,15 +408,15 @@ class _StatusRow extends ConsumerWidget {
                 value: 'delete',
                 child: Row(
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.delete_outline,
                       size: BatshIconSize.md,
-                      color: BatshColors.error,
+                      color: context.colorScheme.error,
                     ),
                     const SizedBox(width: BatshSpacing.sm),
                     Text(
-                      S.deletePost,
-                      style: const TextStyle(color: BatshColors.error),
+                      context.l10n.deletePost,
+                      style: TextStyle(color: context.colorScheme.error),
                     ),
                   ],
                 ),

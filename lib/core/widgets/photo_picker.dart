@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+
+import '../l10n/l10n_extension.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../l10n/strings.dart';
@@ -12,6 +14,8 @@ import '../theme/batsh_radius.dart';
 import '../theme/batsh_spacing.dart';
 import '../theme/batsh_typography.dart';
 import '../theme/batsh_icon_size.dart';
+
+import 'package:batsh/core/theme/theme_extension.dart';
 
 /// Multi-photo picker (max [maxPhotos], default 5). Returns [DraftPhoto] entries
 /// the caller persists later.
@@ -58,9 +62,10 @@ class _PhotoPickerState extends State<PhotoPicker> {
         newPhotos.add(DraftPhoto(file: File(x.path)));
       }
     }
-    setState(() => _photos = [..._photos, ...newPhotos]
-        .take(widget.maxPhotos)
-        .toList());
+    setState(
+      () =>
+          _photos = [..._photos, ...newPhotos].take(widget.maxPhotos).toList(),
+    );
     widget.onChanged(_photos);
   }
 
@@ -75,9 +80,10 @@ class _PhotoPickerState extends State<PhotoPicker> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
-          '${S.photos} (${_photos.length}/${widget.maxPhotos})',
-          style: BatshTypography.labelMd
-              .copyWith(color: BatshColors.onSurfaceVariant),
+          '${context.l10n.photos} (${_photos.length}/${widget.maxPhotos})',
+          style: BatshTypography.labelMd.copyWith(
+            color: context.colorScheme.onSurfaceVariant,
+          ),
         ),
         const SizedBox(height: BatshSpacing.sm),
         SizedBox(
@@ -92,8 +98,7 @@ class _PhotoPickerState extends State<PhotoPicker> {
                   onTap: _photos.length >= widget.maxPhotos ? null : _pick,
                 );
               }
-              return _PhotoTile(
-                  photo: _photos[i], onRemove: () => _remove(i));
+              return _PhotoTile(photo: _photos[i], onRemove: () => _remove(i));
             },
           ),
         ),
@@ -110,7 +115,7 @@ class _AddTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final disabled = onTap == null;
     return Material(
-      color: BatshColors.surfaceContainer,
+      color: context.colorScheme.surfaceContainer,
       borderRadius: BatshRadius.brMd,
       child: InkWell(
         borderRadius: BatshRadius.brMd,
@@ -121,15 +126,16 @@ class _AddTile extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BatshRadius.brMd,
             border: Border.all(
-                color: BatshColors.outlineVariant,
-                style: disabled ? BorderStyle.solid : BorderStyle.solid),
+              color: context.colorScheme.outlineVariant,
+              style: disabled ? BorderStyle.solid : BorderStyle.solid,
+            ),
           ),
           alignment: Alignment.center,
           child: Icon(
             Icons.add_a_photo_outlined,
             color: disabled
-                ? BatshColors.surfaceContainerHigh
-                : BatshColors.primary,
+                ? context.colorScheme.surfaceContainerHigh
+                : context.colorScheme.primary,
             size: BatshIconSize.lg,
           ),
         ),
@@ -152,10 +158,13 @@ class _PhotoTile extends StatelessWidget {
       image = Image.memory(photo.bytes!, fit: BoxFit.cover);
     } else if (photo.url != null) {
       image = CachedNetworkImage(
-          imageUrl: photo.url!,
-          fit: BoxFit.cover,
-          placeholder: (_, _) => Container(color: BatshColors.surfaceContainer),
-          errorWidget: (_, _, _) => Container(color: BatshColors.surfaceContainer));
+        imageUrl: photo.url!,
+        fit: BoxFit.cover,
+        placeholder: (_, _) =>
+            Container(color: context.colorScheme.surfaceContainer),
+        errorWidget: (_, _, _) =>
+            Container(color: context.colorScheme.surfaceContainer),
+      );
     } else {
       image = const SizedBox.shrink();
     }
@@ -177,8 +186,11 @@ class _PhotoTile extends StatelessWidget {
               onTap: onRemove,
               child: const Padding(
                 padding: EdgeInsets.all(4),
-                child:
-                    Icon(Icons.close, size: BatshIconSize.sm, color: Colors.white),
+                child: Icon(
+                  Icons.close,
+                  size: BatshIconSize.sm,
+                  color: Colors.white,
+                ),
               ),
             ),
           ),
@@ -208,12 +220,13 @@ class PhotoGallery extends StatelessWidget {
           child: Container(
             width: 200,
             height: 160,
-            color: BatshColors.surfaceContainer,
+            color: context.colorScheme.surfaceContainer,
             child: CachedNetworkImage(
-                      imageUrl: urls[i],
-                      fit: BoxFit.cover,
-                      placeholder: (_, _) => const SizedBox.shrink(),
-                      errorWidget: (_, _, _) => const SizedBox.shrink()),
+              imageUrl: urls[i],
+              fit: BoxFit.cover,
+              placeholder: (_, _) => const SizedBox.shrink(),
+              errorWidget: (_, _, _) => const SizedBox.shrink(),
+            ),
           ),
         ),
       ),

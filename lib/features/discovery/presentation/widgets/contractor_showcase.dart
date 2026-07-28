@@ -12,7 +12,7 @@ import '../../../../core/theme/batsh_shadows.dart';
 import '../../../../core/theme/batsh_spacing.dart';
 import '../../../../core/theme/batsh_typography.dart';
 import '../../../../core/utils/image_url.dart';
-import '../../../../core/l10n/strings.dart';
+import 'package:batsh/core/l10n/l10n_extension.dart';
 import '../../../../core/widgets/batsh_button.dart';
 import '../../../../core/widgets/batsh_pressable.dart';
 import '../../../../core/widgets/batsh_shimmer.dart';
@@ -28,6 +28,7 @@ import '../../domain/contractor_listing.dart';
 import '../../../../core/theme/batsh_icon_size.dart';
 import '../../../../core/widgets/batsh_badge.dart';
 
+import 'package:batsh/core/theme/theme_extension.dart';
 part 'contractor_showcase_header.dart';
 part 'contractor_showcase_sections.dart';
 
@@ -102,40 +103,42 @@ class ContractorShowcase extends ConsumerWidget {
           expandedHeight: 268,
           pinned: true,
           automaticallyImplyLeading: !_isOwner,
-          backgroundColor: BatshColors.background,
-          foregroundColor: BatshColors.onSurface,
+          backgroundColor: context.colorScheme.background,
+          foregroundColor: context.colorScheme.onSurface,
           elevation: 0,
           leading: _isOwner ? null : const _BackButton(),
           actions: _isOwner
               ? [
                   IconButton(
-                    tooltip: S.editLabel,
+                    tooltip: context.l10n.editLabel,
                     icon: const Icon(Icons.edit_outlined),
                     onPressed: onEdit,
                   ),
                 ]
               : [
                   IconButton(
-                    tooltip: isSaved ? S.unsaveTooltip : S.saveTooltip,
+                    tooltip: isSaved
+                        ? context.l10n.unsaveTooltip
+                        : context.l10n.saveTooltip,
                     icon: Icon(
                       isSaved ? Icons.bookmark : Icons.bookmark_border,
                       color: isSaved
-                          ? BatshColors.primary
-                          : BatshColors.onSurface,
+                          ? context.colorScheme.primary
+                          : context.colorScheme.onSurface,
                     ),
                     onPressed: () => runSignedIn(
                       context,
                       ref,
-                      reason: S.signInToSave,
+                      reason: context.l10n.signInToSave,
                       action: () => ref
                           .read(savedControllerProvider.notifier)
                           .toggle(listing.id),
                     ),
                   ),
                   IconButton(
-                    tooltip: S.share,
+                    tooltip: context.l10n.share,
                     icon: const Icon(Icons.share_outlined),
-                    onPressed: () => _shareContractor(listing),
+                    onPressed: () => _shareContractor(context, listing),
                   ),
                 ],
           // The avatar is anchored to the bottom of the hero rather than pulled
@@ -210,7 +213,10 @@ class ContractorShowcase extends ConsumerWidget {
               ],
               if (listing.serviceAreas.isNotEmpty) ...[
                 const SizedBox(height: BatshSpacing.lg),
-                _ChipsSection(title: S.worksIn, labels: listing.serviceAreas),
+                _ChipsSection(
+                  title: context.l10n.worksIn,
+                  labels: listing.serviceAreas,
+                ),
               ],
               if (_isOwner && onSignOut != null) ...[
                 const SizedBox(height: BatshSpacing.xl),
@@ -234,15 +240,17 @@ class ContractorShowcase extends ConsumerWidget {
 /// The blurb still carries no link: there is no public profile URL yet. Add one
 /// here the moment App Links / a web profile exist, since a shareable link is
 /// the whole point of the button.
-void _shareContractor(ContractorListing listing) {
+void _shareContractor(BuildContext context, ContractorListing listing) {
   final name = listing.businessName.isNotEmpty
       ? listing.businessName
       : listing.fullName;
-  final blurb = StringBuffer(S.seeOnShattab.replaceFirst('%s', name));
+  final blurb = StringBuffer(
+    context.l10n.seeOnShattab.replaceFirst('%s', name),
+  );
   if (listing.headline != null && listing.headline!.isNotEmpty) {
     blurb.write(' - ${listing.headline}');
   }
-  blurb.write('\n${S.forContact}: ${listing.phone}');
+  blurb.write('\n${context.l10n.forContact}: ${listing.phone}');
   Share.share(blurb.toString(), subject: name);
 }
 
@@ -286,13 +294,16 @@ class ContractorContactBar extends StatelessWidget {
     final content = Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        WhatsAppButton(phone: listing.phone, message: S.profileGreeting),
+        WhatsAppButton(
+          phone: listing.phone,
+          message: context.l10n.profileGreeting,
+        ),
         const SizedBox(height: BatshSpacing.sm),
         Row(
           children: [
             Expanded(
               child: BatshButton(
-                label: S.sendProjectDetails,
+                label: context.l10n.sendProjectDetails,
                 style: BatshButtonStyle.secondary,
                 onPressed: () =>
                     context.push(Routes.homeownerSendBriefPath(listing.id)),
@@ -316,9 +327,9 @@ class ContractorContactBar extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: BatshColors.surfaceContainerLowest,
-        border: const Border(
-          top: BorderSide(color: BatshColors.outlineVariant),
+        color: context.colorScheme.surfaceContainerLowest,
+        border: Border(
+          top: BorderSide(color: context.colorScheme.outlineVariant),
         ),
         boxShadow: BatshShadows.raised,
       ),
@@ -353,13 +364,13 @@ class _StatsRow extends StatelessWidget {
       if (contractor.projectsCompleted > 0)
         _StatCard(
           value: '${contractor.projectsCompleted}',
-          label: S.projectsCompleted,
+          label: context.l10n.projectsCompleted,
           icon: Icons.home_work_outlined,
         ),
       if (contractor.yearsExperience != null)
         _StatCard(
           value: '${contractor.yearsExperience}',
-          label: S.experienceYears,
+          label: context.l10n.experienceYears,
           icon: Icons.workspace_premium_outlined,
         ),
     ];
@@ -402,14 +413,18 @@ class _StatCard extends StatelessWidget {
         horizontal: BatshSpacing.md,
       ),
       decoration: BoxDecoration(
-        color: BatshColors.surfaceContainerLowest,
+        color: context.colorScheme.surfaceContainerLowest,
         borderRadius: BatshRadius.brXl,
         boxShadow: BatshShadows.soft,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: BatshColors.primary, size: BatshIconSize.md),
+          Icon(
+            icon,
+            color: context.colorScheme.primary,
+            size: BatshIconSize.md,
+          ),
           const SizedBox(height: BatshSpacing.md),
           // Plain text, no count-up tween. The tween began at 0 on every build,
           // and this widget's ancestor watches the saved-contractors provider —
@@ -418,7 +433,7 @@ class _StatCard extends StatelessWidget {
           Text(
             value,
             style: BatshTypography.displayMd.copyWith(
-              color: BatshColors.onSurface,
+              color: context.colorScheme.onSurface,
               fontWeight: FontWeight.w700,
             ),
           ),
@@ -427,7 +442,7 @@ class _StatCard extends StatelessWidget {
             label,
             maxLines: 2,
             style: BatshTypography.labelMd.copyWith(
-              color: BatshColors.onSurfaceVariant,
+              color: context.colorScheme.onSurfaceVariant,
             ),
           ),
         ],
@@ -450,11 +465,14 @@ class _GoProBanner extends StatelessWidget {
         borderRadius: BatshRadius.brCard,
         clipBehavior: Clip.antiAlias,
         child: Ink(
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.centerRight,
               end: Alignment.centerLeft,
-              colors: [BatshColors.primary, BatshColors.onPrimaryFixedVariant],
+              colors: [
+                context.colorScheme.primary,
+                context.colorScheme.onPrimaryFixedVariant,
+              ],
             ),
           ),
           child: InkWell(
@@ -466,19 +484,19 @@ class _GoProBanner extends StatelessWidget {
                   Container(
                     width: 40,
                     height: 40,
-                    decoration: const BoxDecoration(
+                    decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       gradient: LinearGradient(
                         colors: [
-                          BatshColors.tertiaryContainer,
-                          BatshColors.tertiary,
+                          context.colorScheme.tertiaryContainer,
+                          context.colorScheme.tertiary,
                         ],
                       ),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.workspace_premium_rounded,
                       size: BatshIconSize.md,
-                      color: BatshColors.onTertiaryContainer,
+                      color: context.colorScheme.onTertiaryContainer,
                     ),
                   ),
                   const SizedBox(width: BatshSpacing.md),
@@ -487,18 +505,18 @@ class _GoProBanner extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          S.upgradeToProShort,
+                          context.l10n.upgradeToProShort,
                           style: BatshTypography.titleMd.copyWith(
-                            color: BatshColors.onPrimary,
+                            color: context.colorScheme.onPrimary,
                             fontWeight: FontWeight.w700,
                           ),
                         ),
                         Text(
-                          S.proValueLine,
+                          context.l10n.proValueLine,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: BatshTypography.bodySm.copyWith(
-                            color: BatshColors.onPrimary.withValues(
+                            color: context.colorScheme.onPrimary.withValues(
                               alpha: 0.85,
                             ),
                           ),
@@ -511,7 +529,7 @@ class _GoProBanner extends StatelessWidget {
                   Icon(
                     Icons.arrow_forward_ios,
                     size: BatshIconSize.sm,
-                    color: BatshColors.onPrimary.withValues(alpha: 0.9),
+                    color: context.colorScheme.onPrimary.withValues(alpha: 0.9),
                   ),
                 ],
               ),
@@ -536,7 +554,7 @@ class _OwnerActions extends StatelessWidget {
       child: Column(
         children: [
           BatshButton(
-            label: S.editProfileButton,
+            label: context.l10n.editProfileButton,
             style: BatshButtonStyle.secondary,
             onPressed: onEdit,
           ),
@@ -544,16 +562,16 @@ class _OwnerActions extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(
+              Icon(
                 Icons.visibility_outlined,
                 size: BatshIconSize.sm,
-                color: BatshColors.onSurfaceVariant,
+                color: context.colorScheme.onSurfaceVariant,
               ),
               const SizedBox(width: BatshSpacing.xs),
               Text(
-                S.clientsPreview,
+                context.l10n.clientsPreview,
                 style: BatshTypography.labelSm.copyWith(
-                  color: BatshColors.onSurfaceVariant,
+                  color: context.colorScheme.onSurfaceVariant,
                 ),
               ),
             ],
@@ -575,7 +593,7 @@ class _SignOutBlock extends StatelessWidget {
         horizontal: BatshSpacing.marginMobile,
       ),
       child: BatshButton(
-        label: S.signOutButton,
+        label: context.l10n.signOutButton,
         style: BatshButtonStyle.ghost,
         onPressed: onSignOut,
       ),

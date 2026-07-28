@@ -1,6 +1,6 @@
 import 'package:intl/intl.dart';
 
-import '../../../core/l10n/strings.dart';
+import 'package:batsh/core/l10n/strings.dart';
 import '../domain/quote.dart';
 
 /// Arabic-locale grouping formatter (matches the app's `DateFormat('ar')`),

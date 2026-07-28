@@ -49,10 +49,10 @@ class ModerationRepository {
   Future<void> block(String userId) async {
     // Idempotent: re-blocking must not surface a primary-key error to someone
     // who simply tapped twice.
-    await _client.from('user_blocks').upsert(
-      {'blocker_id': _uid, 'blocked_id': userId},
-      onConflict: 'blocker_id,blocked_id',
-    );
+    await _client.from('user_blocks').upsert({
+      'blocker_id': _uid,
+      'blocked_id': userId,
+    }, onConflict: 'blocker_id,blocked_id');
   }
 
   Future<void> unblock(String userId) async {

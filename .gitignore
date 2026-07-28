@@ -75,3 +75,12 @@ opencode.json
 
 # Local tooling output (design critiques) — not part of the project.
 .impeccable/
+
+# One-off repair scripts and their scratch output (2026-07-28 branch repair).
+# Kept out of the tree: they encode a snapshot of broken state, not a tool.
+/*.py
+/scratch/
+/arabic_strings.txt
+/found_trust.txt
+/trust_signals_lines.txt
+/supabase_login.txt

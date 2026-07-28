@@ -56,16 +56,13 @@ class ReviewsRepository {
   }) async {
     final row = await _client
         .from('reviews')
-        .upsert(
-          {
-            'brief_id': briefId,
-            'contractor_id': contractorId,
-            'homeowner_id': _uid,
-            'rating': rating,
-            'comment': comment,
-          },
-          onConflict: 'brief_id',
-        )
+        .upsert({
+          'brief_id': briefId,
+          'contractor_id': contractorId,
+          'homeowner_id': _uid,
+          'rating': rating,
+          'comment': comment,
+        }, onConflict: 'brief_id')
         .select()
         .single();
     return Review.fromJson(row);

@@ -74,25 +74,29 @@ class BatshTheme {
           shape: const RoundedRectangleBorder(
             borderRadius: BatshRadius.brDefault,
           ),
-          textStyle:
-              BatshTypography.labelMd.copyWith(fontWeight: FontWeight.w600),
+          textStyle: BatshTypography.labelMd.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: BatshColors.primary,
           minimumSize: const Size(0, 48),
-          textStyle:
-              BatshTypography.labelMd.copyWith(fontWeight: FontWeight.w600),
+          textStyle: BatshTypography.labelMd.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: BatshColors.surfaceContainerLow,
-        hintStyle: BatshTypography.bodyMd
-            .copyWith(color: BatshColors.onSurfaceVariant),
-        labelStyle: BatshTypography.bodyMd
-            .copyWith(color: BatshColors.onSurfaceVariant),
+        hintStyle: BatshTypography.bodyMd.copyWith(
+          color: BatshColors.onSurfaceVariant,
+        ),
+        labelStyle: BatshTypography.bodyMd.copyWith(
+          color: BatshColors.onSurfaceVariant,
+        ),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: BatshSpacing.gutter,
           vertical: BatshSpacing.md,
@@ -109,39 +113,30 @@ class BatshTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BatshRadius.brMd,
-          borderSide: const BorderSide(
-            color: BatshColors.primary,
-            width: 2,
-          ),
+          borderSide: const BorderSide(color: BatshColors.primary, width: 2),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BatshRadius.brMd,
-          borderSide: const BorderSide(
-            color: BatshColors.error,
-            width: 1.5,
-          ),
+          borderSide: const BorderSide(color: BatshColors.error, width: 1.5),
         ),
         focusedErrorBorder: OutlineInputBorder(
           borderRadius: BatshRadius.brMd,
-          borderSide: const BorderSide(
-            color: BatshColors.error,
-            width: 2,
-          ),
+          borderSide: const BorderSide(color: BatshColors.error, width: 2),
         ),
       ),
       cardTheme: CardThemeData(
         color: BatshColors.surfaceContainerLowest,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BatshRadius.brLg,
-        ),
+        shape: const RoundedRectangleBorder(borderRadius: BatshRadius.brLg),
         margin: EdgeInsets.zero,
       ),
       bottomNavigationBarTheme: BottomNavigationBarThemeData(
         backgroundColor: BatshColors.surfaceContainerLow,
         selectedItemColor: BatshColors.primary,
-        unselectedItemColor: BatshColors.onSurfaceVariant.withValues(alpha: 0.55),
+        unselectedItemColor: BatshColors.onSurfaceVariant.withValues(
+          alpha: 0.55,
+        ),
         showSelectedLabels: true,
         showUnselectedLabels: true,
         type: BottomNavigationBarType.fixed,
@@ -158,12 +153,12 @@ class BatshTheme {
         selectedColor: BatshColors.primaryFixed,
         disabledColor: BatshColors.surfaceContainerHigh,
         labelStyle: BatshTypography.labelMd,
-        secondaryLabelStyle: BatshTypography.labelMd
-            .copyWith(color: BatshColors.primary, fontWeight: FontWeight.w600),
-        side: const BorderSide(color: BatshColors.outlineVariant),
-        shape: const RoundedRectangleBorder(
-          borderRadius: BatshRadius.brFull,
+        secondaryLabelStyle: BatshTypography.labelMd.copyWith(
+          color: BatshColors.primary,
+          fontWeight: FontWeight.w600,
         ),
+        side: const BorderSide(color: BatshColors.outlineVariant),
+        shape: const RoundedRectangleBorder(borderRadius: BatshRadius.brFull),
         padding: const EdgeInsets.symmetric(
           horizontal: BatshSpacing.md,
           vertical: BatshSpacing.sm,
@@ -176,12 +171,11 @@ class BatshTheme {
       ),
       snackBarTheme: SnackBarThemeData(
         backgroundColor: BatshColors.inverseSurface,
-        contentTextStyle:
-            BatshTypography.bodyMd.copyWith(color: BatshColors.inverseOnSurface),
-        behavior: SnackBarBehavior.floating,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BatshRadius.brMd,
+        contentTextStyle: BatshTypography.bodyMd.copyWith(
+          color: BatshColors.inverseOnSurface,
         ),
+        behavior: SnackBarBehavior.floating,
+        shape: const RoundedRectangleBorder(borderRadius: BatshRadius.brMd),
       ),
       progressIndicatorTheme: const ProgressIndicatorThemeData(
         color: BatshColors.primary,
@@ -205,9 +199,7 @@ class BatshTheme {
               : Colors.transparent,
         ),
         side: const BorderSide(color: BatshColors.outline, width: 1.5),
-        shape: const RoundedRectangleBorder(
-          borderRadius: BatshRadius.brSm,
-        ),
+        shape: const RoundedRectangleBorder(borderRadius: BatshRadius.brSm),
       ),
       scrollbarTheme: ScrollbarThemeData(
         thickness: WidgetStateProperty.all(4),
@@ -284,25 +276,29 @@ class BatshTheme {
           shape: const RoundedRectangleBorder(
             borderRadius: BatshRadius.brDefault,
           ),
-          textStyle:
-              BatshTypography.labelMd.copyWith(fontWeight: FontWeight.w600),
+          textStyle: BatshTypography.labelMd.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: colors.primary,
           minimumSize: const Size(0, 48),
-          textStyle:
-              BatshTypography.labelMd.copyWith(fontWeight: FontWeight.w600),
+          textStyle: BatshTypography.labelMd.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: colors.surfaceContainerLow,
-        hintStyle: BatshTypography.bodyMd
-            .copyWith(color: colors.onSurfaceVariant),
-        labelStyle: BatshTypography.bodyMd
-            .copyWith(color: colors.onSurfaceVariant),
+        hintStyle: BatshTypography.bodyMd.copyWith(
+          color: colors.onSurfaceVariant,
+        ),
+        labelStyle: BatshTypography.bodyMd.copyWith(
+          color: colors.onSurfaceVariant,
+        ),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: BatshSpacing.gutter,
           vertical: BatshSpacing.md,
@@ -319,33 +315,22 @@ class BatshTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BatshRadius.brMd,
-          borderSide: BorderSide(
-            color: colors.primary,
-            width: 2,
-          ),
+          borderSide: BorderSide(color: colors.primary, width: 2),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BatshRadius.brMd,
-          borderSide: BorderSide(
-            color: colors.error,
-            width: 1.5,
-          ),
+          borderSide: BorderSide(color: colors.error, width: 1.5),
         ),
         focusedErrorBorder: OutlineInputBorder(
           borderRadius: BatshRadius.brMd,
-          borderSide: BorderSide(
-            color: colors.error,
-            width: 2,
-          ),
+          borderSide: BorderSide(color: colors.error, width: 2),
         ),
       ),
       cardTheme: CardThemeData(
         color: colors.surfaceContainerLowest,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BatshRadius.brLg,
-        ),
+        shape: const RoundedRectangleBorder(borderRadius: BatshRadius.brLg),
         margin: EdgeInsets.zero,
       ),
       bottomNavigationBarTheme: BottomNavigationBarThemeData(
@@ -378,12 +363,12 @@ class BatshTheme {
         selectedColor: colors.primaryContainer,
         disabledColor: colors.surfaceContainerHigh,
         labelStyle: BatshTypography.labelMd,
-        secondaryLabelStyle: BatshTypography.labelMd
-            .copyWith(color: colors.primary, fontWeight: FontWeight.w600),
-        side: BorderSide(color: colors.outlineVariant),
-        shape: const RoundedRectangleBorder(
-          borderRadius: BatshRadius.brFull,
+        secondaryLabelStyle: BatshTypography.labelMd.copyWith(
+          color: colors.primary,
+          fontWeight: FontWeight.w600,
         ),
+        side: BorderSide(color: colors.outlineVariant),
+        shape: const RoundedRectangleBorder(borderRadius: BatshRadius.brFull),
         padding: const EdgeInsets.symmetric(
           horizontal: BatshSpacing.md,
           vertical: BatshSpacing.sm,
@@ -396,16 +381,13 @@ class BatshTheme {
       ),
       snackBarTheme: SnackBarThemeData(
         backgroundColor: colors.inverseSurface,
-        contentTextStyle:
-            BatshTypography.bodyMd.copyWith(color: colors.onInverseSurface),
-        behavior: SnackBarBehavior.floating,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BatshRadius.brMd,
+        contentTextStyle: BatshTypography.bodyMd.copyWith(
+          color: colors.onInverseSurface,
         ),
+        behavior: SnackBarBehavior.floating,
+        shape: const RoundedRectangleBorder(borderRadius: BatshRadius.brMd),
       ),
-      progressIndicatorTheme: ProgressIndicatorThemeData(
-        color: colors.primary,
-      ),
+      progressIndicatorTheme: ProgressIndicatorThemeData(color: colors.primary),
       switchTheme: SwitchThemeData(
         thumbColor: WidgetStateProperty.resolveWith(
           (states) => states.contains(WidgetState.selected)
@@ -425,9 +407,7 @@ class BatshTheme {
               : Colors.transparent,
         ),
         side: BorderSide(color: colors.outline, width: 1.5),
-        shape: const RoundedRectangleBorder(
-          borderRadius: BatshRadius.brSm,
-        ),
+        shape: const RoundedRectangleBorder(borderRadius: BatshRadius.brSm),
       ),
       scrollbarTheme: ScrollbarThemeData(
         thickness: WidgetStateProperty.all(4),

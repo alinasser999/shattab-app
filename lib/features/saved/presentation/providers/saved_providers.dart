@@ -18,9 +18,7 @@ Future<Set<String>> savedContractorIds(Ref ref) async {
 Future<List<ContractorListing>> savedContractors(Ref ref) async {
   final session = ref.watch(currentSessionProvider);
   if (session == null) return const [];
-  return ref
-      .watch(savedRepositoryProvider)
-      .fetchSavedListings(session.user.id);
+  return ref.watch(savedRepositoryProvider).fetchSavedListings(session.user.id);
 }
 
 // keepAlive: called one-shot via ref.read(...notifier); autoDispose would
@@ -33,15 +31,15 @@ class SavedController extends _$SavedController {
   Future<void> toggle(String contractorId) async {
     final session = ref.read(currentSessionProvider);
     if (session == null) return;
-    final ids =
-        await ref.read(savedContractorIdsProvider.future);
+    final ids = await ref.read(savedContractorIdsProvider.future);
     final repo = ref.read(savedRepositoryProvider);
     if (ids.contains(contractorId)) {
       await repo.unsave(
-          homeownerId: session.user.id, contractorId: contractorId);
+        homeownerId: session.user.id,
+        contractorId: contractorId,
+      );
     } else {
-      await repo.save(
-          homeownerId: session.user.id, contractorId: contractorId);
+      await repo.save(homeownerId: session.user.id, contractorId: contractorId);
     }
     if (ref.mounted) {
       ref.invalidate(savedContractorIdsProvider);

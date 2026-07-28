@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/debug/debug_config.dart';
 import 'core/l10n/locale_provider.dart';
-import 'core/l10n/strings.dart';
+import 'package:batsh/core/l10n/l10n_extension.dart';
 import 'core/router/app_router.dart';
 import 'core/supabase/supabase_provider.dart';
 import 'core/theme/batsh_theme.dart';
@@ -14,6 +14,8 @@ import 'features/auth/domain/profile.dart';
 import 'features/auth/presentation/providers/auth_provider.dart';
 import 'core/theme/batsh_colors.dart';
 import 'core/theme/batsh_radius.dart';
+
+import 'package:batsh/core/theme/theme_extension.dart';
 
 class BatshApp extends ConsumerWidget {
   const BatshApp({super.key});
@@ -26,7 +28,7 @@ class BatshApp extends ConsumerWidget {
     final motionMode = ref.watch(motionModeProvider);
 
     return MaterialApp.router(
-      title: S.appName,
+      title: context.l10n.appName,
       debugShowCheckedModeBanner: false,
       theme: BatshTheme.light(),
       darkTheme: BatshTheme.dark(),
@@ -97,16 +99,22 @@ class _DebugBanner extends ConsumerWidget {
           children: [
             const Text('🔧', style: TextStyle(fontSize: 11)),
             const SizedBox(width: 6),
-            _roleBtn(ref, 'مالك', UserRole.homeowner, role),
+            _roleBtn(context, ref, 'مالك', UserRole.homeowner, role),
             const SizedBox(width: 4),
-            _roleBtn(ref, 'مقاول', UserRole.contractor, role),
+            _roleBtn(context, ref, 'مقاول', UserRole.contractor, role),
           ],
         ),
       ),
     );
   }
 
-  Widget _roleBtn(WidgetRef ref, String label, UserRole r, UserRole current) {
+  Widget _roleBtn(
+    BuildContext context,
+    WidgetRef ref,
+    String label,
+    UserRole r,
+    UserRole current,
+  ) {
     final active = r == current;
     return GestureDetector(
       onTap: active
@@ -118,7 +126,7 @@ class _DebugBanner extends ConsumerWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
         decoration: BoxDecoration(
-          color: active ? BatshColors.primary : Colors.white24,
+          color: active ? context.colorScheme.primary : Colors.white24,
           borderRadius: BatshRadius.brXs,
         ),
         child: Text(

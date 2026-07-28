@@ -8,7 +8,7 @@ import '../../../moderation/data/moderation_repository.dart';
 import '../../../moderation/presentation/report_sheet.dart';
 import '../providers/explore_providers.dart';
 
-import '../../../../core/l10n/strings.dart';
+import 'package:batsh/core/l10n/l10n_extension.dart';
 import '../../../../core/theme/batsh_colors.dart';
 import '../../../../core/theme/batsh_motion.dart';
 import '../../../../core/theme/batsh_radius.dart';
@@ -22,6 +22,8 @@ import '../../domain/post.dart';
 import 'post_type_icon.dart';
 import '../../../../core/theme/batsh_icon_size.dart';
 import '../../../../core/widgets/batsh_pressable.dart';
+
+import 'package:batsh/core/theme/theme_extension.dart';
 
 class PostCard extends StatelessWidget {
   const PostCard({
@@ -58,19 +60,25 @@ class PostCard extends StatelessWidget {
     Share.share(_shareUrl, subject: post.caption);
   }
 
-  String _timeAgo(DateTime dt) {
+  String _timeAgo(BuildContext context, DateTime dt) {
     final diff = DateTime.now().difference(dt);
-    if (diff.inSeconds < 60) return S.agoNow;
+    if (diff.inSeconds < 60) return context.l10n.agoNow;
     if (diff.inMinutes < 60) {
       final m = diff.inMinutes;
-      return m == 1 ? S.agoMin : S.agoMins.replaceFirst('%s', '$m');
+      return m == 1
+          ? context.l10n.agoMin
+          : context.l10n.agoMins.replaceFirst('%s', '$m');
     }
     if (diff.inHours < 24) {
       final h = diff.inHours;
-      return h == 1 ? S.agoHour : S.agoHours.replaceFirst('%s', '$h');
+      return h == 1
+          ? context.l10n.agoHour
+          : context.l10n.agoHours.replaceFirst('%s', '$h');
     }
     final d = diff.inDays;
-    return d == 1 ? S.agoDay : S.agoDays.replaceFirst('%s', '$d');
+    return d == 1
+        ? context.l10n.agoDay
+        : context.l10n.agoDays.replaceFirst('%s', '$d');
   }
 
   @override
@@ -98,7 +106,7 @@ class PostCard extends StatelessWidget {
                   ),
                 ),
               if (post.mediaUrls.isNotEmpty) _buildMedia(context),
-              _buildActions(),
+              _buildActions(context),
             ],
           ),
         )
@@ -158,14 +166,14 @@ class PostCard extends StatelessWidget {
                     PostTypeIcon(postType: post.postType),
                     const SizedBox(width: 4),
                     Text(
-                      _postTypeLabel(post.postType),
+                      _postTypeLabel(context, post.postType),
                       style: BatshTypography.bodySm,
                     ),
                     const SizedBox(width: BatshSpacing.xs),
                     Text('•', style: BatshTypography.bodySm),
                     const SizedBox(width: BatshSpacing.xs),
                     Text(
-                      _timeAgo(post.createdAt),
+                      _timeAgo(context, post.createdAt),
                       style: BatshTypography.bodySm,
                     ),
                   ],
@@ -195,13 +203,13 @@ class PostCard extends StatelessWidget {
           fit: BoxFit.cover,
           memCacheWidth: 800, // decode at display size, not source resolution
           placeholder: (_, __) =>
-              Container(height: 260, color: BatshColors.surfaceVariant),
+              Container(height: 260, color: context.colorScheme.surfaceVariant),
           errorWidget: (_, __, ___) => Container(
             height: 260,
-            color: BatshColors.surfaceVariant,
+            color: context.colorScheme.surfaceVariant,
             child: Icon(
               Icons.broken_image,
-              color: BatshColors.onSurfaceVariant,
+              color: context.colorScheme.onSurfaceVariant,
             ),
           ),
         ),
@@ -220,12 +228,12 @@ class PostCard extends StatelessWidget {
             fit: BoxFit.cover,
             memCacheWidth: 800,
             placeholder: (_, __) =>
-                Container(color: BatshColors.surfaceVariant),
+                Container(color: context.colorScheme.surfaceVariant),
             errorWidget: (_, __, ___) => Container(
-              color: BatshColors.surfaceVariant,
+              color: context.colorScheme.surfaceVariant,
               child: Icon(
                 Icons.broken_image,
-                color: BatshColors.onSurfaceVariant,
+                color: context.colorScheme.onSurfaceVariant,
               ),
             ),
           ),
@@ -234,7 +242,7 @@ class PostCard extends StatelessWidget {
     );
   }
 
-  Widget _buildActions() {
+  Widget _buildActions(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(
         horizontal: BatshSpacing.sm,
@@ -244,8 +252,10 @@ class PostCard extends StatelessWidget {
         children: [
           _ActionButton(
             icon: post.isLiked ? Icons.favorite : Icons.favorite_border,
-            color: post.isLiked ? BatshColors.error : null,
-            label: post.likeCount > 0 ? '${post.likeCount}' : S.likeLabel,
+            color: post.isLiked ? context.colorScheme.error : null,
+            label: post.likeCount > 0
+                ? '${post.likeCount}'
+                : context.l10n.likeLabel,
             onTap: onLike,
           ),
           const SizedBox(width: BatshSpacing.sm),
@@ -253,19 +263,19 @@ class PostCard extends StatelessWidget {
             icon: Icons.chat_bubble_outline,
             label: post.commentCount > 0
                 ? '${post.commentCount}'
-                : S.commentLabel,
+                : context.l10n.commentLabel,
             onTap: onCommentTap,
           ),
           const Spacer(),
           _ActionButton(
             icon: Icons.share_outlined,
-            label: S.sharePost,
+            label: context.l10n.sharePost,
             onTap: _share,
           ),
           const SizedBox(width: BatshSpacing.xs),
           _ActionButton(
             icon: post.isSaved ? Icons.bookmark : Icons.bookmark_border,
-            color: post.isSaved ? BatshColors.tertiary : null,
+            color: post.isSaved ? context.colorScheme.tertiary : null,
             onTap: onSave,
           ),
         ],
@@ -273,16 +283,16 @@ class PostCard extends StatelessWidget {
     );
   }
 
-  String _postTypeLabel(PostType type) {
+  String _postTypeLabel(BuildContext context, PostType type) {
     switch (type) {
       case PostType.projectShowcase:
-        return S.postTypeProjectShowcase;
+        return context.l10n.postTypeProjectShowcase;
       case PostType.tip:
-        return S.postTypeTip;
+        return context.l10n.postTypeTip;
       case PostType.milestone:
-        return S.postTypeMilestone;
+        return context.l10n.postTypeMilestone;
       case PostType.renovationUpdate:
-        return S.postTypeRenovationUpdate;
+        return context.l10n.postTypeRenovationUpdate;
     }
   }
 }
@@ -300,11 +310,11 @@ class _ModerationMenu extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return PopupMenuButton<String>(
-      tooltip: S.reportTitle,
-      icon: const Icon(
+      tooltip: context.l10n.reportTitle,
+      icon: Icon(
         Icons.more_horiz_rounded,
         size: BatshIconSize.md,
-        color: BatshColors.onSurfaceVariant,
+        color: context.colorScheme.onSurfaceVariant,
       ),
       onSelected: (v) async {
         if (v == 'report') {
@@ -321,7 +331,7 @@ class _ModerationMenu extends ConsumerWidget {
             children: [
               const Icon(Icons.flag_outlined, size: BatshIconSize.md),
               const SizedBox(width: BatshSpacing.sm),
-              Text(S.reportPostAction),
+              Text(context.l10n.reportPostAction),
             ],
           ),
         ),
@@ -329,15 +339,15 @@ class _ModerationMenu extends ConsumerWidget {
           value: 'block',
           child: Row(
             children: [
-              const Icon(
+              Icon(
                 Icons.block,
                 size: BatshIconSize.md,
-                color: BatshColors.error,
+                color: context.colorScheme.error,
               ),
               const SizedBox(width: BatshSpacing.sm),
               Text(
-                S.blockUser,
-                style: const TextStyle(color: BatshColors.error),
+                context.l10n.blockUser,
+                style: TextStyle(color: context.colorScheme.error),
               ),
             ],
           ),
@@ -358,11 +368,11 @@ class _OwnerMenu extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return PopupMenuButton<String>(
-      tooltip: S.editPost,
-      icon: const Icon(
+      tooltip: context.l10n.editPost,
+      icon: Icon(
         Icons.more_horiz_rounded,
         size: BatshIconSize.md,
-        color: BatshColors.onSurfaceVariant,
+        color: context.colorScheme.onSurfaceVariant,
       ),
       onSelected: (v) {
         if (v == 'edit') onEdit?.call();
@@ -376,7 +386,7 @@ class _OwnerMenu extends StatelessWidget {
               children: [
                 const Icon(Icons.edit_outlined, size: BatshIconSize.md),
                 const SizedBox(width: BatshSpacing.sm),
-                Text(S.editPost),
+                Text(context.l10n.editPost),
               ],
             ),
           ),
@@ -385,15 +395,15 @@ class _OwnerMenu extends StatelessWidget {
             value: 'delete',
             child: Row(
               children: [
-                const Icon(
+                Icon(
                   Icons.delete_outline,
                   size: BatshIconSize.md,
-                  color: BatshColors.error,
+                  color: context.colorScheme.error,
                 ),
                 const SizedBox(width: BatshSpacing.sm),
                 Text(
-                  S.deletePost,
-                  style: const TextStyle(color: BatshColors.error),
+                  context.l10n.deletePost,
+                  style: TextStyle(color: context.colorScheme.error),
                 ),
               ],
             ),
@@ -449,7 +459,7 @@ class _ActionButtonState extends State<_ActionButton>
                 Icon(
                   widget.icon,
                   size: BatshIconSize.md,
-                  color: widget.color ?? BatshColors.onSurfaceVariant,
+                  color: widget.color ?? context.colorScheme.onSurfaceVariant,
                 ),
                 if (widget.label != null) ...[
                   const SizedBox(width: 3),

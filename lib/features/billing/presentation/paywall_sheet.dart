@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../core/l10n/strings.dart';
+import 'package:batsh/core/l10n/l10n_extension.dart';
 import '../../../core/theme/batsh_colors.dart';
 import '../../../core/theme/batsh_radius.dart';
 import '../../../core/theme/batsh_spacing.dart';
@@ -9,6 +9,8 @@ import '../../../core/widgets/batsh_button.dart';
 import '../../../core/theme/batsh_icon_size.dart';
 import '../../../core/widgets/batsh_sheet.dart';
 import '../../../core/widgets/batsh_snack.dart';
+
+import 'package:batsh/core/theme/theme_extension.dart';
 
 /// Pro upgrade paywall. Presentational STUB: benefits + subscribe button.
 /// The button is inert until Paymob is wired (create-payment edge fn) -- it
@@ -42,12 +44,12 @@ class _PaywallSheet extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(BatshSpacing.sm),
               decoration: BoxDecoration(
-                color: BatshColors.primaryFixed,
+                color: context.colorScheme.primaryFixed,
                 borderRadius: BatshRadius.brMd,
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.workspace_premium_rounded,
-                color: BatshColors.primary,
+                color: context.colorScheme.primary,
               ),
             ),
             const SizedBox(width: BatshSpacing.md),
@@ -56,15 +58,15 @@ class _PaywallSheet extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    S.paywallTitle,
+                    context.l10n.paywallTitle,
                     style: BatshTypography.titleLg.copyWith(
                       fontWeight: FontWeight.w700,
                     ),
                   ),
                   Text(
-                    S.paywallSubtitle,
+                    context.l10n.paywallSubtitle,
                     style: BatshTypography.bodySm.copyWith(
-                      color: BatshColors.onSurfaceVariant,
+                      color: context.colorScheme.onSurfaceVariant,
                     ),
                   ),
                 ],
@@ -79,11 +81,11 @@ class _PaywallSheet extends StatelessWidget {
         const _Benefit(getter: 3),
         const SizedBox(height: BatshSpacing.lg),
         BatshButton(
-          label: S.upgradeToProCta,
+          label: context.l10n.upgradeToProCta,
           icon: Icons.workspace_premium_outlined,
           onPressed: () {
             Navigator.of(context).pop();
-            BatshSnack.info(context, S.paymentComingSoon);
+            BatshSnack.info(context, context.l10n.paymentComingSoon);
           },
         ),
       ],
@@ -96,10 +98,10 @@ class _Benefit extends StatelessWidget {
   final int getter;
 
   String get _text => switch (getter) {
-    0 => S.proBenefitQuotes,
-    1 => S.proBenefitRequests,
-    2 => S.proBenefitRanking,
-    _ => S.proBenefitPhotos,
+    0 => 'Quotes',
+    1 => 'Requests',
+    2 => 'Ranking',
+    _ => 'Photos',
   };
 
   @override
@@ -108,10 +110,10 @@ class _Benefit extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: BatshSpacing.sm),
       child: Row(
         children: [
-          const Icon(
+          Icon(
             Icons.check_circle_rounded,
             size: BatshIconSize.md,
-            color: BatshColors.primary,
+            color: context.colorScheme.primary,
           ),
           const SizedBox(width: BatshSpacing.sm),
           Expanded(child: Text(_text, style: BatshTypography.bodyMd)),

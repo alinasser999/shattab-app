@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:flutter_animate/flutter_animate.dart';
 
-import '../../../../core/l10n/strings.dart';
+import 'package:batsh/core/l10n/l10n_extension.dart';
 import '../../../../core/router/routes.dart';
 import '../../../../core/theme/batsh_colors.dart';
 import '../../../../core/theme/batsh_motion.dart';
@@ -18,6 +18,8 @@ import '../../../../core/widgets/batsh_section_header.dart';
 import '../../domain/onboarding_models.dart';
 import '../providers/onboarding_provider.dart';
 import '../../../../core/widgets/batsh_snack.dart';
+
+import 'package:batsh/core/theme/theme_extension.dart';
 
 class ContractorServicesScreen extends ConsumerStatefulWidget {
   const ContractorServicesScreen({super.key});
@@ -78,85 +80,87 @@ class _ContractorServicesScreenState
       _hydrated = true;
     }
     return BatshScaffold(
-      title: S.specialtiesTitle,
+      title: context.l10n.specialtiesTitle,
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const SizedBox(height: BatshSpacing.md),
-            BatshSectionHeader(title: S.specialtiesTitle),
-            const SizedBox(height: BatshSpacing.sm),
-            Text(
-              S.specialtiesSubtitle,
-              style: BatshTypography.bodyMd
-                  .copyWith(color: BatshColors.onSurfaceVariant),
-            ),
-            const SizedBox(height: BatshSpacing.md),
-            Wrap(
-              spacing: BatshSpacing.sm,
-              runSpacing: BatshSpacing.sm,
-              children: OnboardingCatalog.specialtiesCatalog.entries
-                  .map(
-                    (e) => BatshChip(
-                      label: e.value,
-                      icon: _specialtyIcons[e.key],
-                      selected: _specialties.contains(e.key),
-                      onTap: () => setState(() {
-                        if (_specialties.contains(e.key)) {
-                          _specialties.remove(e.key);
-                        } else {
-                          _specialties.add(e.key);
-                        }
-                      }),
+          children:
+              [
+                    const SizedBox(height: BatshSpacing.md),
+                    BatshSectionHeader(title: context.l10n.specialtiesTitle),
+                    const SizedBox(height: BatshSpacing.sm),
+                    Text(
+                      context.l10n.specialtiesSubtitle,
+                      style: BatshTypography.bodyMd.copyWith(
+                        color: context.colorScheme.onSurfaceVariant,
+                      ),
                     ),
-                  )
-                  .toList(),
-            ),
-            const SizedBox(height: BatshSpacing.lg),
-            BatshSectionHeader(title: S.serviceAreasTitle),
-            const SizedBox(height: BatshSpacing.sm),
-            Text(
-              S.serviceAreasSubtitle,
-              style: BatshTypography.bodyMd
-                  .copyWith(color: BatshColors.onSurfaceVariant),
-            ),
-            const SizedBox(height: BatshSpacing.md),
-            Wrap(
-              spacing: BatshSpacing.sm,
-              runSpacing: BatshSpacing.sm,
-              children: OnboardingCatalog.citiesAndDistricts
-                  .map(
-                    (entry) => BatshChip(
-                      label: entry.city,
-                      selected: _areas.contains(entry.city),
-                      onTap: () => setState(() {
-                        if (_areas.contains(entry.city)) {
-                          _areas.remove(entry.city);
-                        } else {
-                          _areas.add(entry.city);
-                        }
-                      }),
+                    const SizedBox(height: BatshSpacing.md),
+                    Wrap(
+                      spacing: BatshSpacing.sm,
+                      runSpacing: BatshSpacing.sm,
+                      children: OnboardingCatalog.specialtiesCatalog.entries
+                          .map(
+                            (e) => BatshChip(
+                              label: e.value,
+                              icon: _specialtyIcons[e.key],
+                              selected: _specialties.contains(e.key),
+                              onTap: () => setState(() {
+                                if (_specialties.contains(e.key)) {
+                                  _specialties.remove(e.key);
+                                } else {
+                                  _specialties.add(e.key);
+                                }
+                              }),
+                            ),
+                          )
+                          .toList(),
                     ),
+                    const SizedBox(height: BatshSpacing.lg),
+                    BatshSectionHeader(title: context.l10n.serviceAreasTitle),
+                    const SizedBox(height: BatshSpacing.sm),
+                    Text(
+                      context.l10n.serviceAreasSubtitle,
+                      style: BatshTypography.bodyMd.copyWith(
+                        color: context.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(height: BatshSpacing.md),
+                    Wrap(
+                      spacing: BatshSpacing.sm,
+                      runSpacing: BatshSpacing.sm,
+                      children: OnboardingCatalog.citiesAndDistricts
+                          .map(
+                            (entry) => BatshChip(
+                              label: entry.city,
+                              selected: _areas.contains(entry.city),
+                              onTap: () => setState(() {
+                                if (_areas.contains(entry.city)) {
+                                  _areas.remove(entry.city);
+                                } else {
+                                  _areas.add(entry.city);
+                                }
+                              }),
+                            ),
+                          )
+                          .toList(),
+                    ),
+                    const SizedBox(height: BatshSpacing.xl),
+                    BatshButton(
+                      label: context.l10n.next,
+                      onPressed: _specialties.isEmpty || _areas.isEmpty || _busy
+                          ? null
+                          : _next,
+                      isLoading: _busy,
+                    ),
+                    const SizedBox(height: BatshSpacing.lg),
+                  ]
+                  .animate(interval: 60.ms)
+                  .fadeIn(
+                    duration: BatshMotion.slow,
+                    curve: BatshMotion.easeOut,
                   )
-                  .toList(),
-            ),
-            const SizedBox(height: BatshSpacing.xl),
-            BatshButton(
-              label: S.next,
-              onPressed: _specialties.isEmpty || _areas.isEmpty || _busy
-                  ? null
-                  : _next,
-              isLoading: _busy,
-            ),
-            const SizedBox(height: BatshSpacing.lg),
-          ].animate(interval: 60.ms).fadeIn(
-            duration: BatshMotion.slow,
-            curve: BatshMotion.easeOut,
-          ).slideY(
-            begin: 0.08,
-            end: 0,
-            curve: BatshMotion.easeOut,
-          ),
+                  .slideY(begin: 0.08, end: 0, curve: BatshMotion.easeOut),
         ),
       ),
     );

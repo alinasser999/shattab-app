@@ -6,7 +6,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/l10n/strings.dart';
+import 'package:batsh/core/l10n/l10n_extension.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/batsh_colors.dart';
 import '../../../core/theme/batsh_motion.dart';
@@ -31,6 +31,8 @@ import 'providers/discovery_providers.dart';
 import '../../../core/theme/batsh_icon_size.dart';
 import '../../../core/widgets/batsh_search_bar.dart';
 import '../../../core/widgets/batsh_section_header.dart';
+
+import 'package:batsh/core/theme/theme_extension.dart';
 
 class DiscoverScreen extends ConsumerStatefulWidget {
   const DiscoverScreen({super.key});
@@ -79,13 +81,13 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
 
     final sections = [
       BatshFilterSheetSection(
-        title: S.filterCategory,
+        title: context.l10n.filterCategory,
         icon: Icons.category_rounded,
         singleSelect: true,
         options: specialties,
       ),
       BatshFilterSheetSection(
-        title: S.filterCity,
+        title: context.l10n.filterCity,
         icon: Icons.location_on_rounded,
         singleSelect: true,
         options: cities,
@@ -133,7 +135,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
     final savedIds = ref.watch(savedContractorIdsProvider).value ?? {};
 
     return BatshScaffold(
-      title: S.tabDiscover,
+      title: context.l10n.tabDiscover,
       padding: EdgeInsets.zero,
       body: contractorsAsync.when(
         loading: () => const _DiscoverSkeleton(),
@@ -145,8 +147,8 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
           if (list.isEmpty) {
             return Center(
               child: BatshEmptyState(
-                title: S.noContractorsTitle,
-                message: S.noContractorsMessage,
+                title: context.l10n.noContractorsTitle,
+                message: context.l10n.noContractorsMessage,
                 icon: Icons.search_off_outlined,
               ),
             );
@@ -279,7 +281,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
                       children: [
                         Expanded(
                           child: BatshSearchBar(
-                            hintText: S.searchHint,
+                            hintText: context.l10n.searchHint,
                             controller: _searchCtrl,
                             onChanged: (v) {
                               _debounce?.cancel();
@@ -375,8 +377,10 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
                           .setSpecialty(key),
                     ),
                   ),
-                if (showNearYou) ...shelf(S.nearYouIn(myCity!), nearYou),
-                if (topRated.isNotEmpty) ...shelf(S.topRated, topRated),
+                if (showNearYou)
+                  ...shelf(context.l10n.nearYouIn(myCity!), nearYou),
+                if (topRated.isNotEmpty)
+                  ...shelf(context.l10n.topRated, topRated),
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(
@@ -386,7 +390,8 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
                       0,
                     ),
                     child: BatshSectionHeader(
-                      title: '${S.allProfessionals} (${rest.length})',
+                      title:
+                          '${context.l10n.allProfessionals} (${rest.length})',
                     ),
                   ),
                 ),
@@ -418,7 +423,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
                                   onToggleSave: () => runSignedIn(
                                     context,
                                     ref,
-                                    reason: S.signInToSave,
+                                    reason: context.l10n.signInToSave,
                                     action: () => ref
                                         .read(savedControllerProvider.notifier)
                                         .toggle(item.id),
@@ -472,7 +477,7 @@ class _CategoryStrip extends StatelessWidget {
             padding: const EdgeInsets.symmetric(
               horizontal: BatshSpacing.marginMobile,
             ),
-            child: BatshSectionHeader(title: S.browseByCategory),
+            child: BatshSectionHeader(title: context.l10n.browseByCategory),
           ),
           const SizedBox(height: BatshSpacing.sm),
           SizedBox(
@@ -517,7 +522,7 @@ class _CategoryChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: BatshColors.surfaceContainerLowest,
+      color: context.colorScheme.surfaceContainerLowest,
       borderRadius: BatshRadius.brFull,
       clipBehavior: Clip.antiAlias,
       child: InkWell(
@@ -529,13 +534,13 @@ class _CategoryChip extends StatelessWidget {
           ),
           decoration: BoxDecoration(
             borderRadius: BatshRadius.brFull,
-            border: Border.all(color: BatshColors.outlineVariant),
+            border: Border.all(color: context.colorScheme.outlineVariant),
           ),
           alignment: Alignment.center,
           child: Text(
             label,
             style: BatshTypography.labelLg.copyWith(
-              color: BatshColors.onSurface,
+              color: context.colorScheme.onSurface,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -567,7 +572,7 @@ class _FeaturedPremiumCard extends StatelessWidget {
           boxShadow: BatshShadows.elevated,
         ),
         child: Material(
-          color: BatshColors.surfaceContainerLowest,
+          color: context.colorScheme.surfaceContainerLowest,
           borderRadius: BatshRadius.brLg,
           clipBehavior: Clip.antiAlias,
           child: InkWell(
@@ -588,8 +593,8 @@ class _FeaturedPremiumCard extends StatelessWidget {
                             fit: BoxFit.cover,
                             // Tile is 210px wide; 2x for high-DPI is plenty.
                             memCacheWidth: 420,
-                            placeholder: (_, _) => const ColoredBox(
-                              color: BatshColors.surfaceContainer,
+                            placeholder: (_, _) => ColoredBox(
+                              color: context.colorScheme.surfaceContainer,
                             ),
                             errorWidget: (_, _, _) => const _FeaturedFallback(),
                           )
@@ -633,11 +638,12 @@ class _FeaturedPremiumCard extends StatelessWidget {
                                 ? Icons.auto_awesome
                                 : Icons.star,
                             size: BatshIconSize.xs,
-                            color: BatshColors.tertiaryFixed,
+                            color: context.colorScheme.tertiaryFixed,
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            listing.rating?.toStringAsFixed(1) ?? S.newBadge,
+                            listing.rating?.toStringAsFixed(1) ??
+                                context.l10n.newBadge,
                             style: BatshTypography.labelSm.copyWith(
                               color: Colors.white,
                               fontWeight: FontWeight.w700,

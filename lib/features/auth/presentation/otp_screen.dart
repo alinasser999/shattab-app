@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/l10n/strings.dart';
+import 'package:batsh/core/l10n/l10n_extension.dart';
 import '../../../core/theme/batsh_colors.dart';
 import '../../../core/theme/batsh_spacing.dart';
 import '../../../core/theme/batsh_typography.dart';
@@ -12,6 +12,8 @@ import '../../../core/widgets/batsh_button.dart';
 import '../../../core/widgets/batsh_scaffold.dart';
 import '../../../core/widgets/batsh_text_field.dart';
 import 'providers/otp_provider.dart';
+
+import 'package:batsh/core/theme/theme_extension.dart';
 
 class OtpScreen extends ConsumerStatefulWidget {
   const OtpScreen({super.key});
@@ -33,7 +35,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
   Future<void> _submit() async {
     final code = _controller.text.trim();
     if (!Validators.isOtpCode(code)) {
-      setState(() => _errorText = S.invalidOtp);
+      setState(() => _errorText = context.l10n.invalidOtp);
       return;
     }
     setState(() => _errorText = null);
@@ -41,7 +43,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
     if (!mounted) return;
     if (!ok) {
       final error = ref.read(otpControllerProvider).errorMessage;
-      setState(() => _errorText = error ?? S.invalidOtp);
+      setState(() => _errorText = error ?? context.l10n.invalidOtp);
     }
     // On success the router redirect kicks in via currentSessionProvider.
   }
@@ -58,7 +60,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
     final isMobile = context.isMobile;
 
     return BatshScaffold(
-      title: S.otpTitle,
+      title: context.l10n.otpTitle,
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: BatshSpacing.lg),
@@ -66,7 +68,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                S.otpTitle,
+                context.l10n.otpTitle,
                 style: isMobile
                     ? BatshTypography.headlineLgMobile
                     : BatshTypography.headlineLg,
@@ -74,13 +76,14 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
               const SizedBox(height: BatshSpacing.sm),
               Text(
                 state.phone ?? '',
-                style: BatshTypography.bodyMd
-                    .copyWith(color: BatshColors.onSurfaceVariant),
+                style: BatshTypography.bodyMd.copyWith(
+                  color: context.colorScheme.onSurfaceVariant,
+                ),
               ),
               const SizedBox(height: BatshSpacing.lg),
               BatshTextField(
                 controller: _controller,
-                hint: S.otpHint,
+                hint: context.l10n.otpHint,
                 keyboardType: TextInputType.number,
                 textInputAction: TextInputAction.done,
                 onSubmitted: (_) => _submit(),
@@ -93,7 +96,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
               ),
               const SizedBox(height: BatshSpacing.lg),
               BatshButton(
-                label: S.continueLabel,
+                label: context.l10n.continueLabel,
                 onPressed: state.isVerifying ? null : _submit,
                 isLoading: state.isVerifying,
               ),
@@ -103,9 +106,11 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
                   onPressed: state.canResend ? _resend : null,
                   child: Text(
                     state.canResend
-                        ? S.resendCode
-                        : S.resendInSeconds
-                            .replaceAll('%s', '${state.cooldownSeconds}'),
+                        ? context.l10n.resendCode
+                        : context.l10n.resendInSeconds.replaceAll(
+                            '%s',
+                            '${state.cooldownSeconds}',
+                          ),
                   ),
                 ),
               ),

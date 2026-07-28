@@ -7,21 +7,20 @@ Brief _brief({
   DateTime? completionRequestedAt,
   DateTime? completedAt,
   BriefStatus status = BriefStatus.open,
-}) =>
-    Brief(
-      id: 'b1',
-      homeownerId: 'h1',
-      apartmentType: ApartmentType.studio,
-      city: 'القاهرة',
-      workDescription: 'دهان شقة',
-      photoUrls: const [],
-      targetSpecialties: const ['paint'],
-      status: status,
-      createdAt: DateTime.utc(2026, 7, 1),
-      hiredAt: hiredAt,
-      completionRequestedAt: completionRequestedAt,
-      completedAt: completedAt,
-    );
+}) => Brief(
+  id: 'b1',
+  homeownerId: 'h1',
+  apartmentType: ApartmentType.studio,
+  city: 'القاهرة',
+  workDescription: 'دهان شقة',
+  photoUrls: const [],
+  targetSpecialties: const ['paint'],
+  status: status,
+  createdAt: DateTime.utc(2026, 7, 1),
+  hiredAt: hiredAt,
+  completionRequestedAt: completionRequestedAt,
+  completedAt: completedAt,
+);
 
 void main() {
   final t1 = DateTime.utc(2026, 7, 10);
@@ -52,10 +51,7 @@ void main() {
     });
 
     test('homeowner can complete without the contractor requesting first', () {
-      expect(
-        _brief(hiredAt: t1, completedAt: t3).stage,
-        BriefStage.completed,
-      );
+      expect(_brief(hiredAt: t1, completedAt: t3).stage, BriefStage.completed);
     });
 
     // Should be impossible — confirm_completion requires hired_at — but data
@@ -86,8 +82,10 @@ void main() {
       expect(_brief().awaitsCompletionConfirmation, isFalse);
       expect(_brief(hiredAt: t1).awaitsCompletionConfirmation, isTrue);
       expect(
-        _brief(hiredAt: t1, completionRequestedAt: t2)
-            .awaitsCompletionConfirmation,
+        _brief(
+          hiredAt: t1,
+          completionRequestedAt: t2,
+        ).awaitsCompletionConfirmation,
         isTrue,
       );
       expect(
@@ -122,8 +120,10 @@ void main() {
 
       expect(brief.stage, BriefStage.completed);
       expect(brief.completedAt, DateTime.parse('2026-07-25T00:00:00.000Z'));
-      expect(brief.completionRequestedAt,
-          DateTime.parse('2026-07-20T00:00:00.000Z'));
+      expect(
+        brief.completionRequestedAt,
+        DateTime.parse('2026-07-20T00:00:00.000Z'),
+      );
     });
 
     // Rows written before migration 0019 have neither column.

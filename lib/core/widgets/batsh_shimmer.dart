@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../l10n/l10n_extension.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 import '../l10n/strings.dart';
@@ -6,6 +8,8 @@ import '../theme/batsh_colors.dart';
 import '../theme/batsh_motion.dart';
 import '../theme/batsh_radius.dart';
 import '../theme/batsh_spacing.dart';
+
+import 'package:batsh/core/theme/theme_extension.dart';
 
 class BatshShimmerBox extends StatelessWidget {
   const BatshShimmerBox({
@@ -22,13 +26,13 @@ class BatshShimmerBox extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Semantics(
-      label: S.loading,
+      label: context.l10n.loading,
       child:
           Container(
                 width: width,
                 height: height,
                 decoration: BoxDecoration(
-                  color: BatshColors.surfaceContainerHigh,
+                  color: context.colorScheme.surfaceContainerHigh,
                   borderRadius: borderRadius ?? BatshRadius.brDefault,
                 ),
               )
@@ -36,7 +40,7 @@ class BatshShimmerBox extends StatelessWidget {
               .shimmer(
                 duration: BatshMotion.slower,
                 curve: BatshMotion.easeInOut,
-                color: BatshColors.surfaceContainerLowest,
+                color: context.colorScheme.surfaceContainerLowest,
               ),
     );
   }
@@ -325,7 +329,10 @@ class BatshGradientFallback extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topRight,
           end: Alignment.bottomLeft,
-          colors: [BatshColors.primaryContainer, BatshColors.tertiaryContainer],
+          colors: [
+            context.colorScheme.primaryContainer,
+            context.colorScheme.tertiaryContainer,
+          ],
         ),
       ),
     );

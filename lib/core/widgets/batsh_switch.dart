@@ -5,6 +5,8 @@ import '../theme/batsh_colors.dart';
 import '../theme/batsh_shadows.dart';
 import '../theme/batsh_motion.dart';
 
+import 'package:batsh/core/theme/theme_extension.dart';
+
 /// Premium custom toggle — terracotta track, spring-eased thumb, soft shadow.
 /// Replaces stock [Switch] on the account screen so the control reads on-brand.
 /// Honors reduced-motion (snaps instead of sliding) and keeps a 48px hit area.
@@ -44,8 +46,8 @@ class BatshSwitch extends StatelessWidget {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(_h),
                 color: value
-                    ? BatshColors.primary
-                    : BatshColors.surfaceContainerHighest,
+                    ? context.colorScheme.primary
+                    : context.colorScheme.surfaceContainerHighest,
               ),
               child: AnimatedAlign(
                 duration: d,
@@ -56,7 +58,7 @@ class BatshSwitch extends StatelessWidget {
                   height: _thumb,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: BatshColors.surfaceContainerLowest,
+                    color: context.colorScheme.surfaceContainerLowest,
                     boxShadow: BatshShadows.soft,
                   ),
                 ),

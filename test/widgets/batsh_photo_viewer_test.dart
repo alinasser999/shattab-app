@@ -1,3 +1,4 @@
+import 'package:batsh/l10n/app_localizations.dart';
 import 'package:batsh/core/widgets/batsh_photo_viewer.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -12,8 +13,12 @@ void main() {
   const urls = ['https://x/1.jpg', 'https://x/2.jpg', 'https://x/3.jpg'];
 
   Widget host(Widget child) => MaterialApp(
-        home: Directionality(textDirection: TextDirection.rtl, child: child),
-      );
+    locale: const Locale('ar'),
+    localizationsDelegates: AppLocalizations.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
+
+    home: Directionality(textDirection: TextDirection.rtl, child: child),
+  );
 
   group('BatshPhotoViewer', () {
     testWidgets('counter starts at the initial index', (tester) async {
@@ -30,8 +35,9 @@ void main() {
 
       // Drive the pager directly: dragging depends on RTL axis direction,
       // which is not what this test is about.
-      final controller =
-          tester.widget<PageView>(find.byType(PageView).first).controller!;
+      final controller = tester
+          .widget<PageView>(find.byType(PageView).first)
+          .controller!;
       controller.jumpToPage(2);
       await tester.pump(const Duration(milliseconds: 400));
 
@@ -52,11 +58,8 @@ void main() {
         host(
           Builder(
             builder: (context) => ElevatedButton(
-              onPressed: () => BatshPhotoViewer.show(
-                context,
-                urls: urls,
-                initialIndex: 99,
-              ),
+              onPressed: () =>
+                  BatshPhotoViewer.show(context, urls: urls, initialIndex: 99),
               child: const Text('open'),
             ),
           ),

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/l10n_extension.dart';
+
 import '../l10n/strings.dart';
 import '../theme/batsh_colors.dart';
 import '../theme/batsh_icon_size.dart';
@@ -7,6 +9,8 @@ import '../theme/batsh_radius.dart';
 import '../theme/batsh_shadows.dart';
 import '../theme/batsh_spacing.dart';
 import '../theme/batsh_typography.dart';
+
+import 'package:batsh/core/theme/theme_extension.dart';
 
 /// The search field at the top of a browse screen.
 ///
@@ -73,7 +77,7 @@ class _BatshSearchBarState extends State<BatshSearchBar> {
         end: BatshSpacing.xs,
       ),
       decoration: BoxDecoration(
-        color: BatshColors.cardBackground,
+        color: context.colorScheme.surface,
         borderRadius: BatshRadius.brFull,
         boxShadow: BatshShadows.soft,
       ),
@@ -82,7 +86,7 @@ class _BatshSearchBarState extends State<BatshSearchBar> {
           Icon(
             Icons.search_rounded,
             size: BatshIconSize.md,
-            color: BatshColors.onSurfaceVariant,
+            color: context.colorScheme.onSurfaceVariant,
           ),
           const SizedBox(width: BatshSpacing.sm),
           Expanded(
@@ -97,20 +101,20 @@ class _BatshSearchBarState extends State<BatshSearchBar> {
                 isDense: true,
                 contentPadding: EdgeInsets.zero,
                 hintStyle: BatshTypography.bodyMd.copyWith(
-                  color: BatshColors.onSurfaceVariant,
+                  color: context.colorScheme.onSurfaceVariant,
                 ),
               ),
             ),
           ),
           if (hasText)
             IconButton(
-              tooltip: S.clearSearch,
+              tooltip: context.l10n.clearSearch,
               visualDensity: VisualDensity.compact,
               onPressed: widget.onClear,
               icon: Icon(
                 Icons.close_rounded,
                 size: BatshIconSize.md,
-                color: BatshColors.onSurfaceVariant,
+                color: context.colorScheme.onSurfaceVariant,
               ),
             ),
         ],

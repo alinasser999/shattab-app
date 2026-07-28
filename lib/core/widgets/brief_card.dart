@@ -1,5 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+
+import '../l10n/l10n_extension.dart';
 import 'package:intl/intl.dart' as intl;
 
 import '../../features/briefs/domain/brief.dart';
@@ -12,6 +14,8 @@ import '../utils/image_url.dart';
 import 'batsh_card.dart';
 import '../theme/batsh_icon_size.dart';
 import 'batsh_badge.dart';
+
+import 'package:batsh/core/theme/theme_extension.dart';
 
 class BriefCard extends StatelessWidget {
   const BriefCard({super.key, required this.brief, required this.onTap});
@@ -43,7 +47,7 @@ class BriefCard extends StatelessWidget {
                     Text(
                       formatted,
                       style: BatshTypography.labelSm.copyWith(
-                        color: BatshColors.onSurfaceVariant,
+                        color: context.colorScheme.onSurfaceVariant,
                       ),
                     ),
                   ],
@@ -58,30 +62,30 @@ class BriefCard extends StatelessWidget {
                 const SizedBox(height: BatshSpacing.sm),
                 Row(
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.place_outlined,
                       size: BatshIconSize.sm,
-                      color: BatshColors.onSurfaceVariant,
+                      color: context.colorScheme.onSurfaceVariant,
                     ),
                     const SizedBox(width: 4),
                     Text(
                       brief.city,
                       style: BatshTypography.labelMd.copyWith(
-                        color: BatshColors.onSurfaceVariant,
+                        color: context.colorScheme.onSurfaceVariant,
                       ),
                     ),
                     if (brief.district != null) ...[
                       Text(
                         ' · ',
                         style: BatshTypography.labelMd.copyWith(
-                          color: BatshColors.onSurfaceVariant,
+                          color: context.colorScheme.onSurfaceVariant,
                         ),
                       ),
                       Expanded(
                         child: Text(
                           brief.district!,
                           style: BatshTypography.labelMd.copyWith(
-                            color: BatshColors.onSurfaceVariant,
+                            color: context.colorScheme.onSurfaceVariant,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -109,7 +113,7 @@ class _Thumb extends StatelessWidget {
       width: 64,
       height: 64,
       decoration: BoxDecoration(
-        color: BatshColors.surfaceContainer,
+        color: context.colorScheme.surfaceContainer,
         borderRadius: BatshRadius.brMd,
       ),
       clipBehavior: Clip.antiAlias,
@@ -119,10 +123,10 @@ class _Thumb extends StatelessWidget {
               fit: BoxFit.cover,
               memCacheWidth: 320,
             )
-          : const Center(
+          : Center(
               child: Icon(
                 Icons.image_outlined,
-                color: BatshColors.onSurfaceVariant,
+                color: context.colorScheme.onSurfaceVariant,
                 size: BatshIconSize.lg,
               ),
             ),
@@ -141,11 +145,14 @@ class _StatusBadge extends StatelessWidget {
     // briefs should not read as a wall of errors. An open post is available
     // work; an open direct request was addressed to this contractor by name.
     final (label, tone) = switch (status) {
-      BriefStatus.cancelled => (S.statusCancelled, BatshBadgeTone.neutral),
+      BriefStatus.cancelled => (
+        context.l10n.statusCancelled,
+        BatshBadgeTone.neutral,
+      ),
       BriefStatus.open =>
         isPost
-            ? (S.statusOpen, BatshBadgeTone.success)
-            : (S.statusDirect, BatshBadgeTone.brand),
+            ? (context.l10n.statusOpen, BatshBadgeTone.success)
+            : (context.l10n.statusDirect, BatshBadgeTone.brand),
     };
     return BatshBadge(label: label, tone: tone, compact: true);
   }

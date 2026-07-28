@@ -34,30 +34,27 @@ Future<void> main() async {
     return;
   }
 
-  await SentryFlutter.init(
-    (options) {
-      options.dsn = dsn;
-      options.environment = kReleaseMode ? 'production' : 'development';
+  await SentryFlutter.init((options) {
+    options.dsn = dsn;
+    options.environment = kReleaseMode ? 'production' : 'development';
 
-      // Never attach request bodies, headers, cookies or user identifiers.
-      // Every account here is keyed by an Egyptian phone number, so the default
-      // "helpful" PII capture would ship personal data to a third party.
-      options.sendDefaultPii = false;
+    // Never attach request bodies, headers, cookies or user identifiers.
+    // Every account here is keyed by an Egyptian phone number, so the default
+    // "helpful" PII capture would ship personal data to a third party.
+    options.sendDefaultPii = false;
 
-      // Errors are always sent; performance traces are sampled. Traces are the
-      // expensive part of the quota and 20% is plenty to spot a slow screen.
-      options.tracesSampleRate = kReleaseMode ? 0.2 : 1.0;
+    // Errors are always sent; performance traces are sampled. Traces are the
+    // expensive part of the quota and 20% is plenty to spot a slow screen.
+    options.tracesSampleRate = kReleaseMode ? 0.2 : 1.0;
 
-      // A screenshot here can contain a phone number, a brief, or the inside of
-      // a customer's home.
-      options.attachScreenshot = false;
+    // A screenshot here can contain a phone number, a brief, or the inside of
+    // a customer's home.
+    options.attachScreenshot = false;
 
-      options.beforeSend = (event, hint) {
-        // Defence in depth: drop the user object even if some integration
-        // populates it. Errors stay useful without knowing who hit them.
-        return event.copyWith(user: null);
-      };
-    },
-    appRunner: () => runApp(const ProviderScope(child: BatshApp())),
-  );
+    options.beforeSend = (event, hint) {
+      // Defence in depth: drop the user object even if some integration
+      // populates it. Errors stay useful without knowing who hit them.
+      return event.copyWith(user: null);
+    };
+  }, appRunner: () => runApp(const ProviderScope(child: BatshApp())));
 }

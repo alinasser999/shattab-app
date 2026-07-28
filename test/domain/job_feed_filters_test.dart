@@ -33,10 +33,14 @@ void main() {
     test('order of selection does not change the result', () {
       const brief = ['kitchen'];
       expect(
-        matchesSpecialtyFilters(
-            brief, {SpecialtyFilter.painting, SpecialtyFilter.kitchens}),
-        matchesSpecialtyFilters(
-            brief, {SpecialtyFilter.kitchens, SpecialtyFilter.painting}),
+        matchesSpecialtyFilters(brief, {
+          SpecialtyFilter.painting,
+          SpecialtyFilter.kitchens,
+        }),
+        matchesSpecialtyFilters(brief, {
+          SpecialtyFilter.kitchens,
+          SpecialtyFilter.painting,
+        }),
       );
     });
 
@@ -54,7 +58,9 @@ void main() {
     test('brief with several trades matches on any of them', () {
       expect(
         matchesSpecialtyFilters(
-            ['plumbing', 'bathroom'], {SpecialtyFilter.bathrooms}),
+          ['plumbing', 'bathroom'],
+          {SpecialtyFilter.bathrooms},
+        ),
         isTrue,
       );
     });
@@ -89,12 +95,18 @@ void main() {
     test('today accepts the last 24h and rejects older', () {
       expect(
         matchesRecency(
-            now.subtract(const Duration(hours: 5)), RecencyFilter.today, now),
+          now.subtract(const Duration(hours: 5)),
+          RecencyFilter.today,
+          now,
+        ),
         isTrue,
       );
       expect(
         matchesRecency(
-            now.subtract(const Duration(hours: 30)), RecencyFilter.today, now),
+          now.subtract(const Duration(hours: 30)),
+          RecencyFilter.today,
+          now,
+        ),
         isFalse,
       );
     });

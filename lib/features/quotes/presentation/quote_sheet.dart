@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/l10n/strings.dart';
+import 'package:batsh/core/l10n/l10n_extension.dart';
 import '../../../core/theme/batsh_colors.dart';
 import '../../../core/theme/batsh_motion.dart';
 import '../../../core/theme/batsh_spacing.dart';
@@ -15,6 +15,8 @@ import 'providers/quotes_providers.dart';
 import '../../../core/theme/batsh_icon_size.dart';
 import '../../../core/widgets/batsh_sheet.dart';
 import '../../../core/widgets/batsh_snack.dart';
+
+import 'package:batsh/core/theme/theme_extension.dart';
 
 /// Opens the price-quote bottom sheet. Returns true if a quote was submitted.
 Future<bool> showQuoteSheet(
@@ -71,13 +73,13 @@ class _QuoteSheetState extends ConsumerState<_QuoteSheet> {
   Future<void> _submit() async {
     final note = _note.text.trim();
     if (note.isEmpty) {
-      setState(() => _noteError = S.quoteNoteRequired);
+      setState(() => _noteError = context.l10n.quoteNoteRequired);
       return;
     }
     final minVal = int.tryParse(_min.text.trim());
     final maxVal = int.tryParse(_max.text.trim());
     if (minVal != null && maxVal != null && minVal > maxVal) {
-      setState(() => _priceError = S.priceMinLessThanMax);
+      setState(() => _priceError = context.l10n.priceMinLessThanMax);
       return;
     }
     setState(() {
@@ -106,7 +108,7 @@ class _QuoteSheetState extends ConsumerState<_QuoteSheet> {
     } catch (_) {
       if (!mounted) return;
       setState(() => _submitting = false);
-      BatshSnack.error(context, S.unknownErrorRetry);
+      BatshSnack.error(context, context.l10n.unknownErrorRetry);
     }
   }
 
@@ -134,7 +136,9 @@ class _QuoteSheetState extends ConsumerState<_QuoteSheet> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
-          widget.existing == null ? S.sendQuote : S.editQuote,
+          widget.existing == null
+              ? context.l10n.sendQuote
+              : context.l10n.editQuote,
           style: BatshTypography.titleLg,
         ),
         const SizedBox(height: BatshSpacing.lg),
@@ -144,8 +148,8 @@ class _QuoteSheetState extends ConsumerState<_QuoteSheet> {
             Expanded(
               child: BatshTextField(
                 controller: _min,
-                label: S.priceFromLabel,
-                hint: S.priceEgpHint,
+                label: context.l10n.priceFromLabel,
+                hint: context.l10n.priceEgpHint,
                 keyboardType: TextInputType.number,
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
               ),
@@ -154,8 +158,8 @@ class _QuoteSheetState extends ConsumerState<_QuoteSheet> {
             Expanded(
               child: BatshTextField(
                 controller: _max,
-                label: S.priceToLabel,
-                hint: S.priceEgpHint,
+                label: context.l10n.priceToLabel,
+                hint: context.l10n.priceEgpHint,
                 keyboardType: TextInputType.number,
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
               ),
@@ -167,27 +171,27 @@ class _QuoteSheetState extends ConsumerState<_QuoteSheet> {
             padding: const EdgeInsets.only(top: BatshSpacing.sm),
             child: Text(
               _priceError!,
-              style: TextStyle(color: BatshColors.error, fontSize: 12),
+              style: TextStyle(color: context.colorScheme.error, fontSize: 12),
             ),
           ),
         const SizedBox(height: BatshSpacing.md),
         BatshTextField(
           controller: _duration,
-          label: S.durationLabel,
-          hint: S.durationHint,
+          label: context.l10n.durationLabel,
+          hint: context.l10n.durationHint,
         ),
         const SizedBox(height: BatshSpacing.md),
         BatshTextField(
           controller: _note,
-          label: S.quoteNoteLabel,
-          hint: S.quoteNoteHint,
+          label: context.l10n.quoteNoteLabel,
+          hint: context.l10n.quoteNoteHint,
           errorText: _noteError,
           maxLines: 4,
           maxLength: 500,
         ),
         const SizedBox(height: BatshSpacing.lg),
         BatshButton(
-          label: S.submitQuote,
+          label: context.l10n.submitQuote,
           icon: Icons.send_outlined,
           isLoading: _submitting,
           onPressed: _submitting ? null : _submit,
@@ -210,13 +214,13 @@ class _SuccessView extends StatelessWidget {
         children: [
           Container(
                 padding: const EdgeInsets.all(BatshSpacing.gutter),
-                decoration: const BoxDecoration(
-                  color: BatshColors.successContainer,
+                decoration: BoxDecoration(
+                  color: context.colorScheme.successContainer,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.check_rounded,
-                  color: BatshColors.success,
+                  color: context.colorScheme.success,
                   size: BatshIconSize.xxl,
                 ),
               )
@@ -230,7 +234,7 @@ class _SuccessView extends StatelessWidget {
               .fadeIn(duration: 200.ms),
           const SizedBox(height: BatshSpacing.gutter),
           Text(
-            S.quoteSentSuccess,
+            context.l10n.quoteSentSuccess,
             style: BatshTypography.titleLg,
           ).animate().fadeIn(delay: 150.ms, duration: 300.ms),
         ],

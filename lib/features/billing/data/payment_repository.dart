@@ -31,13 +31,23 @@ class PaymentRepository {
       final name = '$uid/${DateTime.now().millisecondsSinceEpoch}.jpg';
       final storage = _client.storage.from('payment-proofs');
       if (proofFile != null) {
-        await storage.upload(name, proofFile,
-            fileOptions: const FileOptions(
-                upsert: true, contentType: 'image/jpeg'));
+        await storage.upload(
+          name,
+          proofFile,
+          fileOptions: const FileOptions(
+            upsert: true,
+            contentType: 'image/jpeg',
+          ),
+        );
       } else {
-        await storage.uploadBinary(name, proofBytes!,
-            fileOptions: const FileOptions(
-                upsert: true, contentType: 'image/jpeg'));
+        await storage.uploadBinary(
+          name,
+          proofBytes!,
+          fileOptions: const FileOptions(
+            upsert: true,
+            contentType: 'image/jpeg',
+          ),
+        );
       }
       proofPath = name;
     }
@@ -56,4 +66,5 @@ class PaymentRepository {
 }
 
 final paymentRepositoryProvider = Provider<PaymentRepository>(
-    (ref) => PaymentRepository(ref.watch(supabaseClientProvider)));
+  (ref) => PaymentRepository(ref.watch(supabaseClientProvider)),
+);

@@ -7,7 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
-import '../../../../core/l10n/strings.dart';
+import 'package:batsh/core/l10n/l10n_extension.dart';
 import '../../../../core/theme/batsh_colors.dart';
 import '../../../../core/theme/batsh_radius.dart';
 import '../../../../core/theme/batsh_spacing.dart';
@@ -20,6 +20,8 @@ import '../../../discovery/domain/contractor_listing.dart';
 import '../../../discovery/presentation/providers/discovery_providers.dart';
 import '../providers/onboarding_provider.dart';
 import '../../../../core/theme/batsh_icon_size.dart';
+
+import 'package:batsh/core/theme/theme_extension.dart';
 
 /// Edit the contractor showcase shown on their profile + in Discover.
 /// Reads current values from [contractorByIdProvider] and writes through
@@ -93,7 +95,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       if (!mounted) return;
       context.pop();
     } catch (_) {
-      if (mounted) setState(() => _error = S.somethingWentWrong);
+      if (mounted) setState(() => _error = context.l10n.somethingWentWrong);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -102,8 +104,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final myId = _myId;
-    final existing =
-        myId == null ? null : ref.watch(contractorByIdProvider(myId)).value;
+    final existing = myId == null
+        ? null
+        : ref.watch(contractorByIdProvider(myId)).value;
     if (!_hydrated && existing != null) {
       _bizCtrl.text = existing.businessName;
       _headlineCtrl.text = existing.headline ?? '';
@@ -116,17 +119,19 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     }
 
     return BatshScaffold(
-      title: S.editProfileButton,
+      title: context.l10n.editProfileButton,
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const SizedBox(height: BatshSpacing.md),
-            Text(S.portfolioCoverLabel,
-                style: BatshTypography.labelMd.copyWith(
-                  color: BatshColors.onSurfaceVariant,
-                  fontWeight: FontWeight.w700,
-                )),
+            Text(
+              context.l10n.portfolioCoverLabel,
+              style: BatshTypography.labelMd.copyWith(
+                color: context.colorScheme.onSurfaceVariant,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
             const SizedBox(height: BatshSpacing.sm),
             _CoverPicker(
               file: _cover,
@@ -137,11 +142,13 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
               },
             ),
             const SizedBox(height: BatshSpacing.lg),
-            Text(S.logo,
-                style: BatshTypography.labelMd.copyWith(
-                  color: BatshColors.onSurfaceVariant,
-                  fontWeight: FontWeight.w700,
-                )),
+            Text(
+              context.l10n.logo,
+              style: BatshTypography.labelMd.copyWith(
+                color: context.colorScheme.onSurfaceVariant,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
             const SizedBox(height: BatshSpacing.sm),
             Center(
               child: _LogoPicker(
@@ -159,16 +166,19 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             // you?" rather than being told is the whole point.
             Align(
               alignment: AlignmentDirectional.centerStart,
-              child:
-                  Text(S.providerKindQuestion, style: BatshTypography.labelLg),
+              child: Text(
+                context.l10n.providerKindQuestion,
+                style: BatshTypography.labelLg,
+              ),
             ),
             const SizedBox(height: BatshSpacing.xs),
             Align(
               alignment: AlignmentDirectional.centerStart,
               child: Text(
-                S.providerKindHelp,
-                style: BatshTypography.bodySm
-                    .copyWith(color: BatshColors.onSurfaceVariant),
+                context.l10n.providerKindHelp,
+                style: BatshTypography.bodySm.copyWith(
+                  color: context.colorScheme.onSurfaceVariant,
+                ),
               ),
             ),
             const SizedBox(height: BatshSpacing.sm),
@@ -179,7 +189,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                 for (final kind in ProviderKind.values)
                   ChoiceChip(
                     avatar: Icon(kind.icon, size: BatshIconSize.sm),
-                    label: Text(kind.label),
+                    label: Text(kind.label(context)),
                     selected: _kind == kind,
                     onSelected: (_) => setState(() => _kind = kind),
                   ),
@@ -188,28 +198,28 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             const SizedBox(height: BatshSpacing.gutter),
             BatshTextField(
               controller: _bizCtrl,
-              label: S.businessNameTitle,
+              label: context.l10n.businessNameTitle,
               maxLength: 60,
             ),
             const SizedBox(height: BatshSpacing.gutter),
             BatshTextField(
               controller: _headlineCtrl,
-              label: S.professionalTitle,
-              hint: S.professionalTitleHint,
+              label: context.l10n.professionalTitle,
+              hint: context.l10n.professionalTitleHint,
               maxLength: 80,
             ),
             const SizedBox(height: BatshSpacing.gutter),
             BatshTextField(
               controller: _bioCtrl,
-              label: S.bioLabel,
-              hint: S.bioHint,
+              label: context.l10n.bioLabel,
+              hint: context.l10n.bioHint,
               maxLines: 5,
               maxLength: 400,
             ),
             const SizedBox(height: BatshSpacing.gutter),
             BatshTextField(
               controller: _yearsCtrl,
-              label: S.yearsExperience,
+              label: context.l10n.yearsExperience,
               keyboardType: TextInputType.number,
               inputFormatters: [
                 FilteringTextInputFormatter.digitsOnly,
@@ -219,7 +229,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             ),
             const SizedBox(height: BatshSpacing.xl),
             BatshButton(
-              label: S.saveProfile,
+              label: context.l10n.saveProfile,
               onPressed: _busy ? null : _save,
               isLoading: _busy,
             ),
@@ -249,19 +259,28 @@ class _CoverPicker extends StatelessWidget {
         aspectRatio: 16 / 9,
         child: Container(
           decoration: BoxDecoration(
-            color: BatshColors.surfaceContainer,
+            color: context.colorScheme.surfaceContainer,
             borderRadius: BatshRadius.brLg,
-            border: Border.all(color: BatshColors.outlineVariant, width: 1.5),
+            border: Border.all(
+              color: context.colorScheme.outlineVariant,
+              width: 1.5,
+            ),
           ),
           clipBehavior: Clip.antiAlias,
           child: file != null
               ? Image.file(file!, fit: BoxFit.cover)
               : (existingUrl != null
-                  ? CachedNetworkImage(imageUrl: existingUrl!, fit: BoxFit.cover)
-                  : const Center(
-                      child: Icon(Icons.add_photo_alternate_outlined,
-                          size: BatshIconSize.xl, color: BatshColors.onSurfaceVariant),
-                    )),
+                    ? CachedNetworkImage(
+                        imageUrl: existingUrl!,
+                        fit: BoxFit.cover,
+                      )
+                    : Center(
+                        child: Icon(
+                          Icons.add_photo_alternate_outlined,
+                          size: BatshIconSize.xl,
+                          color: context.colorScheme.onSurfaceVariant,
+                        ),
+                      )),
         ),
       ),
     );
@@ -286,17 +305,23 @@ class _LogoPicker extends StatelessWidget {
         width: 110,
         height: 110,
         decoration: BoxDecoration(
-          color: BatshColors.surfaceContainer,
+          color: context.colorScheme.surfaceContainer,
           shape: BoxShape.circle,
-          border: Border.all(color: BatshColors.primary, width: 2),
+          border: Border.all(color: context.colorScheme.primary, width: 2),
         ),
         clipBehavior: Clip.antiAlias,
         child: file != null
             ? Image.file(file!, fit: BoxFit.cover)
             : (existingUrl != null
-                ? CachedNetworkImage(imageUrl: existingUrl!, fit: BoxFit.cover)
-                : const Icon(Icons.add_a_photo_outlined,
-                    color: BatshColors.onSurfaceVariant, size: BatshIconSize.lg)),
+                  ? CachedNetworkImage(
+                      imageUrl: existingUrl!,
+                      fit: BoxFit.cover,
+                    )
+                  : Icon(
+                      Icons.add_a_photo_outlined,
+                      color: context.colorScheme.onSurfaceVariant,
+                      size: BatshIconSize.lg,
+                    )),
       ),
     );
   }

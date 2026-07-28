@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/l10n/strings.dart';
+import 'package:batsh/core/l10n/l10n_extension.dart';
+import 'package:batsh/core/l10n/strings.dart';
 import '../../../core/models/draft_photo.dart';
 import '../../../core/theme/batsh_colors.dart';
 import '../../../core/theme/batsh_radius.dart';
@@ -16,6 +17,8 @@ import '../pricing.dart';
 import '../../../core/theme/batsh_icon_size.dart';
 import '../../../core/widgets/batsh_sheet.dart';
 import '../../../core/widgets/batsh_snack.dart';
+
+import 'package:batsh/core/theme/theme_extension.dart';
 
 /// Opens the payment-method chooser, then routes to the chosen flow.
 /// InstaPay is functional (manual verify); Apple Pay is pending a processor.
@@ -33,7 +36,7 @@ Future<void> showPaymentMethods(
       context,
     ).push(MaterialPageRoute(builder: (_) => InstaPayScreen(annual: annual)));
   } else if (method == 'applepay') {
-    BatshSnack.info(context, S.applePaySoon);
+    BatshSnack.info(context, context.l10n.applePaySoon);
   }
 }
 
@@ -46,19 +49,19 @@ class _MethodsSheet extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(S.choosePaymentMethod, style: BatshTypography.titleLg),
+        Text(context.l10n.choosePaymentMethod, style: BatshTypography.titleLg),
         const SizedBox(height: BatshSpacing.md),
         _MethodTile(
           icon: Icons.swap_horiz_rounded,
-          title: S.payInstapay,
-          subtitle: S.payInstapaySub,
+          title: context.l10n.payInstapay,
+          subtitle: context.l10n.payInstapaySub,
           onTap: () => Navigator.of(context).pop('instapay'),
         ),
         const SizedBox(height: BatshSpacing.sm),
         _MethodTile(
           icon: Icons.apple_rounded,
-          title: S.payApplePay,
-          subtitle: S.payApplePaySub,
+          title: context.l10n.payApplePay,
+          subtitle: context.l10n.payApplePaySub,
           soon: true,
           onTap: () => Navigator.of(context).pop('applepay'),
         ),
@@ -84,9 +87,11 @@ class _MethodTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final tint = soon ? BatshColors.onSurfaceVariant : BatshColors.primary;
+    final tint = soon
+        ? context.colorScheme.onSurfaceVariant
+        : context.colorScheme.primary;
     return Material(
-      color: BatshColors.surfaceContainerLow,
+      color: context.colorScheme.surfaceContainerLow,
       borderRadius: BatshRadius.brLg,
       child: InkWell(
         onTap: onTap,
@@ -100,8 +105,8 @@ class _MethodTile extends StatelessWidget {
                 height: 44,
                 decoration: BoxDecoration(
                   color: soon
-                      ? BatshColors.surfaceContainerHigh
-                      : BatshColors.primaryFixed,
+                      ? context.colorScheme.surfaceContainerHigh
+                      : context.colorScheme.primaryFixed,
                   borderRadius: BatshRadius.brMd,
                 ),
                 child: Icon(icon, color: tint),
@@ -122,13 +127,14 @@ class _MethodTile extends StatelessWidget {
                               vertical: 1,
                             ),
                             decoration: BoxDecoration(
-                              color: BatshColors.surfaceContainerHighest,
+                              color:
+                                  context.colorScheme.surfaceContainerHighest,
                               borderRadius: BatshRadius.brFull,
                             ),
                             child: Text(
-                              S.paySoonBadge,
+                              context.l10n.paySoonBadge,
                               style: BatshTypography.labelSm.copyWith(
-                                color: BatshColors.onSurfaceVariant,
+                                color: context.colorScheme.onSurfaceVariant,
                               ),
                             ),
                           ),
@@ -138,15 +144,15 @@ class _MethodTile extends StatelessWidget {
                     Text(
                       subtitle,
                       style: BatshTypography.bodySm.copyWith(
-                        color: BatshColors.onSurfaceVariant,
+                        color: context.colorScheme.onSurfaceVariant,
                       ),
                     ),
                   ],
                 ),
               ),
-              const Icon(
+              Icon(
                 Icons.chevron_left_rounded,
-                color: BatshColors.onSurfaceVariant,
+                color: context.colorScheme.onSurfaceVariant,
               ),
             ],
           ),
@@ -180,7 +186,7 @@ class _InstaPayScreenState extends ConsumerState<InstaPayScreen> {
 
   Future<void> _submit() async {
     if (_proof == null) {
-      BatshSnack.error(context, S.instapayProofRequired);
+      BatshSnack.error(context, context.l10n.instapayProofRequired);
       return;
     }
     setState(() => _loading = true);
@@ -200,7 +206,7 @@ class _InstaPayScreenState extends ConsumerState<InstaPayScreen> {
       if (mounted) setState(() => _submitted = true);
     } catch (_) {
       if (mounted) {
-        BatshSnack.error(context, S.instapayError);
+        BatshSnack.error(context, context.l10n.instapayError);
       }
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -210,8 +216,8 @@ class _InstaPayScreenState extends ConsumerState<InstaPayScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: BatshColors.surface,
-      appBar: AppBar(title: Text(S.instapayTitle)),
+      backgroundColor: context.colorScheme.surface,
+      appBar: AppBar(title: Text(context.l10n.instapayTitle)),
       body: _submitted ? _success() : _form(),
     );
   }
@@ -224,17 +230,17 @@ class _InstaPayScreenState extends ConsumerState<InstaPayScreen> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _infoCard(
-            label: S.instapayAmountLabel,
+            label: context.l10n.instapayAmountLabel,
             child: Text(
               S.money(amount),
               style: BatshTypography.displayMd.copyWith(
-                color: BatshColors.primary,
+                color: context.colorScheme.primary,
               ),
             ),
           ),
           const SizedBox(height: BatshSpacing.md),
           _infoCard(
-            label: S.instapayNumberLabel,
+            label: context.l10n.instapayNumberLabel,
             child: Row(
               children: [
                 Expanded(
@@ -250,16 +256,19 @@ class _InstaPayScreenState extends ConsumerState<InstaPayScreen> {
                     Clipboard.setData(
                       const ClipboardData(text: BatshPricing.instapayNumber),
                     );
-                    BatshSnack.info(context, S.copiedToast);
+                    BatshSnack.info(context, context.l10n.copiedToast);
                   },
                   icon: const Icon(Icons.copy_rounded, size: BatshIconSize.md),
-                  label: Text(S.copyAction),
+                  label: Text(context.l10n.copyAction),
                 ),
               ],
             ),
           ),
           const SizedBox(height: BatshSpacing.lg),
-          Text(S.instapayUploadLabel, style: BatshTypography.labelLg),
+          Text(
+            context.l10n.instapayUploadLabel,
+            style: BatshTypography.labelLg,
+          ),
           const SizedBox(height: BatshSpacing.sm),
           PhotoPicker(
             maxPhotos: 1,
@@ -269,11 +278,13 @@ class _InstaPayScreenState extends ConsumerState<InstaPayScreen> {
           const SizedBox(height: BatshSpacing.lg),
           TextField(
             controller: _refController,
-            decoration: InputDecoration(labelText: S.instapayRefLabel),
+            decoration: InputDecoration(
+              labelText: context.l10n.instapayRefLabel,
+            ),
           ),
           const SizedBox(height: BatshSpacing.xl),
           BatshButton(
-            label: S.instapaySubmit,
+            label: context.l10n.instapaySubmit,
             icon: Icons.send_rounded,
             isLoading: _loading,
             onPressed: _submit,
@@ -286,7 +297,7 @@ class _InstaPayScreenState extends ConsumerState<InstaPayScreen> {
   Widget _infoCard({required String label, required Widget child}) {
     return Container(
       decoration: BoxDecoration(
-        color: BatshColors.surfaceContainerLowest,
+        color: context.colorScheme.surfaceContainerLowest,
         borderRadius: BatshRadius.brLg,
         boxShadow: BatshShadows.soft,
       ),
@@ -297,7 +308,7 @@ class _InstaPayScreenState extends ConsumerState<InstaPayScreen> {
           Text(
             label,
             style: BatshTypography.labelMd.copyWith(
-              color: BatshColors.onSurfaceVariant,
+              color: context.colorScheme.onSurfaceVariant,
             ),
           ),
           const SizedBox(height: BatshSpacing.xs),
@@ -314,28 +325,28 @@ class _InstaPayScreenState extends ConsumerState<InstaPayScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(
+            Icon(
               Icons.check_circle_rounded,
               size: BatshIconSize.xxl,
-              color: BatshColors.secondary,
+              color: context.colorScheme.secondary,
             ),
             const SizedBox(height: BatshSpacing.lg),
             Text(
-              S.instapaySubmittedTitle,
+              context.l10n.instapaySubmittedTitle,
               textAlign: TextAlign.center,
               style: BatshTypography.headlineSm,
             ),
             const SizedBox(height: BatshSpacing.sm),
             Text(
-              S.instapaySubmittedBody,
+              context.l10n.instapaySubmittedBody,
               textAlign: TextAlign.center,
               style: BatshTypography.bodyMd.copyWith(
-                color: BatshColors.onSurfaceVariant,
+                color: context.colorScheme.onSurfaceVariant,
               ),
             ),
             const SizedBox(height: BatshSpacing.xl),
             BatshButton(
-              label: S.instapayDone,
+              label: context.l10n.instapayDone,
               onPressed: () => Navigator.of(context).pop(),
             ),
           ],

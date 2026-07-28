@@ -1,12 +1,16 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
+import '../l10n/l10n_extension.dart';
+
 import '../l10n/strings.dart';
 import '../theme/batsh_colors.dart';
 import '../theme/batsh_radius.dart';
 import '../theme/batsh_spacing.dart';
 import '../theme/batsh_typography.dart';
 import '../theme/batsh_icon_size.dart';
+
+import 'package:batsh/core/theme/theme_extension.dart';
 
 /// Full-screen photo viewer: swipe between photos, pinch to zoom.
 ///
@@ -46,8 +50,9 @@ class BatshPhotoViewer extends StatefulWidget {
 }
 
 class _BatshPhotoViewerState extends State<BatshPhotoViewer> {
-  late final PageController _controller =
-      PageController(initialPage: widget.initialIndex);
+  late final PageController _controller = PageController(
+    initialPage: widget.initialIndex,
+  );
   late int _index = widget.initialIndex;
 
   @override
@@ -100,9 +105,12 @@ class _BatshPhotoViewerState extends State<BatshPhotoViewer> {
                 children: [
                   _Scrim(
                     child: IconButton(
-                      tooltip: S.closePhotoViewer,
-                      icon: const Icon(Icons.close_rounded,
-                          color: Colors.white, size: BatshIconSize.md),
+                      tooltip: context.l10n.closePhotoViewer,
+                      icon: const Icon(
+                        Icons.close_rounded,
+                        color: Colors.white,
+                        size: BatshIconSize.md,
+                      ),
                       onPressed: () => Navigator.of(context).maybePop(),
                     ),
                   ),
@@ -111,10 +119,14 @@ class _BatshPhotoViewerState extends State<BatshPhotoViewer> {
                     _Scrim(
                       child: Padding(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: BatshSpacing.md,
-                            vertical: BatshSpacing.sm),
+                          horizontal: BatshSpacing.md,
+                          vertical: BatshSpacing.sm,
+                        ),
                         child: Text(
-                          S.photoIndexOf(_index + 1, widget.urls.length),
+                          context.l10n.photoIndexOf(
+                            _index + 1,
+                            widget.urls.length,
+                          ),
                           style: BatshTypography.labelMd.copyWith(
                             color: Colors.white,
                             fontWeight: FontWeight.w700,
@@ -141,7 +153,7 @@ class _Scrim extends StatelessWidget {
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: BatshColors.scrim.withValues(alpha: 0.55),
+        color: context.colorScheme.scrim.withValues(alpha: 0.55),
         borderRadius: BatshRadius.brFull,
       ),
       child: child,

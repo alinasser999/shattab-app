@@ -8,7 +8,7 @@ import 'package:image_picker/image_picker.dart';
 
 import 'package:flutter_animate/flutter_animate.dart';
 
-import '../../../../core/l10n/strings.dart';
+import 'package:batsh/core/l10n/l10n_extension.dart';
 import '../../../../core/router/routes.dart';
 import '../../../../core/theme/batsh_colors.dart';
 import '../../../../core/theme/batsh_motion.dart';
@@ -24,6 +24,8 @@ import '../../../auth/presentation/providers/auth_provider.dart';
 import '../providers/onboarding_provider.dart';
 import '../../../../core/theme/batsh_icon_size.dart';
 
+import 'package:batsh/core/theme/theme_extension.dart';
+
 class CompanyProfileScreen extends ConsumerStatefulWidget {
   const CompanyProfileScreen({super.key});
 
@@ -32,8 +34,7 @@ class CompanyProfileScreen extends ConsumerStatefulWidget {
       _CompanyProfileScreenState();
 }
 
-class _CompanyProfileScreenState
-    extends ConsumerState<CompanyProfileScreen> {
+class _CompanyProfileScreenState extends ConsumerState<CompanyProfileScreen> {
   final TextEditingController _bizCtrl = TextEditingController();
   final TextEditingController _nameCtrl = TextEditingController();
   File? _logo;
@@ -66,7 +67,7 @@ class _CompanyProfileScreenState
     final biz = _bizCtrl.text.trim();
     final name = _nameCtrl.text.trim();
     if (biz.length < 2 || name.length < 2) {
-      setState(() => _error = S.fillBothFields);
+      setState(() => _error = context.l10n.fillBothFields);
       return;
     }
     setState(() {
@@ -104,86 +105,92 @@ class _CompanyProfileScreenState
       _hydrated = true;
     }
     return BatshScaffold(
-      title: S.businessNameTitle,
+      title: context.l10n.businessNameTitle,
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const SizedBox(height: BatshSpacing.md),
-            BatshSectionHeader(title: S.companyData),
-            const SizedBox(height: BatshSpacing.sm),
-            Center(
-              child: GestureDetector(
-                onTap: _pickLogo,
-                child: Container(
-                  width: 120,
-                  height: 120,
-                  decoration: BoxDecoration(
-                    color: BatshColors.surfaceContainer,
-                    borderRadius: BatshRadius.brXl,
-                    border: Border.all(
-                      color: BatshColors.outlineVariant,
-                      width: 1.5,
+          children:
+              [
+                    const SizedBox(height: BatshSpacing.md),
+                    BatshSectionHeader(title: context.l10n.companyData),
+                    const SizedBox(height: BatshSpacing.sm),
+                    Center(
+                      child: GestureDetector(
+                        onTap: _pickLogo,
+                        child: Container(
+                          width: 120,
+                          height: 120,
+                          decoration: BoxDecoration(
+                            color: context.colorScheme.surfaceContainer,
+                            borderRadius: BatshRadius.brXl,
+                            border: Border.all(
+                              color: context.colorScheme.outlineVariant,
+                              width: 1.5,
+                            ),
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BatshRadius.brXl,
+                            child: _logo != null
+                                ? Image.file(_logo!, fit: BoxFit.cover)
+                                : (existingLogo != null
+                                      ? CachedNetworkImage(
+                                          imageUrl: existingLogo,
+                                          fit: BoxFit.cover,
+                                        )
+                                      : Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            Icon(
+                                              Icons.add_a_photo_outlined,
+                                              color: context
+                                                  .colorScheme
+                                                  .onSurfaceVariant,
+                                              size: BatshIconSize.lg,
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              context.l10n.chooseImage,
+                                              style: BatshTypography.bodySm
+                                                  .copyWith(
+                                                    color: context
+                                                        .colorScheme
+                                                        .onSurfaceVariant,
+                                                  ),
+                                            ),
+                                          ],
+                                        )),
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BatshRadius.brXl,
-                    child: _logo != null
-                        ? Image.file(_logo!, fit: BoxFit.cover)
-                        : (existingLogo != null
-                            ? CachedNetworkImage(
-                                imageUrl: existingLogo,
-                                fit: BoxFit.cover,
-                              )
-                            : Column(
-                                mainAxisSize: MainAxisSize.min,
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  const Icon(
-                                    Icons.add_a_photo_outlined,
-                                    color: BatshColors.onSurfaceVariant,
-                                    size: BatshIconSize.lg,
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    S.chooseImage,
-                                    style: BatshTypography.bodySm.copyWith(
-                                      color: BatshColors.onSurfaceVariant,
-                                    ),
-                                  ),
-                                ],
-                              )),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: BatshSpacing.lg),
-            BatshTextField(
-              controller: _bizCtrl,
-              label: S.businessNameTitle,
-              hint: S.businessNameHint,
-            ),
-            const SizedBox(height: BatshSpacing.gutter),
-            BatshTextField(
-              controller: _nameCtrl,
-              label: S.displayNameLabel,
-              errorText: _error,
-            ),
-            const SizedBox(height: BatshSpacing.xl),
-            BatshButton(
-              label: S.next,
-              onPressed: _busy ? null : _next,
-              isLoading: _busy,
-            ),
-            const SizedBox(height: BatshSpacing.lg),
-          ].animate(interval: 60.ms).fadeIn(
-            duration: BatshMotion.slow,
-            curve: BatshMotion.easeOut,
-          ).slideY(
-            begin: 0.08,
-            end: 0,
-            curve: BatshMotion.easeOut,
-          ),
+                    const SizedBox(height: BatshSpacing.lg),
+                    BatshTextField(
+                      controller: _bizCtrl,
+                      label: context.l10n.businessNameTitle,
+                      hint: context.l10n.businessNameHint,
+                    ),
+                    const SizedBox(height: BatshSpacing.gutter),
+                    BatshTextField(
+                      controller: _nameCtrl,
+                      label: context.l10n.displayNameLabel,
+                      errorText: _error,
+                    ),
+                    const SizedBox(height: BatshSpacing.xl),
+                    BatshButton(
+                      label: context.l10n.next,
+                      onPressed: _busy ? null : _next,
+                      isLoading: _busy,
+                    ),
+                    const SizedBox(height: BatshSpacing.lg),
+                  ]
+                  .animate(interval: 60.ms)
+                  .fadeIn(
+                    duration: BatshMotion.slow,
+                    curve: BatshMotion.easeOut,
+                  )
+                  .slideY(begin: 0.08, end: 0, curve: BatshMotion.easeOut),
         ),
       ),
     );

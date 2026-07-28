@@ -6,6 +6,8 @@ import '../theme/batsh_motion.dart';
 import '../theme/batsh_spacing.dart';
 import '../theme/batsh_typography.dart';
 
+import 'package:batsh/core/theme/theme_extension.dart';
+
 enum BatshHeaderStyle { normal, primary }
 
 class BatshScaffold extends StatelessWidget {
@@ -17,8 +19,9 @@ class BatshScaffold extends StatelessWidget {
     this.leading,
     this.bottomNavigationBar,
     this.floatingActionButton,
-    this.padding =
-        const EdgeInsets.symmetric(horizontal: BatshSpacing.marginMobile),
+    this.padding = const EdgeInsets.symmetric(
+      horizontal: BatshSpacing.marginMobile,
+    ),
     this.showAppBar = true,
     this.centerTitle = true,
     this.resizeToAvoidBottomInset = true,
@@ -54,10 +57,10 @@ class BatshScaffold extends StatelessWidget {
     );
 
     if (animateEntrance) {
-      bodyContent = bodyContent.animate().fadeIn(
-            duration: BatshMotion.slower,
-            curve: BatshMotion.easeOut,
-          ).slideY(
+      bodyContent = bodyContent
+          .animate()
+          .fadeIn(duration: BatshMotion.slower, curve: BatshMotion.easeOut)
+          .slideY(
             begin: 0.025,
             end: 0,
             duration: BatshMotion.slower,
@@ -66,7 +69,7 @@ class BatshScaffold extends StatelessWidget {
     }
 
     return Scaffold(
-      backgroundColor: backgroundColor ?? BatshColors.background,
+      backgroundColor: backgroundColor ?? context.colorScheme.background,
       resizeToAvoidBottomInset: resizeToAvoidBottomInset,
       extendBodyBehindAppBar: extendBodyBehindAppBar,
       appBar: showAppBar
@@ -77,7 +80,7 @@ class BatshScaffold extends StatelessWidget {
                       style: isPrimary
                           ? BatshTypography.titleLg.copyWith(
                               fontWeight: FontWeight.w600,
-                              color: BatshColors.onPrimary,
+                              color: context.colorScheme.onPrimary,
                             )
                           : BatshTypography.titleLg.copyWith(
                               fontWeight: FontWeight.w600,
@@ -87,10 +90,12 @@ class BatshScaffold extends StatelessWidget {
               centerTitle: centerTitle,
               leading: leading,
               actions: actions,
-              backgroundColor:
-                  isPrimary ? BatshColors.primary : Colors.transparent,
-              foregroundColor:
-                  isPrimary ? BatshColors.onPrimary : BatshColors.onSurface,
+              backgroundColor: isPrimary
+                  ? context.colorScheme.primary
+                  : Colors.transparent,
+              foregroundColor: isPrimary
+                  ? context.colorScheme.onPrimary
+                  : context.colorScheme.onSurface,
               surfaceTintColor: Colors.transparent,
               elevation: 0,
               scrolledUnderElevation: 0,
@@ -104,13 +109,10 @@ class BatshScaffold extends StatelessWidget {
           if (isPrimary)
             Container(
               height: 1,
-              color: BatshColors.primary.withValues(alpha: 0.15),
+              color: context.colorScheme.primary.withValues(alpha: 0.15),
             )
           else if (showAppBar)
-            Container(
-              height: 0.5,
-              color: BatshColors.divider,
-            ),
+            Container(height: 0.5, color: context.colorScheme.outlineVariant),
           Expanded(child: bodyContent),
         ],
       ),

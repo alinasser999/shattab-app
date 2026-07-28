@@ -18,10 +18,15 @@ class HomeownerProfileRepository {
     required File file,
   }) async {
     final path = '$profileId/avatar.jpg';
-    await _client.storage.from('avatars').upload(
+    await _client.storage
+        .from('avatars')
+        .upload(
           path,
           file,
-          fileOptions: const FileOptions(upsert: true, contentType: 'image/jpeg'),
+          fileOptions: const FileOptions(
+            upsert: true,
+            contentType: 'image/jpeg',
+          ),
         );
     final url = _client.storage.from('avatars').getPublicUrl(path);
     return '$url?v=${DateTime.now().millisecondsSinceEpoch}';
@@ -47,7 +52,8 @@ class HomeownerProfileRepository {
     List<String>? renovationInterests,
   }) async {
     final payload = <String, dynamic>{'profile_id': profileId};
-    if (apartmentType != null) payload['apartment_type'] = apartmentType.dbValue;
+    if (apartmentType != null)
+      payload['apartment_type'] = apartmentType.dbValue;
     if (city != null) payload['city'] = city;
     if (district != null) payload['district'] = district;
     if (renovationInterests != null) {

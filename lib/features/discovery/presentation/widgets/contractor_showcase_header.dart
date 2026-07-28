@@ -8,13 +8,15 @@ class _BackButton extends StatelessWidget {
       padding: const EdgeInsets.all(8),
       child: Material(
         // Was a raw `Colors.white` scrim, which also stayed white in dark mode.
-        color: BatshColors.surfaceContainerLowest.withValues(alpha: 0.9),
+        color: context.colorScheme.surfaceContainerLowest.withValues(
+          alpha: 0.9,
+        ),
         shape: const CircleBorder(),
         child: IconButton(
           // `Icons.arrow_back` is declared with matchTextDirection, so it
           // mirrors to point right in Arabic and left in English. The previous
           // hardcoded `arrow_forward` was correct only in RTL.
-          icon: const Icon(Icons.arrow_back, color: BatshColors.onSurface),
+          icon: Icon(Icons.arrow_back, color: context.colorScheme.onSurface),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
       ),
@@ -37,7 +39,7 @@ class _CoverHero extends StatelessWidget {
             fit: BoxFit.cover,
             memCacheWidth: 900,
             placeholder: (_, _) =>
-                const ColoredBox(color: BatshColors.surfaceContainer),
+                ColoredBox(color: context.colorScheme.surfaceContainer),
             errorWidget: (_, _, _) => const _CoverFallback(),
           )
         else
@@ -55,7 +57,7 @@ class _CoverHero extends StatelessWidget {
               colors: [
                 const Color(0x00000000),
                 const Color(0x14000000),
-                BatshColors.background.withValues(alpha: 0.55),
+                context.colorScheme.background.withValues(alpha: 0.55),
               ],
               stops: const [0.0, 0.55, 1.0],
             ),
@@ -85,16 +87,16 @@ class _AvatarRing extends StatelessWidget {
       height: 100,
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: BatshColors.background,
+        color: context.colorScheme.background,
         shape: BoxShape.circle,
         boxShadow: BatshShadows.elevated,
       ),
       child: Container(
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: BatshColors.surfaceContainer,
+          color: context.colorScheme.surfaceContainer,
           border: Border.all(
-            color: BatshColors.primary.withValues(alpha: 0.55),
+            color: context.colorScheme.primary.withValues(alpha: 0.55),
             width: 2,
           ),
         ),
@@ -105,12 +107,12 @@ class _AvatarRing extends StatelessWidget {
                 fit: BoxFit.cover,
                 memCacheWidth: 200,
                 placeholder: (_, _) =>
-                    const ColoredBox(color: BatshColors.surfaceContainer),
+                    ColoredBox(color: context.colorScheme.surfaceContainer),
               )
-            : const Icon(
+            : Icon(
                 Icons.engineering_outlined,
                 size: BatshIconSize.xxl,
-                color: BatshColors.primary,
+                color: context.colorScheme.primary,
               ),
       ),
     );
@@ -147,13 +149,13 @@ class _NameHeadline extends StatelessWidget {
             runSpacing: BatshSpacing.xs,
             children: [
               BatshBadge(
-                label: contractor.providerKind.label,
+                label: contractor.providerKind.label(context),
                 icon: contractor.providerKind.icon,
                 emphasis: BatshBadgeEmphasis.outline,
               ),
               if (contractor.verified)
                 BatshBadge(
-                  label: S.verified,
+                  label: context.l10n.verified,
                   icon: Icons.verified_rounded,
                   tone: BatshBadgeTone.brand,
                 ),
@@ -169,7 +171,7 @@ class _NameHeadline extends StatelessWidget {
               contractor.headline!,
               textAlign: TextAlign.center,
               style: BatshTypography.bodyMd.copyWith(
-                color: BatshColors.onSurfaceVariant,
+                color: context.colorScheme.onSurfaceVariant,
               ),
             ),
           ],
@@ -218,23 +220,23 @@ class _RatingPill extends StatelessWidget {
           vertical: BatshSpacing.sm,
         ),
         decoration: BoxDecoration(
-          color: BatshColors.secondaryContainer,
+          color: context.colorScheme.secondaryContainer,
           borderRadius: BatshRadius.brFull,
-          border: Border.all(color: BatshColors.secondary, width: 1),
+          border: Border.all(color: context.colorScheme.secondary, width: 1),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(
+            Icon(
               Icons.auto_awesome,
               size: BatshIconSize.sm,
-              color: BatshColors.onSecondaryContainer,
+              color: context.colorScheme.onSecondaryContainer,
             ),
             const SizedBox(width: BatshSpacing.xs),
             Text(
-              S.newProfessional,
+              context.l10n.noRatingsYet,
               style: BatshTypography.labelMd.copyWith(
-                color: BatshColors.onSecondaryContainer,
+                color: context.colorScheme.onSecondaryContainer,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -248,7 +250,7 @@ class _RatingPill extends StatelessWidget {
     // and the star row also rendered 4.9 as a half star, because a half was
     // drawn whenever the fractional part cleared 0.4.
     return Material(
-      color: BatshColors.tertiaryFixed,
+      color: context.colorScheme.tertiaryFixed,
       borderRadius: BatshRadius.brFull,
       child: InkWell(
         borderRadius: BatshRadius.brFull,
@@ -260,37 +262,37 @@ class _RatingPill extends StatelessWidget {
           ),
           decoration: BoxDecoration(
             borderRadius: BatshRadius.brFull,
-            border: Border.all(color: BatshColors.tertiary, width: 1),
+            border: Border.all(color: context.colorScheme.tertiary, width: 1),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(
+              Icon(
                 Icons.star_rounded,
                 size: BatshIconSize.md,
-                color: BatshColors.tertiary,
+                color: context.colorScheme.tertiary,
               ),
               const SizedBox(width: BatshSpacing.xs),
               Text(
                 avg.toStringAsFixed(1),
                 style: BatshTypography.labelMd.copyWith(
-                  color: BatshColors.onTertiaryContainer,
+                  color: context.colorScheme.onTertiaryContainer,
                   fontWeight: FontWeight.w700,
                 ),
               ),
               const SizedBox(width: BatshSpacing.xs),
               Text(
-                '· $reviewCount ${S.reviewsCount}',
+                '· $reviewCount ${context.l10n.reviewsCount}',
                 style: BatshTypography.labelSm.copyWith(
-                  color: BatshColors.onTertiaryContainer,
+                  color: context.colorScheme.onTertiaryContainer,
                 ),
               ),
               if (onTap != null) ...[
                 const SizedBox(width: 2),
-                const Icon(
+                Icon(
                   Icons.arrow_forward_ios,
                   size: BatshIconSize.xs,
-                  color: BatshColors.onTertiaryContainer,
+                  color: context.colorScheme.onTertiaryContainer,
                 ),
               ],
             ],

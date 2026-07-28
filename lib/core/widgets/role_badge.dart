@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/l10n_extension.dart';
+
 import '../l10n/strings.dart';
 import '../theme/batsh_colors.dart';
 import '../theme/batsh_radius.dart';
 import '../theme/batsh_spacing.dart';
 import '../theme/batsh_typography.dart';
+
+import 'package:batsh/core/theme/theme_extension.dart';
 
 /// Marks whether a post's author is a contractor or a homeowner.
 ///
@@ -28,11 +32,15 @@ class RoleBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     // Contractors carry the brand terracotta because they are the side being
     // evaluated. Homeowners get the calmer olive: informative, not a pitch.
-    final color = _isContractor ? BatshColors.primary : BatshColors.secondary;
+    final color = _isContractor
+        ? context.colorScheme.primary
+        : context.colorScheme.secondary;
     final background = _isContractor
-        ? BatshColors.primaryFixed.withValues(alpha: 0.35)
-        : BatshColors.secondaryContainer;
-    final label = _isContractor ? S.roleProfessional : S.roleHomeowner;
+        ? context.colorScheme.primaryFixed.withValues(alpha: 0.35)
+        : context.colorScheme.secondaryContainer;
+    final label = _isContractor
+        ? context.l10n.roleProfessional
+        : context.l10n.roleHomeowner;
     final icon = _isContractor ? Icons.engineering_rounded : Icons.home_rounded;
 
     return Container(
@@ -51,9 +59,8 @@ class RoleBadge extends StatelessWidget {
           const SizedBox(width: 4),
           Text(
             label,
-            style:
-                (compact ? BatshTypography.labelSm : BatshTypography.labelMd)
-                    .copyWith(color: color, fontWeight: FontWeight.w700),
+            style: (compact ? BatshTypography.labelSm : BatshTypography.labelMd)
+                .copyWith(color: color, fontWeight: FontWeight.w700),
           ),
         ],
       ),

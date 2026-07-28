@@ -7,6 +7,8 @@ import '../theme/batsh_radius.dart';
 import '../theme/batsh_spacing.dart';
 import '../theme/batsh_typography.dart';
 
+import 'package:batsh/core/theme/theme_extension.dart';
+
 /// What a piece of transient feedback is telling the user.
 enum BatshSnackKind {
   /// Something the user asked for happened.
@@ -32,8 +34,8 @@ enum BatshSnackKind {
 /// comes free here.
 ///
 /// ```dart
-/// BatshSnack.success(context, S.changesSaved);
-/// BatshSnack.error(context, S.quoteSendFailed);
+/// BatshSnack.success(context, context.l10n.changesSaved);
+/// BatshSnack.error(context, context.l10n.quoteSendFailed);
 /// ```
 class BatshSnack {
   const BatshSnack._();
@@ -83,20 +85,20 @@ class BatshSnack {
 
     final (background, foreground, icon) = switch (kind) {
       BatshSnackKind.success => (
-          BatshColors.success,
-          BatshColors.onSuccess,
-          Icons.check_circle_outline,
-        ),
+        context.colorScheme.success,
+        context.colorScheme.onSuccess,
+        Icons.check_circle_outline,
+      ),
       BatshSnackKind.error => (
-          BatshColors.error,
-          BatshColors.onError,
-          Icons.error_outline,
-        ),
+        context.colorScheme.error,
+        context.colorScheme.onError,
+        Icons.error_outline,
+      ),
       BatshSnackKind.info => (
-          BatshColors.inverseSurface,
-          BatshColors.inverseOnSurface,
-          Icons.info_outline,
-        ),
+        context.colorScheme.inverseSurface,
+        context.colorScheme.inverseOnSurface,
+        Icons.info_outline,
+      ),
     };
 
     messenger.showSnackBar(
@@ -149,6 +151,6 @@ class BatshSnack {
   /// Errors get longer because they have to be read, not just noticed.
   static Duration durationFor(BatshSnackKind kind) =>
       kind == BatshSnackKind.error
-          ? const Duration(seconds: 5)
-          : const Duration(seconds: 3);
+      ? const Duration(seconds: 5)
+      : const Duration(seconds: 3);
 }

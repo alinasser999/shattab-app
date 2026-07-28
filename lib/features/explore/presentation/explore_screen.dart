@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/l10n/strings.dart';
+import 'package:batsh/core/l10n/l10n_extension.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/batsh_spacing.dart';
 import '../../../core/utils/error_mapper.dart';
@@ -60,7 +60,12 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
     if (session != null) {
       action();
     } else {
-      runSignedIn(context, ref, reason: S.signInToPost, action: action);
+      runSignedIn(
+        context,
+        ref,
+        reason: context.l10n.signInToPost,
+        action: action,
+      );
     }
   }
 
@@ -70,10 +75,10 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
   Future<void> _confirmDeletePost(BuildContext context, String postId) async {
     final ok = await BatshDialog.confirm(
       context,
-      title: S.deletePost,
-      message: S.deletePostConfirm,
-      confirmLabel: S.deletePost,
-      cancelLabel: S.cancel,
+      title: context.l10n.deletePost,
+      message: context.l10n.deletePostConfirm,
+      confirmLabel: context.l10n.deletePost,
+      cancelLabel: context.l10n.cancel,
       isDestructive: true,
     );
     if (ok != true || !context.mounted) return;
@@ -81,7 +86,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
     try {
       await ref.read(postControllerProvider.notifier).deletePost(postId);
       if (!context.mounted) return;
-      BatshSnack.success(context, S.postDeleted);
+      BatshSnack.success(context, context.l10n.postDeleted);
     } catch (e) {
       if (!context.mounted) return;
       BatshSnack.error(context, ErrorMapper.map(e));
@@ -94,7 +99,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
     final session = ref.watch(currentSessionProvider);
 
     return BatshScaffold(
-      title: S.exploreTitle,
+      title: context.l10n.exploreTitle,
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           _ensureAuth(context, () => context.push('${_explorePrefix()}/new'));
@@ -111,12 +116,12 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
           data: (posts) {
             if (posts.isEmpty) {
               return BatshEmptyState(
-                title: S.noPostsYet,
-                message: S.noPostsYetSub,
+                title: context.l10n.noPostsYet,
+                message: context.l10n.noPostsYetSub,
                 icon: Icons.explore_outlined,
                 action: session != null
                     ? BatshButton(
-                        label: S.createPost,
+                        label: context.l10n.createPost,
                         onPressed: () =>
                             context.push('${_explorePrefix()}/new'),
                       )

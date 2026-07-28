@@ -14,16 +14,16 @@ class _BioSection extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.all(BatshSpacing.gutter),
         decoration: BoxDecoration(
-          color: BatshColors.surfaceContainerLow,
+          color: context.colorScheme.surfaceContainerLow,
           borderRadius: BatshRadius.brCard,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              S.aboutProfessional,
+              context.l10n.aboutProfessional,
               style: BatshTypography.labelMd.copyWith(
-                color: BatshColors.onSurfaceVariant,
+                color: context.colorScheme.onSurfaceVariant,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -72,9 +72,9 @@ class _ServicesSection extends StatelessWidget {
             horizontal: BatshSpacing.marginMobile,
           ),
           child: Text(
-            S.specialtiesLabel,
+            context.l10n.specialtiesLabel,
             style: BatshTypography.titleLg.copyWith(
-              color: BatshColors.onSurface,
+              color: context.colorScheme.onSurface,
             ),
           ),
         ),
@@ -118,14 +118,18 @@ class _ServiceTile extends StatelessWidget {
         vertical: BatshSpacing.md,
       ),
       decoration: BoxDecoration(
-        color: BatshColors.surfaceContainerLowest,
+        color: context.colorScheme.surfaceContainerLowest,
         borderRadius: BatshRadius.brLg,
-        border: Border.all(color: BatshColors.outlineVariant),
+        border: Border.all(color: context.colorScheme.outlineVariant),
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, size: BatshIconSize.lg, color: BatshColors.primary),
+          Icon(
+            icon,
+            size: BatshIconSize.lg,
+            color: context.colorScheme.primary,
+          ),
           const SizedBox(height: BatshSpacing.sm),
           Flexible(
             child: Text(
@@ -134,7 +138,7 @@ class _ServiceTile extends StatelessWidget {
               textAlign: TextAlign.center,
               overflow: TextOverflow.ellipsis,
               style: BatshTypography.labelSm.copyWith(
-                color: BatshColors.onSurface,
+                color: context.colorScheme.onSurface,
                 fontWeight: FontWeight.w600,
                 height: 1.25,
               ),
@@ -164,7 +168,7 @@ class _ChipsSection extends StatelessWidget {
           Text(
             title,
             style: BatshTypography.titleLg.copyWith(
-              color: BatshColors.onSurface,
+              color: context.colorScheme.onSurface,
             ),
           ),
           const SizedBox(height: BatshSpacing.sm),
@@ -179,17 +183,17 @@ class _ChipsSection extends StatelessWidget {
                     vertical: BatshSpacing.sm,
                   ),
                   decoration: BoxDecoration(
-                    color: BatshColors.surfaceContainer,
+                    color: context.colorScheme.surfaceContainer,
                     borderRadius: BatshRadius.brFull,
                     border: Border.all(
-                      color: BatshColors.outlineVariant,
+                      color: context.colorScheme.outlineVariant,
                       width: 1,
                     ),
                   ),
                   child: Text(
                     label,
                     style: BatshTypography.labelMd.copyWith(
-                      color: BatshColors.onSurface,
+                      color: context.colorScheme.onSurface,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -227,22 +231,25 @@ class _PortfolioSection extends StatelessWidget {
         ),
         child: Row(
           children: [
-            const Icon(
+            Icon(
               Icons.cloud_off_outlined,
               size: BatshIconSize.md,
-              color: BatshColors.onSurfaceVariant,
+              color: context.colorScheme.onSurfaceVariant,
             ),
             const SizedBox(width: BatshSpacing.sm),
             Expanded(
               child: Text(
-                S.portfolioLoadFailed,
+                context.l10n.portfolioLoadFailed,
                 style: BatshTypography.bodySm.copyWith(
-                  color: BatshColors.onSurfaceVariant,
+                  color: context.colorScheme.onSurfaceVariant,
                 ),
               ),
             ),
             if (onRetry != null)
-              TextButton(onPressed: onRetry, child: Text(S.tryAgain)),
+              TextButton(
+                onPressed: onRetry,
+                child: Text(context.l10n.tryAgain),
+              ),
           ],
         ),
       );
@@ -259,9 +266,9 @@ class _PortfolioSection extends StatelessWidget {
           child: Row(
             children: [
               Text(
-                S.portfolioGalleryTitle,
+                context.l10n.portfolioGalleryTitle,
                 style: BatshTypography.titleLg.copyWith(
-                  color: BatshColors.onSurface,
+                  color: context.colorScheme.onSurface,
                 ),
               ),
               const Spacer(),
@@ -271,7 +278,7 @@ class _PortfolioSection extends StatelessWidget {
                     : context.push(
                         Routes.homeownerContractorPortfolioPath(contractor.id),
                       ),
-                child: Text(S.viewAll),
+                child: Text(context.l10n.viewAll),
               ),
             ],
           ),
@@ -323,7 +330,7 @@ class _PortfolioTile extends StatelessWidget {
           onTap: onTap,
           semanticLabel: project.title,
           child: Material(
-            color: BatshColors.surfaceContainerLowest,
+            color: context.colorScheme.surfaceContainerLowest,
             borderRadius: BatshRadius.brXl,
             clipBehavior: Clip.antiAlias,
             child: Column(
@@ -338,12 +345,12 @@ class _PortfolioTile extends StatelessWidget {
                     // Tile is 260px wide.
                     memCacheWidth: 520,
                     placeholder: (_, _) =>
-                        const ColoredBox(color: BatshColors.surfaceContainer),
+                        ColoredBox(color: context.colorScheme.surfaceContainer),
                     errorWidget: (_, _, _) => Container(
-                      color: BatshColors.surfaceContainer,
-                      child: const Icon(
+                      color: context.colorScheme.surfaceContainer,
+                      child: Icon(
                         Icons.image_outlined,
-                        color: BatshColors.onSurfaceVariant,
+                        color: context.colorScheme.onSurfaceVariant,
                       ),
                     ),
                   ),
@@ -369,7 +376,7 @@ class _PortfolioTile extends StatelessWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: BatshTypography.labelSm.copyWith(
-                            color: BatshColors.onSurfaceVariant,
+                            color: context.colorScheme.onSurfaceVariant,
                           ),
                         ),
                       ],

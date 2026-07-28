@@ -6,6 +6,8 @@ import '../theme/batsh_radius.dart';
 import '../theme/batsh_spacing.dart';
 import '../theme/batsh_typography.dart';
 
+import 'package:batsh/core/theme/theme_extension.dart';
+
 class BatshTextField extends StatelessWidget {
   const BatshTextField({
     super.key,
@@ -59,7 +61,7 @@ class BatshTextField extends StatelessWidget {
               child: Text(
                 label!,
                 style: BatshTypography.bodyMd.copyWith(
-                  color: BatshColors.onSurfaceVariant,
+                  color: context.colorScheme.onSurfaceVariant,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -78,7 +80,7 @@ class BatshTextField extends StatelessWidget {
             onChanged: onChanged,
             onFieldSubmitted: onSubmitted,
             style: BatshTypography.bodyMd,
-            cursorColor: BatshColors.primary,
+            cursorColor: context.colorScheme.primary,
             cursorWidth: 2,
             decoration: InputDecoration(
               hintText: hint,
@@ -87,13 +89,15 @@ class BatshTextField extends StatelessWidget {
               suffixIcon: suffixIcon,
               counterText: '',
               hintStyle: BatshTypography.bodyMd.copyWith(
-                color: BatshColors.onSurfaceVariant.withValues(alpha: 0.6),
+                color: context.colorScheme.onSurfaceVariant.withValues(
+                  alpha: 0.6,
+                ),
               ),
               errorStyle: BatshTypography.labelSm.copyWith(
-                color: BatshColors.error,
+                color: context.colorScheme.error,
               ),
               filled: true,
-              fillColor: BatshColors.surfaceContainerLow,
+              fillColor: context.colorScheme.surfaceContainerLow,
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: BatshSpacing.gutter,
                 vertical: BatshSpacing.md,
@@ -105,34 +109,38 @@ class BatshTextField extends StatelessWidget {
               enabledBorder: OutlineInputBorder(
                 borderRadius: BatshRadius.brMd,
                 borderSide: BorderSide(
-                  color: BatshColors.outlineVariant.withValues(alpha: 0.5),
+                  color: context.colorScheme.outlineVariant.withValues(
+                    alpha: 0.5,
+                  ),
                 ),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BatshRadius.brMd,
-                borderSide: const BorderSide(
-                  color: BatshColors.primary,
+                borderSide: BorderSide(
+                  color: context.colorScheme.primary,
                   width: 2,
                 ),
               ),
               errorBorder: OutlineInputBorder(
                 borderRadius: BatshRadius.brMd,
-                borderSide: const BorderSide(
-                  color: BatshColors.error,
+                borderSide: BorderSide(
+                  color: context.colorScheme.error,
                   width: 1.5,
                 ),
               ),
               focusedErrorBorder: OutlineInputBorder(
                 borderRadius: BatshRadius.brMd,
-                borderSide: const BorderSide(
-                  color: BatshColors.error,
+                borderSide: BorderSide(
+                  color: context.colorScheme.error,
                   width: 2,
                 ),
               ),
               disabledBorder: OutlineInputBorder(
                 borderRadius: BatshRadius.brMd,
                 borderSide: BorderSide(
-                  color: BatshColors.outlineVariant.withValues(alpha: 0.3),
+                  color: context.colorScheme.outlineVariant.withValues(
+                    alpha: 0.3,
+                  ),
                 ),
               ),
             ),

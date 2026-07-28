@@ -49,8 +49,7 @@ class Routes {
       '/h/discover/contractor/$id/brief/sent';
   static const String homeownerNewPost = '/h/requests/new-post';
   static String homeownerBriefDetailPath(String id) => '/h/requests/$id';
-  static String contractorPostDetailPath(String id) =>
-      '/c/dashboard/post/$id';
+  static String contractorPostDetailPath(String id) => '/c/dashboard/post/$id';
   static String contractorRequestDetailPath(String id) => '/c/inbox/$id';
   static const String contractorMyQuotes = '/c/dashboard/my-quotes';
   static const String contractorPortfolioNew = '/c/portfolio/new';
@@ -59,8 +58,9 @@ class Routes {
   static String homeownerContractorPortfolioPath(String id) =>
       '/h/discover/contractor/$id/portfolio';
   static String homeownerProjectDetailPath(
-          String contractorId, String projectId) =>
-      '/h/discover/contractor/$contractorId/portfolio/$projectId';
+    String contractorId,
+    String projectId,
+  ) => '/h/discover/contractor/$contractorId/portfolio/$projectId';
 
   // Explore
   static const String exploreCreatePost = '/explore/new';

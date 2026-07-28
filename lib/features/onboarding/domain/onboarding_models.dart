@@ -16,14 +16,14 @@ enum ApartmentType {
   }
 
   String get dbValue => switch (this) {
-        ApartmentType.studio => 'studio',
-        ApartmentType.oneBedroom => 'one_bedroom',
-        ApartmentType.twoBedroom => 'two_bedroom',
-        ApartmentType.threeBedroomPlus => 'three_bedroom_plus',
-        ApartmentType.duplex => 'duplex',
-        ApartmentType.villa => 'villa',
-        ApartmentType.penthouse => 'penthouse',
-      };
+    ApartmentType.studio => 'studio',
+    ApartmentType.oneBedroom => 'one_bedroom',
+    ApartmentType.twoBedroom => 'two_bedroom',
+    ApartmentType.threeBedroomPlus => 'three_bedroom_plus',
+    ApartmentType.duplex => 'duplex',
+    ApartmentType.villa => 'villa',
+    ApartmentType.penthouse => 'penthouse',
+  };
 }
 
 class HomeownerProfile {
@@ -51,26 +51,25 @@ class HomeownerProfile {
     String? city,
     String? district,
     List<String>? renovationInterests,
-  }) =>
-      HomeownerProfile(
-        profileId: profileId,
-        apartmentType: apartmentType ?? this.apartmentType,
-        city: city ?? this.city,
-        district: district ?? this.district,
-        renovationInterests: renovationInterests ?? this.renovationInterests,
-      );
+  }) => HomeownerProfile(
+    profileId: profileId,
+    apartmentType: apartmentType ?? this.apartmentType,
+    city: city ?? this.city,
+    district: district ?? this.district,
+    renovationInterests: renovationInterests ?? this.renovationInterests,
+  );
 
-  factory HomeownerProfile.fromJson(Map<String, dynamic> json) =>
-      HomeownerProfile(
-        profileId: json['profile_id'] as String,
-        apartmentType:
-            ApartmentType.fromString(json['apartment_type'] as String?),
-        city: json['city'] as String?,
-        district: json['district'] as String?,
-        renovationInterests:
-            ((json['renovation_interests'] as List?) ?? const [])
-                .map((e) => e as String).toList(),
-      );
+  factory HomeownerProfile.fromJson(
+    Map<String, dynamic> json,
+  ) => HomeownerProfile(
+    profileId: json['profile_id'] as String,
+    apartmentType: ApartmentType.fromString(json['apartment_type'] as String?),
+    city: json['city'] as String?,
+    district: json['district'] as String?,
+    renovationInterests: ((json['renovation_interests'] as List?) ?? const [])
+        .map((e) => e as String)
+        .toList(),
+  );
 }
 
 class ContractorProfile {
@@ -119,18 +118,17 @@ class ContractorProfile {
     int? yearsExperience,
     String? plan,
     DateTime? planExpiresAt,
-  }) =>
-      ContractorProfile(
-        profileId: profileId,
-        businessName: businessName ?? this.businessName,
-        logoUrl: logoUrl ?? this.logoUrl,
-        bio: bio ?? this.bio,
-        specialties: specialties ?? this.specialties,
-        serviceAreas: serviceAreas ?? this.serviceAreas,
-        yearsExperience: yearsExperience ?? this.yearsExperience,
-        plan: plan ?? this.plan,
-        planExpiresAt: planExpiresAt ?? this.planExpiresAt,
-      );
+  }) => ContractorProfile(
+    profileId: profileId,
+    businessName: businessName ?? this.businessName,
+    logoUrl: logoUrl ?? this.logoUrl,
+    bio: bio ?? this.bio,
+    specialties: specialties ?? this.specialties,
+    serviceAreas: serviceAreas ?? this.serviceAreas,
+    yearsExperience: yearsExperience ?? this.yearsExperience,
+    plan: plan ?? this.plan,
+    planExpiresAt: planExpiresAt ?? this.planExpiresAt,
+  );
 
   factory ContractorProfile.fromJson(Map<String, dynamic> json) =>
       ContractorProfile(
@@ -138,10 +136,12 @@ class ContractorProfile {
         businessName: json['business_name'] as String?,
         logoUrl: json['logo_url'] as String?,
         bio: json['bio'] as String?,
-        specialties:
-            ((json['specialties'] as List?) ?? const []).map((e) => e as String).toList(),
-        serviceAreas:
-            ((json['service_areas'] as List?) ?? const []).map((e) => e as String).toList(),
+        specialties: ((json['specialties'] as List?) ?? const [])
+            .map((e) => e as String)
+            .toList(),
+        serviceAreas: ((json['service_areas'] as List?) ?? const [])
+            .map((e) => e as String)
+            .toList(),
         yearsExperience: json['years_experience'] as int?,
         plan: (json['plan'] as String?) ?? 'free',
         planExpiresAt: json['plan_expires_at'] == null
@@ -154,10 +154,17 @@ class ContractorProfile {
 class OnboardingCatalog {
   const OnboardingCatalog._();
 
-  static const List<({String city, List<String> districts})> citiesAndDistricts = [
+  static const List<({String city, List<String> districts})>
+  citiesAndDistricts = [
     (
       city: 'القاهرة',
-      districts: ['مدينة نصر', 'مصر الجديدة', 'المعادي', 'الزمالك', 'وسط البلد'],
+      districts: [
+        'مدينة نصر',
+        'مصر الجديدة',
+        'المعادي',
+        'الزمالك',
+        'وسط البلد',
+      ],
     ),
     (
       city: 'الجيزة',

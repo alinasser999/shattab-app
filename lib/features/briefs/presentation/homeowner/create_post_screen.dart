@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/router/routes.dart';
 
-import '../../../../core/l10n/strings.dart';
+import 'package:batsh/core/l10n/l10n_extension.dart';
 import '../../../../core/theme/batsh_colors.dart';
 import '../../../../core/theme/batsh_motion.dart';
 import '../../../../core/theme/batsh_spacing.dart';
@@ -25,6 +25,8 @@ import '../../../onboarding/presentation/providers/onboarding_provider.dart';
 import '../../domain/brief.dart';
 import '../providers/briefs_providers.dart';
 import '../../../../core/widgets/batsh_snack.dart';
+
+import 'package:batsh/core/theme/theme_extension.dart';
 
 class CreatePostScreen extends ConsumerStatefulWidget {
   const CreatePostScreen({super.key, this.editing});
@@ -75,21 +77,21 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
 
   Future<void> _submit() async {
     if (ref.read(currentSessionProvider) == null) {
-      await showSignInSheet(context, reason: S.signInToPost);
+      await showSignInSheet(context, reason: context.l10n.signInToPost);
       if (!mounted) return;
       if (ref.read(currentSessionProvider) == null) return;
     }
     final desc = _descCtrl.text.trim();
     if (desc.length < 10) {
-      setState(() => _error = S.errorWriteMoreDetails);
+      setState(() => _error = context.l10n.errorWriteMoreDetails);
       return;
     }
     if (_apartmentType == null || _city == null) {
-      setState(() => _error = S.errorFillApartmentCity);
+      setState(() => _error = context.l10n.errorFillApartmentCity);
       return;
     }
     if (_targetSpecialties.isEmpty) {
-      setState(() => _error = S.errorSelectSpecialty);
+      setState(() => _error = context.l10n.errorSelectSpecialty);
       return;
     }
     setState(() {
@@ -126,7 +128,9 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
       if (!mounted) return;
       BatshSnack.success(
         context,
-        widget.isEditing ? S.changesSaved : S.postCreatedSuccess,
+        widget.isEditing
+            ? context.l10n.changesSaved
+            : context.l10n.postCreatedSuccess,
       );
       if (widget.isEditing) {
         Navigator.of(context).maybePop();
@@ -154,28 +158,28 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
     final reduced = MediaQuery.disableAnimationsOf(context);
     final items = <Widget>[
       const SizedBox(height: BatshSpacing.md),
-      Text(S.writeWhatYouNeed, style: BatshTypography.headlineMd),
+      Text(context.l10n.writeWhatYouNeed, style: BatshTypography.headlineMd),
       const SizedBox(height: BatshSpacing.xs),
       Text(
-        S.contractorsWillSeeMatched,
+        context.l10n.contractorsWillSeeMatched,
         style: BatshTypography.bodyMd.copyWith(
-          color: BatshColors.onSurfaceVariant,
+          color: context.colorScheme.onSurfaceVariant,
         ),
       ),
       const SizedBox(height: BatshSpacing.lg),
       BatshTextField(
         controller: _descCtrl,
-        label: S.descriptionLabel,
-        hint: S.descriptionWorkHint,
+        label: context.l10n.descriptionLabel,
+        hint: context.l10n.descriptionWorkHint,
         maxLines: 6,
         maxLength: 2000,
         errorText: _error,
       ),
       const SizedBox(height: BatshSpacing.gutter),
       Text(
-        '${S.sectionLookingForWho} *',
+        '${context.l10n.sectionLookingForWho} *',
         style: BatshTypography.labelMd.copyWith(
-          color: BatshColors.onSurfaceVariant,
+          color: context.colorScheme.onSurfaceVariant,
         ),
       ),
       const SizedBox(height: BatshSpacing.sm),
@@ -199,9 +203,9 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
       ),
       const SizedBox(height: BatshSpacing.gutter),
       Text(
-        '${S.apartmentTypeLabel} *',
+        '${context.l10n.apartmentTypeLabel} *',
         style: BatshTypography.labelMd.copyWith(
-          color: BatshColors.onSurfaceVariant,
+          color: context.colorScheme.onSurfaceVariant,
         ),
       ),
       const SizedBox(height: BatshSpacing.sm),
@@ -219,9 +223,9 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
       ),
       const SizedBox(height: BatshSpacing.gutter),
       Text(
-        '${S.cityLabel} *',
+        '${context.l10n.cityLabel} *',
         style: BatshTypography.labelMd.copyWith(
-          color: BatshColors.onSurfaceVariant,
+          color: context.colorScheme.onSurfaceVariant,
         ),
       ),
       const SizedBox(height: BatshSpacing.sm),
@@ -245,9 +249,9 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
         const SizedBox(height: BatshSpacing.md),
       ],
       Text(
-        S.phoneVisibleContractors,
+        context.l10n.phoneVisibleContractors,
         style: BatshTypography.labelMd.copyWith(
-          color: BatshColors.onSurfaceVariant,
+          color: context.colorScheme.onSurfaceVariant,
         ),
       ),
       const SizedBox(height: BatshSpacing.lg),
@@ -255,13 +259,17 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
         const BatshLoading()
       else
         BatshButton(
-          label: widget.isEditing ? S.saveChanges : S.createPostPublishButton,
+          label: widget.isEditing
+              ? context.l10n.saveChanges
+              : context.l10n.createPostPublishButton,
           onPressed: _submit,
         ),
       const SizedBox(height: BatshSpacing.lg),
     ];
     return BatshScaffold(
-      title: widget.isEditing ? S.editBriefTitle : S.createPostTitle,
+      title: widget.isEditing
+          ? context.l10n.editBriefTitle
+          : context.l10n.createPostTitle,
       body: ListView(
         children: reduced
             ? items

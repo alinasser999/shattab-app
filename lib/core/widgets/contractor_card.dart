@@ -1,6 +1,8 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
+import '../l10n/l10n_extension.dart';
+
 import '../../features/discovery/domain/contractor_listing.dart';
 import '../l10n/strings.dart';
 import '../../features/onboarding/domain/onboarding_models.dart';
@@ -15,6 +17,8 @@ import 'batsh_shimmer.dart';
 import 'tier_badge.dart';
 import '../theme/batsh_icon_size.dart';
 import 'batsh_badge.dart';
+
+import 'package:batsh/core/theme/theme_extension.dart';
 
 /// Large editorial-style card for the discover feed. Premium magazine layout:
 /// a tall cover with the logo, name, headline and rating composited directly
@@ -53,7 +57,7 @@ class ContractorCard extends StatelessWidget {
         onTap: onTap,
         semanticLabel: name,
         child: Material(
-          color: BatshColors.surfaceContainerLowest,
+          color: context.colorScheme.surfaceContainerLowest,
           borderRadius: BatshRadius.brLg,
           clipBehavior: Clip.antiAlias,
           child: Column(
@@ -88,17 +92,17 @@ class ContractorCard extends StatelessWidget {
                       const SizedBox(height: BatshSpacing.sm),
                       Row(
                         children: [
-                          const Icon(
+                          Icon(
                             Icons.place_outlined,
                             size: BatshIconSize.sm,
-                            color: BatshColors.onSurfaceVariant,
+                            color: context.colorScheme.onSurfaceVariant,
                           ),
                           const SizedBox(width: 4),
                           Expanded(
                             child: Text(
                               firstAreas.join(' · '),
                               style: BatshTypography.labelMd.copyWith(
-                                color: BatshColors.onSurfaceVariant,
+                                color: context.colorScheme.onSurfaceVariant,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -148,7 +152,7 @@ class _EditorialCover extends StatelessWidget {
               fit: BoxFit.cover,
               memCacheWidth: 800,
               placeholder: (_, _) =>
-                  const ColoredBox(color: BatshColors.surfaceContainer),
+                  ColoredBox(color: context.colorScheme.surfaceContainer),
               errorWidget: (_, _, _) => const _CoverFallback(),
             )
           else
@@ -182,15 +186,17 @@ class _EditorialCover extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 BatshBadge(
-                  label: listing.rating?.toStringAsFixed(1) ?? S.newBadge,
+                  label:
+                      listing.rating?.toStringAsFixed(1) ??
+                      context.l10n.newBadge,
                   icon: listing.reviewCount == 0
                       ? Icons.auto_awesome
                       : Icons.star,
                   emphasis: BatshBadgeEmphasis.onImage,
                   compact: true,
                   semanticLabel: listing.rating == null
-                      ? S.newBadge
-                      : '${S.ratingLabel} ${listing.rating!.toStringAsFixed(1)}',
+                      ? context.l10n.newBadge
+                      : '${context.l10n.ratingLabel} ${listing.rating!.toStringAsFixed(1)}',
                 ),
                 if (listing.tier.isPublic) ...[
                   const SizedBox(height: BatshSpacing.xxs),
@@ -208,13 +214,15 @@ class _EditorialCover extends StatelessWidget {
                 color: Colors.white.withValues(alpha: 0.92),
                 shape: const CircleBorder(),
                 child: IconButton(
-                  tooltip: isSaved ? S.unsaveTooltip : S.saveTooltip,
+                  tooltip: isSaved
+                      ? context.l10n.unsaveTooltip
+                      : context.l10n.saveTooltip,
                   icon: Icon(
                     isSaved ? Icons.bookmark : Icons.bookmark_border,
                     size: BatshIconSize.md,
                     color: isSaved
-                        ? BatshColors.primary
-                        : BatshColors.onSurfaceVariant,
+                        ? context.colorScheme.primary
+                        : context.colorScheme.onSurfaceVariant,
                   ),
                   onPressed: onToggleSave,
                   constraints: const BoxConstraints(
@@ -291,17 +299,17 @@ class _LogoAvatar extends StatelessWidget {
       ),
       child: ClipOval(
         child: Container(
-          color: BatshColors.surfaceContainer,
+          color: context.colorScheme.surfaceContainer,
           child: logoUrl != null
               ? CachedNetworkImage(
                   imageUrl: sizedImageUrl(logoUrl!, width: 160),
                   fit: BoxFit.cover,
                   placeholder: (_, _) =>
-                      const ColoredBox(color: BatshColors.surfaceContainer),
+                      ColoredBox(color: context.colorScheme.surfaceContainer),
                 )
-              : const Icon(
+              : Icon(
                   Icons.engineering_outlined,
-                  color: BatshColors.primary,
+                  color: context.colorScheme.primary,
                   size: BatshIconSize.lg,
                 ),
         ),
@@ -330,14 +338,14 @@ class _MicroStats extends StatelessWidget {
     return Row(
       children: [
         BatshBadge(
-          label: '${listing.projectsCompleted} ${S.singleProject}',
+          label: '${listing.projectsCompleted} ${context.l10n.singleProject}',
           icon: Icons.home_work_outlined,
           compact: true,
         ),
         if (listing.yearsExperience != null) ...[
           const SizedBox(width: BatshSpacing.sm),
           BatshBadge(
-            label: '${listing.yearsExperience} ${S.year}',
+            label: '${listing.yearsExperience} ${context.l10n.year}',
             icon: Icons.workspace_premium_outlined,
             compact: true,
           ),

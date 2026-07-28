@@ -35,15 +35,14 @@ class OtpState {
     String? errorMessage,
     DateTime? lastSentAt,
     bool clearError = false,
-  }) =>
-      OtpState(
-        phone: phone ?? this.phone,
-        isSending: isSending ?? this.isSending,
-        isVerifying: isVerifying ?? this.isVerifying,
-        cooldownSeconds: cooldownSeconds ?? this.cooldownSeconds,
-        errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
-        lastSentAt: lastSentAt ?? this.lastSentAt,
-      );
+  }) => OtpState(
+    phone: phone ?? this.phone,
+    isSending: isSending ?? this.isSending,
+    isVerifying: isVerifying ?? this.isVerifying,
+    cooldownSeconds: cooldownSeconds ?? this.cooldownSeconds,
+    errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
+    lastSentAt: lastSentAt ?? this.lastSentAt,
+  );
 }
 
 @riverpod
@@ -58,18 +57,11 @@ class OtpController extends _$OtpController {
   }
 
   Future<bool> sendOtp(String phone) async {
-    state = state.copyWith(
-      phone: phone,
-      isSending: true,
-      clearError: true,
-    );
+    state = state.copyWith(phone: phone, isSending: true, clearError: true);
     try {
       await ref.read(authRepositoryProvider).sendOtp(phone);
       _startCooldown();
-      state = state.copyWith(
-        isSending: false,
-        lastSentAt: DateTime.now(),
-      );
+      state = state.copyWith(isSending: false, lastSentAt: DateTime.now());
       return true;
     } catch (e) {
       state = state.copyWith(

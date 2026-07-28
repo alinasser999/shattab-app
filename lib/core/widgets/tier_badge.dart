@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/l10n_extension.dart';
+
 import '../../features/discovery/domain/contractor_listing.dart';
 import '../l10n/strings.dart';
 import '../theme/batsh_colors.dart';
@@ -7,6 +9,8 @@ import '../theme/batsh_radius.dart';
 import '../theme/batsh_spacing.dart';
 import '../theme/batsh_typography.dart';
 import '../theme/batsh_icon_size.dart';
+
+import 'package:batsh/core/theme/theme_extension.dart';
 
 /// The earned trust level — "مستوى فضي" / "مستوى ذهبي" — shown to homeowners.
 ///
@@ -32,35 +36,43 @@ class TierBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     if (!tier.isPublic) return const SizedBox.shrink();
 
-    final label = '${S.tierLevelPrefix} ${tier.label}';
+    final label = '${context.l10n.tierLevelPrefix} ${tier.label(context)}';
     final chip = Container(
-      padding:
-          const EdgeInsets.symmetric(horizontal: BatshSpacing.xs, vertical: 4),
+      padding: const EdgeInsets.symmetric(
+        horizontal: BatshSpacing.xs,
+        vertical: 4,
+      ),
       decoration: BoxDecoration(
         // Opaque: on the card this sits over an arbitrary cover photo.
-        color: BatshColors.secondaryContainer,
+        color: context.colorScheme.secondaryContainer,
         borderRadius: BatshRadius.brSm,
-        border: Border.all(color: BatshColors.secondary),
+        border: Border.all(color: context.colorScheme.secondary),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           // Icon and word each carry the meaning alone, so the badge survives a
           // greyscale or colour-blind read.
-          const Icon(Icons.emoji_events_outlined,
-              size: BatshIconSize.sm, color: BatshColors.onSecondaryContainer),
+          Icon(
+            Icons.emoji_events_outlined,
+            size: BatshIconSize.sm,
+            color: context.colorScheme.onSecondaryContainer,
+          ),
           const SizedBox(width: 4),
           Text(
             label,
             style: BatshTypography.labelSm.copyWith(
-              color: BatshColors.onSecondaryContainer,
+              color: context.colorScheme.onSecondaryContainer,
               fontWeight: FontWeight.w700,
             ),
           ),
           if (explainOnTap) ...[
             const SizedBox(width: 2),
-            const Icon(Icons.info_outline,
-                size: BatshIconSize.xs, color: BatshColors.onSecondaryContainer),
+            Icon(
+              Icons.info_outline,
+              size: BatshIconSize.xs,
+              color: context.colorScheme.onSecondaryContainer,
+            ),
           ],
         ],
       ),
@@ -84,29 +96,30 @@ class TierBadge extends StatelessWidget {
 /// cannot be bought. The badge is worth nothing as a trust signal if the reader
 /// cannot check what produced it.
 Future<void> showTierExplainer(BuildContext context) => showDialog<void>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(S.tierHowTitle),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(S.tierHowGold, style: BatshTypography.bodyMd),
-            const SizedBox(height: BatshSpacing.xs),
-            Text(S.tierHowSilver, style: BatshTypography.bodyMd),
-            const SizedBox(height: BatshSpacing.sm),
-            Text(
-              S.tierNotForSale,
-              style: BatshTypography.bodySm
-                  .copyWith(color: BatshColors.onSurfaceVariant),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: Text(S.done),
+  context: context,
+  builder: (ctx) => AlertDialog(
+    title: Text(context.l10n.tierHowTitle),
+    content: Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(context.l10n.tierHowGold, style: BatshTypography.bodyMd),
+        const SizedBox(height: BatshSpacing.xs),
+        Text(context.l10n.tierHowSilver, style: BatshTypography.bodyMd),
+        const SizedBox(height: BatshSpacing.sm),
+        Text(
+          context.l10n.tierNotForSale,
+          style: BatshTypography.bodySm.copyWith(
+            color: context.colorScheme.onSurfaceVariant,
           ),
-        ],
+        ),
+      ],
+    ),
+    actions: [
+      TextButton(
+        onPressed: () => Navigator.of(ctx).pop(),
+        child: Text(context.l10n.done),
       ),
-    );
+    ],
+  ),
+);

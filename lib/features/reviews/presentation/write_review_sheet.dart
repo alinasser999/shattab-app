@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/l10n/strings.dart';
+import 'package:batsh/core/l10n/l10n_extension.dart';
 import '../../../core/theme/batsh_colors.dart';
 import '../../../core/theme/batsh_spacing.dart';
 import '../../../core/theme/batsh_typography.dart';
@@ -11,6 +11,8 @@ import '../../../core/widgets/batsh_text_field.dart';
 import '../domain/review.dart';
 import 'providers/reviews_providers.dart';
 import '../../../core/widgets/batsh_sheet.dart';
+
+import 'package:batsh/core/theme/theme_extension.dart';
 
 /// Opens the rate-contractor sheet. [existing] pre-fills when editing.
 Future<void> showWriteReviewSheet(
@@ -61,7 +63,7 @@ class _WriteReviewSheetState extends ConsumerState<_WriteReviewSheet> {
 
   Future<void> _submit() async {
     if (_rating < 1) {
-      setState(() => _error = S.selectStarsFirst);
+      setState(() => _error = context.l10n.selectStarsFirst);
       return;
     }
     setState(() {
@@ -81,7 +83,7 @@ class _WriteReviewSheetState extends ConsumerState<_WriteReviewSheet> {
       if (!mounted) return;
       Navigator.of(context).pop();
     } catch (_) {
-      if (mounted) setState(() => _error = S.profileError);
+      if (mounted) setState(() => _error = context.l10n.profileError);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -102,16 +104,16 @@ class _WriteReviewSheetState extends ConsumerState<_WriteReviewSheet> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            S.rateContractor,
+            context.l10n.rateContractor,
             textAlign: TextAlign.center,
             style: BatshTypography.titleLg,
           ),
           const SizedBox(height: BatshSpacing.xs),
           Text(
-            S.ratingHelpsOthers,
+            context.l10n.ratingHelpsOthers,
             textAlign: TextAlign.center,
             style: BatshTypography.bodyMd.copyWith(
-              color: BatshColors.onSurfaceVariant,
+              color: context.colorScheme.onSurfaceVariant,
             ),
           ),
           const SizedBox(height: BatshSpacing.lg),
@@ -122,8 +124,8 @@ class _WriteReviewSheetState extends ConsumerState<_WriteReviewSheet> {
           const SizedBox(height: BatshSpacing.lg),
           BatshTextField(
             controller: _commentCtrl,
-            label: S.yourReview,
-            hint: S.yourReviewHint,
+            label: context.l10n.yourReview,
+            hint: context.l10n.yourReviewHint,
             maxLines: 4,
             maxLength: 400,
           ),
@@ -131,12 +133,14 @@ class _WriteReviewSheetState extends ConsumerState<_WriteReviewSheet> {
             const SizedBox(height: BatshSpacing.sm),
             Text(
               _error!,
-              style: BatshTypography.labelMd.copyWith(color: BatshColors.error),
+              style: BatshTypography.labelMd.copyWith(
+                color: context.colorScheme.error,
+              ),
             ),
           ],
           const SizedBox(height: BatshSpacing.lg),
           BatshButton(
-            label: S.submitReview,
+            label: context.l10n.submitReview,
             onPressed: _busy ? null : _submit,
             isLoading: _busy,
           ),
