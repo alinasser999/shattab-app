@@ -969,6 +969,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get topRated => 'الأعلى تقييمًا';
 
   @override
+  String get recentWorkTitle => 'أعمال حديثة';
+
+  @override
   String get nearYou => 'قريبين منك';
 
   @override

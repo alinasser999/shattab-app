@@ -72,7 +72,6 @@ class _CoverHero extends StatelessWidget {
   }
 }
 
-
 class _AvatarRing extends StatelessWidget {
   const _AvatarRing({this.logoUrl});
   final String? logoUrl;

@@ -91,11 +91,7 @@ class ContractorCard extends StatelessWidget {
                     // Two lines and no ellipsis. This is the contractor's
                     // identity; it is the one string on the card that must
                     // never arrive cut in half.
-                    Text(
-                      name,
-                      style: BatshTypography.titleLg,
-                      maxLines: 2,
-                    ),
+                    Text(name, style: BatshTypography.titleLg, maxLines: 2),
                     const SizedBox(height: BatshSpacing.xs),
                     _StatLine(listing: listing),
                     if (topSpecialties.isNotEmpty) ...[

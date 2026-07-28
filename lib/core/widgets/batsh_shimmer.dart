@@ -318,4 +318,3 @@ class BatshHeroDetailSkeleton extends StatelessWidget {
     );
   }
 }
-

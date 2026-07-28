@@ -1988,6 +1988,12 @@ abstract class AppLocalizations {
   /// **'الأعلى تقييمًا'**
   String get topRated;
 
+  /// No description provided for @recentWorkTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'أعمال حديثة'**
+  String get recentWorkTitle;
+
   /// No description provided for @nearYou.
   ///
   /// In ar, this message translates to:

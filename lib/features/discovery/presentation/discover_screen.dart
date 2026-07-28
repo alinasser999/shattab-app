@@ -17,6 +17,7 @@ import '../../../core/theme/batsh_typography.dart';
 import '../../../core/utils/image_url.dart';
 import '../../../core/widgets/batsh_empty_state.dart';
 import '../../../core/widgets/batsh_initial_plate.dart';
+import 'widgets/recent_work_rail.dart';
 import '../../../core/widgets/batsh_error.dart';
 import '../../../core/widgets/batsh_filter_sheet.dart';
 import '../../../core/widgets/batsh_scaffold.dart';
@@ -382,6 +383,12 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
                   ...shelf(context.l10n.nearYouIn(myCity!), nearYou),
                 if (topRated.isNotEmpty)
                   ...shelf(context.l10n.topRated, topRated),
+                // Only while browsing. Once a filter is on, the homeowner is
+                // in a task — "a plumber in Giza" — and a rail of unrelated
+                // finished work is something to scroll past on the way to the
+                // list they asked for.
+                if (filters.isEmpty)
+                  const SliverToBoxAdapter(child: RecentWorkRail()),
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(
@@ -721,7 +728,6 @@ class _FeaturedPremiumCard extends StatelessWidget {
     );
   }
 }
-
 
 class _DiscoverSkeleton extends StatelessWidget {
   const _DiscoverSkeleton();

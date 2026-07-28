@@ -971,6 +971,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get topRated => 'Top Rated';
 
   @override
+  String get recentWorkTitle => 'Recent work';
+
+  @override
   String get nearYou => 'Near You';
 
   @override

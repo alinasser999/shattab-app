@@ -30,6 +30,28 @@ class PortfolioRepository {
     return rows.map(PortfolioProject.fromJson).toList();
   }
 
+  /// Newest finished work across every contractor, for the discover rail.
+  ///
+  /// Unlike [fetchForContractor] this ignores `position` — that column is a
+  /// contractor's own ordering of their own gallery and means nothing across
+  /// portfolios. Recency is the only ordering that carries information here,
+  /// and it is what makes the rail differ between visits.
+  ///
+  /// Works signed out: `portfolio_projects` carries an "anyone read portfolio"
+  /// SELECT policy.
+  Future<List<PortfolioProject>> fetchRecent({int limit = 12}) async {
+    final rows = await _client
+        .from('portfolio_projects')
+        .select()
+        .order('created_at', ascending: false)
+        .limit(limit);
+    return rows
+        .map(PortfolioProject.fromJson)
+        // A project with no cover has nothing to contribute to a photo rail.
+        .where((p) => p.coverPhotoUrl.isNotEmpty)
+        .toList();
+  }
+
   Future<PortfolioProject?> fetchById(String projectId) async {
     final row = await _client
         .from('portfolio_projects')
@@ -173,3 +195,12 @@ class PortfolioRepository {
 @Riverpod(keepAlive: true)
 PortfolioRepository portfolioRepository(Ref ref) =>
     PortfolioRepository(ref.watch(supabaseClientProvider));
+
+/// Recent work across all contractors, for the discover rail.
+///
+/// Not kept alive: this is the one surface on discover that should look
+/// different when the homeowner comes back, so letting it refetch on a fresh
+/// subscription is the point rather than a cost.
+@riverpod
+Future<List<PortfolioProject>> recentProjects(Ref ref) =>
+    ref.watch(portfolioRepositoryProvider).fetchRecent();

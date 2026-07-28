@@ -363,6 +363,7 @@
   "searchHint": "ابحث عن محترف أو شركة…",
   "featuredContractors": "محترفين مميزين",
   "topRated": "الأعلى تقييمًا",
+  "recentWorkTitle": "أعمال حديثة",
   "nearYou": "قريبين منك",
   "nearYouIn": "قريبين منك في {city}",
   "@nearYouIn": {

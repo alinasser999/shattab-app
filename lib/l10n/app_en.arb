@@ -363,6 +363,7 @@
   "searchHint": "Search for a Professional or company…",
   "featuredContractors": "Featured Professionals",
   "topRated": "Top Rated",
+  "recentWorkTitle": "Recent work",
   "nearYou": "Near You",
   "nearYouIn": "Near you in {city}",
   "@nearYouIn": {
