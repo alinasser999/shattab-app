@@ -148,18 +148,33 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                   index: i,
                   onTap: () =>
                       context.push('${_explorePrefix()}/post/${posts[i].id}'),
+                  // The optimistic flip has already rolled itself back by the
+                  // time this catches — all that is left is to say why, so the
+                  // undo does not read as a tap that missed.
                   onLike: () {
-                    _ensureAuth(context, () {
-                      ref
-                          .read(postControllerProvider.notifier)
-                          .toggleLike(posts[i]);
+                    _ensureAuth(context, () async {
+                      try {
+                        await ref
+                            .read(postControllerProvider.notifier)
+                            .toggleLike(posts[i]);
+                      } catch (e) {
+                        if (context.mounted) {
+                          BatshSnack.error(context, ErrorMapper.map(e));
+                        }
+                      }
                     });
                   },
                   onSave: () {
-                    _ensureAuth(context, () {
-                      ref
-                          .read(postControllerProvider.notifier)
-                          .toggleSave(posts[i]);
+                    _ensureAuth(context, () async {
+                      try {
+                        await ref
+                            .read(postControllerProvider.notifier)
+                            .toggleSave(posts[i]);
+                      } catch (e) {
+                        if (context.mounted) {
+                          BatshSnack.error(context, ErrorMapper.map(e));
+                        }
+                      }
                     });
                   },
                   onProfileTap: () {

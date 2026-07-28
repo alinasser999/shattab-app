@@ -1,5 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -118,6 +119,18 @@ class _PostDetailContentState extends ConsumerState<_PostDetailContent> {
       action: action,
     );
   }
+
+  /// Runs an optimistic toggle, and says so when the write behind it fails.
+  ///
+  /// The controller has already rolled the flip back by the time this catches.
+  /// Without a message, that undo is indistinguishable from a tap that missed.
+  void _optimistic(Future<void> Function() op) => _ensureAuth(() async {
+    try {
+      await op();
+    } catch (_) {
+      if (mounted) BatshSnack.error(context, context.l10n.unknownErrorRetry);
+    }
+  });
 
   void _sharePost(Post post) {
     Share.share(
@@ -405,9 +418,10 @@ class _PostDetailContentState extends ConsumerState<_PostDetailContent> {
           label: post.likeCount > 0
               ? '${post.likeCount}'
               : context.l10n.likeLabel,
-          onTap: () => _ensureAuth(
+          onTap: () => _optimistic(
             () => ref.read(postControllerProvider.notifier).toggleLike(post),
           ),
+          haptic: HapticStrength.light,
         ),
         const SizedBox(width: BatshSpacing.sm),
         _ActionBtn(
@@ -427,9 +441,10 @@ class _PostDetailContentState extends ConsumerState<_PostDetailContent> {
         _ActionBtn(
           icon: post.isSaved ? Icons.bookmark : Icons.bookmark_border,
           color: post.isSaved ? context.colorScheme.tertiary : null,
-          onTap: () => _ensureAuth(
+          onTap: () => _optimistic(
             () => ref.read(postControllerProvider.notifier).toggleSave(post),
           ),
+          haptic: HapticStrength.light,
         ),
       ],
     );
@@ -565,12 +580,22 @@ class _PostDetailContentState extends ConsumerState<_PostDetailContent> {
 }
 
 class _ActionBtn extends StatefulWidget {
-  const _ActionBtn({required this.icon, this.label, this.color, this.onTap});
+  const _ActionBtn({
+    required this.icon,
+    this.label,
+    this.color,
+    this.onTap,
+    this.haptic = HapticStrength.selection,
+  });
 
   final IconData icon;
   final String? label;
   final Color? color;
   final VoidCallback? onTap;
+
+  /// Liking and saving are the two taps here that mean something to the person
+  /// making them, so they answer back harder than share or comment.
+  final HapticStrength haptic;
 
   @override
   State<_ActionBtn> createState() => _ActionBtnState();
@@ -578,12 +603,38 @@ class _ActionBtn extends StatefulWidget {
 
 class _ActionBtnState extends State<_ActionBtn>
     with SingleTickerProviderStateMixin {
+  // `value` matters: AnimationController defaults it to `lowerBound`, so
+  // without it every one of these buttons painted at 0.9 forever and only
+  // reached full size after its first tap.
   late final AnimationController _ctrl = AnimationController(
     vsync: this,
     duration: BatshMotion.fast,
     lowerBound: 0.9,
     upperBound: 1.0,
+    value: 1.0,
   );
+
+  bool get _reduced => MediaQuery.disableAnimationsOf(context);
+
+  void _press() {
+    if (!_reduced) _ctrl.reverse();
+  }
+
+  void _release() {
+    if (!_reduced) _ctrl.forward();
+  }
+
+  void _tap() {
+    final onTap = widget.onTap;
+    if (onTap == null) return;
+    switch (widget.haptic) {
+      case HapticStrength.selection:
+        HapticFeedback.selectionClick();
+      case HapticStrength.light:
+        HapticFeedback.lightImpact();
+    }
+    onTap();
+  }
 
   @override
   void dispose() {
@@ -594,10 +645,10 @@ class _ActionBtnState extends State<_ActionBtn>
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTapDown: (_) => _ctrl.reverse(),
-      onTapUp: (_) => _ctrl.forward(),
-      onTapCancel: () => _ctrl.forward(),
-      onTap: widget.onTap,
+      onTapDown: (_) => _press(),
+      onTapUp: (_) => _release(),
+      onTapCancel: _release,
+      onTap: _tap,
       child: AnimatedBuilder(
         animation: _ctrl,
         builder: (context, _) => Transform.scale(

@@ -109,6 +109,12 @@ class PostController extends _$PostController {
     }
   }
 
+  /// Flips the like immediately and undoes it if the write fails.
+  ///
+  /// Rethrows after the rollback, like [addComment], so the caller can say so.
+  /// A silent rollback is indistinguishable from a tap that never registered,
+  /// and on a patchy mobile connection that is the common case, not the rare
+  /// one.
   Future<void> toggleLike(Post post) async {
     final userId = ref.read(currentSessionProvider)?.user.id;
     if (userId == null) return;
@@ -125,9 +131,13 @@ class PostController extends _$PostController {
       ref.invalidate(postByIdProvider(post.id));
     } catch (_) {
       feed.patchPost(post); // rollback
+      rethrow;
     }
   }
 
+  /// Flips the save immediately and undoes it if the write fails.
+  ///
+  /// Rethrows after the rollback, for the reason given on [toggleLike].
   Future<void> toggleSave(Post post) async {
     final userId = ref.read(currentSessionProvider)?.user.id;
     if (userId == null) return;
@@ -142,6 +152,7 @@ class PostController extends _$PostController {
       ref.invalidate(savedPostsProvider);
     } catch (_) {
       feed.patchPost(post); // rollback
+      rethrow;
     }
   }
 

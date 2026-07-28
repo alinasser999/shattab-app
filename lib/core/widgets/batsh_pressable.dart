@@ -2,6 +2,14 @@ import 'package:flutter/material.dart';
 
 import '../theme/batsh_motion.dart';
 
+/// How firmly a tap answers back.
+///
+/// [selection] is the default: the light tick that says "registered", for
+/// navigation, chips and neutral actions. [light] is a real bump, reserved for
+/// taps the person *meant* — liking, saving, committing. Spending the stronger
+/// one on everything makes it mean nothing.
+enum HapticStrength { selection, light }
+
 /// Bare press-scale interaction, extracted from [BatshCard] so image tiles and
 /// custom-decorated cards get the same tactile feedback without inheriting a
 /// card's background/padding. Scales down on press, springs back on release.

@@ -1,5 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
@@ -257,6 +258,7 @@ class PostCard extends StatelessWidget {
                 ? '${post.likeCount}'
                 : context.l10n.likeLabel,
             onTap: onLike,
+            haptic: HapticStrength.light,
           ),
           const SizedBox(width: BatshSpacing.sm),
           _ActionButton(
@@ -277,6 +279,7 @@ class PostCard extends StatelessWidget {
             icon: post.isSaved ? Icons.bookmark : Icons.bookmark_border,
             color: post.isSaved ? context.colorScheme.tertiary : null,
             onTap: onSave,
+            haptic: HapticStrength.light,
           ),
         ],
       ),
@@ -414,12 +417,22 @@ class _OwnerMenu extends StatelessWidget {
 }
 
 class _ActionButton extends StatefulWidget {
-  const _ActionButton({required this.icon, this.label, this.color, this.onTap});
+  const _ActionButton({
+    required this.icon,
+    this.label,
+    this.color,
+    this.onTap,
+    this.haptic = HapticStrength.selection,
+  });
 
   final IconData icon;
   final String? label;
   final Color? color;
   final VoidCallback? onTap;
+
+  /// Liking and saving are the two taps in the feed that mean something to the
+  /// person making them, so they answer back harder than share or comment.
+  final HapticStrength haptic;
 
   @override
   State<_ActionButton> createState() => _ActionButtonState();
@@ -427,12 +440,38 @@ class _ActionButton extends StatefulWidget {
 
 class _ActionButtonState extends State<_ActionButton>
     with SingleTickerProviderStateMixin {
+  // `value` matters: AnimationController defaults it to `lowerBound`, so
+  // without it every one of these buttons painted at 0.9 forever and only
+  // reached full size after its first tap.
   late final AnimationController _ctrl = AnimationController(
     vsync: this,
     duration: BatshMotion.fast,
     lowerBound: 0.9,
     upperBound: 1.0,
+    value: 1.0,
   );
+
+  bool get _reduced => MediaQuery.disableAnimationsOf(context);
+
+  void _press() {
+    if (!_reduced) _ctrl.reverse();
+  }
+
+  void _release() {
+    if (!_reduced) _ctrl.forward();
+  }
+
+  void _tap() {
+    final onTap = widget.onTap;
+    if (onTap == null) return;
+    switch (widget.haptic) {
+      case HapticStrength.selection:
+        HapticFeedback.selectionClick();
+      case HapticStrength.light:
+        HapticFeedback.lightImpact();
+    }
+    onTap();
+  }
 
   @override
   void dispose() {
@@ -443,10 +482,10 @@ class _ActionButtonState extends State<_ActionButton>
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTapDown: (_) => _ctrl.reverse(),
-      onTapUp: (_) => _ctrl.forward(),
-      onTapCancel: () => _ctrl.forward(),
-      onTap: widget.onTap,
+      onTapDown: (_) => _press(),
+      onTapUp: (_) => _release(),
+      onTapCancel: _release,
+      onTap: _tap,
       child: AnimatedBuilder(
         animation: _ctrl,
         builder: (context, _) => Transform.scale(
