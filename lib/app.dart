@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/debug/debug_config.dart';
 import 'core/l10n/locale_provider.dart';
 import 'package:batsh/core/l10n/l10n_extension.dart';
+import 'package:batsh/l10n/app_localizations.dart';
 import 'core/router/app_router.dart';
 import 'core/supabase/supabase_provider.dart';
 import 'core/theme/batsh_theme.dart';
@@ -28,7 +28,11 @@ class BatshApp extends ConsumerWidget {
     final motionMode = ref.watch(motionModeProvider);
 
     return MaterialApp.router(
-      title: context.l10n.appName,
+      // `title` builds in this widget's own context, above MaterialApp in the
+      // tree — no Localizations ancestor exists there yet, so context.l10n
+      // null-checked and crashed on every boot. onGenerateTitle's context is
+      // inside the tree MaterialApp itself creates.
+      onGenerateTitle: (context) => context.l10n.appName,
       debugShowCheckedModeBanner: false,
       theme: BatshTheme.light(),
       darkTheme: BatshTheme.dark(),
@@ -36,11 +40,9 @@ class BatshApp extends ConsumerWidget {
       routerConfig: router,
       locale: locale,
       supportedLocales: const [Locale('ar', 'EG'), Locale('ar'), Locale('en')],
-      localizationsDelegates: const [
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
+      // The hand-rolled version of this list was missing AppLocalizations
+      // itself — every context.l10n call in the app was one delegate short.
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
       builder: (context, child) {
         if (child == null) return const SizedBox.shrink();
         // Honour the system font size, but cap it. Many surfaces still use

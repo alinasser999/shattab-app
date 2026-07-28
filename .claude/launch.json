@@ -16,8 +16,8 @@
     {
       "name": "shattab-flutter-web",
       "runtimeExecutable": "C:/flutter/bin/flutter.bat",
-      "runtimeArgs": ["run", "-d", "web-server", "--web-port", "8080"],
-      "port": 8080
+      "runtimeArgs": ["run", "-d", "web-server", "--web-port", "6434"],
+      "port": 6434
     },
     {
       "name": "shattab-admin",

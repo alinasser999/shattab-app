@@ -11,7 +11,12 @@ class BatshTheme {
 
   static ThemeData light() {
     final colors = BatshColors.scheme;
-    final textTheme = BatshTypography.textTheme;
+    // BatshTypography ships every style with a null colour so one scale can
+    // serve both themes. The ink is applied here, per scheme.
+    final textTheme = BatshTypography.textTheme.apply(
+      bodyColor: colors.onSurface,
+      displayColor: colors.onSurface,
+    );
 
     return ThemeData(
       useMaterial3: true,
@@ -213,7 +218,12 @@ class BatshTheme {
 
   static ThemeData dark() {
     final colors = BatshColors.darkScheme;
-    final textTheme = BatshTypography.textTheme;
+    // Without this the whole app painted 0xFF1F1B14 text on the dark scheme's
+    // 0xFF1F1B14 surface. Same colour, 1.0:1, invisible.
+    final textTheme = BatshTypography.textTheme.apply(
+      bodyColor: colors.onSurface,
+      displayColor: colors.onSurface,
+    );
 
     return ThemeData(
       useMaterial3: true,

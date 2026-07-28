@@ -62,6 +62,22 @@ flutter:
     - assets/images/
     - assets/icons/
 
+  # Bundled rather than fetched from fonts.gstatic.com at runtime. The CDN
+  # path means a first launch on a weak connection renders fallback glyphs
+  # until the download lands, and never renders the real face offline — on the
+  # network most of these users actually have, that is the common case.
+  fonts:
+    - family: IBM Plex Sans Arabic
+      fonts:
+        - asset: assets/fonts/IBMPlexSansArabic-400.ttf
+          weight: 400
+        - asset: assets/fonts/IBMPlexSansArabic-500.ttf
+          weight: 500
+        - asset: assets/fonts/IBMPlexSansArabic-600.ttf
+          weight: 600
+        - asset: assets/fonts/IBMPlexSansArabic-700.ttf
+          weight: 700
+
 flutter_launcher_icons:
   android: "ic_launcher"
   ios: true
