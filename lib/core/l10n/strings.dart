@@ -899,6 +899,10 @@ class S {
   // ── Contact ─────────────────────────────────────────────────────────────
   static String get contactViaWhatsApp =>
       _t('تواصل عبر واتساب', 'Contact via WhatsApp');
+
+  /// Visible label when the button sits at half width beside Call. The full
+  /// phrase truncates there; [contactViaWhatsApp] stays the announced one.
+  static String get whatsappShort => _t('واتساب', 'WhatsApp');
   static String get call => _t('اتصل', 'Call');
   static String get phone => _t('تليفون', 'Phone');
 

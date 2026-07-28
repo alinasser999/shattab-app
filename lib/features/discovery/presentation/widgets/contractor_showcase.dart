@@ -301,19 +301,23 @@ class ContractorContactBar extends StatelessWidget {
     final content = Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        WhatsAppButton(
-          phone: listing.phone,
-          message: context.l10n.profileGreeting,
+        // One primary, and it is the platform's own. Sending project details
+        // is what this screen exists to produce: it is the only path that
+        // leaves a brief behind, that the contractor can quote against, and
+        // that the business can see. WhatsApp and Call are the two ways to
+        // leave, and they stay available without outranking it.
+        BatshButton(
+          label: context.l10n.sendProjectDetails,
+          onPressed: () =>
+              context.push(Routes.homeownerSendBriefPath(listing.id)),
         ),
         const SizedBox(height: BatshSpacing.sm),
         Row(
           children: [
             Expanded(
-              child: BatshButton(
-                label: context.l10n.sendProjectDetails,
-                style: BatshButtonStyle.secondary,
-                onPressed: () =>
-                    context.push(Routes.homeownerSendBriefPath(listing.id)),
+              child: WhatsAppButton(
+                phone: listing.phone,
+                message: context.l10n.profileGreeting,
               ),
             ),
             const SizedBox(width: BatshSpacing.sm),

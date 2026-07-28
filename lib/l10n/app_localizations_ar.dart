@@ -1385,6 +1385,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get contactViaWhatsApp => 'تواصل عبر واتساب';
 
   @override
+  String get whatsappShort => 'واتساب';
+
+  @override
   String get call => 'اتصل';
 
   @override

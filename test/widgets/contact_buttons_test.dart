@@ -17,7 +17,11 @@ void main() {
         ),
       );
 
-      expect(find.text(S.contactViaWhatsApp), findsOneWidget);
+      // Visible label is the short form; the full sentence is what a screen
+      // reader announces. Both are asserted so the terse label can never drift
+      // into being terse for assistive tech too.
+      expect(find.text(S.whatsappShort), findsOneWidget);
+      expect(find.bySemanticsLabel(S.contactViaWhatsApp), findsOneWidget);
     });
 
     testWidgets('renders with empty phone without crashing', (tester) async {
@@ -31,7 +35,11 @@ void main() {
         ),
       );
 
-      expect(find.text(S.contactViaWhatsApp), findsOneWidget);
+      // Visible label is the short form; the full sentence is what a screen
+      // reader announces. Both are asserted so the terse label can never drift
+      // into being terse for assistive tech too.
+      expect(find.text(S.whatsappShort), findsOneWidget);
+      expect(find.bySemanticsLabel(S.contactViaWhatsApp), findsOneWidget);
     });
   });
 

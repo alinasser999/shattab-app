@@ -1387,6 +1387,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get contactViaWhatsApp => 'Contact via WhatsApp';
 
   @override
+  String get whatsappShort => 'WhatsApp';
+
+  @override
   String get call => 'Call';
 
   @override

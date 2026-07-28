@@ -2816,6 +2816,12 @@ abstract class AppLocalizations {
   /// **'تواصل عبر واتساب'**
   String get contactViaWhatsApp;
 
+  /// No description provided for @whatsappShort.
+  ///
+  /// In ar, this message translates to:
+  /// **'واتساب'**
+  String get whatsappShort;
+
   /// No description provided for @call.
   ///
   /// In ar, this message translates to:
