@@ -319,22 +319,3 @@ class BatshHeroDetailSkeleton extends StatelessWidget {
   }
 }
 
-class BatshGradientFallback extends StatelessWidget {
-  const BatshGradientFallback({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topRight,
-          end: Alignment.bottomLeft,
-          colors: [
-            context.colorScheme.primaryContainer,
-            context.colorScheme.tertiaryContainer,
-          ],
-        ),
-      ),
-    );
-  }
-}

@@ -25,8 +25,12 @@ class _BackButton extends StatelessWidget {
 }
 
 class _CoverHero extends StatelessWidget {
-  const _CoverHero({this.coverUrl});
+  const _CoverHero({this.coverUrl, this.name});
   final String? coverUrl;
+
+  /// Feeds the no-photo plate, so a contractor without a cover gets their own
+  /// initial here and the same one on their card in the feed.
+  final String? name;
 
   @override
   Widget build(BuildContext context) {
@@ -40,10 +44,10 @@ class _CoverHero extends StatelessWidget {
             memCacheWidth: 900,
             placeholder: (_, _) =>
                 ColoredBox(color: context.colorScheme.surfaceContainer),
-            errorWidget: (_, _, _) => const _CoverFallback(),
+            errorWidget: (_, _, _) => BatshInitialPlate(name: name),
           )
         else
-          const _CoverFallback(),
+          BatshInitialPlate(name: name),
         // Neutral photographic scrim. The previous ramp reached the page
         // background at 92% with 0.86 alpha, which erased the bottom third of
         // the photo — a cover you cannot see reads as a rendering accident.
@@ -68,13 +72,6 @@ class _CoverHero extends StatelessWidget {
   }
 }
 
-class _CoverFallback extends StatelessWidget {
-  const _CoverFallback();
-  @override
-  Widget build(BuildContext context) {
-    return const BatshGradientFallback();
-  }
-}
 
 class _AvatarRing extends StatelessWidget {
   const _AvatarRing({this.logoUrl});

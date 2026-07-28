@@ -16,6 +16,7 @@ import '../../../core/theme/batsh_spacing.dart';
 import '../../../core/theme/batsh_typography.dart';
 import '../../../core/utils/image_url.dart';
 import '../../../core/widgets/batsh_empty_state.dart';
+import '../../../core/widgets/batsh_initial_plate.dart';
 import '../../../core/widgets/batsh_error.dart';
 import '../../../core/widgets/batsh_filter_sheet.dart';
 import '../../../core/widgets/batsh_scaffold.dart';
@@ -596,9 +597,10 @@ class _FeaturedPremiumCard extends StatelessWidget {
                             placeholder: (_, _) => ColoredBox(
                               color: context.colorScheme.surfaceContainer,
                             ),
-                            errorWidget: (_, _, _) => const _FeaturedFallback(),
+                            errorWidget: (_, _, _) =>
+                                BatshInitialPlate(name: listing.businessName),
                           )
-                        : const _FeaturedFallback(),
+                        : BatshInitialPlate(name: listing.businessName),
                   ),
                   Positioned.fill(
                     child: IgnorePointer(
@@ -720,14 +722,6 @@ class _FeaturedPremiumCard extends StatelessWidget {
   }
 }
 
-class _FeaturedFallback extends StatelessWidget {
-  const _FeaturedFallback();
-
-  @override
-  Widget build(BuildContext context) {
-    return const BatshGradientFallback();
-  }
-}
 
 class _DiscoverSkeleton extends StatelessWidget {
   const _DiscoverSkeleton();

@@ -1,5 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+
+import '../../../../core/widgets/batsh_initial_plate.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -150,7 +152,12 @@ class ContractorShowcase extends ConsumerWidget {
             fit: StackFit.expand,
             children: [
               FlexibleSpaceBar(
-                background: _CoverHero(coverUrl: listing.coverPhotoUrl),
+                background: _CoverHero(
+                  coverUrl: listing.coverPhotoUrl,
+                  name: listing.businessName.isNotEmpty
+                      ? listing.businessName
+                      : listing.fullName,
+                ),
               ),
               Align(
                 alignment: Alignment.bottomCenter,
