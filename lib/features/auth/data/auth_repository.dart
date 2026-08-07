@@ -11,7 +11,7 @@ part 'auth_repository.g.dart';
 
 class AuthRepository {
   AuthRepository(this._client, [MediaStorageService? mediaStorage])
-      : _mediaStorage = mediaStorage;
+    : _mediaStorage = mediaStorage;
   final SupabaseClient _client;
   final MediaStorageService? _mediaStorage;
 
@@ -123,8 +123,7 @@ class AuthRepository {
 }
 
 @Riverpod(keepAlive: true)
-AuthRepository authRepository(Ref ref) =>
-    AuthRepository(
-      ref.watch(supabaseClientProvider),
-      ref.watch(mediaStorageProvider),
-    );
+AuthRepository authRepository(Ref ref) => AuthRepository(
+  ref.watch(supabaseClientProvider),
+  ref.watch(mediaStorageProvider),
+);

@@ -197,8 +197,7 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
                     children: [
                       _CreatePostSectionHeading(
                         title: context.l10n.communityCreatePostTypeTitle,
-                        subtitle:
-                            context.l10n.communityCreatePostTypeSubtitle,
+                        subtitle: context.l10n.communityCreatePostTypeSubtitle,
                         icon: Icons.architecture_outlined,
                       ),
                       const SizedBox(height: BatshSpacing.md),
@@ -230,9 +229,8 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
                           style: FilledButton.styleFrom(
                             backgroundColor: context.colorScheme.primary,
                             foregroundColor: context.colorScheme.onPrimary,
-                            disabledBackgroundColor: context
-                                .colorScheme
-                                .surfaceContainerHighest,
+                            disabledBackgroundColor:
+                                context.colorScheme.surfaceContainerHighest,
                             disabledForegroundColor: context
                                 .colorScheme
                                 .onSurfaceVariant
@@ -299,8 +297,7 @@ class _PostTypeSelector extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final singleColumn = constraints.maxWidth < 360;
-        final halfWidth =
-            (constraints.maxWidth - BatshSpacing.sm) / 2;
+        final halfWidth = (constraints.maxWidth - BatshSpacing.sm) / 2;
         return Wrap(
           spacing: BatshSpacing.sm,
           runSpacing: BatshSpacing.sm,
@@ -425,11 +422,7 @@ class _CreatePostSectionHeading extends StatelessWidget {
               color: context.colorScheme.primary.withValues(alpha: 0.24),
             ),
           ),
-          child: Icon(
-            icon,
-            size: 21,
-            color: context.colorScheme.primary,
-          ),
+          child: Icon(icon, size: 21, color: context.colorScheme.primary),
         ),
         const SizedBox(width: BatshSpacing.sm),
         Expanded(

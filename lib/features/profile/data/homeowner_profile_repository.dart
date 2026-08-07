@@ -14,7 +14,7 @@ part 'homeowner_profile_repository.g.dart';
 
 class HomeownerProfileRepository {
   HomeownerProfileRepository(this._client, [MediaStorageService? mediaStorage])
-      : _mediaStorage = mediaStorage;
+    : _mediaStorage = mediaStorage;
   final SupabaseClient _client;
   final MediaStorageService? _mediaStorage;
 

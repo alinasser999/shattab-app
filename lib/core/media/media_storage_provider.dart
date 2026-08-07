@@ -29,9 +29,9 @@ final mediaStorageProvider = Provider<MediaStorageService>((ref) {
 });
 
 Set<MediaCategory> _parseCategories(Set<String> names) => {
-      for (final category in MediaCategory.values)
-        if (category.canUsePublicR2 && names.contains(category.wireName)) category,
-    };
+  for (final category in MediaCategory.values)
+    if (category.canUsePublicR2 && names.contains(category.wireName)) category,
+};
 
 class _MediaStorageRouter implements MediaStorageService {
   _MediaStorageRouter({required this.supabase, required this.r2});

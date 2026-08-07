@@ -15,7 +15,10 @@ void main() {
 
   test('wire names preserve the existing Supabase bucket contract', () {
     expect(MediaCategory.postMedia.wireName, 'post-media');
-    expect(MediaCategory.verificationDocument.supabaseBucket, 'verification-docs');
+    expect(
+      MediaCategory.verificationDocument.supabaseBucket,
+      'verification-docs',
+    );
     expect(MediaCategory.paymentProof.supabaseBucket, 'payment-proofs');
   });
 }

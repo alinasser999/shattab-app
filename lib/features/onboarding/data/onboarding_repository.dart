@@ -15,7 +15,7 @@ part 'onboarding_repository.g.dart';
 
 class OnboardingRepository {
   OnboardingRepository(this._client, [MediaStorageService? mediaStorage])
-      : _mediaStorage = mediaStorage;
+    : _mediaStorage = mediaStorage;
   final SupabaseClient _client;
   final MediaStorageService? _mediaStorage;
 
@@ -158,8 +158,7 @@ class OnboardingRepository {
 }
 
 @Riverpod(keepAlive: true)
-OnboardingRepository onboardingRepository(Ref ref) =>
-    OnboardingRepository(
-      ref.watch(supabaseClientProvider),
-      ref.watch(mediaStorageProvider),
-    );
+OnboardingRepository onboardingRepository(Ref ref) => OnboardingRepository(
+  ref.watch(supabaseClientProvider),
+  ref.watch(mediaStorageProvider),
+);

@@ -246,8 +246,11 @@ Bootstrapping the first admin is manual and off-system by design — see
 - **Enums that cross the wire** carry an explicit `wire`/`dbValue` and a tolerant
   `fromWire`/`fromDb` that falls back rather than throwing — an older client must
   not crash on a value a newer migration added.
-- `dart format` is **not** enforced; most files are not format-clean, and a
-  blanket reformat would bury real diffs.
+- `dart format` **is** enforced. `.github/workflows/ci.yml` runs
+  `dart format --output=none --set-exit-if-changed lib test` *before* analyze
+  and test, so one unformatted file fails the whole pipeline at its first step.
+  Run `dart format lib test` before pushing. (An earlier version of this doc
+  claimed the opposite; the repo was reformatted 2026-08-07 to make CI pass.)
 
 ---
 

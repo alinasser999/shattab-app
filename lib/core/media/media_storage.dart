@@ -14,32 +14,29 @@ enum MediaCategory {
 
 extension MediaCategoryWire on MediaCategory {
   String get wireName => switch (this) {
-        MediaCategory.avatar => 'avatars',
-        MediaCategory.contractorLogo => 'contractor-logos',
-        MediaCategory.postMedia => 'post-media',
-        MediaCategory.portfolioPhoto => 'portfolio-photos',
-        MediaCategory.briefPhoto => 'brief-photos',
-        MediaCategory.verificationDocument => 'verification-docs',
-        MediaCategory.paymentProof => 'payment-proofs',
-      };
+    MediaCategory.avatar => 'avatars',
+    MediaCategory.contractorLogo => 'contractor-logos',
+    MediaCategory.postMedia => 'post-media',
+    MediaCategory.portfolioPhoto => 'portfolio-photos',
+    MediaCategory.briefPhoto => 'brief-photos',
+    MediaCategory.verificationDocument => 'verification-docs',
+    MediaCategory.paymentProof => 'payment-proofs',
+  };
 
   String get supabaseBucket => wireName;
 
   bool get canUsePublicR2 => switch (this) {
-        MediaCategory.avatar ||
-        MediaCategory.contractorLogo ||
-        MediaCategory.postMedia ||
-        MediaCategory.portfolioPhoto => true,
-        MediaCategory.briefPhoto ||
-        MediaCategory.verificationDocument ||
-        MediaCategory.paymentProof => false,
-      };
+    MediaCategory.avatar ||
+    MediaCategory.contractorLogo ||
+    MediaCategory.postMedia ||
+    MediaCategory.portfolioPhoto => true,
+    MediaCategory.briefPhoto ||
+    MediaCategory.verificationDocument ||
+    MediaCategory.paymentProof => false,
+  };
 }
 
-enum MediaProvider {
-  supabase,
-  cloudflareR2,
-}
+enum MediaProvider { supabase, cloudflareR2 }
 
 class MediaUploadResult {
   const MediaUploadResult({

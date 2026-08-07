@@ -257,8 +257,7 @@ class _NotificationTile extends StatelessWidget {
       context.l10n.notificationPostCommentedBody,
     'notificationCommentRepliedBody' =>
       context.l10n.notificationCommentRepliedBody,
-    'notificationCommentLikedBody' =>
-      context.l10n.notificationCommentLikedBody,
+    'notificationCommentLikedBody' => context.l10n.notificationCommentLikedBody,
     _ => context.l10n.notificationsSubtitle,
   };
 

@@ -31,7 +31,7 @@ class BriefCursor {
 
 class BriefsRepository {
   BriefsRepository(this._client, [MediaStorageService? mediaStorage])
-      : _mediaStorage = mediaStorage;
+    : _mediaStorage = mediaStorage;
   final SupabaseClient _client;
   final MediaStorageService? _mediaStorage;
 
@@ -313,8 +313,7 @@ class BriefsRepository {
 }
 
 @Riverpod(keepAlive: true)
-BriefsRepository briefsRepository(Ref ref) =>
-    BriefsRepository(
-      ref.watch(supabaseClientProvider),
-      ref.watch(mediaStorageProvider),
-    );
+BriefsRepository briefsRepository(Ref ref) => BriefsRepository(
+  ref.watch(supabaseClientProvider),
+  ref.watch(mediaStorageProvider),
+);

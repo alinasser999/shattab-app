@@ -74,10 +74,8 @@ class Routes {
   static String contractorHomeownerProfilePath(String id) => '/c/homeowner/$id';
   static String contractorCommunityContractorProfilePath(String id) =>
       '/c/explore/contractor/$id';
-  static String homeownerCommunityPostPath(String id) =>
-      '/h/explore/post/$id';
-  static String contractorCommunityPostPath(String id) =>
-      '/c/explore/post/$id';
+  static String homeownerCommunityPostPath(String id) => '/h/explore/post/$id';
+  static String contractorCommunityPostPath(String id) => '/c/explore/post/$id';
   static String contractorRequestDetailPath(String id) => '/c/inbox/$id';
   static const String contractorMyQuotes = '/c/dashboard/my-quotes';
   static const String contractorPortfolioNew = '/c/portfolio/new';

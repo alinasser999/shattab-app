@@ -55,10 +55,10 @@ class Env {
   static String? get r2PublicBaseUrl => _optional('R2_PUBLIC_BASE_URL');
 
   static Set<String> get r2PublicMediaCategories => {
-        for (final category in (dotenv.env['R2_PUBLIC_MEDIA_CATEGORIES'] ?? '')
-            .split(','))
-          if (category.trim().isNotEmpty) category.trim(),
-      };
+    for (final category
+        in (dotenv.env['R2_PUBLIC_MEDIA_CATEGORIES'] ?? '').split(','))
+      if (category.trim().isNotEmpty) category.trim(),
+  };
 
   static String? _optional(String key) {
     final value = dotenv.env[key]?.trim();

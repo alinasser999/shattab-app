@@ -15,7 +15,7 @@ part 'portfolio_repository.g.dart';
 
 class PortfolioRepository {
   PortfolioRepository(this._client, [MediaStorageService? mediaStorage])
-      : _mediaStorage = mediaStorage;
+    : _mediaStorage = mediaStorage;
   final SupabaseClient _client;
   final MediaStorageService? _mediaStorage;
 
@@ -233,11 +233,10 @@ class PortfolioRepository {
 }
 
 @Riverpod(keepAlive: true)
-PortfolioRepository portfolioRepository(Ref ref) =>
-    PortfolioRepository(
-      ref.watch(supabaseClientProvider),
-      ref.watch(mediaStorageProvider),
-    );
+PortfolioRepository portfolioRepository(Ref ref) => PortfolioRepository(
+  ref.watch(supabaseClientProvider),
+  ref.watch(mediaStorageProvider),
+);
 
 /// Recent work across all contractors, for the discover rail.
 ///

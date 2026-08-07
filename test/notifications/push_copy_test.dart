@@ -30,10 +30,10 @@ void main() {
             as Map<String, dynamic>;
 
     // Top-level entries of the COPY object: two-space indent, then the key.
-    keys = RegExp(r'^  (notification[A-Za-z]+): \{', multiLine: true)
-        .allMatches(source)
-        .map((match) => match.group(1)!)
-        .toList();
+    keys = RegExp(
+      r'^  (notification[A-Za-z]+): \{',
+      multiLine: true,
+    ).allMatches(source).map((match) => match.group(1)!).toList();
   });
 
   test('the Edge Function declares copy for the keys it can be sent', () {

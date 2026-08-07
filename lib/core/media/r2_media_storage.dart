@@ -19,11 +19,11 @@ class CloudflareR2MediaStorage {
     required String signerUrl,
     required String publicBaseUrl,
     required Set<MediaCategory> enabledCategories,
-  })  : _supabase = supabase,
-        _http = httpClient,
-        _signerUrl = signerUrl.replaceFirst(RegExp(r'/+$'), ''),
-        _publicBaseUrl = publicBaseUrl.replaceFirst(RegExp(r'/+$'), ''),
-        _enabledCategories = enabledCategories;
+  }) : _supabase = supabase,
+       _http = httpClient,
+       _signerUrl = signerUrl.replaceFirst(RegExp(r'/+$'), ''),
+       _publicBaseUrl = publicBaseUrl.replaceFirst(RegExp(r'/+$'), ''),
+       _enabledCategories = enabledCategories;
 
   final SupabaseClient _supabase;
   final http.Client _http;
@@ -36,7 +36,8 @@ class CloudflareR2MediaStorage {
       _publicBaseUrl.isNotEmpty &&
       _enabledCategories.isNotEmpty;
 
-  bool supports(MediaCategory category) => _enabledCategories.contains(category);
+  bool supports(MediaCategory category) =>
+      _enabledCategories.contains(category);
 
   bool ownsUrl(String rawUrl) {
     final base = Uri.tryParse(_publicBaseUrl);
@@ -83,7 +84,8 @@ class CloudflareR2MediaStorage {
       throw const MediaStorageException('r2_invalid_upload_response');
     }
 
-    final signedHeaders = (response['headers'] as Map?)?.map(
+    final signedHeaders =
+        (response['headers'] as Map?)?.map(
           (key, value) => MapEntry(key.toString(), value.toString()),
         ) ??
         <String, String>{};
@@ -95,17 +97,10 @@ class CloudflareR2MediaStorage {
     late final http.Response uploadResponse;
     try {
       uploadResponse = await _http
-          .put(
-            Uri.parse(uploadUrl),
-            headers: uploadHeaders,
-            body: bytes,
-          )
+          .put(Uri.parse(uploadUrl), headers: uploadHeaders, body: bytes)
           .timeout(const Duration(seconds: 45));
     } catch (error) {
-      throw MediaStorageException(
-        'r2_upload_unreachable',
-        cause: error,
-      );
+      throw MediaStorageException('r2_upload_unreachable', cause: error);
     }
     if (uploadResponse.statusCode < 200 || uploadResponse.statusCode >= 300) {
       throw MediaStorageException(
@@ -116,10 +111,7 @@ class CloudflareR2MediaStorage {
     try {
       final finalized = await _post(
         '/v1/media/finalize',
-        body: {
-          'object_key': objectKey,
-          'content_type': contentType,
-        },
+        body: {'object_key': objectKey, 'content_type': contentType},
       );
       final finalizedUrl = finalized['public_url'] as String?;
       if (finalizedUrl == null) {
@@ -188,10 +180,7 @@ class CloudflareR2MediaStorage {
     try {
       decoded = (jsonDecode(response.body) as Map).cast<String, dynamic>();
     } catch (error) {
-      throw MediaStorageException(
-        'r2_invalid_signer_response',
-        cause: error,
-      );
+      throw MediaStorageException('r2_invalid_signer_response', cause: error);
     }
     if (response.statusCode < 200 || response.statusCode >= 300) {
       throw MediaStorageException(
