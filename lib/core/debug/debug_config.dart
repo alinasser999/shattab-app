@@ -2,35 +2,38 @@ import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../features/auth/domain/profile.dart';
+import '../env/env.dart';
+import '../logging/app_logger.dart';
 
-/// Debug auth: sign in as a seeded real test user so EVERY feature (posting,
-/// quoting, requests) works against real Supabase RLS — mocking a profile can't
-/// do that because writes need a real `auth.uid()`.
-///
-/// Tree-shaken in release (kDebugMode = false) → the seeded creds never ship.
-/// The user (auth.users id `deb00000-0000-4000-8000-000000000001`) was seeded
-/// via SQL with both a contractor and homeowner sub-profile so the banner can
-/// flip roles instantly. To remove: `delete from auth.users where id=...`.
+/// Signs into a seeded local test user only when explicitly enabled through
+/// ignored `.env` values. This path is unavailable in release builds.
 const bool kDebugAuth = kDebugMode;
-const String kDebugEmail = 'debug.tester@shattab.test';
-const String kDebugPassword = 'Debug!2026';
 
-/// Sign the seeded debug user in once at startup if there's no session yet.
+/// Sign the seeded debug user in once at startup if there is no session yet.
 Future<void> debugSignIn(SupabaseClient client) async {
-  if (!kDebugAuth) return;
+  if (!kDebugAuth || !Env.debugAuthEnabled) return;
   if (client.auth.currentSession != null) return;
+
+  final email = Env.debugAuthEmail;
+  final password = Env.debugAuthPassword;
+  if (email == null || password == null) {
+    AppLogger.warning('debug auth skipped: credentials are not configured');
+    return;
+  }
+
   try {
-    await client.auth.signInWithPassword(
-      email: kDebugEmail,
-      password: kDebugPassword,
+    await client.auth.signInWithPassword(email: email, password: password);
+  } catch (error, stackTrace) {
+    AppLogger.error(
+      'debug auth sign-in failed',
+      error: error,
+      stackTrace: stackTrace,
     );
-  } catch (e) {
-    debugPrint('debug sign-in failed: $e');
   }
 }
 
-/// Flip the debug user's role in the DB (both sub-profiles already exist).
-/// Caller refreshes currentProfile so the router redirects to the new shell.
+/// Flip the debug user's role in the DB. The caller refreshes current profile
+/// so the router redirects to the new shell.
 Future<void> debugSwitchRole(SupabaseClient client, UserRole role) async {
   final id = client.auth.currentUser?.id;
   if (id == null) return;

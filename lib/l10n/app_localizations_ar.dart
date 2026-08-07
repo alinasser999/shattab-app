@@ -9,6 +9,41 @@ class AppLocalizationsAr extends AppLocalizations {
   AppLocalizationsAr([String locale = 'ar']) : super(locale);
 
   @override
+  String get opportunityPostedBy => 'صاحب الطلب';
+
+  @override
+  String get viewHomeownerProfile => 'عرض ملف صاحب الطلب';
+
+  @override
+  String get homeownerProfileTitle => 'ملف صاحب الطلب';
+
+  @override
+  String get homeownerProfileSubtitle => 'تفاصيل عامة عن صاحب الطلب';
+
+  @override
+  String get homeownerProfileDetailsTitle => 'تفاصيل صاحب الطلب';
+
+  @override
+  String get homeownerLocationLabel => 'منطقة المشروع';
+
+  @override
+  String get homeownerApartmentLabel => 'نوع الوحدة';
+
+  @override
+  String get homeownerInterestsLabel => 'اهتمامات التشطيب';
+
+  @override
+  String get homeownerProfileUnavailable =>
+      'بيانات صاحب الطلب مش متاحة دلوقتي.';
+
+  @override
+  String get homeownerProfileNoDetails =>
+      'لسه ما أضافش تفاصيل إضافية عن بيته أو احتياجاته.';
+
+  @override
+  String get homeownerProfilePrivacyHint => 'بيانات التواصل لا تظهر في الملف.';
+
+  @override
   String get tierHowGold => 'ذهبي: حساب موثّق + ١٠ مشاريع منجزة أو ٥ تقييمات.';
 
   @override
@@ -24,7 +59,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get appName => 'شطب';
+  String get appName => 'شطّب';
 
   @override
   String get appNameLatin => 'Shattab';
@@ -130,6 +165,135 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get accountSettingsTitle => 'الإعدادات';
+
+  @override
+  String get roleSwitcherOwner => 'مالك';
+
+  @override
+  String get roleSwitcherContractor => 'مقاول';
+
+  @override
+  String get nextStepsTitle => 'ابدأ هنا';
+
+  @override
+  String get performanceTitle => 'أداؤك خلال آخر 30 يوم';
+
+  @override
+  String get personalizeTitle => 'تخصيص تجربتك';
+
+  @override
+  String get areasNotAdded => 'مناطق الشغل لسه مش مضافة';
+
+  @override
+  String get verifiedStatus => 'موثّق';
+
+  @override
+  String get unverifiedStatus => 'غير موثّق';
+
+  @override
+  String get profileCompletionTitle => 'اكتمال الملف';
+
+  @override
+  String profileCompletionPercent(int value) {
+    return 'اكتمال الملف $value%';
+  }
+
+  @override
+  String get profileCompleteMessage => 'ملفك جاهز يعرّف العملاء بشغلك.';
+
+  @override
+  String get profileIncompleteMessage => 'كمّل ملفك عشان تظهر لعملاء أكتر.';
+
+  @override
+  String get completeProfileAction => 'كمّل ملفك';
+
+  @override
+  String get editProfileImage => 'تعديل صورة الحساب';
+
+  @override
+  String get addFirstProject => 'أضف أول مشروع';
+
+  @override
+  String get addFirstProjectSubtitle => 'اعرض شغلك واجذب عملاء جدد';
+
+  @override
+  String get verifyAccount => 'وثّق حسابك';
+
+  @override
+  String get verifyAccountSubtitle => 'زوّد ثقة العملاء في حسابك';
+
+  @override
+  String get addWorkAreas => 'حدّد مناطق الشغل';
+
+  @override
+  String get addWorkAreasSubtitle => 'خلّي فرص الشغل المناسبة توصلك';
+
+  @override
+  String get verificationPending => 'قيد المراجعة';
+
+  @override
+  String get performanceEmptyTitle => 'أداؤك هيظهر هنا';
+
+  @override
+  String get performanceEmptyMessage =>
+      'كمّل ملفك وأضف أول مشروع عشان تبدأ تتابع تفاعل العملاء.';
+
+  @override
+  String get proCardTitle => 'شطّب Pro';
+
+  @override
+  String get proCardSubtitle => 'خلّي ملفك يظهر لعملاء أكتر، وابرز شغلك بوضوح.';
+
+  @override
+  String get proLearnMore => 'اعرف أكتر';
+
+  @override
+  String get proManageSubtitle => 'إدارة اشتراكك ومزاياك المفعّلة.';
+
+  @override
+  String get settingsEntryTitle => 'الإعدادات والتفضيلات';
+
+  @override
+  String get settingsEntrySubtitle => 'تحكّم في إعدادات التطبيق';
+
+  @override
+  String get settingsAccountSection => 'الحساب';
+
+  @override
+  String get settingsPreferencesSection => 'التفضيلات';
+
+  @override
+  String get settingsSupportSection => 'الدعم والقانون';
+
+  @override
+  String get settingsAccountManagementSection => 'إدارة الحساب';
+
+  @override
+  String get appearanceTitle => 'المظهر';
+
+  @override
+  String get appearanceSubtitle => 'اختار الشكل المناسب ليك';
+
+  @override
+  String get appearanceDay => 'نهاري';
+
+  @override
+  String get appearanceDark => 'داكن';
+
+  @override
+  String get appearanceSystem => 'تلقائي';
+
+  @override
+  String get notificationsTitle => 'الإشعارات';
+
+  @override
+  String get notificationsSubtitle => 'إدارة تفضيلات الإشعارات';
+
+  @override
+  String get notificationsRequests => 'طلبات الشغل';
+
+  @override
+  String get notificationsMessages => 'الرسائل والتحديثات';
 
   @override
   String get taglineNew => 'من أول فكرة لآخر لمسة';
@@ -318,7 +482,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get tabDiscover => 'المحترفين';
 
   @override
-  String get tabRequests => 'طلباتي';
+  String get tabRequests => 'الطلبات';
 
   @override
   String get tabSaved => 'المحفوظات';
@@ -342,7 +506,186 @@ class AppLocalizationsAr extends AppLocalizations {
   String get tabExplore => 'أعمال';
 
   @override
+  String get tabHome => 'الرئيسية';
+
+  @override
+  String get tabCommunity => 'المجتمع';
+
+  @override
+  String get sampleImagesLabel => 'صور تجريبية';
+
+  @override
+  String get workInspirationTitle => 'إلهام للشغل';
+
+  @override
+  String get imageUnavailable => 'الصورة غير متاحة';
+
+  @override
   String get exploreTitle => 'أعمال';
+
+  @override
+  String get communityTitle => 'مجتمع شطّب';
+
+  @override
+  String get communitySubtitle => 'شارك تجربتك واستلهم من غيرك.';
+
+  @override
+  String get communityNotificationsLabel => 'الإشعارات';
+
+  @override
+  String get communityFiltersLabel => 'تصفية المنشورات';
+
+  @override
+  String get communityFilterAll => 'الكل';
+
+  @override
+  String get communityFilterBeforeAfter => 'قبل وبعد';
+
+  @override
+  String get communityFilterTips => 'نصائح';
+
+  @override
+  String get communityFilterExperiences => 'تجارب';
+
+  @override
+  String get communityFilterRequests => 'طلبات';
+
+  @override
+  String get communityCreatePrompt => 'إيه اللي شاغل بالك في التشطيب؟';
+
+  @override
+  String get communityCreatePost => 'إنشاء منشور';
+
+  @override
+  String get communityCreatePostTypeTitle => 'اختار نوع المنشور';
+
+  @override
+  String get communityPostKindStandard => 'مشاركة';
+
+  @override
+  String get communityPostKindStandardDescription =>
+      'شارك تجربة أو تحديث من شغلك';
+
+  @override
+  String get communityPostKindBeforeAfter => 'قبل وبعد';
+
+  @override
+  String get communityPostKindBeforeAfterDescription =>
+      'اعرض الفرق في شغلك بصورتين';
+
+  @override
+  String get communityPostKindQuestion => 'سؤال';
+
+  @override
+  String get communityPostKindQuestionDescription =>
+      'اسأل المجتمع وخد آراء مفيدة';
+
+  @override
+  String get communityPostKindTips => 'نصائح';
+
+  @override
+  String get communityPostKindTipsDescription => 'شارك خطوة أو خامة فرقت معاك';
+
+  @override
+  String get communityPostKindExperiences => 'تجارب';
+
+  @override
+  String get communityPostKindExperiencesDescription =>
+      'احكي اللي اتعلمته من رحلة التشطيب';
+
+  @override
+  String get communityCreatePostTypeSubtitle =>
+      'اختار الطريقة اللي تحب تشارك بيها';
+
+  @override
+  String get communityWritePostTitle => 'اكتبها بطريقتك';
+
+  @override
+  String get communityPublishCta => 'انشر في مجتمع شطّب';
+
+  @override
+  String get communityBeforeAfterNeedsImages => 'أضف صورتين عشان تعرض قبل وبعد';
+
+  @override
+  String get communityPhotoAction => 'صورة';
+
+  @override
+  String get communityBeforeAfterAction => 'قبل وبعد';
+
+  @override
+  String get communityBeforeLabel => 'قبل';
+
+  @override
+  String get communityAfterLabel => 'بعد';
+
+  @override
+  String get communityQuestionAction => 'سؤال';
+
+  @override
+  String get communityPostMenuLabel => 'إجراءات المنشور';
+
+  @override
+  String get communityLikePost => 'إعجاب';
+
+  @override
+  String get communityUnlikePost => 'إلغاء الإعجاب';
+
+  @override
+  String get communityCommentPost => 'التعليقات';
+
+  @override
+  String get communitySharePost => 'مشاركة';
+
+  @override
+  String get communitySavePost => 'حفظ المنشور';
+
+  @override
+  String get communityUnsavePost => 'إزالة حفظ المنشور';
+
+  @override
+  String get communityNoPostsTitle => 'مفيش منشورات هنا لسه';
+
+  @override
+  String get communityNoPostsMessage =>
+      'كن أول واحد يشارك تجربة أو نصيحة في مجتمع شطّب.';
+
+  @override
+  String get communityPostsTitle => 'منشوراته في المجتمع';
+
+  @override
+  String get communityPostsEmptyTitle => 'لسه ما شاركش منشورات';
+
+  @override
+  String get communityPostsEmptyMessage =>
+      'تجاربه ونصايحه هتظهر هنا لما يشاركها في مجتمع شطّب.';
+
+  @override
+  String get communityPostsLoadError => 'مش قادرين نحمّل منشوراته دلوقتي';
+
+  @override
+  String get communityClearFilter => 'عرض كل المنشورات';
+
+  @override
+  String get communityLoadingMore => 'جارٍ تحميل منشورات إضافية';
+
+  @override
+  String communityFilterAnnouncement(String filter) {
+    return 'فلتر المنشورات: $filter';
+  }
+
+  @override
+  String get communityAuthorHomeowner => 'صاحب شقة';
+
+  @override
+  String get communityAuthorProfessional => 'محترف موثّق';
+
+  @override
+  String get communityMemberFallback => 'عضو في المجتمع';
+
+  @override
+  String communityTimePublic(String time) {
+    return 'منشور منذ $time';
+  }
 
   @override
   String get createPost => 'إضافة منشور';
@@ -436,6 +779,36 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get commentPosted => 'تم نشر التعليق';
+
+  @override
+  String get commentReply => 'رد';
+
+  @override
+  String get commentLike => 'إعجاب بالتعليق';
+
+  @override
+  String get commentUnlike => 'إلغاء الإعجاب بالتعليق';
+
+  @override
+  String get editComment => 'تعديل التعليق';
+
+  @override
+  String get deleteComment => 'حذف التعليق';
+
+  @override
+  String get deleteCommentConfirm => 'متأكد إنك عايز تحذف التعليق؟';
+
+  @override
+  String get commentUpdated => 'تم تعديل التعليق';
+
+  @override
+  String get commentDeleted => 'تم حذف التعليق';
+
+  @override
+  String get replyingToComment => 'بترد على تعليق';
+
+  @override
+  String get commentEditedLabel => 'تم التعديل';
 
   @override
   String get commentRateLimitError => 'بتعلق بسرعة! استنى شوية';
@@ -903,6 +1276,94 @@ class AppLocalizationsAr extends AppLocalizations {
   String get contactClient => 'تواصل مع العميل';
 
   @override
+  String get requestsPageTitle => 'الطلبات';
+
+  @override
+  String requestsUsage(String used, String limit) {
+    return 'استخدمت $used من $limit عروضك المجانية خلال آخر ٣٠ يوم';
+  }
+
+  @override
+  String get requestsProStatus => 'اشتراك برو مفعّل — عروضك وطلباتك متاحة';
+
+  @override
+  String get requestsPlanRefreshError => 'مش قادرين نحدّث حالة باقتك دلوقتي.';
+
+  @override
+  String get requestsPlanRetry => 'حدّث حالة الباقة';
+
+  @override
+  String get requestsOpenDetails => 'شوف تفاصيل الطلب';
+
+  @override
+  String get requestsQuoteType => 'مطلوب عرض سعر';
+
+  @override
+  String requestsPublishedOn(String date) {
+    return 'نُشر في $date';
+  }
+
+  @override
+  String get requestsLockedWithPro => 'متاح مع برو';
+
+  @override
+  String get requestsProContactAvailable => 'بيانات التواصل متاحة مع برو';
+
+  @override
+  String get requestsProtectedContact => 'بيانات التواصل محمية';
+
+  @override
+  String get requestsLocationVisible => 'بيانات الطلب ظاهرة ليك';
+
+  @override
+  String get requestsOtherTitle => 'طلبات تانية';
+
+  @override
+  String get requestsProHeadline => 'الطلب ده مناسب لشغلك؟';
+
+  @override
+  String get requestsProEmphasis => 'متسيبوش يروح.';
+
+  @override
+  String get requestsProDescription =>
+      'برو بيفتحلك بيانات التواصل ويخليك تقدم عروض من غير حد.';
+
+  @override
+  String get requestsBenefitContact => 'بيانات التواصل';
+
+  @override
+  String get requestsBenefitUnlimited => 'عروض من غير حد';
+
+  @override
+  String get requestsBenefitRanking => 'ظهور أعلى في البحث';
+
+  @override
+  String requestsAnnualSaving(String amount) {
+    return 'وفّرت $amount ج.م مع الخطة السنوية';
+  }
+
+  @override
+  String get requestsTrialBilling => 'ابدأ شهر مجاني، وبعده أول خصم حسب الخطة';
+
+  @override
+  String get requestsPaidBilling => 'اشتراك مدفوع — التفعيل بعد تأكيد التحويل';
+
+  @override
+  String get requestsCtaTrial => 'افتح الطلب وابدأ شهر مجاني';
+
+  @override
+  String get requestsCtaPaid => 'افتح الطلب واشترك في برو';
+
+  @override
+  String get requestsPaymentNote => 'دفع آمن — التفعيل بعد مراجعة التحويل';
+
+  @override
+  String get requestsCheckoutFailed => 'حصلت مشكلة في فتح الدفع، حاول تاني.';
+
+  @override
+  String get requestsProUnlocked => 'برو مفعّل — تقدر تتابع الطلب وتقدّم عرضك';
+
+  @override
   String get myPortfolioTitle => 'أعمالي';
 
   @override
@@ -960,7 +1421,28 @@ class AppLocalizationsAr extends AppLocalizations {
   String get coverRequired => 'لازم تضيف صورة واحدة على الأقل';
 
   @override
-  String get searchHint => 'ابحث عن محترف أو شركة…';
+  String get searchHint => 'بتدور على مين أو محتاج تعمل إيه؟';
+
+  @override
+  String get discoverHeroKicker => 'محترفين موثوقين، وشغل واضح';
+
+  @override
+  String get discoverHeroTitle => 'بيتك يستاهل حد تطمنله';
+
+  @override
+  String get discoverHeroSubtitle => 'اختار محترف شغله واضح وتقييماته حقيقية.';
+
+  @override
+  String get featuredProfessional => 'محترف مميز';
+
+  @override
+  String get customerReviews => 'تقييمات العملاء';
+
+  @override
+  String get completedProjectsShort => 'مشروع مكتمل';
+
+  @override
+  String get verifiedByShattab => 'موثوق من شطب';
 
   @override
   String get featuredContractors => 'محترفين مميزين';
@@ -969,7 +1451,23 @@ class AppLocalizationsAr extends AppLocalizations {
   String get topRated => 'الأعلى تقييمًا';
 
   @override
-  String get recentWorkTitle => 'أعمال حديثة';
+  String get topRatedCollectionDescription =>
+      'محترفين عندهم تقييمات حقيقية من العملاء';
+
+  @override
+  String get noRatedProfessionalsMessage =>
+      'لسه مفيش محترفين عندهم تقييمات منشورة.';
+
+  @override
+  String get recentWorkTitle => 'شغل اتعمل بجد';
+
+  @override
+  String get allProfessionalsCollectionDescription =>
+      'كل المحترفين المتاحين على شطّب';
+
+  @override
+  String get nearbyProfessionalsCollectionDescription =>
+      'محترفين بيخدموا منطقتك';
 
   @override
   String get nearYou => 'قريبين منك';
@@ -981,6 +1479,39 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get browseByCategory => 'تصفّح بالتخصص';
+
+  @override
+  String get more => 'المزيد';
+
+  @override
+  String get specialtyPaint => 'دهانات';
+
+  @override
+  String get specialtyFlooring => 'أرضيات';
+
+  @override
+  String get specialtyKitchen => 'مطابخ';
+
+  @override
+  String get specialtyBathroom => 'حمامات';
+
+  @override
+  String get specialtyElectrical => 'كهرباء';
+
+  @override
+  String get specialtyPlumbing => 'سباكة';
+
+  @override
+  String get specialtyCarpentry => 'نجارة';
+
+  @override
+  String get specialtyDesign => 'تصميم داخلي';
+
+  @override
+  String get specialtyFullRenovation => 'تشطيبات كاملة';
+
+  @override
+  String get shattabVerifiedProfessional => 'محترف موثّق من شطّب';
 
   @override
   String get trendingNearYou => 'رائج بالقرب منك';
@@ -1382,7 +1913,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get ratingHelpsOthers => 'تقييمك بيساعد باقي العملاء';
 
   @override
-  String get contactViaWhatsApp => 'تواصل عبر واتساب';
+  String get contactViaWhatsApp => 'التواصل من واتساب';
 
   @override
   String get whatsappShort => 'واتساب';
@@ -1404,6 +1935,11 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get greetingEvening => 'مساء الخير';
+
+  @override
+  String greetingPersonalized(String greeting, String name) {
+    return '$greeting يا $name';
+  }
 
   @override
   String get newJobs => 'فرص عمل جديدة';
@@ -1880,6 +2416,33 @@ class AppLocalizationsAr extends AppLocalizations {
   String get aboutProfessional => 'عن المحترف';
 
   @override
+  String get requestPriceQuote => 'اطلب عرض سعر';
+
+  @override
+  String get contactThroughShattab => 'تواصل من خلال شطّب';
+
+  @override
+  String get professionalWorkTitle => 'شغل اتعمل بجد';
+
+  @override
+  String get fromOurClients => 'من عملائنا';
+
+  @override
+  String get viewAllReviews => 'شوف كل التقييمات';
+
+  @override
+  String get shattabClient => 'عميل من شطّب';
+
+  @override
+  String get verifiedReviewFromCompletedJob => 'تقييم موثّق بعد شغل مكتمل';
+
+  @override
+  String get noPublicWorkYet => 'المحترف لسه مضافش أعمال للعرض.';
+
+  @override
+  String get contactPrivacyShareHint => 'ابدأ التواصل بأمان من خلال شطّب.';
+
+  @override
   String get worksIn => 'بيشتغل في';
 
   @override
@@ -2002,7 +2565,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get deleteAccountConfirmWord => 'حذف';
 
   @override
-  String get deleteAccountConfirmHint => 'اكتب \"حذف\" عشان تأكد';
+  String get deleteAccountConfirmHint => 'اكتب \\\"حذف\\\" عشان تأكد';
 
   @override
   String get accountDeleted => 'تم حذف حسابك';
@@ -2074,7 +2637,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get briefSentMessageNew =>
-      'المحترف استلم تفاصيل مشروعك وهيتواصل معاك قريب.\\nتقدر تكلّمه دلوقتي على واتساب لو حابب تستعجل.';
+      'المحترف استلم تفاصيل مشروعك وهيتواصل معاك قريب.\\\nتقدر تكلّمه دلوقتي على واتساب لو حابب تستعجل.';
 
   @override
   String get cancelBriefMessage => 'مش هيقدر يتفعّل تاني بعد ما تلغيه.';
@@ -2268,4 +2831,599 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get workTitleHint => 'مثال: تشطيب شقة في التجمع';
+
+  @override
+  String get adjustOpportunityPreferences => 'اضبط تفضيلات فرصك';
+
+  @override
+  String get budgetAndTimingTitle => 'الميزانية وموعد البدء';
+
+  @override
+  String get budgetAndTimingUnavailable =>
+      'صاحب الطلب لسه محددش الميزانية أو موعد البدء. تقدر تسأل عنهم داخل عرضك.';
+
+  @override
+  String get clearFilters => 'امسح الفلاتر';
+
+  @override
+  String get competitionUnavailableHint =>
+      'مستوى المنافسة هيظهر لما يتوفر عدد العروض على الفرصة.';
+
+  @override
+  String get completeOpportunityPreferencesHint =>
+      'حدّد تخصصك ومناطق شغلك عشان نرشحلك فرص أنسب.';
+
+  @override
+  String get completeProfileBeforeApplying => 'كمّل بياناتك الأول';
+
+  @override
+  String get distanceUnavailableHint =>
+      'بنطابق على مناطق شغلك المحفوظة. المسافة بالكيلومتر هتتوفر بعد تفعيل الموقع.';
+
+  @override
+  String get filterAll => 'الكل';
+
+  @override
+  String get filterAllLocations => 'كل المناطق';
+
+  @override
+  String get filterAnyTime => 'أي وقت';
+
+  @override
+  String get filterFresh => 'جديدة';
+
+  @override
+  String get filterLocation => 'الموقع';
+
+  @override
+  String get filterNearYou => 'مناطق شغلك';
+
+  @override
+  String get filterNotApplied => 'لم أقدّم عليها';
+
+  @override
+  String get filterHideApplied => 'إخفاء الفرص اللي قدّمت عليها';
+
+  @override
+  String get filterPublishedTime => 'وقت النشر';
+
+  @override
+  String get filtersApplyHint => 'هيتم تطبيق الفلاتر على الفرص المتاحة.';
+
+  @override
+  String get followQuoteAction => 'متابعة العرض';
+
+  @override
+  String get jobRadarTitle => 'رادار الشغل';
+
+  @override
+  String get opportunitySummaryTitle => 'ملخص فرص الشغل';
+
+  @override
+  String get opportunitySummaryHeading => 'ملخص فرصك';
+
+  @override
+  String get opportunityCountLabel => 'فرصة مناسبة';
+
+  @override
+  String get opportunityFreshCount => 'جديدة';
+
+  @override
+  String get opportunityAreaCount => 'في مناطق شغلك';
+
+  @override
+  String get opportunityWeekCount => 'هذا الأسبوع';
+
+  @override
+  String get searchForMatchingOpportunities => 'دور على فرص مناسبة لشغلك';
+
+  @override
+  String get opportunitySortTitle => 'ترتيب الفرص';
+
+  @override
+  String get opportunitySortRecommended => 'الأكثر مناسبة';
+
+  @override
+  String get opportunitySortNewest => 'الأحدث';
+
+  @override
+  String opportunitySortLabel(String sort) {
+    return 'ترتيب الفرص حسب $sort';
+  }
+
+  @override
+  String opportunityFilterAction(int count) {
+    return 'تصفية الفرص، $count فلاتر مفعّلة';
+  }
+
+  @override
+  String matchingOpportunitiesHeader(int count) {
+    return 'عندك $count فرص مناسبة لشغلك';
+  }
+
+  @override
+  String get projectPhotoLabel => 'صورة مشروع';
+
+  @override
+  String get projectPhotoLoading => 'جاري تحميل صورة المشروع';
+
+  @override
+  String get opportunityMediaUnavailable => 'صورة المشروع غير متاحة';
+
+  @override
+  String get loadMoreProgress => 'جاري تحميل فرص تانية';
+
+  @override
+  String get loadMoreError => 'حصلت مشكلة في تحميل فرص تانية';
+
+  @override
+  String latestOpportunityTime(String time) {
+    return 'آخر فرصة مناسبة نزلت $time';
+  }
+
+  @override
+  String get makeOpportunitiesMoreAccurate => 'خلّي فرصك أدق';
+
+  @override
+  String get matchDataInsufficient =>
+      'كمّل تخصصاتك ومناطق شغلك عشان نوضح سبب الترشيح بدقة أكبر.';
+
+  @override
+  String get matchReasonFresh => 'فرصة جديدة ولسه نازلة';
+
+  @override
+  String get matchReasonPhotos => 'فيها صور واضحة للمشروع';
+
+  @override
+  String get matchReasonPortfolio => 'شبه أعمال موجودة في ملفك';
+
+  @override
+  String get matchReasonServiceArea => 'المنطقة ضمن نطاق شغلك';
+
+  @override
+  String get matchReasonSpecialty => 'تخصصك يطابق المطلوب';
+
+  @override
+  String get moreMatchingOpportunities => 'فرص تانية مناسبة';
+
+  @override
+  String get newOpportunitiesForYou => 'فرص جديدة مناسبة ليك';
+
+  @override
+  String get noOpportunityMatches => 'ملقيناش فرص بالفلاتر دي';
+
+  @override
+  String get noOpportunityMatchesHint =>
+      'جرّب توسّع نطاق البحث أو تمسح بعض الفلاتر، وهنعرضلك الفرص الجديدة أول ما تنزل.';
+
+  @override
+  String get notSpecified => 'غير محدد';
+
+  @override
+  String get opportunityAcceptingOffers => 'تستقبل عروض';
+
+  @override
+  String get opportunityClosed => 'الفرصة اتقفلت';
+
+  @override
+  String get opportunityDetailsTitle => 'تفاصيل الفرصة';
+
+  @override
+  String get opportunityFiltersTitle => 'تصفية الفرص';
+
+  @override
+  String get opportunityOpen => 'الفرصة مفتوحة';
+
+  @override
+  String get opportunityQuality => 'جودة الفرصة';
+
+  @override
+  String get opportunityRemovedFromSaved => 'تمت إزالة الفرصة من المحفوظات';
+
+  @override
+  String get opportunitySaved => 'تم حفظ الفرصة';
+
+  @override
+  String get opportunityTimeline => 'خط زمني للفرصة';
+
+  @override
+  String get opportunityViewed => 'شفتها قبل كده';
+
+  @override
+  String get ownerNoteTitle => 'ملاحظة صاحب الطلب';
+
+  @override
+  String get ownerPrivacyHint =>
+      'بيانات التواصل بتفضل خاصة لحد ما يبدأ التواصل من خلال العرض.';
+
+  @override
+  String get projectDetailsTitle => 'تفاصيل المشروع';
+
+  @override
+  String get quoteAlreadySent => 'قدّمت عرضك';
+
+  @override
+  String get radarFresh => 'جديدة اليوم';
+
+  @override
+  String get radarInYourAreas => 'في مناطق شغلك';
+
+  @override
+  String get radarMatchesThisWeek => 'مناسبة هذا الأسبوع';
+
+  @override
+  String get recommendedForYou => 'موصى بيها ليك';
+
+  @override
+  String get relevantOpportunity => 'فرصة مناسبة';
+
+  @override
+  String get removeOpportunityFromSaved => 'إزالة الفرصة من المحفوظات';
+
+  @override
+  String get resetFilters => 'إعادة تعيين';
+
+  @override
+  String get clearAllFilters => 'مسح كل الفلاتر';
+
+  @override
+  String get saveOpportunity => 'حفظ الفرصة';
+
+  @override
+  String searchPreferencesCompletion(int percent) {
+    return 'اكتمال تفضيلات البحث $percent%';
+  }
+
+  @override
+  String showOpportunityCount(int count) {
+    return 'عرض $count فرصة';
+  }
+
+  @override
+  String get strongMatch => 'توافق قوي';
+
+  @override
+  String get submitYourQuote => 'قدّم عرضك';
+
+  @override
+  String get timelineAcceptOffers => 'استقبال العروض';
+
+  @override
+  String get timelineChooseContractor => 'اختيار المقاول';
+
+  @override
+  String get timelineStartWork => 'بدء التنفيذ';
+
+  @override
+  String get viewOpportunityDetails => 'شوف التفاصيل';
+
+  @override
+  String get whyOpportunityMatches => 'ليه الفرصة دي مناسبة ليك؟';
+
+  @override
+  String get youHaveNewOpportunities => 'عندك';
+
+  @override
+  String get homeownerAccountRole => 'صاحب شقة';
+
+  @override
+  String get homeownerAreaFallback => 'موقعك المفضل';
+
+  @override
+  String get homeownerQuickActions => 'إجراءات سريعة';
+
+  @override
+  String get homeownerSettingsPreview => 'إعداداتك';
+
+  @override
+  String get homeownerAccountExperienceSection => 'تجربة حسابك';
+
+  @override
+  String get homeownerEditProfileAction => 'تعديل الملف الشخصي';
+
+  @override
+  String get homeownerDiscoverSubtitle => 'ابحث عن الأفضل';
+
+  @override
+  String get homeownerRequestsSubtitle => 'تابع طلباتك';
+
+  @override
+  String get homeownerSavedSubtitle => 'المحترفين المحفوظين';
+
+  @override
+  String get homeownerAppearanceRow => 'الوضع النهاري';
+
+  @override
+  String get homeownerMotionRow => 'الحركة';
+
+  @override
+  String get homeownerLanguageRow => 'اللغة';
+
+  @override
+  String get homeownerSettingsRow => 'الإعدادات والتفضيلات';
+
+  @override
+  String get homeownerSettingsSubtitle => 'تحكّم في إعدادات التطبيق';
+
+  @override
+  String get homeownerLogoutSubtitle => 'تقدر ترجع في أي وقت';
+
+  @override
+  String get homeownerSettingsExperienceSection => 'تجربة التطبيق';
+
+  @override
+  String get homeownerAppearanceAndMotionTitle => 'المظهر والحركة';
+
+  @override
+  String get homeownerAppearanceAndMotionSubtitle =>
+      'اختار الشكل والحركة المناسبين ليك';
+
+  @override
+  String get homeownerLegalSection => 'الخصوصية والقانون';
+
+  @override
+  String get homeownerPrivacySubtitle => 'اعرف إزاي بنحمي بياناتك';
+
+  @override
+  String get homeownerTermsSubtitle => 'راجع شروط استخدام شطّب';
+
+  @override
+  String get homeownerAccountSection => 'الحساب';
+
+  @override
+  String get homeownerDeleteSubtitle => 'حذف نهائي لكل بيانات الحساب';
+
+  @override
+  String get homeownerMotionTitle => 'الحركة';
+
+  @override
+  String get homeownerMotionSubtitle => 'تحكّم في حركة واجهات التطبيق';
+
+  @override
+  String get homeownerMotionAccessibility =>
+      'لو الحركة بتتعبك، اختار مخفّضة أو بدون حركة لواجهة أهدى.';
+
+  @override
+  String get homeownerSaveSettings => 'حفظ الإعدادات';
+
+  @override
+  String get homeownerLanguageChoose => 'اختار لغة التطبيق';
+
+  @override
+  String get homeownerLanguageArabicHint => 'العربية';
+
+  @override
+  String get homeownerLanguageEnglishHint => 'English';
+
+  @override
+  String get homeownerLanguagePreview => 'معاينة اتجاه النص';
+
+  @override
+  String get homeownerLanguageLtr => 'LTR';
+
+  @override
+  String get homeownerLanguageRtl => 'RTL';
+
+  @override
+  String get homeownerSaveLanguage => 'حفظ اللغة';
+
+  @override
+  String get homeownerPrivacyIntro =>
+      'بنحافظ على بياناتك ونستخدمها عشان نقدملك تجربة آمنة وأنسب ترشيحات للتشطيب.';
+
+  @override
+  String get homeownerTermsIntro =>
+      'باستخدام شطّب، أنت بتوافق على القواعد اللي بتنظّم استخدام المنصة والتواصل مع المحترفين.';
+
+  @override
+  String get homeownerPrivacySection1Title => 'البيانات اللي بنجمعها';
+
+  @override
+  String get homeownerPrivacySection1Body =>
+      'بنستخدم بيانات الحساب الأساسية، ومعلومات السكن واهتمامات التشطيب اللي تختار تشاركها عشان نشغّل الخدمة.';
+
+  @override
+  String get homeownerPrivacySection2Title => 'إزاي بنستخدم بياناتك';
+
+  @override
+  String get homeownerPrivacySection2Body =>
+      'بنستخدم بياناتك لعرض محترفين مناسبين، وتنظيم طلباتك، وتحسين أداء التطبيق وتقديم الدعم.';
+
+  @override
+  String get homeownerPrivacySection3Title => 'حماية بياناتك';
+
+  @override
+  String get homeownerPrivacySection3Body =>
+      'بنطبّق ضوابط وصول وحماية مناسبة، ومش بنعرض بيانات التواصل في الملفات العامة بدون سبب واضح.';
+
+  @override
+  String get homeownerPrivacySection4Title => 'اختياراتك';
+
+  @override
+  String get homeownerPrivacySection4Body =>
+      'تقدر تعدّل بيانات ملفك، وتتحكّم في الإشعارات، وتطلب حذف حسابك من إعدادات الحساب.';
+
+  @override
+  String get homeownerPrivacySection5Title => 'التواصل معنا';
+
+  @override
+  String get homeownerPrivacySection5Body =>
+      'لو عندك سؤال عن بياناتك أو الخصوصية، تواصل مع فريق الدعم من الزر الموجود أسفل الصفحة.';
+
+  @override
+  String get homeownerTermsSection1Title => 'استخدام شطّب';
+
+  @override
+  String get homeownerTermsSection1Body =>
+      'استخدم شطّب بطريقة قانونية ومحترمة، وقدّم معلومات حقيقية تساعد المحترفين على فهم طلبك.';
+
+  @override
+  String get homeownerTermsSection2Title => 'الطلبات والتواصل';
+
+  @override
+  String get homeownerTermsSection2Body =>
+      'المنصة بتنظّم الوصول للمحترفين، لكن الاتفاق النهائي وتفاصيل التنفيذ مسؤولية الأطراف المعنية.';
+
+  @override
+  String get homeownerTermsSection3Title => 'المحتوى والصور';
+
+  @override
+  String get homeownerTermsSection3Body =>
+      'اتأكد إن عندك الحق في الصور والمعلومات اللي ترفعها، وماتضيفش محتوى مخالف أو يعرّض حد للضرر.';
+
+  @override
+  String get homeownerTermsSection4Title => 'المحترفون المستقلون';
+
+  @override
+  String get homeownerTermsSection4Body =>
+      'المحترفون بيقدّموا خدماتهم بشكل مستقل، فراجع ملفهم وتقييماتهم واتفق على التفاصيل قبل بدء العمل.';
+
+  @override
+  String get homeownerTermsSection5Title => 'تحديث الشروط';
+
+  @override
+  String get homeownerTermsSection5Body =>
+      'ممكن نحدّث الشروط لما تتغير الخدمة. هنوضح أي تغييرات مهمة داخل التطبيق.';
+
+  @override
+  String get homeownerContactSupport => 'تواصل مع الدعم';
+
+  @override
+  String get homeownerLogoutTitle => 'تسجيل الخروج؟';
+
+  @override
+  String get homeownerLogoutBody =>
+      'تقدر تسجّل دخولك تاني في أي وقت من غير ما تفقد طلباتك أو المحترفين المحفوظين.';
+
+  @override
+  String get homeownerStaySignedIn => 'البقاء في الحساب';
+
+  @override
+  String get homeownerOrdersAll => 'الكل';
+
+  @override
+  String get homeownerOrdersNew => 'جديدة';
+
+  @override
+  String get homeownerOrdersActive => 'جارية';
+
+  @override
+  String get homeownerOrdersCompleted => 'مكتملة';
+
+  @override
+  String get homeownerOrdersEmptyTitle => 'لسه مفيش طلبات';
+
+  @override
+  String get homeownerOrdersEmptyMessage =>
+      'أول ما تبعت طلب لمحترف، هتقدر تتابع تفاصيله من هنا.';
+
+  @override
+  String get homeownerOrdersDiscoverAction => 'اكتشف المحترفين';
+
+  @override
+  String get homeownerOrdersBackToAccount => 'الرجوع لحسابي';
+
+  @override
+  String get homeownerSavedEmptyTitle => 'المحترفين المحفوظين فاضية';
+
+  @override
+  String get homeownerSavedEmptyMessage =>
+      'احفظ المحترفين اللي عجبوك عشان ترجع لهم بسهولة.';
+
+  @override
+  String get homeownerSavedDiscoverAction => 'اكتشف المحترفين';
+
+  @override
+  String get homeownerSavedHint =>
+      'اضغط علامة الحفظ على أي محترف عشان يظهر هنا.';
+
+  @override
+  String get changeLocation => 'غيّر مكان التصفح';
+
+  @override
+  String get changeLocationDescription =>
+      'اختار محافظة عشان تشوف المحترفين فيها';
+
+  @override
+  String get useProfileLocation => 'استخدم موقع الملف';
+
+  @override
+  String get notificationInboxTitle => 'الإشعارات';
+
+  @override
+  String get notificationMarkAllRead => 'تحديد الكل كمقروء';
+
+  @override
+  String get notificationEmptyTitle => 'مفيش إشعارات جديدة';
+
+  @override
+  String get notificationEmptyBody =>
+      'هنبلغك هنا بأي تحديثات تخص طلباتك وشغلك.';
+
+  @override
+  String get notificationNewQuoteTitle => 'عرض سعر جديد';
+
+  @override
+  String get notificationNewQuoteBody => 'وصلك عرض جديد على طلبك.';
+
+  @override
+  String get notificationQuoteDecisionTitle => 'تحديث على عرضك';
+
+  @override
+  String get notificationQuoteAcceptedBody => 'صاحب الطلب وافق على عرضك.';
+
+  @override
+  String get notificationQuoteDeclinedBody =>
+      'صاحب الطلب اختار عرضًا آخر للطلب.';
+
+  @override
+  String get notificationCompletionTitle => 'تحديث على الشغل';
+
+  @override
+  String get notificationCompletionRequestedBody =>
+      'المحترف بيقول إن الشغل خلص. راجع تفاصيل الطلب.';
+
+  @override
+  String get notificationJobCompletedBody => 'تم تأكيد اكتمال المشروع.';
+
+  @override
+  String get notificationNewReviewTitle => 'تقييم جديد';
+
+  @override
+  String get notificationNewReviewBody =>
+      'العميل أضاف تقييمًا جديدًا على شغلك.';
+
+  @override
+  String get notificationVerificationTitle => 'تحديث التوثيق';
+
+  @override
+  String get notificationVerificationApprovedBody => 'حسابك اتوثق بنجاح.';
+
+  @override
+  String get notificationVerificationRejectedBody =>
+      'راجع ملاحظات التوثيق وقدّم الطلب مرة تانية.';
+
+  @override
+  String get notificationPaymentTitle => 'تحديث الاشتراك';
+
+  @override
+  String get notificationPaymentApprovedBody => 'تم تفعيل اشتراكك.';
+
+  @override
+  String get notificationPaymentRejectedBody => 'طلب الدفع محتاج مراجعة.';
+
+  @override
+  String get notificationCommunityTitle => 'تفاعل جديد';
+
+  @override
+  String get notificationPostLikedBody => 'حد عمل إعجاب على منشورك.';
+
+  @override
+  String get notificationPostCommentedBody => 'حد كتب تعليق على منشورك.';
+
+  @override
+  String get notificationCommentRepliedBody => 'حد رد على تعليقك.';
+
+  @override
+  String get notificationCommentLikedBody => 'حد عمل إعجاب على تعليقك.';
 }

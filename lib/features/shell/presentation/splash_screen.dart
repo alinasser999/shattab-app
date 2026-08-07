@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 import 'package:batsh/core/l10n/l10n_extension.dart';
-import '../../../core/theme/batsh_colors.dart';
 import '../../../core/theme/batsh_typography.dart';
 import '../../../core/theme/batsh_motion.dart';
 
@@ -21,15 +20,12 @@ class _SplashScreenState extends State<SplashScreen>
   Widget build(BuildContext context) {
     final reduced = MediaQuery.disableAnimationsOf(context);
     return Scaffold(
-      backgroundColor: context.colorScheme.background,
+      backgroundColor: context.colorScheme.surface,
       body: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Decorative top-left shape
-            IgnorePointer(child: _animatedCircle(reduced)),
-            const SizedBox(height: 24),
-            // Brand name with dramatic entrance
+            // Use the approved wordmark instead of redrawing the logo as text.
             _animatedBrand(reduced),
             const SizedBox(height: 8),
             // Tagline
@@ -37,43 +33,21 @@ class _SplashScreenState extends State<SplashScreen>
             const SizedBox(height: 48),
             // Loading indicator with delayed entrance
             _animatedLoader(reduced),
-            const SizedBox(height: 24),
-            // Decorative dots
-            _animatedDots(reduced),
           ],
         ),
       ),
     );
   }
 
-  Widget _animatedCircle(bool reduced) {
-    final circle = Container(
-      width: 120,
-      height: 120,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: context.colorScheme.primaryFixed.withValues(alpha: 0.15),
-      ),
-    );
-    if (reduced) return circle;
-    return circle
-        .animate()
-        .fadeIn(duration: 800.ms, curve: BatshMotion.easeOut)
-        .slide(
-          begin: const Offset(-1, -1),
-          end: Offset.zero,
-          duration: 1000.ms,
-          curve: BatshMotion.easeOut,
-        );
-  }
-
   Widget _animatedBrand(bool reduced) {
-    final brand = Text(
-      context.l10n.appName,
-      style: BatshTypography.displayLg.copyWith(
-        color: context.colorScheme.primary,
-        fontWeight: FontWeight.w800,
-        height: 1.1,
+    final brand = SizedBox(
+      width: 220,
+      height: 112,
+      child: Image.asset(
+        'assets/icon/app_icon_foreground.png',
+        fit: BoxFit.cover,
+        filterQuality: FilterQuality.high,
+        semanticLabel: context.l10n.appName,
       ),
     );
     if (reduced) return brand;
@@ -132,39 +106,5 @@ class _SplashScreenState extends State<SplashScreen>
           delay: 600.ms,
           color: context.colorScheme.primaryContainer,
         );
-  }
-
-  Widget _animatedDots(bool reduced) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: List.generate(3, (i) {
-        final dot = Container(
-          width: 6,
-          height: 6,
-          margin: EdgeInsetsDirectional.only(start: i < 2 ? 8 : 0),
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: i == 1
-                ? context.colorScheme.primary
-                : context.colorScheme.primary.withValues(alpha: 0.3),
-          ),
-        );
-        if (reduced) return dot;
-        return dot
-            .animate()
-            .fadeIn(
-              duration: 300.ms,
-              delay: (800 + i * 150).ms,
-              curve: BatshMotion.easeOut,
-            )
-            .scale(
-              begin: const Offset(0, 0),
-              end: const Offset(1, 1),
-              duration: 300.ms,
-              delay: (800 + i * 150).ms,
-              curve: BatshMotion.springTap,
-            );
-      }),
-    );
   }
 }

@@ -3,7 +3,6 @@ import 'package:flutter_animate/flutter_animate.dart';
 
 import 'package:batsh/core/l10n/l10n_extension.dart';
 import 'package:batsh/core/l10n/strings.dart';
-import '../../../core/theme/batsh_colors.dart';
 import '../../../core/theme/batsh_radius.dart';
 import '../../../core/theme/batsh_shadows.dart';
 import '../../../core/theme/batsh_spacing.dart';

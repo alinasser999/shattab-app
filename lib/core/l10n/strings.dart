@@ -10,12 +10,10 @@ class S {
       _isEnglish && en != null ? en : ar;
 
   // App
-  static String get appName => _t('شطب', 'Shattab');
+  static String get appName => _t('شطّب', 'Shattab');
   static String get appNameLatin => 'Shattab';
-  static String get appTagline => _t(
-    'محترفين وعملاء، في مكان واحد',
-    'Professionals & clients, in one place',
-  );
+  static String get appTagline =>
+      _t('من أول فكرة لآخر لمسة', 'From first idea to the final touch');
 
   // Auth
   static String get enterPhone =>
@@ -218,7 +216,7 @@ class S {
 
   // Shell tabs
   static String get tabDiscover => _t('اكتشف', 'Discover');
-  static String get tabRequests => _t('طلباتي', 'My Requests');
+  static String get tabRequests => _t('الطلبات', 'Requests');
   static String get tabSaved => _t('المحفوظات', 'Saved');
   static String get tabProfile => _t('حسابي', 'Profile');
 
@@ -898,7 +896,7 @@ class S {
 
   // ── Contact ─────────────────────────────────────────────────────────────
   static String get contactViaWhatsApp =>
-      _t('تواصل عبر واتساب', 'Contact via WhatsApp');
+      _t('التواصل من واتساب', 'Contact via WhatsApp');
 
   /// Visible label when the button sits at half width beside Call. The full
   /// phrase truncates there; [contactViaWhatsApp] stays the announced one.
@@ -1350,7 +1348,7 @@ class S {
   static String get share => _t('مشاركة', 'Share');
   static String get copiedData => _t('تم نسخ البيانات', 'Data copied');
   static String get seeOnShattab =>
-      _t('شوف الملف على شطب: %s', 'View profile on Shattab: %s');
+      _t('شوف الملف على شطّب: %s', 'View profile on Shattab: %s');
   static String get forContact => _t('للتواصل', 'Contact');
   static String get clientsPreview =>
       _t('ده اللي بيشوفه العملاء', 'This is what clients see');

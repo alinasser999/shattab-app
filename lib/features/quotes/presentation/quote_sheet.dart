@@ -4,10 +4,11 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:batsh/core/l10n/l10n_extension.dart';
-import '../../../core/theme/batsh_colors.dart';
 import '../../../core/theme/batsh_motion.dart';
 import '../../../core/theme/batsh_spacing.dart';
 import '../../../core/theme/batsh_typography.dart';
+import '../../../core/logging/app_logger.dart';
+import '../../../core/utils/error_mapper.dart';
 import '../../../core/widgets/batsh_button.dart';
 import '../../../core/widgets/batsh_text_field.dart';
 import '../domain/quote.dart';
@@ -105,10 +106,16 @@ class _QuoteSheetState extends ConsumerState<_QuoteSheet> {
       await Future<void>.delayed(const Duration(milliseconds: 950));
       if (!mounted) return;
       Navigator.of(context).pop(true);
-    } catch (_) {
+    } catch (error, stackTrace) {
       if (!mounted) return;
+      AppLogger.error(
+        'quote submission failed',
+        error: error,
+        stackTrace: stackTrace,
+        context: {'brief_id': widget.briefId},
+      );
       setState(() => _submitting = false);
-      BatshSnack.error(context, context.l10n.unknownErrorRetry);
+      BatshSnack.error(context, ErrorMapper.map(error));
     }
   }
 

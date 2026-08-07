@@ -39,6 +39,33 @@ class DiscoveryRepository {
     int offset = 0,
     int limit = pageSize,
   }) async {
+    final search = filters.searchQuery?.trim() ?? '';
+    if (search.isNotEmpty) {
+      // Search runs through the `discover_contractors` RPC rather than
+      // PostgREST, because two things it needs cannot be expressed here: an OR
+      // across a base column (`full_name`) and an embedded one
+      // (`business_name`), which the PostgREST parser rejects; and Arabic
+      // folding, so `احمد` finds `أحمد` and `فاطمه` finds `فاطمة`.
+      //
+      // The RPC returns rows in the same shape as the embed below, so
+      // `fromJoined` parses either path without knowing which one ran.
+      final rows = await _client.rpc(
+        'discover_contractors',
+        params: {
+          'p_query': search,
+          'p_specialty': filters.specialty,
+          'p_city': filters.city,
+          'p_limit': limit,
+          'p_offset': offset,
+        },
+      );
+      return (rows as List)
+          .map(
+            (row) => ContractorListing.fromJoined(row as Map<String, dynamic>),
+          )
+          .toList();
+    }
+
     var query = _client
         .from('profiles')
         .select(_joinedColumns)
@@ -54,20 +81,39 @@ class DiscoveryRepository {
         filters.city,
       ]);
     }
-    if (filters.searchQuery != null && filters.searchQuery!.trim().isNotEmpty) {
-      final q = filters.searchQuery!.trim();
-      // PostgREST can't OR a base column against an embedded one in a single
-      // request (parser rejects the embedded ref) — that 400 is what hung the
-      // search spinner. Match the business name (the card title users type).
-      // ponytail: business_name only; full_name search lands with the Phase-2
-      // discover_contractors RPC (trigram, both fields server-side).
-      query = query.ilike('contractor_profiles.business_name', '%$q%');
-    }
 
     // `.range` bounds the result to one page — without it this fetches every
     // contractor row (+ embedded reviews) and OOMs the client at scale.
     final rows = await query
         .order('full_name')
+        .range(offset, offset + limit - 1);
+    return rows.map(ContractorListing.fromJoined).toList();
+  }
+
+  /// Returns only professionals with at least one real review, ordered by
+  /// the same signals homeowners see on the rating shelf. The ordering stays
+  /// in PostgREST so pagination does not reshuffle between pages.
+  Future<List<ContractorListing>> fetchTopRated({
+    int offset = 0,
+    int limit = pageSize,
+  }) async {
+    final rows = await _client
+        .from('profiles')
+        .select(_joinedColumns)
+        .eq('role', 'contractor')
+        .gt('contractor_profiles.rating_count', 0)
+        .order(
+          'rating_avg',
+          referencedTable: 'contractor_profiles',
+          ascending: false,
+        )
+        .order(
+          'rating_count',
+          referencedTable: 'contractor_profiles',
+          ascending: false,
+        )
+        .order('full_name', ascending: true)
+        .order('id', ascending: true)
         .range(offset, offset + limit - 1);
     return rows.map(ContractorListing.fromJoined).toList();
   }

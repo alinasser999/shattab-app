@@ -67,10 +67,26 @@ app.*.map.json
 
 # Design probes + throwaway preview entrypoints (dev-only)
 .probes/
+
+# Agent-session scratch: browser snapshots and iteration screenshots produced
+# while verifying changes. Useful in the moment, not useful in history — they
+# bloat the repo (100s of PNGs/YAMLs) and nobody reads an old one later.
+.playwright-mcp/
+/artifacts/
+/*.png
+
+# Node build artifacts under infra/ (e.g. infra/media-signer)
+**/node_modules/
+**/.wrangler/
 lib/preview_*.dart
 
 # opencode config (may contain API keys)
 opencode.json
+
+# Cloudflare Worker local state and secrets
+infra/media-signer/node_modules/
+infra/media-signer/.wrangler/
+infra/media-signer/.dev.vars
 
 
 # Local tooling output (design critiques) — not part of the project.

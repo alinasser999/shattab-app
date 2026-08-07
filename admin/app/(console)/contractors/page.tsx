@@ -112,7 +112,7 @@ export default async function ContractorsPage({
             action={<Badge tone={pending.length > 0 ? 'warn' : 'ok'}>{pending.length} pending</Badge>}
           />
           {queueRes.error ? (
-            <ErrorState what="Could not read the verification queue." detail={queueRes.error.message} />
+            <ErrorState what="Could not read the verification queue." />
           ) : pending.length === 0 ? (
             <EmptyState
               title="Queue is clear"
@@ -151,7 +151,7 @@ export default async function ContractorsPage({
             }
           />
           {rosterRes.error ? (
-            <ErrorState what="Could not read the roster." detail={rosterRes.error.message} />
+            <ErrorState what="Could not read the roster." />
           ) : pros.length === 0 ? (
             <EmptyState
               title="No professionals match"

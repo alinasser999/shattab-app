@@ -1,7 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
-import '../theme/batsh_colors.dart';
 import '../theme/batsh_typography.dart';
 
 import 'package:batsh/core/theme/theme_extension.dart';

@@ -1,10 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../l10n/l10n_extension.dart';
+import '../analytics/app_analytics.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../l10n/strings.dart';
 import '../theme/batsh_colors.dart';
 import '../theme/batsh_radius.dart';
 import '../theme/batsh_spacing.dart';
@@ -22,6 +24,20 @@ import 'package:batsh/core/theme/theme_extension.dart';
 /// `#25D366`, and is for a surface where contacting really is the single
 /// thing left to do.
 enum ContactEmphasis { subdued, brand }
+
+/// Returns the Egyptian international format expected by wa.me.
+///
+/// Stored phone values are allowed to be entered as `010...`, `+20 10...`,
+/// or `0020...`; normalizing at the launch boundary keeps every caller safe.
+String whatsappPhoneDigits(String phone) {
+  var digits = phone.replaceAll(RegExp(r'\D'), '');
+  if (digits.startsWith('00')) digits = digits.substring(2);
+  if (digits.startsWith('0')) return '20${digits.substring(1)}';
+  if (digits.isNotEmpty && !digits.startsWith('20') && digits.length <= 11) {
+    return '20$digits';
+  }
+  return digits;
+}
 
 class WhatsAppButton extends StatelessWidget {
   const WhatsAppButton({
@@ -46,7 +62,13 @@ class WhatsAppButton extends StatelessWidget {
 
   Future<void> _open(BuildContext context) async {
     HapticFeedback.lightImpact();
-    final cleaned = phone.replaceAll(RegExp(r'\D'), '');
+    final cleaned = whatsappPhoneDigits(phone);
+    if (cleaned.isEmpty) {
+      if (context.mounted) {
+        BatshSnack.error(context, context.l10n.couldNotOpenApp);
+      }
+      return;
+    }
     final uri = Uri.parse(
       'https://wa.me/$cleaned${message != null ? '?text=${Uri.encodeComponent(message!)}' : ''}',
     );
@@ -55,6 +77,14 @@ class WhatsAppButton extends StatelessWidget {
       ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
     } catch (_) {
       ok = false;
+    }
+    if (ok) {
+      unawaited(
+        AppAnalytics.track(
+          'contact_whatsapp',
+          properties: const {'channel': 'whatsapp'},
+        ),
+      );
     }
     if (!ok && context.mounted) {
       BatshSnack.error(context, context.l10n.couldNotOpenApp);
@@ -152,6 +182,14 @@ class CallButton extends StatelessWidget {
       ok = await launchUrl(uri);
     } catch (_) {
       ok = false;
+    }
+    if (ok) {
+      unawaited(
+        AppAnalytics.track(
+          'contact_call',
+          properties: const {'channel': 'phone'},
+        ),
+      );
     }
     if (!ok && context.mounted) {
       BatshSnack.error(context, context.l10n.couldNotOpenApp);

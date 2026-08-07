@@ -247,12 +247,11 @@ export function TableSkeleton({ rows = 6, cols = 5 }: { rows?: number; cols?: nu
 
 // Shown when a read fails. An empty table on error reads as "no data", which is
 // the wrong conclusion to hand an operator.
-export function ErrorState({ what, detail }: { what: string; detail?: string }) {
+export function ErrorState({ what }: { what: string }) {
   return (
     <div className="flex flex-col items-center gap-2 px-6 py-12 text-center">
       <Badge tone="danger">Failed to load</Badge>
       <p className="text-sm text-ink-2">{what}</p>
-      {detail ? <p className="max-w-[60ch] font-mono text-xs text-ink-3">{detail}</p> : null}
       <p className="text-xs text-ink-3">
         Reload the page. If it persists, check the Supabase project status.
       </p>

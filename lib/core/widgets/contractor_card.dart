@@ -1,10 +1,12 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../l10n/l10n_extension.dart';
+import '../l10n/catalog_labels.dart';
 
 import '../../features/discovery/domain/contractor_listing.dart';
-import '../../features/onboarding/domain/onboarding_models.dart';
+import '../theme/batsh_motion.dart';
 import '../theme/batsh_radius.dart';
 import '../theme/batsh_shadows.dart';
 import '../theme/batsh_spacing.dart';
@@ -101,9 +103,7 @@ class ContractorCard extends StatelessWidget {
                           for (final s in topSpecialties) ...[
                             Flexible(
                               child: BatshBadge(
-                                label:
-                                    OnboardingCatalog.specialtiesCatalog[s] ??
-                                    s,
+                                label: localizedSpecialtyLabel(context, s),
                                 tone: BatshBadgeTone.brand,
                                 compact: true,
                               ),
@@ -230,14 +230,32 @@ class _Cover extends StatelessWidget {
                   tooltip: isSaved
                       ? context.l10n.unsaveTooltip
                       : context.l10n.saveTooltip,
-                  icon: Icon(
-                    isSaved ? Icons.bookmark : Icons.bookmark_border,
-                    size: BatshIconSize.md,
-                    color: isSaved
-                        ? context.colorScheme.primary
-                        : context.colorScheme.onSurfaceVariant,
+                  // Saving is the one act of intent on this card, so it gets
+                  // the one flourish: the mark scales in past its resting size
+                  // and settles. Keyed on isSaved so the switcher reads fill
+                  // and outline as two different children.
+                  icon: AnimatedSwitcher(
+                    duration: BatshMotion.normal,
+                    switchInCurve: BatshMotion.springTap,
+                    transitionBuilder: (child, animation) =>
+                        ScaleTransition(scale: animation, child: child),
+                    child: Icon(
+                      isSaved ? Icons.bookmark : Icons.bookmark_border,
+                      key: ValueKey(isSaved),
+                      size: BatshIconSize.md,
+                      color: isSaved
+                          ? context.colorScheme.primary
+                          : context.colorScheme.onSurfaceVariant,
+                    ),
                   ),
-                  onPressed: onToggleSave,
+                  onPressed: onToggleSave == null
+                      ? null
+                      : () {
+                          // On the way in, not after the round trip — the tap
+                          // is what the thumb is confirming.
+                          HapticFeedback.lightImpact();
+                          onToggleSave!();
+                        },
                   constraints: const BoxConstraints(
                     minWidth: 44,
                     minHeight: 44,

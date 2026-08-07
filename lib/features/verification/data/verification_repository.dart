@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/models/draft_photo.dart';
 import '../../../core/supabase/supabase_provider.dart';
+import '../../../core/utils/upload_policy.dart';
 
 /// Status of a contractor's most recent verification request.
 /// [none] = never applied. The badge grant itself lives on
@@ -49,6 +50,7 @@ class VerificationRepository {
       final name = '$uid/${DateTime.now().millisecondsSinceEpoch}_$i.jpg';
       final d = docs[i];
       if (d.file != null) {
+        UploadPolicy.validateImageLength(await d.file!.length());
         await storage.upload(
           name,
           d.file!,
@@ -58,6 +60,7 @@ class VerificationRepository {
           ),
         );
       } else if (d.bytes != null) {
+        UploadPolicy.validateImageBytes(d.bytes!);
         await storage.uploadBinary(
           name,
           d.bytes!,

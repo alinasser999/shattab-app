@@ -1,11 +1,11 @@
 {
-    "name": "Shattab",
-    "short_name": "Shattab",
+    "name": "شطّب | Shattab",
+    "short_name": "شطّب",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#FFF8F3",
     "theme_color": "#9E3D18",
-    "description": "شطب — Egyptian contractor hiring platform",
+    "description": "شطّب - Egyptian finishing and contractor platform",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

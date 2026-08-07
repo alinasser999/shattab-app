@@ -1,0 +1,17 @@
+{
+  "name": "shattab-media-signer",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test test/**/*.test.ts",
+    "deploy:dry": "wrangler deploy --dry-run"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.10",
+    "@cloudflare/workers-types": "^5.20260801.1",
+    "tsx": "^4.19.3",
+    "typescript": "^5.8.3",
+    "wrangler": "^4.15.0"
+  }
+}

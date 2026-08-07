@@ -9,6 +9,42 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
+  String get opportunityPostedBy => 'Post owner';
+
+  @override
+  String get viewHomeownerProfile => 'View post owner\'s profile';
+
+  @override
+  String get homeownerProfileTitle => 'Post owner profile';
+
+  @override
+  String get homeownerProfileSubtitle => 'Public details about the post owner';
+
+  @override
+  String get homeownerProfileDetailsTitle => 'Post owner details';
+
+  @override
+  String get homeownerLocationLabel => 'Project area';
+
+  @override
+  String get homeownerApartmentLabel => 'Home type';
+
+  @override
+  String get homeownerInterestsLabel => 'Renovation interests';
+
+  @override
+  String get homeownerProfileUnavailable =>
+      'Post owner details are unavailable right now.';
+
+  @override
+  String get homeownerProfileNoDetails =>
+      'No additional home or renovation details have been added yet.';
+
+  @override
+  String get homeownerProfilePrivacyHint =>
+      'Contact details are not shown on this profile.';
+
+  @override
   String get tierHowGold =>
       'Gold: verified account + 10 completed projects or 5 reviews.';
 
@@ -132,6 +168,141 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get accountSettingsTitle => 'Settings';
+
+  @override
+  String get roleSwitcherOwner => 'Owner';
+
+  @override
+  String get roleSwitcherContractor => 'Contractor';
+
+  @override
+  String get nextStepsTitle => 'Start here';
+
+  @override
+  String get performanceTitle => 'Your performance in the last 30 days';
+
+  @override
+  String get personalizeTitle => 'Personalize your experience';
+
+  @override
+  String get areasNotAdded => 'Work areas have not been added';
+
+  @override
+  String get verifiedStatus => 'Verified';
+
+  @override
+  String get unverifiedStatus => 'Not verified';
+
+  @override
+  String get profileCompletionTitle => 'Profile completion';
+
+  @override
+  String profileCompletionPercent(int value) {
+    return 'Profile $value% complete';
+  }
+
+  @override
+  String get profileCompleteMessage =>
+      'Your profile is ready to introduce your work to clients.';
+
+  @override
+  String get profileIncompleteMessage =>
+      'Complete your profile to appear to more clients.';
+
+  @override
+  String get completeProfileAction => 'Complete profile';
+
+  @override
+  String get editProfileImage => 'Edit account image';
+
+  @override
+  String get addFirstProject => 'Add your first project';
+
+  @override
+  String get addFirstProjectSubtitle =>
+      'Show your work and attract new clients';
+
+  @override
+  String get verifyAccount => 'Verify your account';
+
+  @override
+  String get verifyAccountSubtitle =>
+      'Give clients more confidence in your work';
+
+  @override
+  String get addWorkAreas => 'Add your work areas';
+
+  @override
+  String get addWorkAreasSubtitle => 'Get matched with the right opportunities';
+
+  @override
+  String get verificationPending => 'Under review';
+
+  @override
+  String get performanceEmptyTitle => 'Your performance will appear here';
+
+  @override
+  String get performanceEmptyMessage =>
+      'Complete your profile and add a project to start tracking client engagement.';
+
+  @override
+  String get proCardTitle => 'Shattab Pro';
+
+  @override
+  String get proCardSubtitle =>
+      'Reach more clients and make your work easier to discover.';
+
+  @override
+  String get proLearnMore => 'Learn more';
+
+  @override
+  String get proManageSubtitle =>
+      'Manage your subscription and active benefits.';
+
+  @override
+  String get settingsEntryTitle => 'Settings and preferences';
+
+  @override
+  String get settingsEntrySubtitle => 'Control how the app works for you';
+
+  @override
+  String get settingsAccountSection => 'Account';
+
+  @override
+  String get settingsPreferencesSection => 'Preferences';
+
+  @override
+  String get settingsSupportSection => 'Support and legal';
+
+  @override
+  String get settingsAccountManagementSection => 'Account management';
+
+  @override
+  String get appearanceTitle => 'Appearance';
+
+  @override
+  String get appearanceSubtitle => 'Choose what feels right for you';
+
+  @override
+  String get appearanceDay => 'Light';
+
+  @override
+  String get appearanceDark => 'Dark';
+
+  @override
+  String get appearanceSystem => 'System';
+
+  @override
+  String get notificationsTitle => 'Notifications';
+
+  @override
+  String get notificationsSubtitle => 'Manage notification preferences';
+
+  @override
+  String get notificationsRequests => 'Job requests';
+
+  @override
+  String get notificationsMessages => 'Messages and updates';
 
   @override
   String get taglineNew => 'From first idea to final touch';
@@ -344,7 +515,189 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tabExplore => 'Projects';
 
   @override
+  String get tabHome => 'Home';
+
+  @override
+  String get tabCommunity => 'Community';
+
+  @override
+  String get sampleImagesLabel => 'Sample images';
+
+  @override
+  String get workInspirationTitle => 'Work inspiration';
+
+  @override
+  String get imageUnavailable => 'Image unavailable';
+
+  @override
   String get exploreTitle => 'Projects';
+
+  @override
+  String get communityTitle => 'Shattab Community';
+
+  @override
+  String get communitySubtitle =>
+      'Share your experience and get inspired by others.';
+
+  @override
+  String get communityNotificationsLabel => 'Notifications';
+
+  @override
+  String get communityFiltersLabel => 'Filter posts';
+
+  @override
+  String get communityFilterAll => 'All';
+
+  @override
+  String get communityFilterBeforeAfter => 'Before & after';
+
+  @override
+  String get communityFilterTips => 'Tips';
+
+  @override
+  String get communityFilterExperiences => 'Experiences';
+
+  @override
+  String get communityFilterRequests => 'Requests';
+
+  @override
+  String get communityCreatePrompt => 'What is on your mind about finishing?';
+
+  @override
+  String get communityCreatePost => 'Create a post';
+
+  @override
+  String get communityCreatePostTypeTitle => 'Choose a post type';
+
+  @override
+  String get communityPostKindStandard => 'Post';
+
+  @override
+  String get communityPostKindStandardDescription =>
+      'Share a finishing experience or update';
+
+  @override
+  String get communityPostKindBeforeAfter => 'Before & after';
+
+  @override
+  String get communityPostKindBeforeAfterDescription =>
+      'Show the difference with two photos';
+
+  @override
+  String get communityPostKindQuestion => 'Question';
+
+  @override
+  String get communityPostKindQuestionDescription =>
+      'Ask the community for useful advice';
+
+  @override
+  String get communityPostKindTips => 'Tips';
+
+  @override
+  String get communityPostKindTipsDescription =>
+      'Share a step or material that made a difference';
+
+  @override
+  String get communityPostKindExperiences => 'Experiences';
+
+  @override
+  String get communityPostKindExperiencesDescription =>
+      'Tell the story of what you learned while finishing';
+
+  @override
+  String get communityCreatePostTypeSubtitle => 'Choose how you want to share';
+
+  @override
+  String get communityWritePostTitle => 'Write it your way';
+
+  @override
+  String get communityPublishCta => 'Share with the Shattab community';
+
+  @override
+  String get communityBeforeAfterNeedsImages =>
+      'Add two photos to show before and after';
+
+  @override
+  String get communityPhotoAction => 'Photo';
+
+  @override
+  String get communityBeforeAfterAction => 'Before & after';
+
+  @override
+  String get communityBeforeLabel => 'Before';
+
+  @override
+  String get communityAfterLabel => 'After';
+
+  @override
+  String get communityQuestionAction => 'Question';
+
+  @override
+  String get communityPostMenuLabel => 'Post actions';
+
+  @override
+  String get communityLikePost => 'Like';
+
+  @override
+  String get communityUnlikePost => 'Unlike';
+
+  @override
+  String get communityCommentPost => 'Comments';
+
+  @override
+  String get communitySharePost => 'Share';
+
+  @override
+  String get communitySavePost => 'Save post';
+
+  @override
+  String get communityUnsavePost => 'Remove saved post';
+
+  @override
+  String get communityNoPostsTitle => 'No posts here yet';
+
+  @override
+  String get communityNoPostsMessage =>
+      'Be the first to share a finishing experience or tip with the Shattab community.';
+
+  @override
+  String get communityPostsTitle => 'Community posts';
+
+  @override
+  String get communityPostsEmptyTitle => 'No shared posts yet';
+
+  @override
+  String get communityPostsEmptyMessage =>
+      'Their experiences and tips will appear here when they share them with the Shattab community.';
+
+  @override
+  String get communityPostsLoadError =>
+      'We couldn\'t load these posts right now';
+
+  @override
+  String get communityClearFilter => 'Show all posts';
+
+  @override
+  String get communityLoadingMore => 'Loading more posts';
+
+  @override
+  String communityFilterAnnouncement(String filter) {
+    return 'Post filter: $filter';
+  }
+
+  @override
+  String get communityAuthorHomeowner => 'Homeowner';
+
+  @override
+  String get communityAuthorProfessional => 'Verified professional';
+
+  @override
+  String get communityMemberFallback => 'Community member';
+
+  @override
+  String communityTimePublic(String time) {
+    return 'Posted $time';
+  }
 
   @override
   String get createPost => 'Create Post';
@@ -438,6 +791,37 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get commentPosted => 'Comment posted';
+
+  @override
+  String get commentReply => 'Reply';
+
+  @override
+  String get commentLike => 'Like comment';
+
+  @override
+  String get commentUnlike => 'Unlike comment';
+
+  @override
+  String get editComment => 'Edit comment';
+
+  @override
+  String get deleteComment => 'Delete comment';
+
+  @override
+  String get deleteCommentConfirm =>
+      'Are you sure you want to delete this comment?';
+
+  @override
+  String get commentUpdated => 'Comment updated';
+
+  @override
+  String get commentDeleted => 'Comment deleted';
+
+  @override
+  String get replyingToComment => 'Replying to a comment';
+
+  @override
+  String get commentEditedLabel => 'Edited';
 
   @override
   String get commentRateLimitError => 'Commenting too fast! Please wait.';
@@ -905,6 +1289,101 @@ class AppLocalizationsEn extends AppLocalizations {
   String get contactClient => 'Contact Client';
 
   @override
+  String get requestsPageTitle => 'Requests';
+
+  @override
+  String requestsUsage(String used, String limit) {
+    return 'You have used $used of $limit free offers in the last 30 days';
+  }
+
+  @override
+  String get requestsProStatus =>
+      'Pro is active — your offers and requests are available';
+
+  @override
+  String get requestsPlanRefreshError =>
+      'We couldn\'t refresh your plan right now.';
+
+  @override
+  String get requestsPlanRetry => 'Refresh plan status';
+
+  @override
+  String get requestsOpenDetails => 'View request details';
+
+  @override
+  String get requestsQuoteType => 'Quote requested';
+
+  @override
+  String requestsPublishedOn(String date) {
+    return 'Posted on $date';
+  }
+
+  @override
+  String get requestsLockedWithPro => 'Available with Pro';
+
+  @override
+  String get requestsProContactAvailable =>
+      'Contact details available with Pro';
+
+  @override
+  String get requestsProtectedContact => 'Contact details are protected';
+
+  @override
+  String get requestsLocationVisible => 'Request details are visible to you';
+
+  @override
+  String get requestsOtherTitle => 'More requests';
+
+  @override
+  String get requestsProHeadline => 'Is this request a fit for your work?';
+
+  @override
+  String get requestsProEmphasis => 'Don\'t let it pass you by.';
+
+  @override
+  String get requestsProDescription =>
+      'Pro opens contact details and lets you send offers without a cap.';
+
+  @override
+  String get requestsBenefitContact => 'Contact details';
+
+  @override
+  String get requestsBenefitUnlimited => 'Unlimited offers';
+
+  @override
+  String get requestsBenefitRanking => 'Higher visibility in search';
+
+  @override
+  String requestsAnnualSaving(String amount) {
+    return 'Save $amount EGP with annual billing';
+  }
+
+  @override
+  String get requestsTrialBilling =>
+      'Start with a free month, then billing follows your plan';
+
+  @override
+  String get requestsPaidBilling =>
+      'Paid subscription — activation follows transfer confirmation';
+
+  @override
+  String get requestsCtaTrial => 'Open the request and start a free month';
+
+  @override
+  String get requestsCtaPaid => 'Open the request and subscribe to Pro';
+
+  @override
+  String get requestsPaymentNote =>
+      'Secure payment — activation follows transfer review';
+
+  @override
+  String get requestsCheckoutFailed => 'We couldn\'t open checkout. Try again.';
+
+  @override
+  String get requestsProUnlocked =>
+      'Pro is active — you can follow up and send your offer';
+
+  @override
   String get myPortfolioTitle => 'My Portfolio';
 
   @override
@@ -962,7 +1441,29 @@ class AppLocalizationsEn extends AppLocalizations {
   String get coverRequired => 'You must add at least one photo';
 
   @override
-  String get searchHint => 'Search for a Professional or company…';
+  String get searchHint => 'Who are you looking for, or what do you need done?';
+
+  @override
+  String get discoverHeroKicker => 'Trusted professionals, visible proof';
+
+  @override
+  String get discoverHeroTitle => 'Your home deserves someone you can trust';
+
+  @override
+  String get discoverHeroSubtitle =>
+      'Choose a professional with clear work and real reviews.';
+
+  @override
+  String get featuredProfessional => 'Featured professional';
+
+  @override
+  String get customerReviews => 'Customer reviews';
+
+  @override
+  String get completedProjectsShort => 'Completed projects';
+
+  @override
+  String get verifiedByShattab => 'Verified by Shattab';
 
   @override
   String get featuredContractors => 'Featured Professionals';
@@ -971,7 +1472,23 @@ class AppLocalizationsEn extends AppLocalizations {
   String get topRated => 'Top Rated';
 
   @override
-  String get recentWorkTitle => 'Recent work';
+  String get topRatedCollectionDescription =>
+      'Professionals with real customer ratings';
+
+  @override
+  String get noRatedProfessionalsMessage =>
+      'There are no professionals with published ratings yet.';
+
+  @override
+  String get recentWorkTitle => 'Real work, beautifully done';
+
+  @override
+  String get allProfessionalsCollectionDescription =>
+      'Every professional currently available on Shattab';
+
+  @override
+  String get nearbyProfessionalsCollectionDescription =>
+      'Professionals who serve your area';
 
   @override
   String get nearYou => 'Near You';
@@ -983,6 +1500,39 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get browseByCategory => 'Browse by category';
+
+  @override
+  String get more => 'More';
+
+  @override
+  String get specialtyPaint => 'Painting';
+
+  @override
+  String get specialtyFlooring => 'Flooring';
+
+  @override
+  String get specialtyKitchen => 'Kitchens';
+
+  @override
+  String get specialtyBathroom => 'Bathrooms';
+
+  @override
+  String get specialtyElectrical => 'Electrical';
+
+  @override
+  String get specialtyPlumbing => 'Plumbing';
+
+  @override
+  String get specialtyCarpentry => 'Carpentry';
+
+  @override
+  String get specialtyDesign => 'Interior design';
+
+  @override
+  String get specialtyFullRenovation => 'Full renovation';
+
+  @override
+  String get shattabVerifiedProfessional => 'Verified by Shattab';
 
   @override
   String get trendingNearYou => 'Trending Near You';
@@ -1406,6 +1956,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get greetingEvening => 'Good evening';
+
+  @override
+  String greetingPersonalized(String greeting, String name) {
+    return '$greeting, $name';
+  }
 
   @override
   String get newJobs => 'New Jobs';
@@ -1882,6 +2437,35 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aboutProfessional => 'About';
 
   @override
+  String get requestPriceQuote => 'Request a quote';
+
+  @override
+  String get contactThroughShattab => 'Contact through Shattab';
+
+  @override
+  String get professionalWorkTitle => 'Real work, beautifully done';
+
+  @override
+  String get fromOurClients => 'From our clients';
+
+  @override
+  String get viewAllReviews => 'View all reviews';
+
+  @override
+  String get shattabClient => 'Shattab client';
+
+  @override
+  String get verifiedReviewFromCompletedJob =>
+      'Verified review from a completed job';
+
+  @override
+  String get noPublicWorkYet => 'This professional has not published work yet.';
+
+  @override
+  String get contactPrivacyShareHint =>
+      'Start a secure conversation through Shattab.';
+
+  @override
   String get worksIn => 'Works in';
 
   @override
@@ -2282,4 +2866,608 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get workTitleHint => 'Example: Apartment finishing in Tagamo3';
+
+  @override
+  String get adjustOpportunityPreferences => 'Adjust opportunity preferences';
+
+  @override
+  String get budgetAndTimingTitle => 'Budget and start date';
+
+  @override
+  String get budgetAndTimingUnavailable =>
+      'The homeowner has not provided a budget or start date yet. You can ask about both in your quote.';
+
+  @override
+  String get clearFilters => 'Clear filters';
+
+  @override
+  String get competitionUnavailableHint =>
+      'Competition level will appear when the opportunity exposes its offer count.';
+
+  @override
+  String get completeOpportunityPreferencesHint =>
+      'Add your specialties and work areas so we can recommend better opportunities.';
+
+  @override
+  String get completeProfileBeforeApplying => 'Complete your profile first';
+
+  @override
+  String get distanceUnavailableHint =>
+      'Matching currently uses your saved work areas. Distance in kilometres will be available after location is enabled.';
+
+  @override
+  String get filterAll => 'All';
+
+  @override
+  String get filterAllLocations => 'All locations';
+
+  @override
+  String get filterAnyTime => 'Any time';
+
+  @override
+  String get filterFresh => 'New';
+
+  @override
+  String get filterLocation => 'Location';
+
+  @override
+  String get filterNearYou => 'Your areas';
+
+  @override
+  String get filterNotApplied => 'Not applied';
+
+  @override
+  String get filterHideApplied => 'Hide opportunities I applied to';
+
+  @override
+  String get filterPublishedTime => 'Published';
+
+  @override
+  String get filtersApplyHint =>
+      'Filters will apply to available opportunities.';
+
+  @override
+  String get followQuoteAction => 'Track quote';
+
+  @override
+  String get jobRadarTitle => 'Job radar';
+
+  @override
+  String get opportunitySummaryTitle => 'Opportunity summary';
+
+  @override
+  String get opportunitySummaryHeading => 'Your opportunity summary';
+
+  @override
+  String get opportunityCountLabel => 'matching opportunities';
+
+  @override
+  String get opportunityFreshCount => 'new';
+
+  @override
+  String get opportunityAreaCount => 'in your areas';
+
+  @override
+  String get opportunityWeekCount => 'This week';
+
+  @override
+  String get searchForMatchingOpportunities =>
+      'Find opportunities that fit your work';
+
+  @override
+  String get opportunitySortTitle => 'Sort opportunities';
+
+  @override
+  String get opportunitySortRecommended => 'Best match';
+
+  @override
+  String get opportunitySortNewest => 'Newest';
+
+  @override
+  String opportunitySortLabel(String sort) {
+    return 'Sort opportunities by $sort';
+  }
+
+  @override
+  String opportunityFilterAction(int count) {
+    return 'Filter opportunities, $count filters active';
+  }
+
+  @override
+  String matchingOpportunitiesHeader(int count) {
+    return 'You have $count opportunities that fit your work';
+  }
+
+  @override
+  String get projectPhotoLabel => 'Project photo';
+
+  @override
+  String get projectPhotoLoading => 'Loading project photo';
+
+  @override
+  String get opportunityMediaUnavailable => 'Project photo unavailable';
+
+  @override
+  String get loadMoreProgress => 'Loading more opportunities';
+
+  @override
+  String get loadMoreError => 'We could not load more opportunities';
+
+  @override
+  String latestOpportunityTime(String time) {
+    return 'Latest matching opportunity was posted $time';
+  }
+
+  @override
+  String get makeOpportunitiesMoreAccurate => 'Make your matches more accurate';
+
+  @override
+  String get matchDataInsufficient =>
+      'Complete your specialties and work areas so we can explain each recommendation more accurately.';
+
+  @override
+  String get matchReasonFresh => 'Recently posted opportunity';
+
+  @override
+  String get matchReasonPhotos => 'Includes clear project photos';
+
+  @override
+  String get matchReasonPortfolio => 'Similar to work in your portfolio';
+
+  @override
+  String get matchReasonServiceArea => 'Located in one of your work areas';
+
+  @override
+  String get matchReasonSpecialty => 'Your specialty matches the request';
+
+  @override
+  String get moreMatchingOpportunities => 'More matching opportunities';
+
+  @override
+  String get newOpportunitiesForYou => 'new opportunities match you';
+
+  @override
+  String get noOpportunityMatches => 'No opportunities match these filters';
+
+  @override
+  String get noOpportunityMatchesHint =>
+      'Try widening your search or clearing some filters. New matching opportunities will appear as they are posted.';
+
+  @override
+  String get notSpecified => 'Not specified';
+
+  @override
+  String get opportunityAcceptingOffers => 'Accepting quotes';
+
+  @override
+  String get opportunityClosed => 'Opportunity closed';
+
+  @override
+  String get opportunityDetailsTitle => 'Opportunity details';
+
+  @override
+  String get opportunityFiltersTitle => 'Filter opportunities';
+
+  @override
+  String get opportunityOpen => 'Opportunity open';
+
+  @override
+  String get opportunityQuality => 'Opportunity quality';
+
+  @override
+  String get opportunityRemovedFromSaved => 'Opportunity removed from saved';
+
+  @override
+  String get opportunitySaved => 'Opportunity saved';
+
+  @override
+  String get opportunityTimeline => 'Opportunity timeline';
+
+  @override
+  String get opportunityViewed => 'Viewed before';
+
+  @override
+  String get ownerNoteTitle => 'Homeowner note';
+
+  @override
+  String get ownerPrivacyHint =>
+      'Contact details remain private until communication starts through a quote.';
+
+  @override
+  String get projectDetailsTitle => 'Project details';
+
+  @override
+  String get quoteAlreadySent => 'Quote submitted';
+
+  @override
+  String get radarFresh => 'New today';
+
+  @override
+  String get radarInYourAreas => 'In your work areas';
+
+  @override
+  String get radarMatchesThisWeek => 'Matches this week';
+
+  @override
+  String get recommendedForYou => 'Recommended for you';
+
+  @override
+  String get relevantOpportunity => 'Relevant opportunity';
+
+  @override
+  String get removeOpportunityFromSaved => 'Remove opportunity from saved';
+
+  @override
+  String get resetFilters => 'Reset';
+
+  @override
+  String get clearAllFilters => 'Clear all filters';
+
+  @override
+  String get saveOpportunity => 'Save opportunity';
+
+  @override
+  String searchPreferencesCompletion(int percent) {
+    return 'Search preferences $percent% complete';
+  }
+
+  @override
+  String showOpportunityCount(int count) {
+    return 'Show $count opportunities';
+  }
+
+  @override
+  String get strongMatch => 'Strong match';
+
+  @override
+  String get submitYourQuote => 'Submit your quote';
+
+  @override
+  String get timelineAcceptOffers => 'Accepting quotes';
+
+  @override
+  String get timelineChooseContractor => 'Choose contractor';
+
+  @override
+  String get timelineStartWork => 'Start work';
+
+  @override
+  String get viewOpportunityDetails => 'View details';
+
+  @override
+  String get whyOpportunityMatches => 'Why does this opportunity match you?';
+
+  @override
+  String get youHaveNewOpportunities => 'You have';
+
+  @override
+  String get homeownerAccountRole => 'Homeowner';
+
+  @override
+  String get homeownerAreaFallback => 'Your preferred area';
+
+  @override
+  String get homeownerQuickActions => 'Quick actions';
+
+  @override
+  String get homeownerSettingsPreview => 'Your settings';
+
+  @override
+  String get homeownerAccountExperienceSection => 'Your account experience';
+
+  @override
+  String get homeownerEditProfileAction => 'Edit profile';
+
+  @override
+  String get homeownerDiscoverSubtitle => 'Find the right professional';
+
+  @override
+  String get homeownerRequestsSubtitle => 'Track your requests';
+
+  @override
+  String get homeownerSavedSubtitle => 'Your saved professionals';
+
+  @override
+  String get homeownerAppearanceRow => 'Appearance';
+
+  @override
+  String get homeownerMotionRow => 'Motion';
+
+  @override
+  String get homeownerLanguageRow => 'Language';
+
+  @override
+  String get homeownerSettingsRow => 'Settings and preferences';
+
+  @override
+  String get homeownerSettingsSubtitle => 'Control your app experience';
+
+  @override
+  String get homeownerLogoutSubtitle => 'You can come back anytime';
+
+  @override
+  String get homeownerSettingsExperienceSection => 'App experience';
+
+  @override
+  String get homeownerAppearanceAndMotionTitle => 'Appearance and motion';
+
+  @override
+  String get homeownerAppearanceAndMotionSubtitle =>
+      'Choose the look and motion that suit you';
+
+  @override
+  String get homeownerLegalSection => 'Privacy and legal';
+
+  @override
+  String get homeownerPrivacySubtitle => 'Learn how we protect your data';
+
+  @override
+  String get homeownerTermsSubtitle => 'Review the Shattab terms';
+
+  @override
+  String get homeownerAccountSection => 'Account';
+
+  @override
+  String get homeownerDeleteSubtitle => 'Permanently remove account data';
+
+  @override
+  String get homeownerMotionTitle => 'Motion';
+
+  @override
+  String get homeownerMotionSubtitle => 'Control movement across the app';
+
+  @override
+  String get homeownerMotionAccessibility =>
+      'If motion feels uncomfortable, choose reduced or off for a calmer interface.';
+
+  @override
+  String get homeownerSaveSettings => 'Save settings';
+
+  @override
+  String get homeownerLanguageChoose => 'Choose your app language';
+
+  @override
+  String get homeownerLanguageArabicHint => 'Arabic';
+
+  @override
+  String get homeownerLanguageEnglishHint => 'English';
+
+  @override
+  String get homeownerLanguagePreview => 'Text direction preview';
+
+  @override
+  String get homeownerLanguageLtr => 'LTR';
+
+  @override
+  String get homeownerLanguageRtl => 'RTL';
+
+  @override
+  String get homeownerSaveLanguage => 'Save language';
+
+  @override
+  String get homeownerPrivacyIntro =>
+      'We protect your data and use it to provide a safer experience and better finishing recommendations.';
+
+  @override
+  String get homeownerTermsIntro =>
+      'By using Shattab, you agree to the rules that govern the platform and your contact with professionals.';
+
+  @override
+  String get homeownerPrivacySection1Title => 'Data we collect';
+
+  @override
+  String get homeownerPrivacySection1Body =>
+      'We use basic account data, home information, and finishing interests that you choose to share to run the service.';
+
+  @override
+  String get homeownerPrivacySection2Title => 'How we use your data';
+
+  @override
+  String get homeownerPrivacySection2Body =>
+      'We use your data to recommend professionals, organize requests, improve the app, and provide support.';
+
+  @override
+  String get homeownerPrivacySection3Title => 'Protecting your data';
+
+  @override
+  String get homeownerPrivacySection3Body =>
+      'We apply appropriate access and security controls, and we do not expose contact details on public profiles without a clear reason.';
+
+  @override
+  String get homeownerPrivacySection4Title => 'Your choices';
+
+  @override
+  String get homeownerPrivacySection4Body =>
+      'You can edit your profile, control notifications, and request account deletion from your account settings.';
+
+  @override
+  String get homeownerPrivacySection5Title => 'Contact us';
+
+  @override
+  String get homeownerPrivacySection5Body =>
+      'If you have a question about your data or privacy, contact our support team using the button below.';
+
+  @override
+  String get homeownerTermsSection1Title => 'Using Shattab';
+
+  @override
+  String get homeownerTermsSection1Body =>
+      'Use Shattab lawfully and respectfully, and provide accurate information that helps professionals understand your request.';
+
+  @override
+  String get homeownerTermsSection2Title => 'Requests and contact';
+
+  @override
+  String get homeownerTermsSection2Body =>
+      'The platform helps you reach professionals, but the final agreement and execution details remain with the parties involved.';
+
+  @override
+  String get homeownerTermsSection3Title => 'Content and photos';
+
+  @override
+  String get homeownerTermsSection3Body =>
+      'Make sure you have the right to upload any photos and information, and never add content that violates someone else\'s rights.';
+
+  @override
+  String get homeownerTermsSection4Title => 'Independent professionals';
+
+  @override
+  String get homeownerTermsSection4Body =>
+      'Professionals provide services independently. Review their profile and ratings and agree on the details before work begins.';
+
+  @override
+  String get homeownerTermsSection5Title => 'Terms updates';
+
+  @override
+  String get homeownerTermsSection5Body =>
+      'We may update these terms as the service changes. Important changes will be explained inside the app.';
+
+  @override
+  String get homeownerContactSupport => 'Contact support';
+
+  @override
+  String get homeownerLogoutTitle => 'Sign out?';
+
+  @override
+  String get homeownerLogoutBody =>
+      'You can sign in again anytime without losing your requests or saved professionals.';
+
+  @override
+  String get homeownerStaySignedIn => 'Stay signed in';
+
+  @override
+  String get homeownerOrdersAll => 'All';
+
+  @override
+  String get homeownerOrdersNew => 'New';
+
+  @override
+  String get homeownerOrdersActive => 'Active';
+
+  @override
+  String get homeownerOrdersCompleted => 'Completed';
+
+  @override
+  String get homeownerOrdersEmptyTitle => 'No requests yet';
+
+  @override
+  String get homeownerOrdersEmptyMessage =>
+      'Once you contact a professional, you can follow the details here.';
+
+  @override
+  String get homeownerOrdersDiscoverAction => 'Discover professionals';
+
+  @override
+  String get homeownerOrdersBackToAccount => 'Back to my account';
+
+  @override
+  String get homeownerSavedEmptyTitle => 'No saved professionals';
+
+  @override
+  String get homeownerSavedEmptyMessage =>
+      'Save the professionals you like so you can find them again easily.';
+
+  @override
+  String get homeownerSavedDiscoverAction => 'Discover professionals';
+
+  @override
+  String get homeownerSavedHint =>
+      'Tap the bookmark on any professional to see them here.';
+
+  @override
+  String get changeLocation => 'Change browse location';
+
+  @override
+  String get changeLocationDescription =>
+      'Choose a city to see professionals in that area';
+
+  @override
+  String get useProfileLocation => 'Use profile location';
+
+  @override
+  String get notificationInboxTitle => 'Notifications';
+
+  @override
+  String get notificationMarkAllRead => 'Mark all as read';
+
+  @override
+  String get notificationEmptyTitle => 'No new notifications';
+
+  @override
+  String get notificationEmptyBody =>
+      'Updates about your requests and work will appear here.';
+
+  @override
+  String get notificationNewQuoteTitle => 'New quote';
+
+  @override
+  String get notificationNewQuoteBody =>
+      'You received a new quote on your request.';
+
+  @override
+  String get notificationQuoteDecisionTitle => 'Update on your quote';
+
+  @override
+  String get notificationQuoteAcceptedBody =>
+      'The homeowner accepted your quote.';
+
+  @override
+  String get notificationQuoteDeclinedBody =>
+      'The homeowner chose another quote for this request.';
+
+  @override
+  String get notificationCompletionTitle => 'Work update';
+
+  @override
+  String get notificationCompletionRequestedBody =>
+      'The professional marked the work as finished. Review the request details.';
+
+  @override
+  String get notificationJobCompletedBody =>
+      'The project was confirmed complete.';
+
+  @override
+  String get notificationNewReviewTitle => 'New review';
+
+  @override
+  String get notificationNewReviewBody =>
+      'A homeowner added a new review to your profile.';
+
+  @override
+  String get notificationVerificationTitle => 'Verification update';
+
+  @override
+  String get notificationVerificationApprovedBody =>
+      'Your account was verified successfully.';
+
+  @override
+  String get notificationVerificationRejectedBody =>
+      'Review the verification notes and submit again.';
+
+  @override
+  String get notificationPaymentTitle => 'Subscription update';
+
+  @override
+  String get notificationPaymentApprovedBody =>
+      'Your subscription is now active.';
+
+  @override
+  String get notificationPaymentRejectedBody =>
+      'Your payment request needs review.';
+
+  @override
+  String get notificationCommunityTitle => 'New activity';
+
+  @override
+  String get notificationPostLikedBody => 'Someone liked your post.';
+
+  @override
+  String get notificationPostCommentedBody => 'Someone commented on your post.';
+
+  @override
+  String get notificationCommentRepliedBody =>
+      'Someone replied to your comment.';
+
+  @override
+  String get notificationCommentLikedBody => 'Someone liked your comment.';
 }

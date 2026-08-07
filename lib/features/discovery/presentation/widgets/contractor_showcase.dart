@@ -8,7 +8,6 @@ import 'package:go_router/go_router.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../../../core/router/routes.dart';
-import '../../../../core/theme/batsh_colors.dart';
 import '../../../../core/theme/batsh_radius.dart';
 import '../../../../core/theme/batsh_shadows.dart';
 import '../../../../core/theme/batsh_spacing.dart';
@@ -17,7 +16,6 @@ import '../../../../core/utils/image_url.dart';
 import 'package:batsh/core/l10n/l10n_extension.dart';
 import '../../../../core/widgets/batsh_button.dart';
 import '../../../../core/widgets/batsh_pressable.dart';
-import '../../../../core/widgets/batsh_shimmer.dart';
 import '../../../../core/widgets/contact_buttons.dart';
 import '../../../../core/widgets/tier_badge.dart';
 import '../../../auth/presentation/sign_in_sheet.dart';
@@ -26,6 +24,7 @@ import '../../../portfolio/domain/portfolio_project.dart';
 import '../../../portfolio/presentation/providers/portfolio_providers.dart';
 import '../../../reviews/presentation/reviews_sheet.dart';
 import '../../../saved/presentation/providers/saved_providers.dart';
+import '../../../explore/presentation/widgets/contractor_community_posts.dart';
 import '../../domain/contractor_listing.dart';
 import '../../../../core/theme/batsh_icon_size.dart';
 import '../../../../core/widgets/batsh_badge.dart';
@@ -105,7 +104,7 @@ class ContractorShowcase extends ConsumerWidget {
           expandedHeight: 268,
           pinned: true,
           automaticallyImplyLeading: !_isOwner,
-          backgroundColor: context.colorScheme.background,
+          backgroundColor: context.colorScheme.surface,
           foregroundColor: context.colorScheme.onSurface,
           elevation: 0,
           leading: _isOwner ? null : const _BackButton(),
@@ -203,6 +202,26 @@ class ContractorShowcase extends ConsumerWidget {
                   ),
                 ),
               ],
+
+              const SizedBox(height: BatshSpacing.xl),
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: BatshSpacing.marginMobile,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      context.l10n.communityPostsTitle,
+                      style: BatshTypography.titleLg.copyWith(
+                        color: context.colorScheme.onSurface,
+                      ),
+                    ),
+                    const SizedBox(height: BatshSpacing.sm),
+                    ContractorCommunityPosts(contractorId: listing.id),
+                  ],
+                ),
+              ),
 
               // Credentials. Tiles with nothing to report are dropped rather
               // than rendered as "0" / "—": a big elevated card announcing

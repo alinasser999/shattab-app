@@ -42,7 +42,7 @@ export function LoginForm({ next }: { next: string }) {
       // was wrong. That is worth preserving rather than "improving": a message
       // distinguishing a bad password from an unknown email turns this form into
       // an account-enumeration oracle.
-      setError(err.message);
+      setError('Sign in failed. Check your credentials and try again.');
       return;
     }
 

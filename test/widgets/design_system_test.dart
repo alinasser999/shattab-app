@@ -3,7 +3,9 @@ import 'package:batsh/core/theme/batsh_border_width.dart';
 import 'package:batsh/core/theme/batsh_colors.dart';
 import 'package:batsh/core/theme/batsh_icon_size.dart';
 import 'package:batsh/core/theme/batsh_shadows.dart';
+import 'package:batsh/core/theme/batsh_theme.dart';
 import 'package:batsh/core/widgets/batsh_badge.dart';
+import 'package:batsh/core/widgets/batsh_chip.dart';
 import 'package:batsh/core/widgets/batsh_dialog.dart';
 import 'package:batsh/core/widgets/batsh_empty_state.dart';
 import 'package:batsh/core/widgets/batsh_sheet.dart';
@@ -57,6 +59,39 @@ void main() {
       expect(BatshBorderWidth.strong, greaterThan(BatshBorderWidth.selected));
       expect(BatshBorderWidth.focusRing, BatshBorderWidth.strong);
     });
+  });
+
+  group('BatshChip', () {
+    for (final (name, build) in <(String, ThemeData Function())>[
+      ('light', BatshTheme.light),
+      ('dark', BatshTheme.dark),
+    ]) {
+      testWidgets('$name: selected label clears body-text contrast', (
+        tester,
+      ) async {
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: build(),
+            home: const Scaffold(
+              body: BatshChip(label: 'Selected', selected: true),
+            ),
+          ),
+        );
+
+        final text = tester.widget<Text>(find.text('Selected'));
+        final container = tester.widget<AnimatedContainer>(
+          find.descendant(
+            of: find.byType(BatshChip),
+            matching: find.byType(AnimatedContainer),
+          ),
+        );
+        final background = (container.decoration! as BoxDecoration).color!;
+        expect(
+          _contrast(text.style!.color!, background),
+          greaterThanOrEqualTo(4.5),
+        );
+      });
+    }
   });
 
   group('BatshShadows.level', () {

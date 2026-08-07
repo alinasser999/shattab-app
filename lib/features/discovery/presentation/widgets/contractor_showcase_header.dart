@@ -61,7 +61,7 @@ class _CoverHero extends StatelessWidget {
               colors: [
                 const Color(0x00000000),
                 const Color(0x14000000),
-                context.colorScheme.background.withValues(alpha: 0.55),
+                context.colorScheme.surface.withValues(alpha: 0.55),
               ],
               stops: const [0.0, 0.55, 1.0],
             ),
@@ -83,7 +83,7 @@ class _AvatarRing extends StatelessWidget {
       height: 100,
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: context.colorScheme.background,
+        color: context.colorScheme.surface,
         shape: BoxShape.circle,
         boxShadow: BatshShadows.elevated,
       ),
@@ -258,7 +258,12 @@ class _RatingPill extends StatelessWidget {
           ),
           decoration: BoxDecoration(
             borderRadius: BatshRadius.brFull,
-            border: Border.all(color: context.colorScheme.tertiary, width: 1),
+            border: Border.all(
+              color: context.colorScheme.onTertiaryFixed.withValues(
+                alpha: 0.35,
+              ),
+              width: 1,
+            ),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -266,13 +271,13 @@ class _RatingPill extends StatelessWidget {
               Icon(
                 Icons.star_rounded,
                 size: BatshIconSize.md,
-                color: context.colorScheme.tertiary,
+                color: context.colorScheme.onTertiaryFixed,
               ),
               const SizedBox(width: BatshSpacing.xs),
               Text(
                 avg.toStringAsFixed(1),
                 style: BatshTypography.labelMd.copyWith(
-                  color: context.colorScheme.onTertiaryContainer,
+                  color: context.colorScheme.onTertiaryFixed,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -280,7 +285,7 @@ class _RatingPill extends StatelessWidget {
               Text(
                 '· $reviewCount ${context.l10n.reviewsCount}',
                 style: BatshTypography.labelSm.copyWith(
-                  color: context.colorScheme.onTertiaryContainer,
+                  color: context.colorScheme.onTertiaryFixed,
                 ),
               ),
               if (onTap != null) ...[
@@ -288,7 +293,7 @@ class _RatingPill extends StatelessWidget {
                 Icon(
                   Icons.arrow_forward_ios,
                   size: BatshIconSize.xs,
-                  color: context.colorScheme.onTertiaryContainer,
+                  color: context.colorScheme.onTertiaryFixed,
                 ),
               ],
             ],

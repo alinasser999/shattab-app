@@ -7,13 +7,13 @@ import 'package:flutter/material.dart';
 import '../l10n/l10n_extension.dart';
 import 'package:image_picker/image_picker.dart';
 
-import '../l10n/strings.dart';
 import '../models/draft_photo.dart';
-import '../theme/batsh_colors.dart';
 import '../theme/batsh_radius.dart';
 import '../theme/batsh_spacing.dart';
 import '../theme/batsh_typography.dart';
 import '../theme/batsh_icon_size.dart';
+import '../utils/upload_policy.dart';
+import 'batsh_snack.dart';
 
 import 'package:batsh/core/theme/theme_extension.dart';
 
@@ -54,19 +54,40 @@ class _PhotoPickerState extends State<PhotoPicker> {
     );
     if (picked.isEmpty) return;
     final newPhotos = <DraftPhoto>[];
+    var rejected = false;
     for (final x in picked) {
       if (kIsWeb) {
         final bytes = await x.readAsBytes();
+        try {
+          UploadPolicy.validateImageBytes(bytes);
+        } on UploadPolicyException {
+          rejected = true;
+          continue;
+        }
         newPhotos.add(DraftPhoto(bytes: bytes));
       } else {
-        newPhotos.add(DraftPhoto(file: File(x.path)));
+        final file = File(x.path);
+        try {
+          UploadPolicy.validateImageLength(await file.length());
+        } on UploadPolicyException {
+          rejected = true;
+          continue;
+        }
+        newPhotos.add(DraftPhoto(file: file));
       }
     }
-    setState(
-      () =>
-          _photos = [..._photos, ...newPhotos].take(widget.maxPhotos).toList(),
-    );
-    widget.onChanged(_photos);
+    if (newPhotos.isNotEmpty) {
+      setState(
+        () => _photos = [
+          ..._photos,
+          ...newPhotos,
+        ].take(widget.maxPhotos).toList(),
+      );
+      widget.onChanged(_photos);
+    }
+    if (rejected && mounted) {
+      BatshSnack.error(context, context.l10n.errPhotoUpload);
+    }
   }
 
   void _remove(int i) {

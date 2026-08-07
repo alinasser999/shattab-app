@@ -5,9 +5,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../core/media/media_storage.dart';
+import '../../../core/media/media_storage_provider.dart';
 import '../../../core/supabase/supabase_provider.dart';
+import '../../../core/utils/upload_policy.dart';
 import '../../onboarding/domain/onboarding_models.dart';
 import '../domain/brief.dart';
+import '../domain/homeowner_profile_preview.dart';
 
 part 'briefs_repository.g.dart';
 
@@ -26,8 +30,10 @@ class BriefCursor {
 }
 
 class BriefsRepository {
-  BriefsRepository(this._client);
+  BriefsRepository(this._client, [MediaStorageService? mediaStorage])
+      : _mediaStorage = mediaStorage;
   final SupabaseClient _client;
+  final MediaStorageService? _mediaStorage;
 
   /// Page size for the opportunities feed. Bounds every fetch — the previous
   /// query had no limit at all and pulled every matching open brief.
@@ -50,6 +56,29 @@ class BriefsRepository {
         .maybeSingle();
     if (row == null) return null;
     return Brief.fromJson(row);
+  }
+
+  /// Returns the contact-free homeowner projection allowed to contractors.
+  /// The database projection intentionally has no phone or contact fields.
+  Future<PublicHomeownerProfile?> fetchHomeownerPublicProfile(
+    String homeownerId,
+  ) async {
+    Map<String, dynamic>? row;
+    try {
+      row = await _client
+          .from('homeowner_public_profiles')
+          .select()
+          .eq('profile_id', homeownerId)
+          .maybeSingle();
+    } on PostgrestException catch (error) {
+      // Older environments may not have the public projection migration yet.
+      // Treat that as an unavailable profile instead of allowing Riverpod to
+      // retry a permanent 404 until the screen appears stuck.
+      if (error.code != 'PGRST205' && error.code != '42P01') rethrow;
+      return null;
+    }
+    if (row == null) return null;
+    return PublicHomeownerProfile.fromJson(row);
   }
 
   /// Posts matching the calling contractor by specialty ∩ service_area.
@@ -251,26 +280,41 @@ class BriefsRepository {
     Uint8List? bytes,
   }) async {
     final path = '$homeownerId/$draftId/$seq.jpg';
-    final storage = _client.storage.from('brief-photos');
+    late final Uint8List uploadBytes;
     if (file != null) {
-      await storage.upload(
-        path,
-        file,
-        fileOptions: const FileOptions(upsert: true, contentType: 'image/jpeg'),
-      );
+      UploadPolicy.validateImageLength(await file.length());
+      uploadBytes = await file.readAsBytes();
     } else if (bytes != null) {
-      await storage.uploadBinary(
-        path,
-        bytes,
-        fileOptions: const FileOptions(upsert: true, contentType: 'image/jpeg'),
-      );
+      UploadPolicy.validateImageBytes(bytes);
+      uploadBytes = bytes;
     } else {
       throw ArgumentError('uploadPhoto needs either file or bytes');
     }
+    final mediaStorage = _mediaStorage;
+    if (mediaStorage != null) {
+      final result = await mediaStorage.uploadPublic(
+        category: MediaCategory.briefPhoto,
+        userId: homeownerId,
+        bytes: uploadBytes,
+        fileName: '$seq.jpg',
+        contentType: 'image/jpeg',
+        supabasePath: path,
+      );
+      return result.url;
+    }
+    final storage = _client.storage.from('brief-photos');
+    await storage.uploadBinary(
+      path,
+      uploadBytes,
+      fileOptions: const FileOptions(upsert: true, contentType: 'image/jpeg'),
+    );
     return storage.getPublicUrl(path);
   }
 }
 
 @Riverpod(keepAlive: true)
 BriefsRepository briefsRepository(Ref ref) =>
-    BriefsRepository(ref.watch(supabaseClientProvider));
+    BriefsRepository(
+      ref.watch(supabaseClientProvider),
+      ref.watch(mediaStorageProvider),
+    );

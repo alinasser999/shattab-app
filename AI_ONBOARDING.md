@@ -1,7 +1,7 @@
 # Shattab — Onboarding Brief for a New AI Agent
 
 Read this before touching anything. It is the current-state map of the repo as of
-**2026-07-27**, branch `feat/bottom-nav-redesign`.
+**2026-08-07**, branch `feat/bottom-nav-redesign`.
 
 > **`CLAUDE.md`, `README.md` and `PRODUCT.md` are stale.** They stop at M3 and say
 > "M4 not started". The app has since shipped reviews, monetization, verification,
@@ -167,20 +167,34 @@ Reference docs: `docs/design-tokens.md`, `docs/design-system-audit.md`,
 
 ## 7. Database
 
-18 tables. `profiles` · `homeowner_profiles` · `contractor_profiles` · `briefs` ·
-`quotes` · `reviews` · `saved_contractors` · `portfolio_projects` · `posts` ·
-`post_likes` · `post_comments` · `post_saves` · `payments` · `payment_requests` ·
-`verification_requests` · `content_reports` · `user_blocks` · `admin_users` ·
-`admin_audit_log`.
+Core marketplace tables: `profiles` · `homeowner_profiles` · `contractor_profiles`
+· `briefs` · `quotes` · `reviews` · `saved_contractors` · `portfolio_projects` ·
+`posts` · `post_likes` · `post_comments` · `post_saves` · `payments` ·
+`payment_requests` · `verification_requests` · `content_reports` · `user_blocks`
+· `admin_users` · `admin_audit_log` · `notifications` · `device_tokens`.
 
 Storage buckets: `avatars`, `brief-photos`, `portfolio-photos`, `post-media`,
 `payment-proofs`, `verification-docs`.
 
-Migrations `0001`–`0028` are on disk in `supabase/migrations/`. Highlights:
-`0013` monetization, `0016` accept-quote guard, `0019` completion loop,
-`0021` admin RPC lockdown (privilege-escalation fix), `0022` RLS initplan perf,
-`0023` account deletion, `0024` reports + blocks, `0025` free quote quota,
-`0027`/`0028` admin table + 8 SECURITY DEFINER RPCs with audit logging.
+`supabase/migrations/` has 40+ files. The numbering scheme drifted after `0028`
+— later migrations are timestamp-named (e.g. `20260806152000_fix_comment_edit_timestamps.sql`)
+rather than sequentially numbered. `list_migrations` via the Supabase MCP is the
+source of truth for what's actually applied; don't assume disk order = apply order.
+Highlights beyond the original `0001`–`0028`: `notifications_and_analytics_contract`
+(server-side triggers write a notification row on every quote/completion/review/
+payment/verification event), `notifications_realtime` (realtime delivery),
+`arabic_contractor_search` (`shattab_normalize_ar()` + `discover_contractors` RPC
+— search must go through this, not a raw `ilike`, or Arabic name variants silently
+fail to match), `device_tokens` (push registration, one row per device).
+
+**⚠️ Six tables with no RLS, discovered live 2026-08-07, not part of this
+product:** `scan_misses`, `user_product_submissions`, `product_drafts`,
+`ingestion_jobs`, `ingestion_items`, `ocr_extractions` — from a migration named
+`create_mokawen_tables`. Confirmed via advisor + direct check: `anon` can
+`SELECT` **and** `INSERT` on all six. They look like a different app's schema
+landed in this project by mistake. Do not build on them, and flag to a human
+before touching — enabling RLS, adding policies, or dropping them is a product
+decision, not something to infer from context.
 
 **Security posture — do not weaken it:**
 
@@ -220,7 +234,10 @@ Bootstrapping the first admin is manual and off-system by design — see
 
 - **Riverpod 3:** use `.value`, not `.valueOrNull` (removed). `@Riverpod` codegen;
   regenerate with `dart run build_runner build --delete-conflicting-outputs`.
-  Generated `.g.dart` files **are committed**.
+  Generated `.g.dart`/`.freezed.dart` files **are gitignored, not committed** —
+  a fresh checkout will not compile until you run that command once. (An
+  earlier version of this doc said the opposite; verified against
+  `.gitignore:58` and `git ls-files`, which shows zero `.g.dart` tracked.)
 - **`riverpod_lint` / `custom_lint` must not be added** — they conflict with
   `freezed_annotation ^3.x`.
 - **Models:** hand-written `copyWith` + `fromJson`. Only reach for freezed at 8+
@@ -262,8 +279,16 @@ transformations — turning it on without one 404s every photo). **Never commit 
 
 ## 11. Known open items
 
-- **Push notifications are not built.** Nobody is told when a quote or request
-  arrives; the loop depends on reopening the app. Biggest retention gap.
+- **Push notifications are code-complete but not delivering.** `PushService` /
+  `PushRegistrar` (`lib/core/notifications/`) and `supabase/functions/send-push/`
+  exist and are wired into boot, but there is no Firebase project for
+  `app.batsh.batsh` yet — no `google-services.json`, no APNs key, no Gradle
+  plugin, no deployed Edge Function, no Database Webhook. `PushService.ensureInitialized()`
+  fails closed (logs and continues) so the app runs fine without any of this —
+  it just means nobody gets a push until a human finishes the Firebase console
+  steps. **Realtime delivery works today** regardless: a user with the app open
+  sees a notification the instant a trigger writes one (`notificationsProvider`
+  is a live Supabase stream, not a poll).
 - Supabase **Phone provider + an SMS gateway that delivers to +20** must be
   enabled in the dashboard or no one can log in. Pending as of the last checklist.
 - Android release signing needs a local, gitignored `android/key.properties`

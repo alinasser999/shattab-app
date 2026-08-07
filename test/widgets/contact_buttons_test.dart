@@ -5,6 +5,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  test('normalizes Egyptian phone numbers for WhatsApp', () {
+    expect(whatsappPhoneDigits('010 0123 4567'), '201001234567');
+    expect(whatsappPhoneDigits('+20 10 0123 4567'), '201001234567');
+    expect(whatsappPhoneDigits('0020 10 0123 4567'), '201001234567');
+    expect(whatsappPhoneDigits(''), isEmpty);
+  });
+
   group('WhatsAppButton', () {
     testWidgets('renders WhatsApp label', (tester) async {
       await tester.pumpWidget(

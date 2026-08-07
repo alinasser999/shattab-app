@@ -27,7 +27,9 @@ type BlockRow = { blocked_id: string; count: number; name: string | null };
 const TARGET_LABEL: Record<string, string> = {
   post: 'Post',
   comment: 'Comment',
-  user: 'Account',
+  profile: 'Account',
+  brief: 'Job request',
+  review: 'Review',
 };
 
 export default async function ModerationPage({
@@ -100,7 +102,7 @@ export default async function ModerationPage({
             action={<Badge tone={pending.length > 0 ? 'warn' : 'ok'}>{pending.length} open</Badge>}
           />
           {pendingRes.error ? (
-            <ErrorState what="Could not read the report queue." detail={pendingRes.error.message} />
+            <ErrorState what="Could not read the report queue." />
           ) : pending.length === 0 ? (
             <EmptyState
               title="Nothing reported"
@@ -108,7 +110,11 @@ export default async function ModerationPage({
             />
           ) : (
             <ul className="stagger divide-y divide-line">
-              {pending.map((report, i) => (
+              {pending.map((report, i) => {
+                // The database only supports content removal for posts and
+                // comments. Other report targets use their own lifecycle.
+                const canRemoveContent = report.target_type === 'post' || report.target_type === 'comment';
+                return (
                 <li key={report.id} style={{ ['--i' as string]: i }} className="px-4 py-4">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="min-w-0">
@@ -135,7 +141,7 @@ export default async function ModerationPage({
                         >
                           View the reporter
                         </Link>
-                        {report.target_type === 'user' ? (
+                        {report.target_type === 'profile' ? (
                           <Link
                             href={`/users?user=${report.target_id}`}
                             className="underline decoration-line-strong underline-offset-4 hover:text-ink hover:decoration-accent"
@@ -167,9 +173,11 @@ export default async function ModerationPage({
                     <Button type="submit" name="action" value="dismiss" variant="secondary" size="sm">
                       No violation
                     </Button>
-                    <Button type="submit" name="action" value="remove_content" variant="danger" size="sm">
-                      Remove content
-                    </Button>
+                    {canRemoveContent ? (
+                      <Button type="submit" name="action" value="remove_content" variant="danger" size="sm">
+                        Remove content
+                      </Button>
+                    ) : null}
                     <Button
                       type="submit"
                       name="action"
@@ -177,11 +185,12 @@ export default async function ModerationPage({
                       variant="danger"
                       size="sm"
                     >
-                      Remove and suspend
+                      {canRemoveContent ? 'Remove and suspend' : 'Suspend author'}
                     </Button>
                   </form>
                 </li>
-              ))}
+                );
+              })}
             </ul>
           )}
         </Panel>

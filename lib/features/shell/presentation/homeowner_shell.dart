@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:batsh/core/l10n/l10n_extension.dart';
-import '../../../core/theme/batsh_colors.dart';
 import '../../../core/widgets/batsh_bottom_nav.dart';
 
 import 'package:batsh/core/theme/theme_extension.dart';
@@ -21,16 +20,16 @@ class HomeownerShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: context.colorScheme.background,
+      backgroundColor: context.colorScheme.surface,
       body: navigationShell,
       bottomNavigationBar: BatshBottomNav(
         currentIndex: navigationShell.currentIndex,
         onTap: _goToTab,
         items: [
           BatshBottomNavItem(
-            icon: Icons.rocket_launch_outlined,
-            selectedIcon: Icons.rocket_launch,
-            label: context.l10n.tabExplore,
+            icon: Icons.home_outlined,
+            selectedIcon: Icons.home_rounded,
+            label: context.l10n.tabHome,
           ),
           BatshBottomNavItem(
             icon: Icons.explore_outlined,
@@ -43,9 +42,9 @@ class HomeownerShell extends StatelessWidget {
             label: context.l10n.tabRequests,
           ),
           BatshBottomNavItem(
-            icon: Icons.bookmark_outline,
-            selectedIcon: Icons.bookmark,
-            label: context.l10n.tabSaved,
+            icon: Icons.photo_library_outlined,
+            selectedIcon: Icons.photo_library_rounded,
+            label: context.l10n.tabCommunity,
           ),
           BatshBottomNavItem(
             icon: Icons.person_outline,

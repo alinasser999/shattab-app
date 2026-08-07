@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../theme/batsh_colors.dart';
 import '../theme/batsh_motion.dart';
 import '../theme/batsh_radius.dart';
 import '../theme/batsh_shadows.dart';
@@ -38,16 +37,26 @@ class BatshBottomNav extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int> onTap;
 
+  /// Extra scroll room for floating navigation bars. The Scaffold reserves the
+  /// bar's layout height, but the stadium itself is transparent around its
+  /// edges and can still visually sit over the last card in a scroll view.
+  static double contentBottomInset(BuildContext context) =>
+      104 + MediaQuery.of(context).padding.bottom;
+
   @override
   Widget build(BuildContext context) {
+    final horizontalInset = MediaQuery.sizeOf(context).width <= 340
+        ? BatshSpacing.xs
+        : BatshSpacing.ml;
+
     return SafeArea(
       top: false,
       minimum: const EdgeInsets.only(bottom: BatshSpacing.xs),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(
-          BatshSpacing.ml,
+        padding: EdgeInsets.fromLTRB(
+          horizontalInset,
           BatshSpacing.xs,
-          BatshSpacing.ml,
+          horizontalInset,
           0,
         ),
         child: DecoratedBox(
@@ -149,82 +158,105 @@ class _NavItemState extends State<_NavItem>
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    final isCompact = MediaQuery.sizeOf(context).width <= 340;
+
+    return Semantics(
+      button: true,
+      selected: widget.isSelected,
+      label: widget.item.label,
       onTap: widget.onTap,
-      behavior: HitTestBehavior.opaque,
-      child: AnimatedBuilder(
-        animation: _scaleAnim,
-        builder: (_, child) => Transform.scale(
-          scale: 0.92 + (_scaleAnim.value * 0.08),
-          child: child,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            SizedBox(
-              height: 34,
-              width: 60,
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  // Active pill — grows and fades in behind the icon.
-                  AnimatedBuilder(
-                    animation: _pillAnim,
-                    builder: (_, __) => Container(
-                      width: 30 + (_pillAnim.value * 26),
-                      height: 34,
-                      decoration: BoxDecoration(
-                        color: context.colorScheme.primaryContainer.withValues(
-                          alpha: _pillAnim.value,
+      child: ExcludeSemantics(
+        child: GestureDetector(
+          onTap: widget.onTap,
+          behavior: HitTestBehavior.opaque,
+          child: AnimatedBuilder(
+            animation: _scaleAnim,
+            builder: (_, child) => Transform.scale(
+              scale: 0.92 + (_scaleAnim.value * 0.08),
+              child: child,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                SizedBox(
+                  height: 34,
+                  width: 60,
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      // Active pill — grows and fades in behind the icon.
+                      AnimatedBuilder(
+                        animation: _pillAnim,
+                        builder: (_, __) => Container(
+                          width: 30 + (_pillAnim.value * 26),
+                          height: 34,
+                          decoration: BoxDecoration(
+                            color: context.colorScheme.primaryContainer
+                                .withValues(alpha: _pillAnim.value),
+                            borderRadius: BatshRadius.brFull,
+                          ),
                         ),
-                        borderRadius: BatshRadius.brFull,
                       ),
-                    ),
-                  ),
-                  Icon(
-                    widget.isSelected
-                        ? widget.item.selectedIcon
-                        : widget.item.icon,
-                    size: BatshIconSize.md + (_pillAnim.value * 3),
-                    color: Color.lerp(
-                      context.colorScheme.onSurfaceVariant.withValues(
-                        alpha: 0.75,
+                      Icon(
+                        widget.isSelected
+                            ? widget.item.selectedIcon
+                            : widget.item.icon,
+                        size: BatshIconSize.md + (_pillAnim.value * 3),
+                        color: Color.lerp(
+                          context.colorScheme.onSurfaceVariant.withValues(
+                            alpha: 0.75,
+                          ),
+                          context.colorScheme.primary,
+                          _pillAnim.value,
+                        ),
                       ),
-                      context.colorScheme.primary,
-                      _pillAnim.value,
-                    ),
+                    ],
                   ),
-                ],
-              ),
-            ),
-            const SizedBox(height: BatshSpacing.xxs),
-            // Full-width bound so a long Arabic label ellipsizes instead of
-            // overflowing the item on narrow screens.
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: BatshSpacing.xxs),
-              child: SizedBox(
-                width: double.infinity,
-                child: AnimatedDefaultTextStyle(
-                  duration: BatshMotion.fast,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.center,
-                  // Solid onSurfaceVariant (not alpha-dimmed) to clear the
-                  // 4.5:1 body-text contrast floor on the white bar.
-                  style: BatshTypography.labelSm.copyWith(
-                    color: widget.isSelected
-                        ? context.colorScheme.primary
-                        : context.colorScheme.onSurfaceVariant,
-                    fontWeight: widget.isSelected
-                        ? FontWeight.w700
-                        : FontWeight.w500,
-                  ),
-                  child: Text(widget.item.label, textAlign: TextAlign.center),
                 ),
-              ),
+                const SizedBox(height: BatshSpacing.xxs),
+                // Full-width bound so a long Arabic label ellipsizes instead of
+                // overflowing the item on narrow screens.
+                Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: isCompact ? 0 : BatshSpacing.xxs,
+                  ),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: AnimatedDefaultTextStyle(
+                      duration: BatshMotion.fast,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
+                      // Solid onSurfaceVariant (not alpha-dimmed) to clear the
+                      // 4.5:1 body-text contrast floor on the white bar.
+                      style: BatshTypography.labelSm.copyWith(
+                        fontSize: isCompact ? 10 : null,
+                        color: widget.isSelected
+                            ? context.colorScheme.primary
+                            : context.colorScheme.onSurfaceVariant,
+                        fontWeight: widget.isSelected
+                            ? FontWeight.w700
+                            : FontWeight.w500,
+                      ),
+                      child: isCompact
+                          ? FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(
+                                widget.item.label,
+                                textAlign: TextAlign.center,
+                              ),
+                            )
+                          : Text(
+                              widget.item.label,
+                              textAlign: TextAlign.center,
+                            ),
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );

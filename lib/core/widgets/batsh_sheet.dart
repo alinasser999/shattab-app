@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../theme/batsh_colors.dart';
 import '../theme/batsh_radius.dart';
 import '../theme/batsh_spacing.dart';
 
@@ -33,9 +32,11 @@ class BatshSheet {
     EdgeInsetsGeometry? contentPadding = const EdgeInsets.all(BatshSpacing.md),
     bool isDismissible = true,
     bool enableDrag = true,
+    bool useRootNavigator = false,
   }) {
     return showModalBottomSheet<T>(
       context: context,
+      useRootNavigator: useRootNavigator,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       isDismissible: isDismissible,

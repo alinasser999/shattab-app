@@ -89,6 +89,9 @@ class ErrorMapper {
     }
 
     // Storage / upload
+    if (msg.contains('image_too_large') || msg.contains('empty_image')) {
+      return S.errPhotoUpload;
+    }
     if (msg.contains('upload') || msg.contains('storage')) {
       return S.errPhotoUpload;
     }

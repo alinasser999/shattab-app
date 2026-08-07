@@ -18,7 +18,7 @@ Egyptian contractor hiring marketplace — homeowners post renovation jobs; cont
 ```bash
 flutter pub get
 copy .env.example .env   # fill in SUPABASE_URL + SUPABASE_ANON_KEY
-dart run build_runner build --delete-conflicting-outputs
+dart run build_runner build
 flutter run
 ```
 
@@ -90,3 +90,6 @@ Migrations live in a separate Supabase project. Existing migrations:
 - `0005_quotes` — quotes table with RLS policies
 
 See `CLAUDE.md` and `docs/` for full spec documents.
+
+Engineering handover documents live in `docs/engineering/`: the repository
+audit, target architecture, operations runbook and scaling roadmap.

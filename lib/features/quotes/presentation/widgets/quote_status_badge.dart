@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import 'package:batsh/core/l10n/l10n_extension.dart';
-import '../../../../core/theme/batsh_colors.dart';
 import '../../../../core/theme/batsh_radius.dart';
 import '../../../../core/theme/batsh_spacing.dart';
 import '../../../../core/theme/batsh_typography.dart';

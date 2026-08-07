@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:batsh/core/l10n/l10n_extension.dart';
-import '../../../core/theme/batsh_colors.dart';
 import '../../../core/theme/batsh_radius.dart';
 import '../../../core/theme/batsh_spacing.dart';
 import '../../../core/theme/batsh_typography.dart';
@@ -25,7 +24,7 @@ class ProjectDetailScreen extends ConsumerWidget {
     final async = ref.watch(portfolioProjectProvider(projectId));
 
     return Scaffold(
-      backgroundColor: context.colorScheme.background,
+      backgroundColor: context.colorScheme.surface,
       body: async.when(
         loading: () => const BatshHeroDetailSkeleton(),
         error: (e, _) => BatshError(
@@ -41,7 +40,7 @@ class ProjectDetailScreen extends ConsumerWidget {
               SliverAppBar(
                 expandedHeight: 320,
                 pinned: true,
-                backgroundColor: context.colorScheme.background,
+                backgroundColor: context.colorScheme.surface,
                 foregroundColor: context.colorScheme.onSurface,
                 elevation: 0,
                 flexibleSpace: FlexibleSpaceBar(
@@ -62,7 +61,7 @@ class ProjectDetailScreen extends ConsumerWidget {
                             end: Alignment.bottomCenter,
                             colors: [
                               Colors.transparent,
-                              context.colorScheme.background.withValues(
+                              context.colorScheme.surface.withValues(
                                 alpha: 0.9,
                               ),
                             ],

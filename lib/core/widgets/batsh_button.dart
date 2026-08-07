@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../theme/batsh_colors.dart';
 import '../theme/batsh_motion.dart';
 import '../theme/batsh_radius.dart';
 import '../theme/batsh_spacing.dart';
@@ -55,21 +54,24 @@ class BatshButton extends StatelessWidget {
               },
             ),
           )
-        : Row(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              if (icon != null) ...[
-                Icon(icon, size: BatshIconSize.md),
-                const SizedBox(width: BatshSpacing.sm),
-              ],
-              Text(
-                label,
-                style: BatshTypography.labelLg.copyWith(
-                  fontWeight: FontWeight.w700,
+        : FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                if (icon != null) ...[
+                  Icon(icon, size: BatshIconSize.md),
+                  const SizedBox(width: BatshSpacing.sm),
+                ],
+                Text(
+                  label,
+                  style: BatshTypography.labelLg.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           );
 
     Widget button = switch (style) {

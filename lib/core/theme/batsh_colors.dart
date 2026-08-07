@@ -30,6 +30,15 @@ class BatshColors {
   static const Color onPrimaryFixedVariant = Color(0xFF822803);
   static const Color surfaceTint = Color(0xFFA23F1A);
 
+  // Brand aliases keep the identity vocabulary explicit while the Material
+  // roles above remain the source used by ThemeData and dark mode.
+  static const Color brandTerracotta = primary;
+  static const Color brandCream = background;
+  static const Color brandCharcoal = onSurface;
+  static const Color brandOlive = secondary;
+  static const Color brandSand = surfaceDim;
+  static const Color brandGold = tertiary;
+
   // Secondary — Olive (trust, nature)
   static const Color secondary = Color(0xFF5C614D);
   static const Color onSecondary = Color(0xFFFFFFFF);
@@ -42,6 +51,17 @@ class BatshColors {
   static const Color tertiaryContainer = Color(0xFFFFE088);
   static const Color onTertiaryContainer = Color(0xFF231A00);
   static const Color tertiaryFixed = Color(0xFFFFE088);
+
+  /// Rating stars. [tertiary] is the gold that stays legible *as text*; a star
+  /// is a filled shape, so it reads a full step darker than a glyph of the same
+  /// colour and needs its own, brighter value. Fixed across themes — a star
+  /// sits on a card, not on the page.
+  static const Color starGold = Color(0xFFE6AC43);
+
+  /// Contour lines of the Shattab pattern: the terracotta drawn down to where
+  /// it reads as a watermark on cream and as sand on the dark surface, so one
+  /// value serves both themes.
+  static const Color patternLine = Color(0xFFDDA47F);
 
   // Text
   static const Color onSurface = Color(0xFF1F1B14);

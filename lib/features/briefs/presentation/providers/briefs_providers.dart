@@ -6,6 +6,9 @@ import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../onboarding/domain/onboarding_models.dart';
 import '../../data/briefs_repository.dart';
 import '../../domain/brief.dart';
+import '../../domain/homeowner_profile_preview.dart';
+import '../../domain/opportunity_experience.dart';
+import 'opportunity_experience_provider.dart';
 
 part 'briefs_providers.g.dart';
 
@@ -19,6 +22,16 @@ Future<List<Brief>> myBriefs(Ref ref) async {
 @riverpod
 Future<Brief?> briefById(Ref ref, String id) =>
     ref.watch(briefsRepositoryProvider).fetchById(id);
+
+@riverpod
+Future<PublicHomeownerProfile?> homeownerProfilePreview(
+  Ref ref,
+  String homeownerId,
+) async {
+  return ref
+      .read(briefsRepositoryProvider)
+      .fetchHomeownerPublicProfile(homeownerId);
+}
 
 /// Debounced search text for the opportunities feed. Held in a provider rather
 /// than screen state so the query is part of the fetch, not a filter applied to
@@ -50,6 +63,7 @@ class ContractorOpportunities extends _$ContractorOpportunities {
   @override
   Future<List<Brief>> build() async {
     final query = ref.watch(opportunitySearchProvider);
+    ref.read(opportunityPaginationProvider.notifier).complete();
     _loadingMore = false;
     final page = await ref
         .read(briefsRepositoryProvider)
@@ -65,6 +79,8 @@ class ContractorOpportunities extends _$ContractorOpportunities {
     final current = state.value;
     if (current == null || current.isEmpty) return;
     _loadingMore = true;
+    ref.read(opportunityPaginationProvider.notifier).begin();
+    var failed = false;
     try {
       final next = await ref
           .read(briefsRepositoryProvider)
@@ -73,9 +89,17 @@ class ContractorOpportunities extends _$ContractorOpportunities {
             after: BriefCursor.fromBrief(current.last),
           );
       _hasMore = next.length == BriefsRepository.pageSize;
-      if (next.isNotEmpty) state = AsyncData([...current, ...next]);
+      final merged = mergeUniqueOpportunityPages(current, next);
+      if (merged.length != current.length) state = AsyncData(merged);
+      if (next.isNotEmpty && merged.length == current.length) {
+        _hasMore = false;
+      }
+    } catch (error) {
+      failed = true;
+      ref.read(opportunityPaginationProvider.notifier).fail(error);
     } finally {
       _loadingMore = false;
+      if (!failed) ref.read(opportunityPaginationProvider.notifier).complete();
     }
   }
 }

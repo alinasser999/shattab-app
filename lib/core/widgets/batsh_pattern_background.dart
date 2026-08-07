@@ -3,8 +3,7 @@ import 'package:flutter/material.dart';
 class BatshPatternBackground extends StatelessWidget {
   final Widget child;
 
-  const BatshPatternBackground({Key? key, required this.child})
-    : super(key: key);
+  const BatshPatternBackground({super.key, required this.child});
 
   @override
   Widget build(BuildContext context) {

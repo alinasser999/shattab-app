@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
-import '../../../../../core/theme/batsh_colors.dart';
 import '../../../../../core/theme/batsh_motion.dart';
 import '../../../../../core/theme/batsh_radius.dart';
 import '../../../../../core/theme/batsh_spacing.dart';
-
-import 'package:batsh/core/theme/theme_extension.dart';
+import '../../../../../core/theme/theme_extension.dart';
 
 class JobCardSkeleton extends StatelessWidget {
   const JobCardSkeleton({super.key});
@@ -14,87 +12,89 @@ class JobCardSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      padding: const EdgeInsets.all(BatshSpacing.md),
       decoration: BoxDecoration(
-        color: context.colorScheme.surface,
-        borderRadius: BatshRadius.brCard,
+        color: context.colorScheme.surfaceContainerLowest,
+        borderRadius: BorderRadius.circular(BatshRadius.xl),
+        border: Border.all(color: context.colorScheme.outlineVariant),
       ),
-      clipBehavior: Clip.antiAlias,
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Hero image block.
-          AspectRatio(
-            aspectRatio: 16 / 10,
-            child: _shimmerBox(
-              context,
-              width: double.infinity,
-              height: double.infinity,
-              radius: 0,
-            ),
+          Row(
+            children: [
+              const _SkeletonBox(width: 120, height: 14),
+              const Spacer(),
+              _SkeletonBox(
+                width: 44,
+                height: 44,
+                radius: 999,
+                color: context.colorScheme.surfaceContainerHigh,
+              ),
+            ],
           ),
-          Padding(
-            padding: const EdgeInsets.all(BatshSpacing.gutter),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _shimmerBox(context, width: double.infinity, height: 18),
-                const SizedBox(height: BatshSpacing.xs),
-                _shimmerBox(context, width: 180, height: 18),
-                const SizedBox(height: BatshSpacing.md),
-                Row(
+          const SizedBox(height: BatshSpacing.md),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _shimmerBox(context, width: 90, height: 14),
-                    const SizedBox(width: BatshSpacing.sm),
-                    _shimmerBox(context, width: 56, height: 20, radius: 999),
-                    const Spacer(),
-                    _shimmerBox(context, width: 40, height: 14),
+                    _SkeletonBox(width: 90, height: 13),
+                    SizedBox(height: BatshSpacing.sm),
+                    _SkeletonBox(width: double.infinity, height: 20),
+                    SizedBox(height: BatshSpacing.xs),
+                    _SkeletonBox(width: 150, height: 20),
+                    SizedBox(height: BatshSpacing.md),
+                    _SkeletonBox(width: 160, height: 14),
                   ],
                 ),
-                const SizedBox(height: BatshSpacing.md),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _shimmerBox(
-                        context,
-                        width: double.infinity,
-                        height: 46,
-                        radius: 16,
-                      ),
-                    ),
-                    const SizedBox(width: BatshSpacing.sm),
-                    Expanded(
-                      child: _shimmerBox(
-                        context,
-                        width: double.infinity,
-                        height: 46,
-                        radius: 16,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
+              ),
+              const SizedBox(width: BatshSpacing.md),
+              _SkeletonBox(width: 96, height: 104),
+            ],
           ),
+          const SizedBox(height: BatshSpacing.md),
+          const Row(
+            children: [
+              _SkeletonBox(width: 88, height: 28, radius: 999),
+              SizedBox(width: BatshSpacing.sm),
+              _SkeletonBox(width: 112, height: 28, radius: 999),
+            ],
+          ),
+          const SizedBox(height: BatshSpacing.md),
+          const _SkeletonBox(width: double.infinity, height: 48, radius: 14),
         ],
       ),
     );
   }
+}
 
-  Widget _shimmerBox(
-    BuildContext context, {
-    required double width,
-    required double height,
-    double radius = 8,
-  }) {
+class _SkeletonBox extends StatelessWidget {
+  const _SkeletonBox({
+    required this.width,
+    required this.height,
+    this.radius = 8,
+    this.color,
+  });
+
+  final double width;
+  final double height;
+  final double radius;
+  final Color? color;
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
           width: width,
           height: height,
           decoration: BoxDecoration(
-            color: context.colorScheme.surfaceContainerHigh,
+            color: color ?? context.colorScheme.surfaceContainerHigh,
             borderRadius: BorderRadius.circular(radius),
           ),
         )
-        .animate(onPlay: (ctrl) => ctrl.repeat(reverse: true))
+        .animate(onPlay: (controller) => controller.repeat(reverse: true))
         .shimmer(
           duration: BatshMotion.slower,
           curve: BatshMotion.easeInOut,

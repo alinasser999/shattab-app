@@ -1,5 +1,5 @@
 name: batsh
-description: "شطب (Shattab) — Egyptian contractor hiring platform"
+description: "شطّب (Shattab) - Egyptian finishing and contractor platform"
 publish_to: 'none'
 version: 0.1.0+1
 
@@ -41,6 +41,14 @@ dependencies:
   share_plus: ^10.0.0
   flutter_image_compress: ^2.3.0
   sentry_flutter: ^8.14.2
+  shared_preferences: ^2.5.3
+  http: ^1.4.0
+
+  # Push delivery only. Realtime already covers the foreground case, so there
+  # is deliberately no flutter_local_notifications here: nothing needs to draw
+  # a banner over an app that is already showing the live badge.
+  firebase_core: ^3.8.0
+  firebase_messaging: ^15.1.5
 
 dev_dependencies:
   flutter_test:
@@ -59,6 +67,7 @@ flutter:
 
   assets:
     - .env
+    - assets/icon/
     - assets/images/
     - assets/icons/
 
@@ -86,3 +95,8 @@ flutter_launcher_icons:
   adaptive_icon_background: "#FFF8F3"
   adaptive_icon_foreground: "assets/icon/app_icon_foreground.png"
   min_sdk_android: 21
+  web:
+    generate: true
+    image_path: "assets/icon/app_icon.png"
+    background_color: "#FFF8F3"
+    theme_color: "#9E3D18"

@@ -35,7 +35,16 @@ class ExploreFeed extends _$ExploreFeed {
         beforeId: cursor?.id,
       );
       _hasMore = posts.length == _pageSize;
-      state = AsyncData(cursor == null ? posts : [...?state.value, ...posts]);
+      if (cursor == null) {
+        state = AsyncData(posts);
+      } else {
+        final current = state.value ?? const <Post>[];
+        final ids = current.map((post) => post.id).toSet();
+        state = AsyncData([
+          ...current,
+          ...posts.where((post) => ids.add(post.id)),
+        ]);
+      }
     } catch (e, st) {
       // Only surface a fresh-load failure. A page>0 failure keeps the list
       // the user already has so a flaky scroll doesn't wipe the feed.
@@ -158,13 +167,64 @@ class PostController extends _$PostController {
 
   /// Adds a comment; throws on failure so the caller can show an error
   /// instead of a false success.
-  Future<void> addComment(String postId, String content) async {
+  Future<void> addComment(
+    String postId,
+    String content, {
+    String? parentCommentId,
+  }) async {
     final userId = ref.read(currentSessionProvider)?.user.id ?? '';
     await ref
         .read(postRepositoryProvider)
-        .addComment(postId: postId, userId: userId, content: content);
+        .addComment(
+          postId: postId,
+          userId: userId,
+          content: content,
+          parentCommentId: parentCommentId,
+        );
     ref.invalidate(postCommentsProvider(postId));
     ref.invalidate(postByIdProvider(postId));
+  }
+
+  Future<void> updateComment({
+    required String postId,
+    required String commentId,
+    required String content,
+  }) async {
+    final userId = ref.read(currentSessionProvider)?.user.id;
+    if (userId == null) return;
+    await ref
+        .read(postRepositoryProvider)
+        .updateComment(commentId: commentId, userId: userId, content: content);
+    ref.invalidate(postCommentsProvider(postId));
+  }
+
+  Future<void> deleteComment({
+    required String postId,
+    required String commentId,
+  }) async {
+    final userId = ref.read(currentSessionProvider)?.user.id;
+    if (userId == null) return;
+    await ref
+        .read(postRepositoryProvider)
+        .deleteComment(commentId: commentId, userId: userId);
+    ref.invalidate(postCommentsProvider(postId));
+    ref.invalidate(postByIdProvider(postId));
+  }
+
+  Future<void> toggleCommentLike({
+    required String postId,
+    required PostComment comment,
+  }) async {
+    final userId = ref.read(currentSessionProvider)?.user.id;
+    if (userId == null) return;
+    await ref
+        .read(postRepositoryProvider)
+        .toggleCommentLike(
+          commentId: comment.id,
+          userId: userId,
+          liked: !comment.isLiked,
+        );
+    ref.invalidate(postCommentsProvider(postId));
   }
 
   Future<void> deletePost(String postId) async {
@@ -183,6 +243,20 @@ Future<List<Post>> myPosts(Ref ref) async {
   final userId = ref.read(currentSessionProvider)?.user.id ?? '';
   return ref.read(postRepositoryProvider).fetchMyPosts(userId);
 }
+
+/// Public contractor-profile preview of the author's latest community posts.
+/// The repository keeps the projection contact-safe and applies the viewer's
+/// like/save state without changing the feed provider's pagination state.
+final contractorCommunityPostsProvider = FutureProvider.autoDispose
+    .family<List<Post>, String>((ref, contractorId) {
+      final viewerId = ref.read(currentSessionProvider)?.user.id ?? '';
+      return ref
+          .read(postRepositoryProvider)
+          .fetchCommunityPostsByAuthor(
+            authorId: contractorId,
+            viewerId: viewerId,
+          );
+    });
 
 @riverpod
 Future<List<Post>> savedPosts(Ref ref) async {

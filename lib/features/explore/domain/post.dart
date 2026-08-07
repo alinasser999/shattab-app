@@ -12,6 +12,35 @@ enum PostType {
   }
 }
 
+/// The community composer exposes friendlier publishing choices than the
+/// storage-level post types. Questions reuse the existing `tip` post type and
+/// are marked through the posts.category column so this remains compatible
+/// with the deployed posts check constraint.
+enum CommunityPostKind {
+  standard('standard', PostType.renovationUpdate),
+  beforeAfter('before_after', PostType.projectShowcase),
+  tips('tips', PostType.tip, categoryMarker: 'tips'),
+  experiences('experiences', PostType.milestone, categoryMarker: 'experience'),
+  question('question', PostType.tip, categoryMarker: 'question');
+
+  const CommunityPostKind(
+    this.routeValue,
+    this.storageType, {
+    this.categoryMarker,
+  });
+
+  final String routeValue;
+  final PostType storageType;
+  final String? categoryMarker;
+
+  static CommunityPostKind fromQuery(String? value) {
+    return CommunityPostKind.values.firstWhere(
+      (kind) => kind.routeValue == value,
+      orElse: () => CommunityPostKind.standard,
+    );
+  }
+}
+
 class Post {
   Post({
     required this.id,
@@ -52,6 +81,8 @@ class Post {
   final String? authorName;
   final String? authorAvatarUrl;
   final String? authorPhone;
+
+  bool get isQuestion => category == CommunityPostKind.question.categoryMarker;
 
   Post copyWith({
     String? id,
@@ -130,6 +161,11 @@ class PostComment {
     required this.createdAt,
     this.userName,
     this.userAvatarUrl,
+    this.parentCommentId,
+    this.updatedAt,
+    this.likeCount = 0,
+    this.isLiked = false,
+    this.userRole,
   });
 
   final String id;
@@ -139,6 +175,13 @@ class PostComment {
   final DateTime createdAt;
   final String? userName;
   final String? userAvatarUrl;
+  final String? parentCommentId;
+  final DateTime? updatedAt;
+  final int likeCount;
+  final bool isLiked;
+  final String? userRole;
+
+  bool get wasEdited => updatedAt != null && updatedAt!.isAfter(createdAt);
 
   factory PostComment.fromJson(Map<String, dynamic> json) => PostComment(
     id: json['id'] as String,
@@ -148,5 +191,12 @@ class PostComment {
     createdAt: DateTime.parse(json['created_at'] as String),
     userName: json['user_name'] as String?,
     userAvatarUrl: json['user_avatar_url'] as String?,
+    parentCommentId: json['parent_comment_id'] as String?,
+    updatedAt: json['updated_at'] == null
+        ? null
+        : DateTime.parse(json['updated_at'] as String),
+    likeCount: (json['like_count'] as num?)?.toInt() ?? 0,
+    isLiked: json['is_liked'] as bool? ?? false,
+    userRole: json['user_role'] as String?,
   );
 }

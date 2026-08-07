@@ -1,0 +1,21 @@
+name = "shattab-media-signer"
+main = "src/index.ts"
+compatibility_date = "2025-04-01"
+
+[vars]
+SUPABASE_URL = "https://replace-with-project.supabase.co"
+R2_ACCOUNT_ID = "replace-with-cloudflare-account-id"
+R2_BUCKET_NAME = "shattab-public-media"
+R2_PUBLIC_BASE_URL = "https://media.example.com"
+ALLOWED_ORIGINS = "https://app.example.com"
+MAX_UPLOAD_BYTES = "10485760"
+R2_PRESIGN_TTL_SECONDS = "900"
+
+[[r2_buckets]]
+binding = "R2_MEDIA_BUCKET"
+bucket_name = "shattab-public-media"
+
+# Set secrets with Wrangler. Never put these in this file:
+# wrangler secret put SUPABASE_ANON_KEY
+# wrangler secret put R2_ACCESS_KEY_ID
+# wrangler secret put R2_SECRET_ACCESS_KEY

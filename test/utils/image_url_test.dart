@@ -61,4 +61,19 @@ void main() {
       expect(sizedImageUrl(signed, width: 800), signed);
     });
   });
+
+  group('isDisplayableImageUrl', () {
+    test('accepts absolute http and https URLs', () {
+      expect(isDisplayableImageUrl('https://example.com/photo.jpg'), isTrue);
+      expect(isDisplayableImageUrl('http://example.com/photo.jpg'), isTrue);
+    });
+
+    test('rejects empty, relative, and unsupported URLs', () {
+      expect(isDisplayableImageUrl(null), isFalse);
+      expect(isDisplayableImageUrl('   '), isFalse);
+      expect(isDisplayableImageUrl('/storage/photo.jpg'), isFalse);
+      expect(isDisplayableImageUrl('javascript:alert(1)'), isFalse);
+      expect(isDisplayableImageUrl('not a URL'), isFalse);
+    });
+  });
 }

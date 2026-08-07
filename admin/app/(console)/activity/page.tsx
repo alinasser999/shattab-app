@@ -86,7 +86,7 @@ export default async function ActivityPage({
             hint="Append-only. No admin, including you, can edit or delete these rows from the console."
           />
           {auditRes.error ? (
-            <ErrorState what="Could not read the audit log." detail={auditRes.error.message} />
+            <ErrorState what="Could not read the audit log." />
           ) : entries.length === 0 ? (
             <EmptyState
               title="No admin actions yet"

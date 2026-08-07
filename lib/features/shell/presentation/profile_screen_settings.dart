@@ -1,6 +1,116 @@
 part of 'profile_screen.dart';
 
-/// iOS-style grouped settings: one soft card, hairline dividers between rows.
+class ContractorSettingsScreen extends ConsumerWidget {
+  const ContractorSettingsScreen({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final profile = ref.watch(currentProfileProvider).value;
+    final listing = profile == null
+        ? null
+        : ref.watch(contractorByIdProvider(profile.id)).value;
+    final verificationStatus = ref.watch(verificationStatusProvider).value;
+
+    return BatshScaffold(
+      title: context.l10n.accountSettingsTitle,
+      leading: IconButton(
+        tooltip: context.l10n.back,
+        onPressed: () => context.pop(),
+        icon: const Icon(Icons.arrow_forward_rounded),
+      ),
+      padding: EdgeInsets.zero,
+      animateEntrance: false,
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(
+          BatshSpacing.md,
+          BatshSpacing.sm,
+          BatshSpacing.md,
+          BatshSpacing.xxxxl,
+        ),
+        children: [
+          _ContractorSettingsSectionLabel(context.l10n.settingsAccountSection),
+          const SizedBox(height: BatshSpacing.sm),
+          _SettingsGroup(
+            children: [
+              _VerificationTile(
+                verified: listing?.verified ?? false,
+                status: verificationStatus,
+              ),
+              const _LanguageTile(),
+            ],
+          ),
+          const SizedBox(height: BatshSpacing.xl),
+          _ContractorSettingsSectionLabel(
+            context.l10n.settingsPreferencesSection,
+          ),
+          const SizedBox(height: BatshSpacing.sm),
+          _SettingsGroup(
+            children: [const _AppearanceTile(), const _NotificationsTile()],
+          ),
+          const SizedBox(height: BatshSpacing.xl),
+          _ContractorSettingsSectionLabel(context.l10n.settingsSupportSection),
+          const SizedBox(height: BatshSpacing.sm),
+          _SettingsGroup(
+            children: [
+              const _HelpTile(),
+              _LegalTile(
+                icon: Icons.privacy_tip_outlined,
+                label: context.l10n.privacyPolicy,
+                url: _privacyPolicyUrl,
+              ),
+              _LegalTile(
+                icon: Icons.description_outlined,
+                label: context.l10n.termsOfService,
+                url: _termsUrl,
+              ),
+            ],
+          ),
+          const SizedBox(height: BatshSpacing.xl),
+          _ContractorSettingsSectionLabel(
+            context.l10n.settingsAccountManagementSection,
+          ),
+          const SizedBox(height: BatshSpacing.sm),
+          _LogoutRow(onTap: () => _confirmSignOut(context, ref)),
+          const SizedBox(height: BatshSpacing.sm),
+          const _DeleteAccountTile(),
+        ],
+      ),
+    );
+  }
+}
+
+class _ContractorSettingsSectionLabel extends StatelessWidget {
+  const _ContractorSettingsSectionLabel(this.text);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          width: 4,
+          height: 22,
+          decoration: BoxDecoration(
+            color: context.colorScheme.primary,
+            borderRadius: BatshRadius.brFull,
+          ),
+        ),
+        const SizedBox(width: BatshSpacing.sm),
+        Expanded(
+          child: Text(
+            text,
+            style: BatshTypography.titleLg.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Compact grouped settings with hairline dividers between rows.
 class _SettingsGroup extends StatelessWidget {
   const _SettingsGroup({required this.children});
   final List<Widget> children;
@@ -23,7 +133,11 @@ class _SettingsGroup extends StatelessWidget {
     }
     return DecoratedBox(
       decoration: BoxDecoration(
+        color: context.colorScheme.surfaceContainerLowest,
         borderRadius: BatshRadius.brXl,
+        border: Border.all(
+          color: context.colorScheme.outlineVariant.withValues(alpha: 0.58),
+        ),
         boxShadow: BatshShadows.soft,
       ),
       child: ClipRRect(
@@ -58,13 +172,13 @@ class _LogoutRow extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.symmetric(
               horizontal: BatshSpacing.lg,
-              vertical: BatshSpacing.gutter,
+              vertical: BatshSpacing.md,
             ),
             child: Row(
               children: [
                 Container(
-                  width: 40,
-                  height: 40,
+                  width: 38,
+                  height: 38,
                   decoration: BoxDecoration(
                     color: context.colorScheme.error.withValues(alpha: 0.1),
                     borderRadius: BatshRadius.brMd,
@@ -111,7 +225,7 @@ class _SettingsTile extends StatelessWidget {
   final IconData icon;
   final String label;
   final Widget trailing;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
   final String? subtitle;
 
   @override
@@ -144,7 +258,7 @@ class _SettingsTile extends StatelessWidget {
                   size: BatshIconSize.md,
                 ),
               ),
-              const SizedBox(width: BatshSpacing.gutter),
+              const SizedBox(width: BatshSpacing.sm),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -180,30 +294,6 @@ class _SettingsTile extends StatelessWidget {
   }
 }
 
-class _DarkModeTile extends ConsumerWidget {
-  const _DarkModeTile();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final themeMode = ref.watch(themeModeProvider);
-    final isDark =
-        themeMode == ThemeMode.dark ||
-        (themeMode == ThemeMode.system &&
-            MediaQuery.of(context).platformBrightness == Brightness.dark);
-
-    return _SettingsTile(
-      icon: isDark ? Icons.dark_mode_outlined : Icons.light_mode_outlined,
-      label: isDark ? context.l10n.darkModeTitle : context.l10n.lightModeTitle,
-      subtitle: context.l10n.darkModeSubtitle,
-      trailing: BatshSwitch(
-        value: isDark,
-        onChanged: (_) => ref.read(themeModeProvider.notifier).toggle(),
-      ),
-      onTap: () => ref.read(themeModeProvider.notifier).toggle(),
-    );
-  }
-}
-
 class _LanguageTile extends ConsumerWidget {
   const _LanguageTile();
 
@@ -235,44 +325,227 @@ class _LanguageTile extends ConsumerWidget {
           ),
         ),
       ),
-      onTap: () => ref.read(localeProvider.notifier).toggle(),
+      onTap: () => context.push(Routes.contractorLanguage),
     );
   }
 }
 
-class _MotionModeTile extends ConsumerWidget {
-  const _MotionModeTile();
+class _VerificationTile extends StatelessWidget {
+  const _VerificationTile({required this.verified, this.status});
+
+  final bool verified;
+  final VerificationStatus? status;
+
+  @override
+  Widget build(BuildContext context) {
+    final pending = status == VerificationStatus.pending;
+    final rejected = status == VerificationStatus.rejected;
+    final label = verified
+        ? context.l10n.verifiedStatus
+        : pending
+        ? context.l10n.verificationPending
+        : rejected
+        ? context.l10n.unverifiedStatus
+        : context.l10n.unverifiedStatus;
+    final color = verified
+        ? context.colorScheme.success
+        : pending
+        ? context.colorScheme.warning
+        : context.colorScheme.primary;
+    return _SettingsTile(
+      icon: verified ? Icons.verified_rounded : Icons.verified_user_outlined,
+      label: context.l10n.verifyTileLabel,
+      subtitle: context.l10n.verifySubtitle,
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            label,
+            style: BatshTypography.labelSm.copyWith(
+              color: color,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(width: BatshSpacing.xs),
+          Icon(
+            Icons.chevron_left_rounded,
+            color: context.colorScheme.onSurfaceVariant,
+            size: BatshIconSize.md,
+          ),
+        ],
+      ),
+      onTap: verified || pending
+          ? null
+          : () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const VerificationScreen()),
+            ),
+    );
+  }
+}
+
+class _AppearanceTile extends ConsumerWidget {
+  const _AppearanceTile();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final motionMode = ref.watch(motionModeProvider);
-    final icon = switch (motionMode) {
-      MotionMode.full => Icons.animation,
-      MotionMode.reduced => Icons.animation_outlined,
-      MotionMode.off => Icons.block,
-    };
-
+    final mode = ref.watch(themeModeProvider);
     return _SettingsTile(
-      icon: icon,
-      label: context.l10n.motionLabel,
-      trailing: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: BatshSpacing.sm,
-          vertical: BatshSpacing.xxs,
-        ),
+      icon: mode == ThemeMode.dark
+          ? Icons.dark_mode_outlined
+          : Icons.light_mode_outlined,
+      label: context.l10n.homeownerAppearanceAndMotionTitle,
+      subtitle: context.l10n.homeownerAppearanceAndMotionSubtitle,
+      trailing: _AppearanceSelector(
+        mode: mode,
+        onChanged: (next) =>
+            ref.read(themeModeProvider.notifier).setThemeMode(next),
+      ),
+      onTap: () => context.push(Routes.contractorAppearance),
+    );
+  }
+}
+
+class _AppearanceSelector extends StatelessWidget {
+  const _AppearanceSelector({required this.mode, required this.onChanged});
+
+  final ThemeMode mode;
+  final ValueChanged<ThemeMode> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      label: context.l10n.appearanceTitle,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _AppearanceChoice(
+            label: context.l10n.appearanceDay,
+            selected: mode == ThemeMode.light,
+            onTap: () => onChanged(ThemeMode.light),
+          ),
+          _AppearanceChoice(
+            label: context.l10n.appearanceDark,
+            selected: mode == ThemeMode.dark,
+            onTap: () => onChanged(ThemeMode.dark),
+          ),
+          _AppearanceChoice(
+            label: context.l10n.appearanceSystem,
+            selected: mode == ThemeMode.system,
+            onTap: () => onChanged(ThemeMode.system),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AppearanceChoice extends StatelessWidget {
+  const _AppearanceChoice({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BatshRadius.brSm,
+      child: AnimatedContainer(
+        duration: BatshMotion.fast,
+        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 6),
         decoration: BoxDecoration(
-          color: context.colorScheme.primaryContainer,
+          color: selected ? context.colorScheme.primary : Colors.transparent,
           borderRadius: BatshRadius.brSm,
         ),
         child: Text(
-          ref.read(motionModeProvider.notifier).label,
+          label,
           style: BatshTypography.labelSm.copyWith(
-            color: context.colorScheme.onPrimaryContainer,
-            fontWeight: FontWeight.w600,
+            color: selected
+                ? context.colorScheme.onPrimary
+                : context.colorScheme.onSurfaceVariant,
+            fontWeight: FontWeight.w700,
           ),
         ),
       ),
-      onTap: () => ref.read(motionModeProvider.notifier).toggle(),
+    );
+  }
+}
+
+class _NotificationsTile extends StatelessWidget {
+  const _NotificationsTile();
+
+  @override
+  Widget build(BuildContext context) {
+    return _SettingsTile(
+      icon: Icons.notifications_none_rounded,
+      label: context.l10n.notificationsTitle,
+      subtitle: context.l10n.notificationsSubtitle,
+      trailing: Icon(
+        Icons.chevron_left_rounded,
+        color: context.colorScheme.onSurfaceVariant,
+        size: BatshIconSize.md,
+      ),
+      onTap: () => _showNotificationSheet(context),
+    );
+  }
+
+  Future<void> _showNotificationSheet(BuildContext context) async {
+    await showNotificationPreferencesSheet(context);
+  }
+}
+
+class _NotificationPreferencesSheet extends StatefulWidget {
+  const _NotificationPreferencesSheet();
+
+  @override
+  State<_NotificationPreferencesSheet> createState() =>
+      _NotificationPreferencesSheetState();
+}
+
+class _NotificationPreferencesSheetState
+    extends State<_NotificationPreferencesSheet> {
+  bool _requests = true;
+  bool _messages = true;
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(
+          BatshSpacing.lg,
+          BatshSpacing.sm,
+          BatshSpacing.lg,
+          BatshSpacing.lg,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              context.l10n.notificationsTitle,
+              style: BatshTypography.titleLg.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: Text(context.l10n.notificationsRequests),
+              value: _requests,
+              onChanged: (value) => setState(() => _requests = value),
+            ),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: Text(context.l10n.notificationsMessages),
+              value: _messages,
+              onChanged: (value) => setState(() => _messages = value),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -371,90 +644,63 @@ class _LegalTile extends StatelessWidget {
 /// Guarded by typed confirmation rather than a plain "are you sure": this
 /// erases briefs, quotes, posts, photos and reviews with no recovery path, and
 /// a misplaced tap in a settings list should not be able to trigger it. The
-/// work happens server-side in `delete_my_account()` (0023) so the account
+/// work happens server-side in `delete_my_account()` so the account
 /// cannot end up half-deleted.
-class _DeleteAccountTile extends ConsumerStatefulWidget {
+class _DeleteAccountTile extends ConsumerWidget {
   const _DeleteAccountTile();
 
   @override
-  ConsumerState<_DeleteAccountTile> createState() => _DeleteAccountTileState();
-}
-
-class _DeleteAccountTileState extends ConsumerState<_DeleteAccountTile> {
-  Future<void> _confirm() async {
-    final controller = TextEditingController();
-    final word = context.l10n.deleteAccountConfirmWord;
-
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setLocal) => AlertDialog(
-          title: Text(context.l10n.deleteAccountTitle),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(context.l10n.deleteAccountBody),
-              const SizedBox(height: BatshSpacing.md),
-              TextField(
-                controller: controller,
-                autofocus: true,
-                decoration: InputDecoration(
-                  hintText: context.l10n.deleteAccountConfirmHint,
+  Widget build(BuildContext context, WidgetRef ref) {
+    final accent = context.colorScheme.error;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: BatshRadius.brXl,
+        boxShadow: BatshShadows.soft,
+      ),
+      child: Material(
+        color: context.colorScheme.surfaceContainerLowest,
+        borderRadius: BatshRadius.brXl,
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: () => _showHomeownerDeleteSheet(context, ref),
+          splashColor: accent.withValues(alpha: 0.08),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: BatshSpacing.lg,
+              vertical: BatshSpacing.md,
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 38,
+                  height: 38,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: accent.withValues(alpha: 0.10),
+                    borderRadius: BatshRadius.brMd,
+                  ),
+                  child: Icon(
+                    Icons.delete_forever_outlined,
+                    color: accent,
+                    size: BatshIconSize.md,
+                  ),
                 ),
-                onChanged: (_) => setLocal(() {}),
-              ),
-            ],
+                const SizedBox(width: BatshSpacing.gutter),
+                Expanded(
+                  child: Text(
+                    context.l10n.deleteAccount,
+                    style: BatshTypography.bodyLg.copyWith(
+                      color: accent,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                Icon(Icons.chevron_left, color: accent, size: BatshIconSize.md),
+              ],
+            ),
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop(false),
-              child: Text(context.l10n.cancel),
-            ),
-            TextButton(
-              // Disabled until the word matches exactly.
-              onPressed: controller.text.trim() == word
-                  ? () => Navigator.of(ctx).pop(true)
-                  : null,
-              child: Text(
-                context.l10n.deleteAccount,
-                style: TextStyle(color: context.colorScheme.error),
-              ),
-            ),
-          ],
         ),
       ),
-    );
-    controller.dispose();
-    if (ok != true || !mounted) return;
-
-    final messenger = ScaffoldMessenger.of(context);
-    try {
-      await ref.read(authRepositoryProvider).deleteAccount();
-      messenger
-        ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(content: Text(context.l10n.accountDeleted)));
-      // The router's auth listener returns the user to the landing screen once
-      // the session is gone, so there is no manual navigation here.
-    } catch (e) {
-      if (!mounted) return;
-      messenger
-        ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(content: Text(ErrorMapper.map(e))));
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return _SettingsTile(
-      icon: Icons.delete_forever_outlined,
-      label: context.l10n.deleteAccount,
-      trailing: Icon(
-        Icons.chevron_left,
-        color: context.colorScheme.onSurfaceVariant,
-        size: BatshIconSize.md,
-      ),
-      onTap: _confirm,
     );
   }
 }

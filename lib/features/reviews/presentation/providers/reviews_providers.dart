@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../../../core/analytics/app_analytics.dart';
 import '../../../discovery/presentation/providers/discovery_providers.dart';
 import '../../data/reviews_repository.dart';
 import '../../domain/review.dart';
@@ -38,6 +41,9 @@ class ReviewController extends _$ReviewController {
           rating: rating,
           comment: comment,
         );
+    unawaited(
+      AppAnalytics.track('review_submitted', properties: {'rating': rating}),
+    );
     ref.invalidate(reviewForBriefProvider(briefId));
     ref.invalidate(reviewsForContractorProvider(contractorId));
     // Refresh the contractor's aggregate rating wherever it is shown.

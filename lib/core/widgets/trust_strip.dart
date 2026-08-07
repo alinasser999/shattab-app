@@ -4,7 +4,7 @@ import 'package:batsh/features/discovery/domain/trust_signals.dart';
 class TrustStrip extends StatelessWidget {
   final TrustProfile profile;
 
-  const TrustStrip({Key? key, required this.profile}) : super(key: key);
+  const TrustStrip({super.key, required this.profile});
 
   @override
   Widget build(BuildContext context) {

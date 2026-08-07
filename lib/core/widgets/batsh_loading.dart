@@ -3,8 +3,6 @@ import 'package:flutter/material.dart';
 import '../l10n/l10n_extension.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
-import '../l10n/strings.dart';
-import '../theme/batsh_colors.dart';
 import '../theme/batsh_motion.dart';
 
 import 'package:batsh/core/theme/theme_extension.dart';

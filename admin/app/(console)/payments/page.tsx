@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { supabaseServer } from '@/lib/supabase/server';
+import { currentAdmin, supabaseServer } from '@/lib/supabase/server';
 import { reviewPayment } from '@/lib/actions';
 import { OutcomeBanner } from '@/components/banner';
 import {
@@ -56,6 +56,8 @@ export default async function PaymentsPage({
   searchParams: Promise<{ done?: string; error?: string }>;
 }) {
   const sp = await searchParams;
+  const admin = await currentAdmin();
+  const canReviewPayments = admin?.level !== 'moderator';
   const supabase = await supabaseServer();
 
   const [pendingRes, historyRes, paymentsRes] = await Promise.all([
@@ -116,7 +118,7 @@ export default async function PaymentsPage({
             }
           />
           {pendingRes.error ? (
-            <ErrorState what="Could not read the payment queue." detail={pendingRes.error.message} />
+            <ErrorState what="Could not read the payment queue." />
           ) : pending.length === 0 ? (
             <EmptyState
               title="No transfers waiting"
@@ -130,6 +132,7 @@ export default async function PaymentsPage({
                   index={i}
                   request={request}
                   proofUrl={proofs.get(request.id)}
+                  canReview={canReviewPayments}
                 />
               ))}
             </ul>
@@ -248,10 +251,12 @@ function PayItem({
   index,
   request,
   proofUrl,
+  canReview,
 }: {
   index: number;
   request: Request;
   proofUrl?: string;
+  canReview: boolean;
 }) {
   const name =
     request.contractor_profiles?.business_name?.trim() ||
@@ -300,26 +305,33 @@ function PayItem({
         </div>
       </div>
 
-      {/* One form, two submit buttons carrying approve=true/false, so the shared
-          reason field reaches whichever was pressed. */}
-      <form action={reviewPayment} className="mt-3 flex flex-wrap items-end gap-2">
-        <input type="hidden" name="request_id" value={request.id} />
-        <input type="hidden" name="path" value="/payments" />
-        <div className="min-w-48 flex-1">
-          <Label htmlFor={`reason-${request.id}`}>Reason, required to reject</Label>
-          <Input
-            id={`reason-${request.id}`}
-            name="reason"
-            placeholder="For example: no matching transfer found"
-          />
-        </div>
-        <Button type="submit" name="approve" value="true" variant="primary" size="sm">
-          Confirm and apply
-        </Button>
-        <Button type="submit" name="approve" value="false" variant="danger" size="sm">
-          Reject
-        </Button>
-      </form>
+      {canReview ? (
+        /* One form, two submit buttons carrying approve=true/false, so the
+           shared reason field reaches whichever was pressed. */
+        <form action={reviewPayment} className="mt-3 flex flex-wrap items-end gap-2">
+          <input type="hidden" name="request_id" value={request.id} />
+          <input type="hidden" name="path" value="/payments" />
+          <div className="min-w-48 flex-1">
+            <Label htmlFor={`reason-${request.id}`}>Reason, required to reject</Label>
+            <Input
+              id={`reason-${request.id}`}
+              name="reason"
+              placeholder="For example: no matching transfer found"
+            />
+          </div>
+          <Button type="submit" name="approve" value="true" variant="primary" size="sm">
+            Confirm and apply
+          </Button>
+          <Button type="submit" name="approve" value="false" variant="danger" size="sm">
+            Reject
+          </Button>
+        </form>
+      ) : (
+        <p className="mt-3 text-xs text-ink-3">
+          <Badge>Owner approval required</Badge>{' '}
+          Moderator accounts can inspect this queue but cannot change billing state.
+        </p>
+      )}
     </li>
   );
 }

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:batsh/core/l10n/l10n_extension.dart';
-import '../../../core/theme/batsh_colors.dart';
 import '../../../core/theme/batsh_spacing.dart';
 import '../../../core/theme/batsh_typography.dart';
 import '../../../core/utils/error_mapper.dart';
@@ -158,6 +157,7 @@ Future<bool> confirmAndBlock(
   final messenger = ScaffoldMessenger.of(context);
   try {
     await ref.read(moderationRepositoryProvider).block(userId);
+    if (!context.mounted) return false;
     ref.invalidate(blockedIdsProvider);
     messenger
       ..hideCurrentSnackBar()
@@ -169,6 +169,7 @@ Future<bool> confirmAndBlock(
       );
     return true;
   } catch (e) {
+    if (!context.mounted) return false;
     messenger
       ..hideCurrentSnackBar()
       ..showSnackBar(

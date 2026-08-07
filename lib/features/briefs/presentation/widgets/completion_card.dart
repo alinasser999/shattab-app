@@ -1,12 +1,14 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:batsh/core/l10n/l10n_extension.dart';
-import '../../../../core/theme/batsh_colors.dart';
 import '../../../../core/theme/batsh_radius.dart';
 import '../../../../core/theme/batsh_spacing.dart';
 import '../../../../core/theme/batsh_typography.dart';
+import '../../../../core/analytics/app_analytics.dart';
 import '../../../../core/utils/error_mapper.dart';
 import '../../../../core/widgets/batsh_button.dart';
 import '../../../reviews/presentation/write_review_sheet.dart';
@@ -54,6 +56,7 @@ class _CompletionCardState extends ConsumerState<CompletionCard> {
   Future<void> _run(
     Future<void> Function() action,
     String successMessage, {
+    String? analyticsEvent,
     VoidCallback? onSuccess,
   }) async {
     if (_busy) return;
@@ -61,6 +64,9 @@ class _CompletionCardState extends ConsumerState<CompletionCard> {
     try {
       await action();
       if (!mounted) return;
+      if (analyticsEvent != null) {
+        unawaited(AppAnalytics.track(analyticsEvent));
+      }
       BatshSnack.success(context, successMessage);
       onSuccess?.call();
     } catch (e) {
@@ -76,10 +82,12 @@ class _CompletionCardState extends ConsumerState<CompletionCard> {
         .read(briefsControllerProvider.notifier)
         .requestCompletion(widget.brief.id),
     context.l10n.workDoneRequested,
+    analyticsEvent: 'completion_requested',
   );
 
   Future<void> _confirmCompletion() async {
     // Irreversible, and it mints a public project count, so it asks first.
+    final successMessage = context.l10n.workCompletedNow;
     final ok = await BatshDialog.confirm(
       context,
       title: context.l10n.confirmCompletionTitle,
@@ -93,11 +101,13 @@ class _CompletionCardState extends ConsumerState<CompletionCard> {
       () => ref
           .read(briefsControllerProvider.notifier)
           .confirmCompletion(widget.brief.id),
-      context.l10n.workCompletedNow,
+      successMessage,
+      analyticsEvent: 'job_completed_confirmed',
       onSuccess: () {
         HapticFeedback.mediumImpact();
         final contractorId = widget.acceptedContractorId;
         if (contractorId == null) return;
+        if (!mounted) return;
         // Ask for the review while the job is still fresh.
         showWriteReviewSheet(
           context,

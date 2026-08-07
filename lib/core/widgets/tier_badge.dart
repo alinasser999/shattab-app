@@ -3,8 +3,6 @@ import 'package:flutter/material.dart';
 import '../l10n/l10n_extension.dart';
 
 import '../../features/discovery/domain/contractor_listing.dart';
-import '../l10n/strings.dart';
-import '../theme/batsh_colors.dart';
 import '../theme/batsh_radius.dart';
 import '../theme/batsh_spacing.dart';
 import '../theme/batsh_typography.dart';

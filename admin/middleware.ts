@@ -32,9 +32,16 @@ export async function middleware(request: NextRequest) {
   // getUser(), not getSession(): getSession trusts the cookie as-is, while
   // getUser revalidates it with the auth server. On a privileged surface the
   // extra round trip is the point.
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // Fail closed when the auth service is unavailable. Treating an unverified
+  // cookie as an authenticated user would be the dangerous failure mode; a
+  // temporary redirect to login is recoverable after the service returns.
+  let user: Awaited<ReturnType<typeof supabase.auth.getUser>>['data']['user'] = null;
+  try {
+    const result = await supabase.auth.getUser();
+    user = result.data.user;
+  } catch {
+    user = null;
+  }
 
   const path = request.nextUrl.pathname;
   const isLogin = path === '/login';

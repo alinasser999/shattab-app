@@ -40,6 +40,7 @@ class BatshTheme {
         centerTitle: true,
         titleTextStyle: BatshTypography.titleLg.copyWith(
           fontWeight: FontWeight.w600,
+          color: colors.onSurface,
         ),
         systemOverlayStyle: const SystemUiOverlayStyle(
           statusBarColor: Colors.transparent,
@@ -247,6 +248,7 @@ class BatshTheme {
         centerTitle: true,
         titleTextStyle: BatshTypography.titleLg.copyWith(
           fontWeight: FontWeight.w600,
+          color: colors.onSurface,
         ),
         systemOverlayStyle: const SystemUiOverlayStyle(
           statusBarColor: Colors.transparent,

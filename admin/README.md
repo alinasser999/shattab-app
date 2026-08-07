@@ -85,12 +85,21 @@ security advisor flags it as disabled today.
 ## Checks
 
 ```bash
+npm run audit:contracts
 npm run typecheck
 npm run build
 ```
 
 `npm run build` is the check that counts. `tsc --noEmit` alone will not catch an
 illegal export from a route file, which is a real error this project already hit.
+
+## Audit and production notes
+
+The current audit, connectivity map, permission matrix, and staging test
+matrix live in [`docs/`](docs/). The admin hardening migration is
+`supabase/migrations/20260803035018_admin_hardening_report_contract.sql` in the
+repository root. Apply it to staging before deploying the matching console
+build; the new `owner`/`moderator` action guard is enforced by PostgreSQL.
 
 ## Deliberately not here
 

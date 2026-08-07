@@ -14,7 +14,7 @@ jobs:
   verify:
     name: Analyze & test
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
 
@@ -25,14 +25,21 @@ jobs:
 
       - run: flutter pub get
 
-      - run: flutter analyze
+      # The repository intentionally does not track generated Riverpod/router
+      # files. Generate them in CI so a clean checkout validates the same
+      # source graph as a local developer build.
+      - run: cp .env.example .env
+      - run: dart run build_runner build
+
+      - run: dart format --output=none --set-exit-if-changed lib test
+      - run: flutter analyze --no-pub
 
       - run: flutter test --reporter=github
+      - run: flutter build web --release
+      # Keep the Android artifact unsigned in CI, but compile the native
+      # release target so mobile-only plugin and manifest errors are caught.
+      - run: flutter build apk --release
 
-# Deliberately not gated here:
-# - `dart format`: 124 of 174 files are not format-clean today, so the gate
-#   would fail on arrival. Run `dart format lib test` as its own commit, then
-#   add the check.
-# - build_runner freshness: generated .g.dart files are committed, and a
-#   generator-version bump on the runner would fail the build for reasons
-#   unrelated to the change under review.
+# Database migration lint and remote Supabase advisors remain separate gates:
+# they require an explicitly configured staging project and must not run against
+# production from an untrusted pull request.

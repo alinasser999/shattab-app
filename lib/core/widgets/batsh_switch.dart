@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../theme/batsh_colors.dart';
 import '../theme/batsh_shadows.dart';
 import '../theme/batsh_motion.dart';
 

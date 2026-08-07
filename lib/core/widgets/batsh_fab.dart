@@ -4,8 +4,7 @@ class BatshFab extends StatelessWidget {
   final VoidCallback onPressed;
   final Widget child;
 
-  const BatshFab({Key? key, required this.onPressed, required this.child})
-    : super(key: key);
+  const BatshFab({super.key, required this.onPressed, required this.child});
 
   @override
   Widget build(BuildContext context) {

@@ -54,13 +54,15 @@ export async function UserDrawer({ userId, backHref }: { userId?: string; backHr
   if (error || !data) {
     return (
       <Panel className="h-fit">
-        <ErrorState what="Could not load this account." detail={error?.message} />
+        <ErrorState what="Could not load this account." />
       </Panel>
     );
   }
 
   const d = data as Detail;
   const p = d.profile;
+  const { data: adminLevel } = await supabase.rpc('admin_level');
+  const canManagePlan = adminLevel !== 'moderator';
   const suspended = Boolean(p.suspended_at);
   const isPro = d.contractor?.plan === 'pro' && (d.contractor.plan_expires_at ?? '') > new Date().toISOString();
 
@@ -228,33 +230,40 @@ export async function UserDrawer({ userId, backHref }: { userId?: string; backHr
               </Button>
             </form>
 
-            <form action={setPlan} className="border-t border-line pt-4">
-              <input type="hidden" name="contractor_id" value={p.id} />
-              <input type="hidden" name="path" value="/users" />
-              <Label htmlFor="plan">Plan</Label>
-              <div className="flex gap-2">
-                <Select id="plan" name="plan" defaultValue={d.contractor.plan}>
-                  <option value="free">Free</option>
-                  <option value="pro">Pro</option>
-                </Select>
-                <Input
-                  name="days"
-                  type="number"
-                  min={0}
-                  max={3650}
-                  defaultValue={30}
-                  aria-label="Days of Pro access"
-                  className="w-20"
-                />
-                <Button type="submit" variant="secondary" size="sm">
-                  Apply
-                </Button>
-              </div>
-              <p className="mt-1 text-xs text-ink-3">
-                Grants Pro without a payment, for comped accounts or a transfer that arrived outside
-                the app. Days are ignored on the free plan.
+            {canManagePlan ? (
+              <form action={setPlan} className="border-t border-line pt-4">
+                <input type="hidden" name="contractor_id" value={p.id} />
+                <input type="hidden" name="path" value="/users" />
+                <Label htmlFor="plan">Plan</Label>
+                <div className="flex gap-2">
+                  <Select id="plan" name="plan" defaultValue={d.contractor.plan}>
+                    <option value="free">Free</option>
+                    <option value="pro">Pro</option>
+                  </Select>
+                  <Input
+                    name="days"
+                    type="number"
+                    min={0}
+                    max={3650}
+                    defaultValue={30}
+                    aria-label="Days of Pro access"
+                    className="w-20"
+                  />
+                  <Button type="submit" variant="secondary" size="sm">
+                    Apply
+                  </Button>
+                </div>
+                <p className="mt-1 text-xs text-ink-3">
+                  Grants Pro without a payment, for comped accounts or a transfer that arrived outside
+                  the app. Days are ignored on the free plan.
+                </p>
+              </form>
+            ) : (
+              <p className="border-t border-line pt-4 text-xs text-ink-3">
+                <Badge>Owner access required</Badge>{' '}
+                Plan changes are reserved for owner accounts.
               </p>
-            </form>
+            )}
           </>
         ) : null}
       </div>

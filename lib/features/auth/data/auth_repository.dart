@@ -2,14 +2,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../core/media/media_storage.dart';
+import '../../../core/media/media_storage_provider.dart';
 import '../../../core/supabase/supabase_provider.dart';
 import '../domain/profile.dart';
 
 part 'auth_repository.g.dart';
 
 class AuthRepository {
-  AuthRepository(this._client);
+  AuthRepository(this._client, [MediaStorageService? mediaStorage])
+      : _mediaStorage = mediaStorage;
   final SupabaseClient _client;
+  final MediaStorageService? _mediaStorage;
 
   Future<void> sendOtp(String phone) =>
       _client.auth.signInWithOtp(phone: phone);
@@ -59,7 +63,7 @@ class AuthRepository {
 
   /// Permanently deletes the signed-in user and everything they own.
   ///
-  /// All the work happens in the `delete_my_account` RPC (0023): a client
+  /// All the work happens in the `delete_my_account` RPC: a client
   /// cannot delete its own `auth.users` row, and doing the cleanup in one
   /// server-side transaction is what stops an account ending up half-deleted.
   ///
@@ -68,6 +72,10 @@ class AuthRepository {
   /// returns the app to the landing screen immediately instead of showing a
   /// signed-in shell full of errors.
   Future<void> deleteAccount() async {
+    // R2 is outside Postgres, so purge the user's public R2 namespace while
+    // the access token is still valid. If that boundary cannot complete, do
+    // not run the irreversible Supabase deletion RPC.
+    await _mediaStorage?.purgeOwnedPublicMedia();
     await _client.rpc('delete_my_account');
     await _client.auth.signOut();
   }
@@ -116,4 +124,7 @@ class AuthRepository {
 
 @Riverpod(keepAlive: true)
 AuthRepository authRepository(Ref ref) =>
-    AuthRepository(ref.watch(supabaseClientProvider));
+    AuthRepository(
+      ref.watch(supabaseClientProvider),
+      ref.watch(mediaStorageProvider),
+    );

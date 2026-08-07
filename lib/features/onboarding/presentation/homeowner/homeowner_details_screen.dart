@@ -6,7 +6,6 @@ import 'package:flutter_animate/flutter_animate.dart';
 
 import 'package:batsh/core/l10n/l10n_extension.dart';
 import '../../../../core/router/routes.dart';
-import '../../../../core/theme/batsh_colors.dart';
 import '../../../../core/theme/batsh_motion.dart';
 import '../../../../core/theme/batsh_spacing.dart';
 import '../../../../core/theme/batsh_typography.dart';
@@ -19,6 +18,7 @@ import '../../../../core/widgets/batsh_section_header.dart';
 import '../../domain/onboarding_models.dart';
 import '../providers/onboarding_provider.dart';
 import '../../../../core/theme/batsh_icon_size.dart';
+import '../../../../core/logging/app_logger.dart';
 import '../../../../core/widgets/batsh_snack.dart';
 
 import 'package:batsh/core/theme/theme_extension.dart';
@@ -76,9 +76,9 @@ class _HomeownerDetailsScreenState
       if (!mounted) return;
       context.go(Routes.homeownerDiscover);
     } catch (e) {
-      // Surfaces the raw error in the browser/device console; the snackbar
-      // below only shows the mapped Arabic message.
-      debugPrint('homeowner onboarding submit failed: $e');
+      // The snackbar stays user-safe; technical context goes through the
+      // privacy-aware application logger.
+      AppLogger.error('homeowner onboarding submit failed', error: e);
       if (!mounted) return;
       BatshSnack.error(context, ErrorMapper.map(e));
     } finally {

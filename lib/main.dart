@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -9,6 +11,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'app.dart';
 import 'core/debug/debug_config.dart';
 import 'core/env/env.dart';
+import 'core/logging/app_logger.dart';
+import 'core/notifications/push_service.dart';
 import 'core/supabase/supabase_client.dart';
 
 Future<void> main() async {
@@ -21,6 +25,10 @@ Future<void> main() async {
   await Env.load();
   await SupabaseInit.ensureInitialized();
 
+  // Never throws: a build without Firebase config, or a handset without Play
+  // Services, falls back to realtime-only delivery rather than failing to boot.
+  await PushService.ensureInitialized();
+
   // Debug-only: sign in as the seeded test user so every write works against
   // real RLS. No-op + tree-shaken in release builds.
   await debugSignIn(Supabase.instance.client);
@@ -30,7 +38,7 @@ Future<void> main() async {
     // No DSN configured — run without crash reporting rather than refusing to
     // start. This is the path for contributors, and for any build where the
     // secret was not injected.
-    runApp(const ProviderScope(child: BatshApp()));
+    _runApp();
     return;
   }
 
@@ -56,5 +64,32 @@ Future<void> main() async {
       // populates it. Errors stay useful without knowing who hit them.
       return event.copyWith(user: null);
     };
-  }, appRunner: () => runApp(const ProviderScope(child: BatshApp())));
+  }, appRunner: _runApp);
+}
+
+void _runApp() {
+  _installErrorLogging();
+  runApp(const ProviderScope(child: BatshApp()));
+}
+
+void _installErrorLogging() {
+  final previousFlutterError = FlutterError.onError;
+  FlutterError.onError = (details) {
+    AppLogger.error(
+      'flutter framework error',
+      error: details.exception,
+      stackTrace: details.stack,
+    );
+    previousFlutterError?.call(details);
+  };
+
+  final previousAsyncError = PlatformDispatcher.instance.onError;
+  PlatformDispatcher.instance.onError = (error, stackTrace) {
+    AppLogger.error(
+      'uncaught async error',
+      error: error,
+      stackTrace: stackTrace,
+    );
+    return previousAsyncError?.call(error, stackTrace) ?? false;
+  };
 }

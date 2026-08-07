@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../theme/batsh_colors.dart';
 import '../theme/batsh_motion.dart';
 import '../theme/batsh_radius.dart';
 import '../theme/batsh_spacing.dart';
@@ -97,7 +96,7 @@ class _BatshChipState extends State<BatshChip>
                     widget.icon,
                     size: widget.compact ? 14 : 16,
                     color: widget.selected
-                        ? context.colorScheme.primary
+                        ? context.colorScheme.onPrimaryFixed
                         : context.colorScheme.onSurfaceVariant.withValues(
                             alpha: 0.6,
                           ),
@@ -112,7 +111,7 @@ class _BatshChipState extends State<BatshChip>
                               : BatshTypography.labelMd)
                           .copyWith(
                             color: widget.selected
-                                ? context.colorScheme.primary
+                                ? context.colorScheme.onPrimaryFixed
                                 : context.colorScheme.onSurfaceVariant,
                             fontWeight: widget.selected
                                 ? FontWeight.w600

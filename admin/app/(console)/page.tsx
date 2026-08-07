@@ -48,7 +48,7 @@ export default async function OverviewPage({
   if (overviewRes.error || !overviewRes.data) {
     return (
       <Panel>
-        <ErrorState what="Could not read the overview metrics." detail={overviewRes.error?.message} />
+        <ErrorState what="Could not read the overview metrics." />
       </Panel>
     );
   }

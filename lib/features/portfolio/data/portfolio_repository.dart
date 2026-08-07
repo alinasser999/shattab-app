@@ -5,14 +5,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../core/media/media_storage.dart';
+import '../../../core/media/media_storage_provider.dart';
 import '../../../core/supabase/supabase_provider.dart';
+import '../../../core/utils/upload_policy.dart';
 import '../domain/portfolio_project.dart';
 
 part 'portfolio_repository.g.dart';
 
 class PortfolioRepository {
-  PortfolioRepository(this._client);
+  PortfolioRepository(this._client, [MediaStorageService? mediaStorage])
+      : _mediaStorage = mediaStorage;
   final SupabaseClient _client;
+  final MediaStorageService? _mediaStorage;
 
   /// Cap on a contractor's project list. The gallery is a scrollable grid
   /// rather than a paginated view, so this bounds the payload without changing
@@ -40,16 +45,25 @@ class PortfolioRepository {
   /// Works signed out: `portfolio_projects` carries an "anyone read portfolio"
   /// SELECT policy.
   Future<List<PortfolioProject>> fetchRecent({int limit = 12}) async {
+    return (await fetchRecentPage(
+      limit: limit,
+    )).where((project) => project.coverPhotoUrl.isNotEmpty).toList();
+  }
+
+  /// Newest finished work across every contractor, paginated for the
+  /// dedicated "real work" collection. A stable id tie-breaker keeps the
+  /// boundary deterministic when two projects share a timestamp.
+  Future<List<PortfolioProject>> fetchRecentPage({
+    int offset = 0,
+    int limit = 12,
+  }) async {
     final rows = await _client
         .from('portfolio_projects')
         .select()
         .order('created_at', ascending: false)
-        .limit(limit);
-    return rows
-        .map(PortfolioProject.fromJson)
-        // A project with no cover has nothing to contribute to a photo rail.
-        .where((p) => p.coverPhotoUrl.isNotEmpty)
-        .toList();
+        .order('id', ascending: false)
+        .range(offset, offset + limit - 1);
+    return rows.map(PortfolioProject.fromJson).toList();
   }
 
   Future<PortfolioProject?> fetchById(String projectId) async {
@@ -138,22 +152,34 @@ class PortfolioRepository {
     Uint8List? bytes,
   }) async {
     final path = '$contractorId/$draftId/$seq.jpg';
-    final storage = _client.storage.from('portfolio-photos');
+    late final Uint8List uploadBytes;
     if (file != null) {
-      await storage.upload(
-        path,
-        file,
-        fileOptions: const FileOptions(upsert: true, contentType: 'image/jpeg'),
-      );
+      UploadPolicy.validateImageLength(await file.length());
+      uploadBytes = await file.readAsBytes();
     } else if (bytes != null) {
-      await storage.uploadBinary(
-        path,
-        bytes,
-        fileOptions: const FileOptions(upsert: true, contentType: 'image/jpeg'),
-      );
+      UploadPolicy.validateImageBytes(bytes);
+      uploadBytes = bytes;
     } else {
       throw ArgumentError('uploadPhoto needs file or bytes');
     }
+    final mediaStorage = _mediaStorage;
+    if (mediaStorage != null) {
+      final result = await mediaStorage.uploadPublic(
+        category: MediaCategory.portfolioPhoto,
+        userId: contractorId,
+        bytes: uploadBytes,
+        fileName: '$seq.jpg',
+        contentType: 'image/jpeg',
+        supabasePath: path,
+      );
+      return result.url;
+    }
+    final storage = _client.storage.from('portfolio-photos');
+    await storage.uploadBinary(
+      path,
+      uploadBytes,
+      fileOptions: const FileOptions(upsert: true, contentType: 'image/jpeg'),
+    );
     return storage.getPublicUrl(path);
   }
 
@@ -168,6 +194,20 @@ class PortfolioRepository {
 
   /// Best-effort cleanup of storage files for removed/updated photos.
   Future<void> _removeStoragePhotos(List<String> urls) async {
+    final mediaStorage = _mediaStorage;
+    if (mediaStorage != null) {
+      for (final url in urls) {
+        try {
+          await mediaStorage.deletePublicReference(
+            url,
+            category: MediaCategory.portfolioPhoto,
+          );
+        } catch (_) {
+          // Non-critical: storage file removal is best-effort.
+        }
+      }
+      return;
+    }
     final storage = _client.storage.from('portfolio-photos');
     for (final url in urls) {
       final path = _storagePathFromUrl(url);
@@ -194,7 +234,10 @@ class PortfolioRepository {
 
 @Riverpod(keepAlive: true)
 PortfolioRepository portfolioRepository(Ref ref) =>
-    PortfolioRepository(ref.watch(supabaseClientProvider));
+    PortfolioRepository(
+      ref.watch(supabaseClientProvider),
+      ref.watch(mediaStorageProvider),
+    );
 
 /// Recent work across all contractors, for the discover rail.
 ///

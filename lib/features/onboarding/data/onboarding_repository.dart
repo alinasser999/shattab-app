@@ -4,15 +4,20 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../core/media/media_storage.dart';
+import '../../../core/media/media_storage_provider.dart';
 import '../../../core/supabase/supabase_provider.dart';
+import '../../../core/utils/upload_policy.dart';
 import '../../discovery/domain/contractor_listing.dart';
 import '../domain/onboarding_models.dart';
 
 part 'onboarding_repository.g.dart';
 
 class OnboardingRepository {
-  OnboardingRepository(this._client);
+  OnboardingRepository(this._client, [MediaStorageService? mediaStorage])
+      : _mediaStorage = mediaStorage;
   final SupabaseClient _client;
+  final MediaStorageService? _mediaStorage;
 
   Future<HomeownerProfile?> fetchHomeowner(String profileId) async {
     final row = await _client
@@ -42,8 +47,9 @@ class OnboardingRepository {
     List<String>? renovationInterests,
   }) async {
     final payload = <String, dynamic>{'profile_id': profileId};
-    if (apartmentType != null)
+    if (apartmentType != null) {
       payload['apartment_type'] = apartmentType.dbValue;
+    }
     if (city != null) payload['city'] = city;
     if (district != null) payload['district'] = district;
     if (renovationInterests != null) {
@@ -104,7 +110,20 @@ class OnboardingRepository {
     required String profileId,
     required File file,
   }) async {
+    UploadPolicy.validateImageLength(await file.length());
     final path = '$profileId/logo.jpg';
+    final mediaStorage = _mediaStorage;
+    if (mediaStorage != null) {
+      final result = await mediaStorage.uploadPublic(
+        category: MediaCategory.contractorLogo,
+        userId: profileId,
+        bytes: await file.readAsBytes(),
+        fileName: 'logo.jpg',
+        contentType: 'image/jpeg',
+        supabasePath: path,
+      );
+      return result.url;
+    }
     await _client.storage
         .from('contractor-logos')
         .upload(path, file, fileOptions: const FileOptions(upsert: true));
@@ -115,7 +134,20 @@ class OnboardingRepository {
     required String profileId,
     required File file,
   }) async {
+    UploadPolicy.validateImageLength(await file.length());
     final path = '$profileId/cover.jpg';
+    final mediaStorage = _mediaStorage;
+    if (mediaStorage != null) {
+      final result = await mediaStorage.uploadPublic(
+        category: MediaCategory.contractorLogo,
+        userId: profileId,
+        bytes: await file.readAsBytes(),
+        fileName: 'cover.jpg',
+        contentType: 'image/jpeg',
+        supabasePath: path,
+      );
+      return '${result.url}?v=${DateTime.now().millisecondsSinceEpoch}';
+    }
     await _client.storage
         .from('contractor-logos')
         .upload(path, file, fileOptions: const FileOptions(upsert: true));
@@ -127,4 +159,7 @@ class OnboardingRepository {
 
 @Riverpod(keepAlive: true)
 OnboardingRepository onboardingRepository(Ref ref) =>
-    OnboardingRepository(ref.watch(supabaseClientProvider));
+    OnboardingRepository(
+      ref.watch(supabaseClientProvider),
+      ref.watch(mediaStorageProvider),
+    );

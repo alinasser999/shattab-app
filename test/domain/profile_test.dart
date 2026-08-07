@@ -1,7 +1,30 @@
 import 'package:batsh/features/auth/domain/profile.dart';
+import 'package:batsh/features/briefs/domain/homeowner_profile_preview.dart';
+import 'package:batsh/features/onboarding/domain/onboarding_models.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  test('public homeowner preview ignores contact fields', () {
+    final preview = PublicHomeownerProfile.fromJson({
+      'profile_id': 'homeowner-1',
+      'role': 'homeowner',
+      'full_name': 'صاحب الطلب',
+      'avatar_url': 'https://example.com/avatar.jpg',
+      'phone': '+201000000000',
+      'apartment_type': 'two_bedroom',
+      'city': 'القاهرة',
+      'district': 'المعادي',
+      'renovation_interests': ['paint', 'flooring'],
+    });
+
+    expect(preview.profile.id, 'homeowner-1');
+    expect(preview.profile.role, UserRole.homeowner);
+    expect(preview.profile.fullName, 'صاحب الطلب');
+    expect(preview.details?.apartmentType, ApartmentType.twoBedroom);
+    expect(preview.details?.city, 'القاهرة');
+    expect(preview.details?.renovationInterests, ['paint', 'flooring']);
+  });
+
   group('Profile.fromJson', () {
     test('produces correct fields from a valid JSON map', () {
       final json = <String, dynamic>{

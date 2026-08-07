@@ -7,7 +7,6 @@ import 'package:go_router/go_router.dart';
 import 'package:share_plus/share_plus.dart';
 
 import 'package:batsh/core/l10n/l10n_extension.dart';
-import '../../../core/theme/batsh_colors.dart';
 import '../../../core/theme/batsh_motion.dart';
 import '../../../core/theme/batsh_radius.dart';
 import '../../../core/theme/batsh_spacing.dart';
@@ -102,6 +101,8 @@ class _PostDetailContentState extends ConsumerState<_PostDetailContent> {
   final _commentFocus = FocusNode();
   final _mediaCtrl = PageController();
   bool _sending = false;
+  PostComment? _replyingTo;
+  PostComment? _editingComment;
 
   @override
   void dispose() {
@@ -140,41 +141,171 @@ class _PostDetailContentState extends ConsumerState<_PostDetailContent> {
   }
 
   void _navigateToProfile(Post post) {
-    // Contractor profiles live under /h/discover; the role guard bounces
-    // contractors off /h, so only homeowners/guests can open them.
     final onContractorSide = GoRouterState.of(
       context,
     ).matchedLocation.startsWith('/c/');
-    if (post.authorRole == 'contractor' && !onContractorSide) {
-      context.push(Routes.homeownerContractorProfilePath(post.authorId));
+    final current = ref.read(currentSessionProvider)?.user.id;
+    if (post.authorId == current) {
+      context.go(
+        onContractorSide ? Routes.contractorProfile : Routes.homeownerProfile,
+      );
+    } else if (post.authorRole == 'contractor') {
+      context.push(
+        onContractorSide
+            ? Routes.contractorCommunityContractorProfilePath(post.authorId)
+            : Routes.homeownerContractorProfilePath(post.authorId),
+      );
+    } else if (onContractorSide) {
+      context.push(Routes.contractorHomeownerProfilePath(post.authorId));
+    } else {
+      context.push(Routes.homeownerCommunityMemberPath(post.authorId));
     }
   }
 
-  void _sendComment() {
+  void _navigateToCommenter(PostComment comment) {
+    final current = ref.read(currentSessionProvider)?.user.id;
+    final onContractorSide = GoRouterState.of(
+      context,
+    ).matchedLocation.startsWith('/c/');
+    if (comment.userId == current) {
+      context.go(
+        onContractorSide ? Routes.contractorProfile : Routes.homeownerProfile,
+      );
+      return;
+    }
+
+    if (comment.userRole == 'contractor') {
+      context.push(
+        onContractorSide
+            ? Routes.contractorCommunityContractorProfilePath(comment.userId)
+            : Routes.homeownerContractorProfilePath(comment.userId),
+      );
+    } else if (onContractorSide) {
+      context.push(Routes.contractorHomeownerProfilePath(comment.userId));
+    } else {
+      context.push(Routes.homeownerCommunityMemberPath(comment.userId));
+    }
+  }
+
+  Future<void> _sendComment() async {
     final text = _commentCtrl.text.trim();
     if (text.isEmpty || _sending) return;
+    final editing = _editingComment;
+    final replyingTo = _replyingTo;
     setState(() => _sending = true);
-    ref
-        .read(postControllerProvider.notifier)
-        .addComment(widget.post.id, text)
-        .then((_) {
-          _commentCtrl.clear();
-          _commentFocus.unfocus();
-          if (mounted) {
-            BatshSnack.success(context, context.l10n.commentPosted);
-          }
-        })
-        .catchError((e) {
-          if (mounted) {
-            final msg = e.toString().contains('rate_limit')
-                ? context.l10n.commentRateLimitError
-                : context.l10n.unknownErrorRetry;
-            BatshSnack.error(context, msg);
-          }
-        })
-        .whenComplete(() {
-          if (mounted) setState(() => _sending = false);
+    try {
+      final controller = ref.read(postControllerProvider.notifier);
+      if (editing != null) {
+        await controller.updateComment(
+          postId: widget.post.id,
+          commentId: editing.id,
+          content: text,
+        );
+      } else {
+        await controller.addComment(
+          widget.post.id,
+          text,
+          parentCommentId: replyingTo?.id,
+        );
+      }
+      _commentCtrl.clear();
+      _commentFocus.unfocus();
+      if (mounted) {
+        setState(() {
+          _replyingTo = null;
+          _editingComment = null;
         });
+        BatshSnack.success(
+          context,
+          editing == null
+              ? context.l10n.commentPosted
+              : context.l10n.commentUpdated,
+        );
+      }
+    } catch (error) {
+      if (mounted) {
+        final msg = error.toString().contains('rate_limit')
+            ? context.l10n.commentRateLimitError
+            : context.l10n.unknownErrorRetry;
+        BatshSnack.error(context, msg);
+      }
+    } finally {
+      if (mounted) setState(() => _sending = false);
+    }
+  }
+
+  void _replyTo(PostComment comment) {
+    setState(() {
+      _replyingTo = comment;
+      _editingComment = null;
+      _commentCtrl.clear();
+    });
+    _commentFocus.requestFocus();
+  }
+
+  void _editComment(PostComment comment) {
+    setState(() {
+      _editingComment = comment;
+      _replyingTo = null;
+      _commentCtrl.text = comment.content;
+      _commentCtrl.selection = TextSelection.collapsed(
+        offset: _commentCtrl.text.length,
+      );
+    });
+    _commentFocus.requestFocus();
+  }
+
+  void _cancelCommentMode() {
+    _commentCtrl.clear();
+    _commentFocus.unfocus();
+    setState(() {
+      _replyingTo = null;
+      _editingComment = null;
+    });
+  }
+
+  void _toggleCommentLike(PostComment comment) {
+    _ensureAuth(() async {
+      try {
+        await ref
+            .read(postControllerProvider.notifier)
+            .toggleCommentLike(postId: widget.post.id, comment: comment);
+      } catch (_) {
+        if (mounted) BatshSnack.error(context, context.l10n.unknownErrorRetry);
+      }
+    });
+  }
+
+  Future<void> _confirmDeleteComment(PostComment comment) async {
+    final shouldDelete = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(context.l10n.deleteComment),
+        content: Text(context.l10n.deleteCommentConfirm),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: Text(context.l10n.cancel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: Text(
+              context.l10n.deleteComment,
+              style: TextStyle(color: context.colorScheme.error),
+            ),
+          ),
+        ],
+      ),
+    );
+    if (shouldDelete != true || !mounted) return;
+    try {
+      await ref
+          .read(postControllerProvider.notifier)
+          .deleteComment(postId: widget.post.id, commentId: comment.id);
+      if (mounted) BatshSnack.success(context, context.l10n.commentDeleted);
+    } catch (_) {
+      if (mounted) BatshSnack.error(context, context.l10n.unknownErrorRetry);
+    }
   }
 
   @override
@@ -210,10 +341,10 @@ class _PostDetailContentState extends ConsumerState<_PostDetailContent> {
                           width: double.infinity,
                           fit: BoxFit.cover,
                           placeholder: (_, __) => Container(
-                            color: context.colorScheme.surfaceVariant,
+                            color: context.colorScheme.surfaceContainerHighest,
                           ),
                           errorWidget: (_, __, ___) => Container(
-                            color: context.colorScheme.surfaceVariant,
+                            color: context.colorScheme.surfaceContainerHighest,
                             child: Icon(
                               Icons.broken_image,
                               color: context.colorScheme.onSurfaceVariant,
@@ -382,12 +513,12 @@ class _PostDetailContentState extends ConsumerState<_PostDetailContent> {
               const SizedBox(height: 2),
               Row(
                 children: [
-                  PostTypeIcon(postType: post.postType),
-                  const SizedBox(width: 4),
-                  Text(
-                    _postTypeLabel(post.postType),
-                    style: BatshTypography.bodySm,
+                  PostTypeIcon(
+                    postType: post.postType,
+                    isQuestion: post.isQuestion,
                   ),
+                  const SizedBox(width: 4),
+                  Text(_postTypeLabel(post), style: BatshTypography.bodySm),
                   const SizedBox(width: BatshSpacing.xs),
                   if (post.governorate != null) ...[
                     Text(
@@ -451,15 +582,28 @@ class _PostDetailContentState extends ConsumerState<_PostDetailContent> {
   }
 
   Widget _buildComment(PostComment c) {
+    final session = ref.read(currentSessionProvider);
+    final isOwner = session?.user.id == c.userId;
+    final name = c.userName?.trim().isNotEmpty == true
+        ? c.userName!.trim()
+        : context.l10n.communityMemberFallback;
     return Padding(
-      padding: const EdgeInsets.only(bottom: BatshSpacing.sm),
+      padding: EdgeInsetsDirectional.only(
+        start: c.parentCommentId == null ? 0 : BatshSpacing.lg,
+        bottom: BatshSpacing.sm,
+      ),
       child: Row(
+        textDirection: TextDirection.rtl,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          AvatarWithInitials(
-            imageUrl: c.userAvatarUrl,
-            name: c.userName ?? '',
-            radius: 16,
+          BatshPressable(
+            onTap: () => _navigateToCommenter(c),
+            semanticLabel: name,
+            child: AvatarWithInitials(
+              imageUrl: c.userAvatarUrl,
+              name: name,
+              radius: 16,
+            ),
           ),
           const SizedBox(width: BatshSpacing.sm),
           Expanded(
@@ -470,7 +614,18 @@ class _PostDetailContentState extends ConsumerState<_PostDetailContent> {
                 children: [
                   Row(
                     children: [
-                      Text(c.userName ?? '', style: BatshTypography.labelSm),
+                      Expanded(
+                        child: BatshPressable(
+                          onTap: () => _navigateToCommenter(c),
+                          semanticLabel: name,
+                          child: Text(
+                            name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: BatshTypography.labelSm,
+                          ),
+                        ),
+                      ),
                       const Spacer(),
                       Text(
                         _timeAgo(c.createdAt),
@@ -480,6 +635,70 @@ class _PostDetailContentState extends ConsumerState<_PostDetailContent> {
                   ),
                   const SizedBox(height: 4),
                   Text(c.content, style: BatshTypography.bodySm),
+                  if (c.wasEdited) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      context.l10n.commentEditedLabel,
+                      style: BatshTypography.labelSm.copyWith(
+                        color: context.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: BatshSpacing.xs),
+                  Wrap(
+                    spacing: BatshSpacing.xs,
+                    runSpacing: BatshSpacing.xxs,
+                    children: [
+                      _ActionBtn(
+                        icon: c.isLiked
+                            ? Icons.favorite_rounded
+                            : Icons.favorite_border_rounded,
+                        color: c.isLiked ? context.colorScheme.error : null,
+                        label: c.likeCount > 0
+                            ? '${c.likeCount}'
+                            : c.isLiked
+                            ? context.l10n.commentUnlike
+                            : context.l10n.commentLike,
+                        onTap: () => _toggleCommentLike(c),
+                        haptic: HapticStrength.light,
+                      ),
+                      _ActionBtn(
+                        icon: Icons.reply_outlined,
+                        label: context.l10n.commentReply,
+                        onTap: () => _replyTo(c),
+                      ),
+                      if (isOwner)
+                        PopupMenuButton<String>(
+                          tooltip: context.l10n.editComment,
+                          padding: EdgeInsets.zero,
+                          onSelected: (value) {
+                            if (value == 'edit') _editComment(c);
+                            if (value == 'delete') {
+                              _confirmDeleteComment(c);
+                            }
+                          },
+                          itemBuilder: (_) => [
+                            PopupMenuItem(
+                              value: 'edit',
+                              child: Text(context.l10n.editComment),
+                            ),
+                            PopupMenuItem(
+                              value: 'delete',
+                              child: Text(
+                                context.l10n.deleteComment,
+                                style: TextStyle(
+                                  color: context.colorScheme.error,
+                                ),
+                              ),
+                            ),
+                          ],
+                          child: const Padding(
+                            padding: EdgeInsets.all(BatshSpacing.xs),
+                            child: Icon(Icons.more_horiz_rounded),
+                          ),
+                        ),
+                    ],
+                  ),
                 ],
               ),
             ),
@@ -506,46 +725,97 @@ class _PostDetailContentState extends ConsumerState<_PostDetailContent> {
           top: BorderSide(color: context.colorScheme.outlineVariant),
         ),
       ),
-      child: Row(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Expanded(
-            child: TextField(
-              controller: _commentCtrl,
-              focusNode: _commentFocus,
-              decoration: InputDecoration(
-                hintText: context.l10n.commentHint,
-                border: InputBorder.none,
-                isDense: true,
-              ),
-              textInputAction: TextInputAction.send,
-              onSubmitted: (_) => _sendComment(),
-            ),
-          ),
-          GestureDetector(
-            onTap: _sending ? null : _sendComment,
-            child: Padding(
-              padding: const EdgeInsets.all(BatshSpacing.xs),
-              child: _sending
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : Text(
-                      context.l10n.postComment,
-                      style: BatshTypography.labelMd.copyWith(
-                        color: context.colorScheme.primary,
-                      ),
+          if (_editingComment != null || _replyingTo != null)
+            Row(
+              children: [
+                Icon(
+                  _editingComment != null
+                      ? Icons.edit_outlined
+                      : Icons.reply_outlined,
+                  size: BatshIconSize.sm,
+                  color: context.colorScheme.primary,
+                ),
+                const SizedBox(width: BatshSpacing.xs),
+                Expanded(
+                  child: Text(
+                    _editingComment != null
+                        ? context.l10n.editComment
+                        : '${context.l10n.replyingToComment}: ${_replyingTo!.userName ?? context.l10n.communityMemberFallback}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: BatshTypography.labelSm.copyWith(
+                      color: context.colorScheme.onSurfaceVariant,
                     ),
+                  ),
+                ),
+                IconButton(
+                  tooltip: context.l10n.cancel,
+                  onPressed: _cancelCommentMode,
+                  icon: const Icon(Icons.close_rounded),
+                  iconSize: BatshIconSize.sm,
+                ),
+              ],
             ),
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _commentCtrl,
+                  focusNode: _commentFocus,
+                  decoration: InputDecoration(
+                    hintText: context.l10n.commentHint,
+                    border: InputBorder.none,
+                    isDense: true,
+                  ),
+                  textInputAction: TextInputAction.send,
+                  onSubmitted: (_) => _sendComment(),
+                ),
+              ),
+              Semantics(
+                button: true,
+                label: _editingComment != null
+                    ? context.l10n.saveChanges
+                    : context.l10n.postComment,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(
+                    minWidth: 44,
+                    minHeight: 44,
+                  ),
+                  child: GestureDetector(
+                    onTap: _sending ? null : _sendComment,
+                    child: Center(
+                      child: _sending
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : Text(
+                              _editingComment != null
+                                  ? context.l10n.saveChanges
+                                  : context.l10n.postComment,
+                              style: BatshTypography.labelMd.copyWith(
+                                color: context.colorScheme.primary,
+                              ),
+                            ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
     );
   }
 
-  String _postTypeLabel(PostType type) {
-    switch (type) {
+  String _postTypeLabel(Post post) {
+    if (post.isQuestion) return context.l10n.communityPostKindQuestion;
+
+    switch (post.postType) {
       case PostType.projectShowcase:
         return context.l10n.postTypeProjectShowcase;
       case PostType.tip:

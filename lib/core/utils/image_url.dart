@@ -32,3 +32,12 @@ String sizedImageUrl(String url, {required int width, int quality = 75}) {
   return '${url.replaceFirst(marker, '/storage/v1/render/image/public/')}'
       '?width=$width&quality=$quality';
 }
+
+bool isDisplayableImageUrl(String? value) {
+  final raw = value?.trim();
+  if (raw == null || raw.isEmpty) return false;
+  final uri = Uri.tryParse(raw);
+  return uri != null &&
+      (uri.scheme == 'http' || uri.scheme == 'https') &&
+      uri.host.isNotEmpty;
+}

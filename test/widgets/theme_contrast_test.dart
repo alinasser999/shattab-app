@@ -1,4 +1,5 @@
 import 'package:batsh/core/theme/batsh_theme.dart';
+import 'package:batsh/core/widgets/batsh_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -70,6 +71,30 @@ void main() {
       final dark = BatshTheme.dark().textTheme.bodyMedium!.color;
       expect(light, isNot(dark));
     });
+
+    for (final (name, build) in <(String, ThemeData Function())>[
+      ('light', BatshTheme.light),
+      ('dark', BatshTheme.dark),
+    ]) {
+      testWidgets('$name: scaffold title uses the current theme ink', (
+        tester,
+      ) async {
+        final theme = build();
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: theme,
+            home: const BatshScaffold(
+              title: 'Account',
+              body: SizedBox.shrink(),
+              animateEntrance: false,
+            ),
+          ),
+        );
+
+        final title = tester.widget<Text>(find.text('Account'));
+        expect(title.style?.color, theme.colorScheme.onSurface);
+      });
+    }
   });
 
   group('Arabic type metrics', () {

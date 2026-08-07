@@ -7,8 +7,8 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
 import 'package:batsh/core/l10n/l10n_extension.dart';
-import '../../../core/theme/batsh_colors.dart';
 import '../../../core/theme/batsh_radius.dart';
+import '../../../core/theme/batsh_shadows.dart';
 import '../../../core/theme/batsh_spacing.dart';
 import '../../../core/theme/batsh_typography.dart';
 import '../../../core/widgets/batsh_button.dart';
@@ -115,101 +115,132 @@ class _HomeownerEditProfileScreenState
 
     return BatshScaffold(
       title: context.l10n.editProfile,
+      leading: IconButton(
+        tooltip: context.l10n.back,
+        onPressed: _busy ? null : () => context.pop(),
+        icon: const Icon(Icons.arrow_forward_rounded),
+      ),
+      padding: EdgeInsets.zero,
+      animateEntrance: false,
       body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const SizedBox(height: BatshSpacing.xl),
-            _AvatarPicker(
-              file: _newAvatar,
-              existingUrl: currentAvatarUrl,
-              name: currentName,
-              onTap: () async {
-                final f = await _pickImage();
-                if (f != null) setState(() => _newAvatar = f);
-              },
+        padding: const EdgeInsets.fromLTRB(
+          BatshSpacing.md,
+          BatshSpacing.sm,
+          BatshSpacing.md,
+          BatshSpacing.xxxxl,
+        ),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: context.colorScheme.surfaceContainerLowest,
+            borderRadius: BatshRadius.brXxl,
+            border: Border.all(
+              color: context.colorScheme.outlineVariant.withValues(alpha: 0.62),
             ),
-            const SizedBox(height: BatshSpacing.xs),
-            Center(
-              child: Text(
-                context.l10n.changePhoto,
-                style: BatshTypography.labelSm.copyWith(
-                  color: context.colorScheme.onSurfaceVariant,
+            boxShadow: BatshShadows.soft,
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(BatshSpacing.md),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const SizedBox(height: BatshSpacing.xl),
+                _AvatarPicker(
+                  file: _newAvatar,
+                  existingUrl: currentAvatarUrl,
+                  name: currentName,
+                  onTap: () async {
+                    final f = await _pickImage();
+                    if (f != null) setState(() => _newAvatar = f);
+                  },
                 ),
-              ),
-            ),
-            const SizedBox(height: BatshSpacing.lg),
-            BatshTextField(
-              controller: _nameCtrl,
-              label: context.l10n.profileNameLabel,
-              maxLength: 60,
-            ),
-            const SizedBox(height: BatshSpacing.gutter),
-            BatshTextField(
-              label: context.l10n.profilePhoneLabel,
-              initialValue: currentPhone,
-              enabled: false,
-            ),
-            if (currentPhone.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(top: BatshSpacing.xs),
-                child: Text(
-                  context.l10n.phoneNotEditable,
-                  style: BatshTypography.labelSm.copyWith(
-                    color: context.colorScheme.onSurfaceVariant,
+                const SizedBox(height: BatshSpacing.xs),
+                Center(
+                  child: Text(
+                    context.l10n.changePhoto,
+                    style: BatshTypography.labelSm.copyWith(
+                      color: context.colorScheme.onSurfaceVariant,
+                    ),
                   ),
                 ),
-              ),
-            const SizedBox(height: BatshSpacing.lg),
-            _SectionDivider(context.l10n.housingData),
-            const SizedBox(height: BatshSpacing.gutter),
-            _ApartmentSelector(
-              value: _apartmentType,
-              onChanged: (v) => setState(() => _apartmentType = v),
-            ),
-            const SizedBox(height: BatshSpacing.gutter),
-            _CityDropdown(
-              value: _city,
-              onChanged: (v) {
-                setState(() {
-                  _city = v;
-                  _district = null;
-                });
-              },
-            ),
-            if (_city != null) ...[
-              const SizedBox(height: BatshSpacing.gutter),
-              _DistrictDropdown(
-                value: _district,
-                districts: _districtsForCity,
-                onChanged: (v) => setState(() => _district = v),
-              ),
-            ],
-            const SizedBox(height: BatshSpacing.lg),
-            _SectionDivider(context.l10n.interestAreas),
-            const SizedBox(height: BatshSpacing.sm),
-            _InterestChips(
-              selected: _interests,
-              onChanged: (v) => setState(() => _interests = v),
-            ),
-            if (_error != null) ...[
-              const SizedBox(height: BatshSpacing.gutter),
-              Text(
-                _error!,
-                style: BatshTypography.labelMd.copyWith(
-                  color: context.colorScheme.error,
+                const SizedBox(height: BatshSpacing.lg),
+                BatshTextField(
+                  controller: _nameCtrl,
+                  label: context.l10n.profileNameLabel,
+                  maxLength: 60,
                 ),
-                textAlign: TextAlign.center,
-              ),
-            ],
-            const SizedBox(height: BatshSpacing.xl),
-            BatshButton(
-              label: context.l10n.saveProfile,
-              onPressed: _busy ? null : _save,
-              isLoading: _busy,
+                const SizedBox(height: BatshSpacing.gutter),
+                BatshTextField(
+                  label: context.l10n.profilePhoneLabel,
+                  initialValue: currentPhone,
+                  enabled: false,
+                ),
+                if (currentPhone.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: BatshSpacing.xs),
+                    child: Text(
+                      context.l10n.phoneNotEditable,
+                      style: BatshTypography.labelSm.copyWith(
+                        color: context.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                const SizedBox(height: BatshSpacing.lg),
+                _SectionDivider(context.l10n.housingData),
+                const SizedBox(height: BatshSpacing.gutter),
+                _ApartmentSelector(
+                  value: _apartmentType,
+                  onChanged: (v) => setState(() => _apartmentType = v),
+                ),
+                const SizedBox(height: BatshSpacing.gutter),
+                _CityDropdown(
+                  value: _city,
+                  onChanged: (v) {
+                    setState(() {
+                      _city = v;
+                      _district = null;
+                    });
+                  },
+                ),
+                if (_city != null) ...[
+                  const SizedBox(height: BatshSpacing.gutter),
+                  _DistrictDropdown(
+                    value: _district,
+                    districts: _districtsForCity,
+                    onChanged: (v) => setState(() => _district = v),
+                  ),
+                ],
+                const SizedBox(height: BatshSpacing.lg),
+                _SectionDivider(context.l10n.interestAreas),
+                const SizedBox(height: BatshSpacing.sm),
+                _InterestChips(
+                  selected: _interests,
+                  onChanged: (v) => setState(() => _interests = v),
+                ),
+                if (_error != null) ...[
+                  const SizedBox(height: BatshSpacing.gutter),
+                  Text(
+                    _error!,
+                    style: BatshTypography.labelMd.copyWith(
+                      color: context.colorScheme.error,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+                const SizedBox(height: BatshSpacing.xl),
+                BatshButton(
+                  label: context.l10n.saveProfile,
+                  onPressed: _busy ? null : _save,
+                  isLoading: _busy,
+                ),
+                const SizedBox(height: BatshSpacing.xs),
+                TextButton(
+                  onPressed: _busy ? null : () => context.pop(),
+                  child: Text(context.l10n.cancel),
+                ),
+                const SizedBox(height: BatshSpacing.xs),
+              ],
             ),
-            const SizedBox(height: BatshSpacing.lg),
-          ],
+          ),
         ),
       ),
     );
@@ -230,59 +261,73 @@ class _AvatarPicker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 120,
-        height: 120,
-        decoration: BoxDecoration(
-          color: context.colorScheme.primaryContainer,
-          shape: BoxShape.circle,
-          border: Border.all(color: context.colorScheme.primary, width: 2.5),
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            if (file != null)
-              Image.file(file!, fit: BoxFit.cover, width: 120, height: 120)
-            else if (existingUrl != null)
-              CachedNetworkImage(
-                imageUrl: existingUrl!,
-                fit: BoxFit.cover,
-                width: 120,
-                height: 120,
-              )
-            else
-              Text(
-                name.isNotEmpty ? name.characters.first : '؟',
-                style: BatshTypography.displayLg.copyWith(
-                  color: context.colorScheme.onPrimaryContainer,
-                ),
-              ),
-            Positioned(
-              bottom: 0,
-              right: 0,
-              child: Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: context.colorScheme.primary,
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: context.colorScheme.background,
-                    width: 2,
+    return Semantics(
+      button: true,
+      label: context.l10n.editProfileImage,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          width: 120,
+          height: 120,
+          decoration: BoxDecoration(
+            color: context.colorScheme.primaryContainer,
+            shape: BoxShape.circle,
+            border: Border.all(color: context.colorScheme.primary, width: 2.5),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              if (file != null)
+                Image.file(file!, fit: BoxFit.cover, width: 120, height: 120)
+              else if (existingUrl != null)
+                CachedNetworkImage(
+                  imageUrl: existingUrl!,
+                  fit: BoxFit.cover,
+                  width: 120,
+                  height: 120,
+                  errorWidget: (_, _, _) => const _AvatarInitial(),
+                )
+              else
+                const _AvatarInitial(),
+              Positioned(
+                bottom: 0,
+                right: 0,
+                child: Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: context.colorScheme.primary,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: context.colorScheme.surface,
+                      width: 2,
+                    ),
+                  ),
+                  child: Icon(
+                    Icons.camera_alt,
+                    size: BatshIconSize.md,
+                    color: context.colorScheme.onPrimary,
                   ),
                 ),
-                child: Icon(
-                  Icons.camera_alt,
-                  size: BatshIconSize.md,
-                  color: context.colorScheme.onPrimary,
-                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
+      ),
+    );
+  }
+}
+
+class _AvatarInitial extends StatelessWidget {
+  const _AvatarInitial();
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      'm',
+      style: BatshTypography.displayLg.copyWith(
+        color: context.colorScheme.onPrimaryContainer,
       ),
     );
   }

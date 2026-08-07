@@ -1,5 +1,11 @@
 # Shattab — Claude Code Context
 
+> **Stale past M3.** This file stops at M3 and its M4 line below is wrong —
+> reviews, monetization, verification, moderation, a social feed, push
+> notifications, realtime, Arabic search, and a separate admin console have
+> all since shipped. **Read [`AI_ONBOARDING.md`](AI_ONBOARDING.md) first** —
+> it is the maintained current-state map. Where the two disagree, it is right.
+
 ## Quick Summary (for ChatGPT 🤖)
 **Shattab (شطب)** — Flutter marketplace for Egyptian home renovation.
 
@@ -60,7 +66,11 @@ Auth (phone OTP), onboarding flows for both roles, role-aware routing, core them
 
 ### M3 Contractor Core — ✅ DONE (2026-06-25, code-complete) — see `docs/m3-completion.md`
 Quotes (send/receive/accept/decline), contractor inbox (Tab 2), portfolio management (Tab 3), homeowner quote views, flutter_animate motion + shimmer skeletons. Migration `0005_quotes` applied live on Supabase `ajqdutehxpbbflzdovhw` (2026-06-25, via MCP).
-### M4 Comm & Polish — not started (chat, push, reviews — deferred)
+### M4 Comm & Polish — see `AI_ONBOARDING.md`, this line is stale
+Reviews, monetization, verification, moderation and a social feed shipped
+after this file was last updated. Push notifications and realtime shipped
+2026-08-07 (see `AI_ONBOARDING.md` §11). In-app chat remains explicitly out
+of scope — that part of the old M4 line is still correct.
 
 ---
 
@@ -187,4 +197,5 @@ Admin invites employees = N/A for Shattab. Role chosen at signup (homeowner vs c
 - Don't commit `.env`
 - Don't change homeowner-facing portfolio screens
 - Don't re-run migrations 0003/0004 on Supabase
-- Don't add in-app chat, push notifications, or reviews (M4)
+- Don't add in-app chat (WhatsApp/Call only — the one M4 restriction still in force)
+- Reviews, push notifications and realtime are already built — see `AI_ONBOARDING.md`

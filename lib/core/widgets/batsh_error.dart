@@ -3,8 +3,6 @@ import 'package:flutter/material.dart';
 import '../l10n/l10n_extension.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
-import '../l10n/strings.dart';
-import '../theme/batsh_colors.dart';
 import '../theme/batsh_spacing.dart';
 import '../theme/batsh_typography.dart';
 import 'batsh_button.dart';
@@ -102,11 +100,14 @@ class _AnimatedButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final availableWidth =
+        MediaQuery.sizeOf(context).width - (BatshSpacing.lg * 2);
     final widget = SizedBox(
+      width: availableWidth.clamp(0.0, 320.0),
       child: BatshButton(
         label: context.l10n.tryAgain,
         onPressed: onRetry,
-        fullWidth: false,
+        fullWidth: true,
       ),
     );
     if (reduced) return widget;

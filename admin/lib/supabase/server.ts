@@ -55,11 +55,18 @@ export async function currentAdmin() {
   const { data: isAdmin } = await supabase.rpc('is_admin');
   if (!isAdmin) return null;
 
+  const { data: level, error: levelError } = await supabase.rpc('admin_level');
+
   const { data: profile } = await supabase
     .from('profiles')
     .select('id, full_name, phone, role')
     .eq('id', user.id)
     .maybeSingle();
 
-  return { id: user.id, phone: user.phone ?? profile?.phone ?? '', name: profile?.full_name ?? '' };
+  return {
+    id: user.id,
+    phone: user.phone ?? profile?.phone ?? '',
+    name: profile?.full_name ?? '',
+    level: levelError ? null : level === 'owner' ? 'owner' : 'moderator',
+  };
 }

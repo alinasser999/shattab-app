@@ -117,9 +117,10 @@ export const PROVIDER_KIND_LABEL: Record<string, string> = {
 
 export const REPORT_REASON_LABEL: Record<string, string> = {
   spam: 'Spam',
-  harassment: 'Harassment',
-  nudity: 'Nudity',
   scam: 'Scam or fraud',
+  offensive: 'Offensive content',
+  sexual: 'Sexual content',
+  violence: 'Violence',
   impersonation: 'Impersonation',
   other: 'Other',
 };

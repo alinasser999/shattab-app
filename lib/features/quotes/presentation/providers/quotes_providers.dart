@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../../../core/analytics/app_analytics.dart';
 import '../../../briefs/domain/brief.dart';
 import '../../data/quotes_repository.dart';
 import '../../domain/quote.dart';
@@ -62,6 +65,12 @@ class QuotesController extends _$QuotesController {
           durationText: durationText,
           note: note,
         );
+    unawaited(
+      AppAnalytics.track(
+        'quote_submitted',
+        properties: {'has_price': priceMin != null || priceMax != null},
+      ),
+    );
     ref.invalidate(myQuoteForBriefProvider(briefId));
     ref.invalidate(quotesForBriefProvider(briefId));
     ref.invalidate(myQuotesProvider);
@@ -76,6 +85,12 @@ class QuotesController extends _$QuotesController {
     required QuoteStatus status,
   }) async {
     await ref.read(quotesRepositoryProvider).setStatus(quoteId, status);
+    unawaited(
+      AppAnalytics.track(
+        'quote_status_changed',
+        properties: {'status': status.name},
+      ),
+    );
     ref.invalidate(quotesForBriefProvider(briefId));
     ref.invalidate(myQuoteForBriefProvider(briefId));
     ref.invalidate(myQuotesProvider);

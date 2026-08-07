@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../theme/batsh_colors.dart';
 import '../theme/theme_extension.dart';
 
 /// Read-only star row for a fractional rating in [0, 5].

@@ -14,6 +14,7 @@ String? roleGuard(Ref ref, GoRouterState state) {
   final session = ref.read(currentSessionProvider);
 
   if (session == null) {
+    if (path == Routes.notifications) return Routes.login;
     if (path.startsWith('/login')) return null;
     // Guests may browse the homeowner shell (Discover, contractor profiles,
     // portfolios) freely — sign-in is gated at the point of a write action
@@ -30,7 +31,14 @@ String? roleGuard(Ref ref, GoRouterState state) {
   final profileAsync = ref.read(currentProfileProvider);
   // Wait until profile resolves; show splash in the meantime.
   if (profileAsync.isLoading) {
-    return path == Routes.splash ? null : Routes.splash;
+    // Keep an authenticated portal deep link alive while its screen-level
+    // providers resolve. Otherwise a refresh of /c/profile/settings falls
+    // through splash and loses the original destination.
+    final isPortalPath =
+        path.startsWith(Routes.homeownerShell) ||
+        path.startsWith(Routes.contractorShell);
+    if (isPortalPath || path == Routes.splash) return null;
+    return Routes.splash;
   }
 
   final profile = profileAsync.value;

@@ -3,8 +3,6 @@ import 'package:flutter/material.dart';
 
 import '../l10n/l10n_extension.dart';
 
-import '../l10n/strings.dart';
-import '../theme/batsh_colors.dart';
 import '../theme/batsh_radius.dart';
 import '../theme/batsh_spacing.dart';
 import '../theme/batsh_typography.dart';
@@ -89,10 +87,22 @@ class _BatshPhotoViewerState extends State<BatshPhotoViewer> {
                       ),
                     ),
                   ),
-                  errorWidget: (_, _, _) => const Icon(
-                    Icons.broken_image_outlined,
-                    color: Colors.white38,
-                    size: BatshIconSize.xl,
+                  errorWidget: (_, _, _) => Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.broken_image_outlined,
+                        color: Colors.white38,
+                        size: BatshIconSize.xl,
+                      ),
+                      const SizedBox(height: BatshSpacing.sm),
+                      Text(
+                        context.l10n.imageUnavailable,
+                        style: BatshTypography.labelMd.copyWith(
+                          color: Colors.white60,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -122,14 +132,17 @@ class _BatshPhotoViewerState extends State<BatshPhotoViewer> {
                           horizontal: BatshSpacing.md,
                           vertical: BatshSpacing.sm,
                         ),
-                        child: Text(
-                          context.l10n.photoIndexOf(
-                            _index + 1,
-                            widget.urls.length,
-                          ),
-                          style: BatshTypography.labelMd.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w700,
+                        child: Directionality(
+                          textDirection: TextDirection.ltr,
+                          child: Text(
+                            context.l10n.photoIndexOf(
+                              _index + 1,
+                              widget.urls.length,
+                            ),
+                            style: BatshTypography.labelMd.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
                         ),
                       ),

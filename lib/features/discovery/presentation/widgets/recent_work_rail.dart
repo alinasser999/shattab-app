@@ -1,8 +1,8 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/l10n/catalog_labels.dart';
 import '../../../../core/l10n/l10n_extension.dart';
 import '../../../../core/router/routes.dart';
 import '../../../../core/theme/batsh_radius.dart';
@@ -10,198 +10,282 @@ import '../../../../core/theme/batsh_shadows.dart';
 import '../../../../core/theme/batsh_spacing.dart';
 import '../../../../core/theme/batsh_typography.dart';
 import '../../../../core/theme/theme_extension.dart';
-import '../../../../core/utils/image_url.dart';
-import '../../../../core/widgets/batsh_initial_plate.dart';
 import '../../../../core/widgets/batsh_pressable.dart';
 import '../../../../core/widgets/batsh_section_header.dart';
 import '../../../../core/widgets/batsh_shimmer.dart';
 import '../../../portfolio/data/portfolio_repository.dart';
 import '../../../portfolio/domain/portfolio_project.dart';
+import 'mockup_assets.dart';
 
-/// Finished work, not the people who did it.
-///
-/// Every other section on discover is contractor cards under a different sort,
-/// so a homeowner browsing a renovation marketplace never actually saw a
-/// renovation. This is the one rail that shows the product, and the one that
-/// changes on its own as contractors post.
-///
-/// The whole rail disappears when there is nothing to show. An empty state
-/// here would be a section header apologising for itself, and discover has
-/// three other sections that stand without it.
+/// A dark visual chapter that keeps the discovery screen from becoming a
+/// stack of identical cream cards. Real projects win; visual fallbacks keep a
+/// new catalogue from looking unfinished while a professional builds a folio.
 class RecentWorkRail extends ConsumerWidget {
-  const RecentWorkRail({super.key});
+  const RecentWorkRail({super.key, this.skip = 0, this.fallbackContractorId});
 
-  /// Tall enough to read as photography rather than as thumbnails, short
-  /// enough that the next section stays on screen and the rail still reads as
-  /// one band within a scroll.
-  static const double railHeight = 208;
+  final int skip;
+  final String? fallbackContractorId;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final projects = ref.watch(recentProjectsProvider);
-
     return projects.when(
-      // A failed rail is not worth an error box on the primary browse screen;
-      // the sections around it still work. Fail quiet.
-      error: (_, _) => const SizedBox.shrink(),
-      loading: () => const _RailFrame(child: _RailSkeleton()),
-      data: (items) {
-        if (items.isEmpty) return const SizedBox.shrink();
+      error: (_, _) => _RailFrame(
+        items: _fallbackItems(context),
+        fallbackContractorId: fallbackContractorId,
+      ),
+      loading: () => const _RailFrame.loading(),
+      data: (all) {
+        final actual = skip > 0 ? all.skip(skip).toList() : all;
+        final items = actual.isEmpty
+            ? _fallbackItems(context)
+            : actual.map(_RailItem.fromProject).toList();
         return _RailFrame(
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(
-              horizontal: BatshSpacing.sectionH,
-            ),
-            itemCount: items.length,
-            separatorBuilder: (_, _) => const SizedBox(width: BatshSpacing.sm),
-            itemBuilder: (_, i) => _WorkTile(project: items[i]),
-          ),
+          items: items,
+          fallbackContractorId: actual.isEmpty ? fallbackContractorId : null,
         );
       },
     );
   }
 }
 
-/// Section header plus the fixed-height band the rail scrolls inside.
 class _RailFrame extends StatelessWidget {
-  const _RailFrame({required this.child});
-  final Widget child;
+  const _RailFrame({required this.items, this.fallbackContractorId})
+    : loading = false;
+
+  const _RailFrame.loading()
+    : items = const [],
+      fallbackContractorId = null,
+      loading = true;
+
+  final List<_RailItem> items;
+  final String? fallbackContractorId;
+  final bool loading;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(
-            BatshSpacing.sectionH,
-            BatshSpacing.lg,
-            BatshSpacing.sectionH,
-            BatshSpacing.sm,
-          ),
-          child: BatshSectionHeader(title: context.l10n.recentWorkTitle),
-        ),
-        SizedBox(height: RecentWorkRail.railHeight, child: child),
-      ],
+    final tileWidth = ((MediaQuery.sizeOf(context).width - 64) / 3).clamp(
+      118.0,
+      210.0,
     );
-  }
-}
-
-/// One project: the cover photo, with the title over the foot of it.
-///
-/// Text on a photo needs a scrim, and a scrim greys the photograph, which is
-/// why the contractor card stopped doing it. Here it earns its place: the tile
-/// *is* the photo, so a caption underneath would either double the tile's
-/// height or shrink the image to a thumbnail. The scrim is bottom-weighted and
-/// only as deep as the title needs.
-class _WorkTile extends StatelessWidget {
-  const _WorkTile({required this.project});
-  final PortfolioProject project;
-
-  static const double width = 268;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: width,
-      child: DecoratedBox(
-        // Shadow outside the clip: a clipped Material clips its own shadow.
-        decoration: BoxDecoration(
-          borderRadius: BatshRadius.brLg,
-          boxShadow: BatshShadows.soft,
-        ),
-        child: ClipRRect(
-          borderRadius: BatshRadius.brLg,
-          child: BatshPressable(
-            semanticLabel: project.title,
-            onTap: () => context.push(
-              Routes.homeownerProjectDetailPath(
-                project.contractorId,
-                project.id,
-              ),
+    return Container(
+      margin: const EdgeInsets.only(top: BatshSpacing.sm),
+      padding: const EdgeInsets.symmetric(vertical: BatshSpacing.md),
+      color: context.colorScheme.inverseSurface,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              BatshSpacing.sectionH,
+              0,
+              BatshSpacing.sectionH,
+              BatshSpacing.md,
             ),
-            child: Stack(
-              fit: StackFit.expand,
+            child: Row(
               children: [
-                CachedNetworkImage(
-                  imageUrl: sizedImageUrl(project.coverPhotoUrl, width: 560),
-                  fit: BoxFit.cover,
-                  // Tile is 268dp wide; 2x covers high-DPI without decoding a
-                  // full upload on the cheap Android hardware that is most of
-                  // this market.
-                  memCacheWidth: 560,
-                  placeholder: (_, _) =>
-                      ColoredBox(color: context.colorScheme.surfaceContainer),
-                  errorWidget: (_, _, _) =>
-                      BatshInitialPlate(name: project.title),
-                ),
-                const IgnorePointer(
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.bottomCenter,
-                        end: Alignment.center,
-                        colors: [Color(0xC2000000), Color(0x00000000)],
-                      ),
-                    ),
+                Expanded(
+                  child: BatshSectionHeader(
+                    title:
+                        items.isNotEmpty &&
+                            items.every((item) => item.isPlaceholder)
+                        ? context.l10n.workInspirationTitle
+                        : context.l10n.recentWorkTitle,
+                    emphasis: BatshSectionEmphasis.major,
+                    color: context.colorScheme.onInverseSurface,
+                    padding: EdgeInsets.zero,
                   ),
                 ),
-                PositionedDirectional(
-                  start: BatshSpacing.sm,
-                  end: BatshSpacing.sm,
-                  bottom: BatshSpacing.sm,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        project.title,
-                        style: BatshTypography.labelLg.copyWith(
-                          color: Colors.white,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      if (project.location != null &&
-                          project.location!.isNotEmpty)
-                        Text(
-                          project.location!,
-                          style: BatshTypography.bodySm.copyWith(
-                            color: Colors.white.withValues(alpha: 0.82),
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                    ],
+                TextButton(
+                  onPressed: () => context.push(Routes.homeownerCompletedWork),
+                  child: Text(
+                    context.l10n.viewAll,
+                    style: BatshTypography.labelMd.copyWith(
+                      color: context.colorScheme.onInverseSurface,
+                    ),
                   ),
                 ),
               ],
             ),
           ),
+          SizedBox(
+            height: 166,
+            child: loading
+                ? ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: BatshSpacing.sectionH,
+                    ),
+                    itemCount: 3,
+                    separatorBuilder: (_, _) =>
+                        const SizedBox(width: BatshSpacing.sm),
+                    itemBuilder: (_, _) => BatshShimmerBox(
+                      width: tileWidth,
+                      height: 166,
+                      borderRadius: BatshRadius.brLg,
+                    ),
+                  )
+                : ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: BatshSpacing.sectionH,
+                    ),
+                    itemCount: items.length,
+                    separatorBuilder: (_, _) =>
+                        const SizedBox(width: BatshSpacing.sm),
+                    itemBuilder: (_, index) {
+                      final item = items[index];
+                      return SizedBox(
+                        width: tileWidth,
+                        child: _WorkTile(
+                          item: item,
+                          fallbackContractorId: fallbackContractorId,
+                        ),
+                      );
+                    },
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _WorkTile extends StatelessWidget {
+  const _WorkTile({required this.item, this.fallbackContractorId});
+
+  final _RailItem item;
+  final String? fallbackContractorId;
+
+  @override
+  Widget build(BuildContext context) {
+    final onTap = item.projectId != null && item.contractorId != null
+        ? () => context.push(
+            Routes.homeownerProjectDetailPath(
+              item.contractorId!,
+              item.projectId!,
+            ),
+          )
+        : fallbackContractorId == null
+        ? null
+        : () => context.push(
+            Routes.homeownerContractorProfilePath(fallbackContractorId!),
+          );
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: BatshRadius.brLg,
+        boxShadow: BatshShadows.soft,
+      ),
+      child: ClipRRect(
+        borderRadius: BatshRadius.brLg,
+        child: BatshPressable(
+          onTap: onTap,
+          semanticLabel: item.title,
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              MockupImage(url: item.url, memCacheWidth: 560),
+              const IgnorePointer(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.bottomCenter,
+                      end: Alignment.center,
+                      colors: [Color(0xD9000000), Color(0x00000000)],
+                    ),
+                  ),
+                ),
+              ),
+              if (item.isPlaceholder)
+                const PositionedDirectional(
+                  top: BatshSpacing.sm,
+                  end: BatshSpacing.sm,
+                  child: MockupSampleBadge(),
+                ),
+              PositionedDirectional(
+                start: BatshSpacing.sm,
+                end: BatshSpacing.sm,
+                bottom: BatshSpacing.sm,
+                child: Directionality(
+                  textDirection: TextDirection.rtl,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        item.title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: BatshTypography.labelMd.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      Text(
+                        item.subtitle,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: BatshTypography.labelSm.copyWith(
+                          color: Colors.white.withValues(alpha: 0.84),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
-/// Three tiles of shimmer at the real tile's width and radius, so the swap to
-/// content does not shift the layout.
-class _RailSkeleton extends StatelessWidget {
-  const _RailSkeleton();
+class _RailItem {
+  const _RailItem({
+    required this.url,
+    required this.title,
+    required this.subtitle,
+    this.projectId,
+    this.contractorId,
+    this.isPlaceholder = false,
+  });
 
-  @override
-  Widget build(BuildContext context) {
-    return ListView.separated(
-      scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.symmetric(horizontal: BatshSpacing.sectionH),
-      itemCount: 3,
-      separatorBuilder: (_, _) => const SizedBox(width: BatshSpacing.sm),
-      itemBuilder: (_, _) => const BatshShimmerBox(
-        width: _WorkTile.width,
-        height: RecentWorkRail.railHeight,
-        borderRadius: BatshRadius.brLg,
-      ),
-    );
-  }
+  factory _RailItem.fromProject(PortfolioProject project) => _RailItem(
+    url: project.coverPhotoUrl,
+    title: project.title,
+    subtitle: project.location ?? project.category ?? '',
+    projectId: project.id,
+    contractorId: project.contractorId,
+    isPlaceholder: false,
+  );
+
+  final String url;
+  final String title;
+  final String subtitle;
+  final String? projectId;
+  final String? contractorId;
+  final bool isPlaceholder;
 }
+
+List<_RailItem> _fallbackItems(BuildContext context) => [
+  _RailItem(
+    url: mockupPortfolioImages[0],
+    title: localizedSpecialtyLabel(context, 'full_reno'),
+    subtitle: localizedSpecialtyLabel(context, 'design'),
+    isPlaceholder: true,
+  ),
+  _RailItem(
+    url: mockupPortfolioImages[1],
+    title: localizedSpecialtyLabel(context, 'design'),
+    subtitle: localizedSpecialtyLabel(context, 'full_reno'),
+    isPlaceholder: true,
+  ),
+  _RailItem(
+    url: mockupPortfolioImages[2],
+    title: localizedSpecialtyLabel(context, 'paint'),
+    subtitle: localizedSpecialtyLabel(context, 'full_reno'),
+    isPlaceholder: true,
+  ),
+];

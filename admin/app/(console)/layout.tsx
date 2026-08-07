@@ -43,6 +43,13 @@ export default async function ConsoleLayout({ children }: { children: React.Reac
           <p className="truncate px-1.5 text-xs text-ink-2" dir="auto" title={admin.phone}>
             {admin.name || admin.phone || 'Admin'}
           </p>
+          <p className="px-1.5 text-2xs text-ink-3">
+            {admin.level === 'owner'
+              ? 'Owner access'
+              : admin.level === 'moderator'
+                ? 'Moderator access'
+                : 'Admin access'}
+          </p>
           {/* A form POST, not a link: sign-out must not be reachable by GET. */}
           <form action="/api/signout" method="post" className="mt-1.5">
             <Button type="submit" variant="ghost" size="sm" className="w-full justify-start">

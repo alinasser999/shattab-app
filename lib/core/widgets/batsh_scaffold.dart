@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
-import '../theme/batsh_colors.dart';
 import '../theme/batsh_motion.dart';
 import '../theme/batsh_spacing.dart';
 import '../theme/batsh_typography.dart';
@@ -69,7 +68,7 @@ class BatshScaffold extends StatelessWidget {
     }
 
     return Scaffold(
-      backgroundColor: backgroundColor ?? context.colorScheme.background,
+      backgroundColor: backgroundColor ?? context.colorScheme.surface,
       resizeToAvoidBottomInset: resizeToAvoidBottomInset,
       extendBodyBehindAppBar: extendBodyBehindAppBar,
       appBar: showAppBar
@@ -84,6 +83,7 @@ class BatshScaffold extends StatelessWidget {
                             )
                           : BatshTypography.titleLg.copyWith(
                               fontWeight: FontWeight.w600,
+                              color: context.colorScheme.onSurface,
                             ),
                     )
                   : null,

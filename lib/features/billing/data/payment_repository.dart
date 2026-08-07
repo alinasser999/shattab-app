@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/supabase/supabase_provider.dart';
+import '../../../core/utils/upload_policy.dart';
 
 /// Writes manual-transfer payment claims. Feature grant is NOT done here — an
 /// admin approves the pending row via `approve_payment_request()` (service role),
@@ -28,6 +29,12 @@ class PaymentRepository {
 
     String? proofPath;
     if (proofFile != null || proofBytes != null) {
+      if (proofBytes != null) {
+        UploadPolicy.validateImageBytes(proofBytes);
+      }
+      if (proofFile != null) {
+        UploadPolicy.validateImageLength(await proofFile.length());
+      }
       final name = '$uid/${DateTime.now().millisecondsSinceEpoch}.jpg';
       final storage = _client.storage.from('payment-proofs');
       if (proofFile != null) {

@@ -102,7 +102,7 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
       <div className="grid gap-5 xl:grid-cols-[1fr_22rem]">
         <Panel className="min-w-0 overflow-hidden">
           {error ? (
-            <ErrorState what="Could not read the account list." detail={error.message} />
+            <ErrorState what="Could not read the account list." />
           ) : rows.length === 0 ? (
             <EmptyState
               title="No accounts match"

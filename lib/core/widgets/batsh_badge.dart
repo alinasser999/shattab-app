@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../theme/batsh_border_width.dart';
-import '../theme/batsh_colors.dart';
 import '../theme/batsh_icon_size.dart';
 import '../theme/batsh_radius.dart';
 import '../theme/batsh_spacing.dart';
