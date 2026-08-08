@@ -177,6 +177,14 @@ class _InstaPayScreenState extends ConsumerState<InstaPayScreen> {
   bool _loading = false;
   bool _submitted = false;
 
+  /// One key per visit to this screen, deliberately not per tap.
+  ///
+  /// `_loading` already stops a double tap, but it cannot help when the insert
+  /// commits and the response is lost on the way back: the user sees a failure,
+  /// taps again, and files a second claim for one transfer. Reusing the key
+  /// across retries lets the database recognise the repeat and keep one row.
+  final _idempotencyKey = PaymentRepository.newIdempotencyKey();
+
   @override
   void dispose() {
     _refController.dispose();
@@ -196,6 +204,7 @@ class _InstaPayScreenState extends ConsumerState<InstaPayScreen> {
             purpose: 'pro',
             planTerm: widget.annual ? 'annual' : 'monthly',
             amountEgp: BatshPricing.proPrice(annual: widget.annual),
+            idempotencyKey: _idempotencyKey,
             proofFile: _proof!.file,
             proofBytes: _proof!.bytes,
             reference: _refController.text.trim().isEmpty

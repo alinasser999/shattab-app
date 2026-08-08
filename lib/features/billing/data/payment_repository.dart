@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -18,10 +19,24 @@ class PaymentRepository {
 
   /// Uploads the InstaPay transfer proof (if any) and inserts a pending
   /// payment request. Throws if not signed in.
+  /// Generates the key that makes a submission retry-safe.
+  ///
+  /// Held by the submitting screen for the life of one attempt, so pressing
+  /// "try again" after a dropped response re-sends the *same* key rather than
+  /// filing a second claim for one bank transfer.
+  static String newIdempotencyKey() {
+    final random = Random.secure();
+    return List.generate(
+      16,
+      (_) => random.nextInt(256).toRadixString(16).padLeft(2, '0'),
+    ).join();
+  }
+
   Future<void> submitInstapay({
     required String purpose, // 'pro' | 'sponsored' | 'boost'
     String? planTerm, // 'monthly' | 'annual' (pro only)
     required int amountEgp,
+    required String idempotencyKey,
     File? proofFile,
     Uint8List? proofBytes,
     String? reference,
@@ -61,16 +76,28 @@ class PaymentRepository {
       proofPath = name;
     }
 
-    await _client.from('payment_requests').insert({
-      'contractor_id': uid,
-      'method': 'instapay',
-      'purpose': purpose,
-      'plan_term': planTerm,
-      'amount_egp': amountEgp,
-      'proof_path': proofPath,
-      'reference_text': reference,
-      'status': 'pending',
-    });
+    try {
+      await _client.from('payment_requests').insert({
+        'contractor_id': uid,
+        'method': 'instapay',
+        'purpose': purpose,
+        'plan_term': planTerm,
+        'amount_egp': amountEgp,
+        'proof_path': proofPath,
+        'reference_text': reference,
+        'status': 'pending',
+        'idempotency_key': idempotencyKey,
+      });
+    } on PostgrestException catch (error) {
+      // 23505 = unique_violation on payment_requests_idempotency_uidx: this
+      // exact attempt already landed, and the caller is retrying because the
+      // response was lost rather than because the write failed. The desired
+      // end state — one pending claim for one transfer — already holds, so
+      // report success. Rethrowing would show an error for a claim that was
+      // filed, and push the contractor toward transferring twice.
+      if (error.code != '23505') rethrow;
+      return;
+    }
 
     // The revenue funnel already emits `checkout_started` when someone opens
     // the flow, but nothing recorded them finishing it — so a contractor who
