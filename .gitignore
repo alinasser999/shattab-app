@@ -78,6 +78,9 @@ app.*.map.json
 # Node build artifacts under infra/ (e.g. infra/media-signer)
 **/node_modules/
 **/.wrangler/
+
+# Kotlin compiler daemon session files, written during android builds
+android/.kotlin/
 lib/preview_*.dart
 
 # opencode config (may contain API keys)
