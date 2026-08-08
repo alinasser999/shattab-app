@@ -31,6 +31,48 @@ const _communityPostSelect = '''
   post_comments(count)
 ''';
 
+/// Key an author identity is cached under while hydrating a page of rows.
+///
+/// Role is part of the key, not decoration: the same uuid can be looked up
+/// through two different projections, and caching on the id alone would let a
+/// contractor-facing identity satisfy a homeowner-facing row.
+String authorIdentityKey(String authorId, String authorRole) =>
+    '$authorId|$authorRole';
+
+/// Attaches fetched identities to the rows that were missing one.
+///
+/// Split out from the fetching so it can be tested without a Supabase client.
+/// This is the step where a mistake would put the wrong person's name on
+/// someone else's post, so it is worth being able to exercise directly.
+///
+/// Rows that already carry a name keep the one they came with, order is
+/// preserved, and an author the lookup could not resolve is left untouched
+/// rather than blanked.
+List<Map<String, dynamic>> applyAuthorIdentities(
+  List<Map<String, dynamic>> rows,
+  Map<String, Map<String, dynamic>> identities,
+) {
+  bool needsIdentity(Map<String, dynamic> row) {
+    final profile = row['profiles'];
+    return !(profile is Map<String, dynamic> &&
+        (profile['full_name'] as String?)?.trim().isNotEmpty == true);
+  }
+
+  return [
+    for (final row in rows)
+      if (!needsIdentity(row))
+        row
+      else
+        switch (identities[authorIdentityKey(
+          row['author_id'] as String? ?? '',
+          row['author_role'] as String? ?? '',
+        )]) {
+          final Map<String, dynamic> profile => {...row, 'profiles': profile},
+          _ => row,
+        },
+  ];
+}
+
 class PostRepository {
   PostRepository(this._client, [MediaStorageService? mediaStorage])
     : _mediaStorage = mediaStorage;
@@ -39,20 +81,70 @@ class PostRepository {
 
   /// The set of post ids the user has liked / saved. One tiny query each;
   /// empty for guests. Used to fill is_liked / is_saved on non-RPC reads.
-  Future<(Set<String>, Set<String>)> _userInteractions(String userId) async {
-    if (userId.isEmpty) return (<String>{}, <String>{});
+  Future<(Set<String>, Set<String>)> _userInteractions(
+    String userId,
+    Iterable<String> postIds,
+  ) async {
+    final ids = postIds.toList(growable: false);
+    if (userId.isEmpty || ids.isEmpty) return (<String>{}, <String>{});
     final likes = await _client
         .from('post_likes')
         .select('post_id')
-        .eq('user_id', userId);
+        .eq('user_id', userId)
+        .inFilter('post_id', ids);
     final saves = await _client
         .from('post_saves')
         .select('post_id')
-        .eq('user_id', userId);
+        .eq('user_id', userId)
+        .inFilter('post_id', ids);
     return (
       {for (final r in likes as List) r['post_id'] as String},
       {for (final r in saves as List) r['post_id'] as String},
     );
+  }
+
+  /// Fills in author identity for rows whose embedded profile came back empty,
+  /// one call per distinct author instead of one per row.
+  ///
+  /// `_withCommunityAuthor` is correct, but it was being mapped over rows inside
+  /// a `Future.wait`, so a saved list of twenty posts by three authors issued
+  /// twenty RPCs. Deduplicating by (author, role) makes that three, and a list
+  /// of one author's work collapses to a single call.
+  Future<List<Map<String, dynamic>>> _hydrateAuthors(
+    List<Map<String, dynamic>> rows, {
+    bool includePhone = true,
+  }) async {
+    bool needsIdentity(Map<String, dynamic> row) {
+      final profile = row['profiles'];
+      return !(profile is Map<String, dynamic> &&
+          (profile['full_name'] as String?)?.trim().isNotEmpty == true);
+    }
+
+    final pending = rows.where(needsIdentity).toList();
+    if (pending.isEmpty) return rows;
+
+    final keys = <String, ({String id, String role})>{};
+    for (final row in pending) {
+      final id = row['author_id'] as String?;
+      final role = row['author_role'] as String?;
+      if (id != null && role != null) {
+        keys[authorIdentityKey(id, role)] = (id: id, role: role);
+      }
+    }
+
+    final identities = <String, Map<String, dynamic>>{};
+    await Future.wait(
+      keys.entries.map((entry) async {
+        final resolved = await _withCommunityAuthor({
+          'author_id': entry.value.id,
+          'author_role': entry.value.role,
+        }, includePhone: includePhone);
+        final profile = resolved['profiles'];
+        if (profile is Map<String, dynamic>) identities[entry.key] = profile;
+      }),
+    );
+
+    return applyAuthorIdentities(rows, identities);
   }
 
   Post _fromRow(Map<String, dynamic> m, Set<String> liked, Set<String> saved) {
@@ -152,7 +244,7 @@ class PostRepository {
         .eq('id', postId)
         .maybeSingle();
     if (row == null) return null;
-    final (liked, saved) = await _userInteractions(userId);
+    final (liked, saved) = await _userInteractions(userId, [postId]);
     final hydrated = await _withCommunityAuthor(Map<String, dynamic>.from(row));
     return _fromRow(hydrated, liked, saved);
   }
@@ -308,16 +400,28 @@ class PostRepository {
         .toList();
   }
 
-  Future<List<Post>> fetchMyPosts(String userId) async {
+  /// The caller's own posts, newest first.
+  ///
+  /// [limit] is not optional in spirit: an author with years of posts would
+  /// otherwise pull every row they had ever written into memory to render one
+  /// screen. `id` joins the sort so the order is total and a future paged
+  /// caller cannot see the same row twice.
+  Future<List<Post>> fetchMyPosts(String userId, {int limit = 50}) async {
     final rows = await _client
         .from('posts')
         .select(_postSelect)
         .eq('author_id', userId)
-        .order('created_at', ascending: false);
-    final (liked, saved) = await _userInteractions(userId);
-    return (rows as List)
-        .map((r) => _fromRow(r as Map<String, dynamic>, liked, saved))
-        .toList();
+        .order('created_at', ascending: false)
+        .order('id', ascending: false)
+        .limit(limit);
+    final maps = [
+      for (final r in rows as List) Map<String, dynamic>.from(r as Map),
+    ];
+    final (liked, saved) = await _userInteractions(
+      userId,
+      maps.map((m) => m['id'] as String),
+    );
+    return maps.map((m) => _fromRow(m, liked, saved)).toList();
   }
 
   /// Returns the latest public community posts authored by a contractor.
@@ -335,36 +439,49 @@ class PostRepository {
         .eq('author_id', authorId)
         .eq('author_role', 'contractor')
         .order('created_at', ascending: false)
+        .order('id', ascending: false)
         .limit(limit);
-    final (liked, saved) = await _userInteractions(viewerId);
-
-    return Future.wait(
-      (rows as List).map((raw) async {
-        final row = await _withCommunityAuthor(
-          Map<String, dynamic>.from(raw as Map),
-          includePhone: false,
-        );
-        return _fromRow(row, liked, saved);
-      }),
+    final maps = [
+      for (final r in rows as List) Map<String, dynamic>.from(r as Map),
+    ];
+    final (liked, saved) = await _userInteractions(
+      viewerId,
+      maps.map((m) => m['id'] as String),
     );
+    final hydrated = await _hydrateAuthors(maps, includePhone: false);
+    return hydrated.map((m) => _fromRow(m, liked, saved)).toList();
   }
 
-  Future<List<Post>> fetchSavedPosts(String userId) async {
+  /// Posts this user has saved, most recently saved first.
+  ///
+  /// Was the worst read in the file: no bound on the outer query, and one
+  /// identity RPC per row issued concurrently inside a `Future.wait`. Someone
+  /// with five hundred saved posts opened five hundred rows and up to five
+  /// hundred simultaneous round trips from a single screen. Now bounded, and
+  /// the identity lookups are deduplicated by author.
+  ///
+  /// Every row here is saved by definition, so `saved` is passed as the row's
+  /// own id rather than re-queried.
+  Future<List<Post>> fetchSavedPosts(String userId, {int limit = 50}) async {
     if (userId.isEmpty) return [];
     final rows = await _client
         .from('post_saves')
         .select('created_at, posts!inner($_postSelect)')
         .eq('user_id', userId)
-        .order('created_at', ascending: false);
-    final (liked, _) = await _userInteractions(userId);
-    return Future.wait(
-      (rows as List).map((r) async {
-        final post =
-            (r as Map<String, dynamic>)['posts'] as Map<String, dynamic>;
-        final hydrated = await _withCommunityAuthor(post);
-        return _fromRow(hydrated, liked, {post['id'] as String});
-      }),
+        .order('created_at', ascending: false)
+        .limit(limit);
+    final posts = [
+      for (final r in rows as List)
+        Map<String, dynamic>.from((r as Map<String, dynamic>)['posts'] as Map),
+    ];
+    final (liked, _) = await _userInteractions(
+      userId,
+      posts.map((m) => m['id'] as String),
     );
+    final hydrated = await _hydrateAuthors(posts);
+    return hydrated
+        .map((m) => _fromRow(m, liked, {m['id'] as String}))
+        .toList();
   }
 
   Future<String> uploadImage(
