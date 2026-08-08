@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../../../core/analytics/app_analytics.dart';
 import '../../../auth/data/auth_repository.dart';
 import '../../../auth/domain/profile.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
@@ -171,7 +173,17 @@ class OnboardingController extends _$OnboardingController {
 
   Future<void> markComplete() async {
     final userId = _requireUserId();
+    final role = ref.read(currentProfileProvider).value?.role.name ?? 'unknown';
     await ref.read(onboardingRepositoryProvider).markOnboardingComplete(userId);
+
+    // The end of the one funnel every user walks through. Without it there is
+    // no way to tell a signup that never finished from one that finished and
+    // then went quiet — opposite problems with opposite fixes. Tracked after
+    // the write, so this counts completions rather than attempts.
+    unawaited(
+      AppAnalytics.track('onboarding_completed', properties: {'role': role}),
+    );
+
     await ref.read(currentProfileProvider.notifier).refresh();
   }
 }

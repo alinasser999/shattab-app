@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../core/analytics/app_analytics.dart';
 import '../../../core/supabase/supabase_provider.dart';
 import '../../../core/utils/upload_policy.dart';
 
@@ -69,6 +71,29 @@ class PaymentRepository {
       'reference_text': reference,
       'status': 'pending',
     });
+
+    // The revenue funnel already emits `checkout_started` when someone opens
+    // the flow, but nothing recorded them finishing it — so a contractor who
+    // opened the sheet and gave up looked identical to one who transferred the
+    // money. This closes that pair, and is the denominator an approval rate
+    // gets computed against.
+    //
+    // `has_proof` matters operationally: an InstaPay claim with no screenshot
+    // is the shape that gets rejected, and a rise in it is a UI problem rather
+    // than a payment problem.
+    //
+    // No reference_text (a real bank transfer reference) and no proof_path.
+    unawaited(
+      AppAnalytics.track(
+        'payment_request_submitted',
+        properties: {
+          'purpose': purpose,
+          'plan_term': planTerm,
+          'amount_egp': amountEgp,
+          'has_proof': proofPath != null,
+        },
+      ),
+    );
   }
 }
 

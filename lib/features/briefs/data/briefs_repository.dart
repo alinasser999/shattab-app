@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -5,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../core/analytics/app_analytics.dart';
 import '../../../core/media/media_storage.dart';
 import '../../../core/media/media_storage_provider.dart';
 import '../../../core/supabase/supabase_provider.dart';
@@ -256,6 +258,27 @@ class BriefsRepository {
         })
         .select()
         .single();
+
+    // Supply side of the marketplace: every quote, hire and review descends
+    // from a brief, so this is the denominator the rest of the funnel gets
+    // measured against. `is_direct` separates the two products sharing this
+    // call — a public post any matched professional can quote, and a request
+    // aimed at one person — which convert very differently.
+    //
+    // Deliberately no city, description or contractor id: the description is
+    // free text a homeowner wrote about their home, and city plus timestamp
+    // narrows identity. Shape only.
+    unawaited(
+      AppAnalytics.track(
+        'brief_created',
+        properties: {
+          'is_direct': targetContractorId != null,
+          'has_photos': photoUrls.isNotEmpty,
+          'specialty_count': targetSpecialties.length,
+        },
+      ),
+    );
+
     return Brief.fromJson(row);
   }
 

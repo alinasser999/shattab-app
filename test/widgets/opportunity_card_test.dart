@@ -8,6 +8,7 @@ import 'package:batsh/features/briefs/presentation/contractor/widgets/opportunit
 import 'package:batsh/features/onboarding/domain/onboarding_models.dart';
 import 'package:batsh/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 Brief _brief({String description = 'تشطيب شقة كاملة'}) => Brief(
@@ -185,13 +186,18 @@ void main() {
     addTearDown(tester.view.reset);
 
     await tester.pumpWidget(
-      MaterialApp(
-        locale: const Locale('ar'),
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
-        supportedLocales: AppLocalizations.supportedLocales,
-        theme: BatshTheme.light(),
-        home: Scaffold(
-          body: BatshError(message: 'الخدمة مش شغالة دلوقتي', onRetry: () {}),
+      // BatshError watches connectivity so it can retry itself when the signal
+      // returns, which means it needs a scope even when the test only cares
+      // about what it renders.
+      ProviderScope(
+        child: MaterialApp(
+          locale: const Locale('ar'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          theme: BatshTheme.light(),
+          home: Scaffold(
+            body: BatshError(message: 'الخدمة مش شغالة دلوقتي', onRetry: () {}),
+          ),
         ),
       ),
     );

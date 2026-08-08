@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../core/analytics/app_analytics.dart';
 import '../../../core/supabase/supabase_provider.dart';
 import '../domain/contractor_listing.dart';
 
@@ -59,11 +62,38 @@ class DiscoveryRepository {
           'p_offset': offset,
         },
       );
-      return (rows as List)
+      final results = (rows as List)
           .map(
             (row) => ContractorListing.fromJoined(row as Map<String, dynamic>),
           )
           .toList();
+
+      // First page only, so this counts searches rather than scroll depth.
+      //
+      // Worth watching closely right now: the Arabic folding in
+      // `discover_contractors` changed what matches, and a search that returns
+      // nothing is indistinguishable, from the user's side, from a marketplace
+      // with no professionals in it. A rising zero-result rate is the signal
+      // that matching is wrong again — the previous version of that bug went
+      // unnoticed precisely because nothing counted it.
+      //
+      // The query text is never sent: people search for named individuals, and
+      // that would be a record of who was looking for whom.
+      if (offset == 0) {
+        unawaited(
+          AppAnalytics.track(
+            'contractor_search',
+            properties: {
+              'result_count': results.length,
+              'zero_results': results.isEmpty,
+              'has_specialty_filter': filters.specialty != null,
+              'has_city_filter': filters.city != null,
+            },
+          ),
+        );
+      }
+
+      return results;
     }
 
     var query = _client

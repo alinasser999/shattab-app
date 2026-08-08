@@ -187,14 +187,18 @@ payment/verification event), `notifications_realtime` (realtime delivery),
 — search must go through this, not a raw `ilike`, or Arabic name variants silently
 fail to match), `device_tokens` (push registration, one row per device).
 
-**⚠️ Six tables with no RLS, discovered live 2026-08-07, not part of this
-product:** `scan_misses`, `user_product_submissions`, `product_drafts`,
-`ingestion_jobs`, `ingestion_items`, `ocr_extractions` — from a migration named
-`create_mokawen_tables`. Confirmed via advisor + direct check: `anon` can
-`SELECT` **and** `INSERT` on all six. They look like a different app's schema
-landed in this project by mistake. Do not build on them, and flag to a human
-before touching — enabling RLS, adding policies, or dropping them is a product
-decision, not something to infer from context.
+**Six foreign tables, now locked down (2026-08-07):** `scan_misses`,
+`user_product_submissions`, `product_drafts`, `ingestion_jobs`,
+`ingestion_items`, `ocr_extractions` — created by a migration named
+`create_mokawen_tables` and belonging to a different product (OCR / product
+ingestion), not Shattab. They shipped with RLS off and default PostgREST
+grants, so `anon` could `SELECT` **and** `INSERT` on all six; since the anon
+key is inside every copy of the app, that was world-readable and -writable.
+
+`20260808001500_lock_down_mokawen_tables.sql` enables RLS with **no policies**
+(deny-all) and revokes the grants. All six were empty when it ran, and nothing
+was dropped — that call belongs to whoever owns that product. If you need them,
+add explicit policies; RLS is already on. Do not build Shattab features on them.
 
 **Security posture — do not weaken it:**
 
@@ -251,6 +255,40 @@ Bootstrapping the first admin is manual and off-system by design — see
   and test, so one unformatted file fails the whole pipeline at its first step.
   Run `dart format lib test` before pushing. (An earlier version of this doc
   claimed the opposite; the repo was reformatted 2026-08-07 to make CI pass.)
+
+---
+
+## 9a. Analytics and connectivity
+
+`AppAnalytics.track(name, properties:)` (`lib/core/analytics/app_analytics.dart`)
+writes to `analytics_events`. It is **fire-and-forget and never throws** — a
+dropped event must never block a quote, a contact handoff or a payment, so call
+sites wrap it in `unawaited(...)` and it swallows its own failures.
+
+**Properties must be non-identifying.** Shape, not content: counts, booleans,
+enum values. Never the search query (people search for named individuals),
+never a brief's `work_description` (free text about someone's home), never a
+bank `reference_text`, never a phone number.
+
+Events today: `onboarding_completed` · `brief_created` · `contractor_search`
+· `professional_profile_view` · `quote_submitted` · `quote_status_changed` ·
+`review_submitted` · `contact_whatsapp` · `contact_call` ·
+`community_post_created` · `pro_cta_tapped` · `requests_paywall_viewed` ·
+`checkout_started` · `checkout_failed` · `payment_request_submitted` ·
+`notification_opened` · `notifications_marked_read`.
+
+`contractor_search` carries `zero_results` deliberately: a search returning
+nothing looks, to the user, identical to a marketplace with nobody in it. The
+Arabic-matching bug that shipped before `shattab_normalize_ar` existed went
+unnoticed for exactly that reason. Watch that rate after any search change.
+
+**Connectivity.** `connectivityProvider` (`lib/core/utils/connectivity.dart`)
+is a `keepAlive` `Stream<bool>` of "is any interface up". `BatshError` watches
+it and fires its own `onRetry` on the offline → online edge, so all 26 error
+surfaces recover by themselves when the signal returns. It answers "is there
+any point retrying", not "is the server reachable" — `ErrorMapper` still
+classifies what actually failed. Because `BatshError` is now a
+`ConsumerStatefulWidget`, any widget test rendering it needs a `ProviderScope`.
 
 ---
 

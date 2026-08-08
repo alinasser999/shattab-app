@@ -50,6 +50,10 @@ dependencies:
   firebase_core: ^3.8.0
   firebase_messaging: ^15.1.5
 
+  # Connectivity transitions, so an error screen can retry itself when the
+  # signal comes back instead of waiting for the user to keep tapping.
+  connectivity_plus: ^6.1.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
