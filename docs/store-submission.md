@@ -1,135 +1,124 @@
-# Store submission checklist — Shattab
+# Store Submission Checklist - Shattab
 
-Status as of 2026-07-26. Ticked items are done in code and verified against the
-live Supabase project. Unticked items need a human: a payment, a credential, or
-an account only you can hold.
+Status as of 2026-08-14. Items marked done are implemented in code and
+verified against the live Supabase project where noted. Remaining unchecked
+items require release credentials, dashboard access, legal decisions, or
+physical-device testing.
 
----
+## Blocking Before Store Submission
 
-## Blocking — must be done before either store
+### Account deletion
 
-### 1. Apply migration 0023 (account deletion) — **NOT DONE**
+The `delete_my_account()` RPC is applied to the live project through the
+`consumer_account_deletion` migration. The client keeps the destructive action
+behind an explicit confirmation flow and unregisters the device token first.
+Run the journey on a staging account before submission; never use a real
+account for this test.
 
-`supabase/migrations/0023_account_deletion.sql` is written and verified against
-the live schema, but is **not applied**. Until it is, the Delete Account button
-throws for every user, which is worse than not having one.
-
-Paste the file into the Supabase SQL editor and run it. Verify:
+Verify the function exists before the store build:
 
 ```sql
 select exists(
-  select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+  select 1 from pg_proc p
+  join pg_namespace n on n.oid = p.pronamespace
   where n.nspname = 'public' and p.proname = 'delete_my_account'
 );
 ```
 
-### 2. Upload keystore — **NOT DONE**
+### Android signing
 
-`android/app/build.gradle.kts` falls back to **debug signing** when
-`android/key.properties` is absent, and it is absent. A debug-signed AAB is
-rejected by Play.
+The release build needs a private upload keystore and `android/key.properties`.
+Keep both outside Git and back up the keystore securely. A debug-signed bundle
+will be rejected by Google Play.
 
-```bash
-keytool -genkey -v -keystore android/upload-keystore.jks -keyalg RSA -keysize 2048 -validity 10000 -alias upload
-```
+### Legal documents
 
-Then create `android/key.properties` (already gitignored):
+Replace every placeholder in `docs/legal/privacy-policy.md` and
+`docs/legal/terms-of-service.md`, publish both at stable URLs, and update the
+URLs used by the app. Verify the pages from a logged-out mobile browser.
 
-```
-storePassword=...
-keyPassword=...
-keyAlias=upload
-storeFile=upload-keystore.jks
-```
+### Required dashboard and credential work
 
-**Back the .jks file up somewhere you will not lose it.** Lose it and you cannot
-ship an update to the same listing, ever.
+- Enable Supabase Phone Auth and verify Egyptian `+20` OTP delivery, expiry,
+  retry, rate limiting, and wrong-code states.
+- Enable Supabase leaked-password protection.
+- Configure Firebase for the real Android/iOS application IDs.
+- Configure the deployed `send-push` Edge Function with its webhook secret and
+  FCM service-account secrets, then test a notification on a locked device.
+- Configure Apple push credentials, Android release signing, and Sign in with
+  Apple in the developer portal, Xcode, and Supabase Auth.
+- Assign an owner for Sentry alerts, Supabase billing, push failures,
+  moderation response, backups, and support escalation.
 
-### 3. Host the legal documents — **NOT DONE**
+## Implemented Product Hardening
 
-`docs/legal/privacy-policy.md` and `docs/legal/terms-of-service.md` are written
-against the app's real schema. Two steps:
+- Signup role selection persists before onboarding starts.
+- Quotes, reviews, briefs, posts, likes, saves, comments, and comment actions
+  guard against duplicate in-flight writes.
+- Notifications use one role-aware destination mapper with safe inbox fallback.
+- Realtime notifications remain the foreground source of truth; push is a
+  delivery enhancement.
+- Public contractor catalogue and saved-professional projections omit phone
+  and operational response-rate fields.
+- Phone/contact access is restricted to the authenticated profile-detail RPC.
+- Billing state and payment submission are server-owned; payment proof is
+  required and verified in private storage.
+- Discovery landing/search, nearby, all-professional, and top-rated collections
+  use stable keyset pagination with deterministic tie-breakers. Legacy offset
+  RPCs remain only for backward-compatible detail reads.
+- Public image uploads validate size/type, resize and compress before upload,
+  and use a safe branded placeholder for failed URLs.
+- Account sign-out and deletion unregister device tokens before clearing the
+  session.
+- Analytics is write-only, bounded, and excludes phone numbers, names, free
+  text, and contact data.
+- R2 is code-integrated but opt-in, not a live production media path. Private
+  verification documents and payment proofs remain in private Supabase Storage.
 
-1. Replace every `{{PLACEHOLDER}}` — legal entity, address, support email,
-   jurisdiction, refund policy, SMS provider, Sentry region.
-2. Publish both at stable URLs, then update `_privacyPolicyUrl` and `_termsUrl`
-   in `lib/features/shell/presentation/profile_screen.dart`. They currently
-   point at `shattab.app/privacy` and `/terms`, which do not exist yet.
+## Store Forms
 
-GitHub Pages is sufficient and free.
+### Google Play
 
-### 4. Supabase Pro — **deliberately deferred**
-
-Not a store requirement, but the free tier auto-pauses after ~7 days of
-inactivity, so the app dies on a quiet week. Pro also unlocks image
-transformations (`SUPABASE_IMAGE_TRANSFORMS`, currently `false` — enabling it
-without a paid plan 404s every photo) and point-in-time recovery.
-
----
-
-## Google Play
-
-- [x] In-app account deletion (Profile → Settings → Delete account) — code done, needs item 1
+- [x] In-app account deletion path and live deletion RPC
 - [x] Report content and block users
-- [x] Crash reporting (Sentry, PII off)
-- [x] Only `INTERNET` requested in the manifest — nothing awkward to justify in Data Safety
-- [ ] Upload keystore (item 2)
-- [ ] Privacy policy URL (item 3)
-- [ ] Data Safety form. Declare: phone number, name, photos, user content;
-      collected and stored, not shared for advertising, not sold; deletion
-      available in-app. Encrypted in transit.
-- [ ] Target API level — check Play's current minimum at submission time
-- [ ] Store listing: icon, feature graphic, at least 2 screenshots per form
-      factor, short and full description, content rating questionnaire
+- [x] Crash reporting with PII disabled
+- [ ] Upload keystore and signed AAB
+- [ ] Privacy policy URL
+- [ ] Data Safety form: phone number, name, photos, user content; stored,
+      encrypted in transit, not sold or used for advertising
+- [ ] Target API level check at submission time
+- [ ] Store icon, feature graphic, screenshots, descriptions, and content rating
 
-Play accepts an **account deletion URL** as an alternative to the in-app path.
-The in-app path exists, so declare that.
+### Apple App Store
 
----
+- [x] Sign in with Apple implementation and entitlement files
+- [x] UGC report/block flows and moderation terms
+- [x] Account deletion path and live deletion RPC
+- [x] Camera and photo-library usage descriptions
+- [ ] Apple Developer membership and portal configuration
+- [ ] EULA and privacy URLs in App Store Connect
+- [ ] Privacy nutrition labels
+- [ ] Review demo account that does not depend on receiving an Egyptian SMS
+- [ ] Age rating
 
-## Apple App Store
+## Known Follow-ups
 
-- [x] **Sign in with Apple** — guideline 4.8. Mandatory because Google sign-in
-      is offered. Button, repository method and entitlement are in place
-- [x] **Guideline 1.2 (UGC)**: report content, block users, and terms stating
-      zero tolerance for objectionable content, with a stated 24-hour response
-- [x] Account deletion — guideline 5.1.1(v). Code done, needs item 1
-- [x] `NSCameraUsageDescription` and `NSPhotoLibraryUsageDescription` present
-      in `ios/Runner/Info.plist`, in Arabic
-- [ ] Apple Developer Program membership (US$99/year)
-- [ ] Enable **Sign in with Apple** for the App ID in the developer portal, add
-      the capability to the Runner target in Xcode, and configure Apple as a
-      provider in Supabase Auth. `ios/Runner/Runner.entitlements` declares the
-      entitlement but does none of that on its own — **the button will fail
-      silently until all three are done**
-- [ ] EULA URL in App Store Connect (use the terms from item 3)
-- [ ] Privacy nutrition labels — same categories as the Play Data Safety form
-- [ ] Demo account for review. Reviewers cannot receive an Egyptian SMS, so
-      supply a working phone-and-password login, or they will reject for being
-      unable to sign in. This is the single most common rejection for
-      phone-auth apps
-- [ ] Age rating: 18+, consistent with the Terms
+- OTP abuse protection still needs a server/provider-level rate-limit or CAPTCHA
+  policy; client debounce is not a security boundary.
+- Feed counters are computed during reads and should be denormalized if feed
+  volume makes the query plan expensive.
+- Verification and payment approvals remain manual workflows and need an
+  operator queue before supply grows materially.
+- Remaining RLS advisor warnings must be reviewed against staging traffic and
+  policy tests, not suppressed globally.
 
----
+## Verification Commands
 
-## Known gaps, not blocking
+```powershell
+pwsh -File tool/release_check.ps1
+pwsh -File tool/release_credentials_check.ps1
+pwsh -File tool/release_credentials_check.ps1 -RequirePublicMediaRollout
+```
 
-- No rate limit or CAPTCHA on OTP send. Every signup is a paid SMS, and
-  SMS-pumping fraud can run the bill up with no real users.
-- Discover still uses `OFFSET` pagination; the feed and briefs use keyset.
-- `get_for_you_feed` computes `like_count` / `comment_count` per read instead
-  of denormalised counters.
-- `briefs` has three permissive SELECT policies that could be one.
-- Verification and payment approvals are manual SQL-editor operations. Fine at
-  ten contractors, not at a thousand.
-
----
-
-## Verified in production
-
-Migrations applied and confirmed against `ajqdutehxpbbflzdovhw`:
-`0018` indexes · `0019` completion loop · `0020` brief edit/delete ·
-`0021` admin RPC lockdown · `0022` RLS InitPlan · `0024` reports and blocks.
-
-Security advisor: 21 findings → 7, and the remaining ones are intended
-(`authenticated` must be able to call the app's own RPCs) or cosmetic.
+The strict credential gates are intentionally expected to fail until private
+release inputs and external services are configured.

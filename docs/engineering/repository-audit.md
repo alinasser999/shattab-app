@@ -1,10 +1,11 @@
 # Shattab Repository Audit
 
-Date: 2026-08-03
+Date: 2026-08-14
 
-This audit describes the repository as it exists before the first hardening
-phase. The worktree contains substantial uncommitted product and visual work;
-those changes are treated as the current baseline and are not reverted.
+This audit began as a pre-hardening baseline. The worktree contains substantial
+uncommitted product and visual work; those changes are treated as the current
+baseline and are not reverted. Current release status is maintained in
+`docs/production-readiness.md`.
 
 ## Repository Map
 
@@ -34,8 +35,8 @@ those changes are treated as the current baseline and are not reverted.
   optimizations, account deletion, moderation, quote lifecycle and admin
   lockdown work.
 - Sentry is optional and configured to avoid default PII and screenshots.
-- The current test suite had 254 passing tests at the audit baseline and has
-  256 passing tests after phase 1 regression coverage.
+- The current test suite has 330 passing tests, with two existing golden tests
+  skipped by their own setup.
 - The app has shared theme tokens and reusable `Batsh*` widgets, which should
   remain the visual and accessibility foundation.
 
@@ -79,9 +80,10 @@ those changes are treated as the current baseline and are not reverted.
   formatted and one dirty file would be rewritten without review.
 - Validation: each new gate must pass on a clean branch before becoming
   required.
-- Status: phase 1 now generates ignored code, checks formatting and analysis,
-  runs tests and verifies a web release build. Migration and remote-advisor
-  gates remain intentionally separate.
+- Status: CI now generates ignored code, checks formatting and analysis, runs
+  tests, compiles an unsigned Android release target, and verifies a web
+  release build. Migration and remote-advisor gates remain intentionally
+  separate.
 
 ### Medium: Presentation files are oversized
 
@@ -113,8 +115,11 @@ those changes are treated as the current baseline and are not reverted.
   SQL.
 - Validation: RLS tests for anonymous, authenticated-owner and authenticated-
   non-owner cases; migration lint; advisor output.
-- Status: no SQL changed in phase 1 because live credentials and schema state
-  must be verified first.
+- Status: live authority, projection, payment, contact, verification,
+  interaction and pagination migrations have been applied and checked against
+  the linked project. The repository now includes an RLS regression harness;
+  it still needs a disposable local/staging database with the pgTAP dependency
+  enabled before it can run.
 
 ### Medium: Collection reads need a complete pagination inventory
 
@@ -127,7 +132,9 @@ those changes are treated as the current baseline and are not reverted.
 - Safe fix: inventory each collection, define cursor ownership and add a stable
   `(created_at, id)` ordering before adding more caching or realtime behavior.
 - Validation: repository tests for duplicate-free page merges and stable cursors.
-- Status: partially addressed in existing code; feature-by-feature work remains.
+- Status: discovery, briefs, community feed, completed work and saved
+  professionals use stable cursors. Bounded account-history lists remain on
+  the register until their screens need a user-visible next-page contract.
 
 ### Low: Documentation and operational handover are incomplete
 
@@ -158,19 +165,22 @@ those changes are treated as the current baseline and are not reverted.
 7. CI/CD maturity: add format, build, dependency, secret, migration and
    release checks once each baseline is clean.
 
-## Out of Scope for This Phase
+## Original Phase Boundaries
 
 - No microservices, queue, external cache or search service.
-- No schema change or production migration.
+- No framework migration or unrelated product-area rewrite; targeted
+  production hardening migrations were added only where the live boundary
+  required them.
 - No visual redesign or route change.
 - No claim that the product currently supports one million concurrent users.
 
 ## Validation Notes
 
 - `flutter analyze --no-pub`: passed with no issues after phase 1 cleanup.
-- `flutter test --reporter compact`: 256 tests passed.
+- `flutter test --no-pub`: 330 tests passed, with two existing golden skips.
 - `dart format --output=none --set-exit-if-changed lib test`: passed.
 - `dart run build_runner build`: completed and wrote generated outputs.
 - `flutter build web --release`: passed.
-- `supabase db lint --workdir supabase`: not run to completion because the
-  local Postgres service is not running. No database migration was changed.
+- `supabase test db --workdir supabase`: blocked because the local Postgres
+  service is not running; run it in the disposable/staging gate described in
+  `docs/production-readiness.md`.
