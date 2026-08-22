@@ -6,12 +6,12 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr';
  * the console.
  *
  * This is a redirect, not a security boundary. The boundary is `is_admin()` in
- * Postgres: if this middleware were deleted entirely, a non-admin reaching
- * /users would still see nothing, because the RLS policies and every RPC would
- * refuse them. Treating middleware as the gate is how "admin panel found by
- * URL guessing" happens.
+ * Postgres: if this proxy were deleted entirely, a non-admin reaching /users
+ * would still see nothing, because the RLS policies and every RPC would refuse
+ * them. Treating the proxy as the gate is how "admin panel found by URL
+ * guessing" happens.
  */
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient(
@@ -55,12 +55,11 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  if (user && isLogin) {
-    const url = request.nextUrl.clone();
-    url.pathname = '/';
-    url.search = '';
-    return NextResponse.redirect(url);
-  }
+  // Do not redirect signed-in users away from /login here. The console layout
+  // may send a signed-in non-admin back to this route with an access-denied
+  // message; redirecting again would create /login -> / -> /login forever.
+  // LoginPage handles the nicer admin-only shortcut after it can ask the
+  // database whether the user actually has console access.
 
   return response;
 }

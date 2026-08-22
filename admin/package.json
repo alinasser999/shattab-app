@@ -11,9 +11,9 @@
     "audit:contracts": "node scripts/audit-contracts.mjs"
   },
   "dependencies": {
-    "@supabase/ssr": "^0.5.2",
-    "@supabase/supabase-js": "^2.47.10",
-    "next": "^15.1.6",
+    "@supabase/ssr": "0.12.4",
+    "@supabase/supabase-js": "2.112.3",
+    "next": "16.3.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },

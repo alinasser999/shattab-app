@@ -17,14 +17,14 @@ without an isolated admin test account.
 
 ```text
 Browser
-  -> Next middleware refreshes the Supabase auth cookie and redirects strangers
+  -> Next proxy refreshes the Supabase auth cookie and redirects strangers
   -> Server Components / Server Actions
   -> @supabase/ssr client with the signed-in user's session and anon key
   -> Supabase RLS and SECURITY DEFINER RPCs
   -> The same public tables, storage buckets, and business rules used by Flutter
 ```
 
-The browser never receives a service-role key. Middleware is a signpost only;
+The browser never receives a service-role key. The proxy is a signpost only;
 `is_admin()` and the admin RPC guards are the authorization boundary.
 
 ## Route inventory
@@ -79,8 +79,8 @@ errors are mapped to safe messages.
 
 - Live RLS and Supabase advisor checks need a reachable project or local Postgres.
 - Large queues use bounded windows rather than URL-persisted pagination.
-- Block aggregation is currently capped in the page; a server-side aggregate RPC
-  should replace it before the table grows materially.
+- Block aggregation now runs in the database through `admin_most_blocked`, with
+  deterministic ordering and a bounded operator-controlled limit.
 - Brief and review moderation need explicit hide/invalidate states before the
   console offers a destructive content action for them.
 - Admin audit rows have no correlation ID or actor IP/session context yet.

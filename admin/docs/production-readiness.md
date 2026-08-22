@@ -3,7 +3,7 @@
 ## Ready in this pass
 
 - No service-role key in the Admin source or environment contract.
-- Middleware refreshes sessions but does not act as the authorization boundary.
+- The Next proxy refreshes sessions but does not act as the authorization boundary.
 - Admin reads use RLS and guarded database RPCs.
 - Sensitive mutations use SECURITY DEFINER RPCs that check the current admin.
 - Owner/moderator action authorization is now database-enforced.
@@ -12,12 +12,13 @@
 - Private verification and payment files use short-lived signed URLs.
 - Server action redirects and displayed backend errors are constrained.
 - Typecheck, contract audit, and production build pass.
-- Read-only live checks confirmed anonymous RPC denial and the current deployed
-  admin RPC guard pattern.
+- Read-only live checks confirmed anonymous RPC denial; the connected project
+  still needs the repository hardening migrations before this build is deployed.
 
 ## Deployment checklist
 
-- Apply `20260803035018_admin_hardening_report_contract.sql` to staging first.
+- Apply `20260803035018_admin_hardening_report_contract.sql` and
+  `20260820010358_admin_most_blocked_aggregate.sql` to staging first.
 - The connected project currently has two `owner` admin accounts and no
   `moderator` account; create a staging moderator deliberately before testing
   the restricted matrix.

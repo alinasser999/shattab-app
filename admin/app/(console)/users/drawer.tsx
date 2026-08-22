@@ -61,8 +61,10 @@ export async function UserDrawer({ userId, backHref }: { userId?: string; backHr
 
   const d = data as Detail;
   const p = d.profile;
-  const { data: adminLevel } = await supabase.rpc('admin_level');
-  const canManagePlan = adminLevel !== 'moderator';
+  const { data: adminLevel, error: adminLevelError } = await supabase.rpc('admin_level');
+  // Plan changes are owner-only. Unknown levels (including a missing
+  // hardening migration) must not fall through to write-capable UI.
+  const canManagePlan = !adminLevelError && adminLevel === 'owner';
   const suspended = Boolean(p.suspended_at);
   const isPro = d.contractor?.plan === 'pro' && (d.contractor.plan_expires_at ?? '') > new Date().toISOString();
 

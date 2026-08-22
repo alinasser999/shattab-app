@@ -57,7 +57,9 @@ export default async function PaymentsPage({
 }) {
   const sp = await searchParams;
   const admin = await currentAdmin();
-  const canReviewPayments = admin?.level !== 'moderator';
+  // Billing is an owner-only write surface. Unknown/null levels fail closed
+  // instead of being mistaken for an owner when the level RPC is unavailable.
+  const canReviewPayments = admin?.level === 'owner';
   const supabase = await supabaseServer();
 
   const [pendingRes, historyRes, paymentsRes] = await Promise.all([
@@ -112,8 +114,8 @@ export default async function PaymentsPage({
             title="Awaiting confirmation"
             hint="Approving writes the payment and applies the plan in one transaction. Check the proof against your bank first."
             action={
-              <Badge tone={pending.length > 0 ? 'warn' : 'ok'}>
-                {pending.length} · {fmtEgp(pendingTotal)}
+              <Badge tone={pendingRes.error ? 'danger' : pending.length > 0 ? 'warn' : 'ok'}>
+                {pendingRes.error ? 'Unavailable' : `${pending.length} · ${fmtEgp(pendingTotal)}`}
               </Badge>
             }
           />
@@ -142,7 +144,9 @@ export default async function PaymentsPage({
         <div className="grid gap-5 lg:grid-cols-2">
           <Panel className="overflow-hidden">
             <PanelHead title="Collected" hint="Confirmed payments, newest first." />
-            {payments.length === 0 ? (
+            {paymentsRes.error ? (
+              <ErrorState what="Could not read collected payments." />
+            ) : payments.length === 0 ? (
               <EmptyState
                 title="No payments recorded"
                 body="A row is written here the moment you confirm a transfer above."
@@ -189,7 +193,9 @@ export default async function PaymentsPage({
 
           <Panel className="overflow-hidden">
             <PanelHead title="Recently reviewed" hint="The last 25 decisions on transfer requests." />
-            {history.length === 0 ? (
+            {historyRes.error ? (
+              <ErrorState what="Could not read reviewed payment requests." />
+            ) : history.length === 0 ? (
               <EmptyState
                 title="Nothing reviewed yet"
                 body="Approvals and rejections are listed here, with full detail under Activity."

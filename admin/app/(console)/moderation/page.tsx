@@ -22,7 +22,7 @@ type Report = {
   reviewed_at: string | null;
 };
 
-type BlockRow = { blocked_id: string; count: number; name: string | null };
+type BlockRow = { blocked_id: string; block_count: number; full_name: string | null };
 
 const TARGET_LABEL: Record<string, string> = {
   post: 'Post',
@@ -55,33 +55,14 @@ export default async function ModerationPage({
       .limit(25),
     // Mutual blocks are private between the two users, but the aggregate is an
     // abuse signal: several unrelated people blocking one account is worth
-    // seeing before a report is even filed.
-    supabase.from('user_blocks').select('blocked_id').limit(2000),
+    // seeing before a report is even filed. The RPC counts the complete table
+    // in Postgres instead of ranking an arbitrary REST sample in memory.
+    supabase.rpc('admin_most_blocked', { p_limit: 10 }),
   ]);
 
   const pending = (pendingRes.data ?? []) as Report[];
   const resolved = (resolvedRes.data ?? []) as Report[];
-
-  const blockCounts = new Map<string, number>();
-  for (const row of (blocksRes.data ?? []) as Array<{ blocked_id: string }>) {
-    blockCounts.set(row.blocked_id, (blockCounts.get(row.blocked_id) ?? 0) + 1);
-  }
-  const mostBlocked: BlockRow[] = [...blockCounts.entries()]
-    .filter(([, count]) => count >= 2)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 10)
-    .map(([blocked_id, count]) => ({ blocked_id, count, name: null }));
-
-  // Resolve display names for the short list only. Fetching names for two
-  // thousand block rows to show ten of them would be the classic N+1 inverted.
-  if (mostBlocked.length > 0) {
-    const { data: names } = await supabase
-      .from('profiles')
-      .select('id, full_name')
-      .in('id', mostBlocked.map((r) => r.blocked_id));
-    const byId = new Map((names ?? []).map((n) => [n.id, n.full_name]));
-    for (const row of mostBlocked) row.name = byId.get(row.blocked_id) ?? null;
-  }
+  const mostBlocked = (blocksRes.data ?? []) as BlockRow[];
 
   return (
     <>
@@ -99,7 +80,11 @@ export default async function ModerationPage({
           <PanelHead
             title="Open reports"
             hint="Oldest first. Removing content keeps its media in storage so an appeal can still be reviewed."
-            action={<Badge tone={pending.length > 0 ? 'warn' : 'ok'}>{pending.length} open</Badge>}
+            action={
+              <Badge tone={pendingRes.error ? 'danger' : pending.length > 0 ? 'warn' : 'ok'}>
+                {pendingRes.error ? 'Unavailable' : `${pending.length} open`}
+              </Badge>
+            }
           />
           {pendingRes.error ? (
             <ErrorState what="Could not read the report queue." />
@@ -201,7 +186,9 @@ export default async function ModerationPage({
               title="Most blocked accounts"
               hint="Two or more independent blocks. Blocks are private to each user; only the count is shown."
             />
-            {mostBlocked.length === 0 ? (
+            {blocksRes.error ? (
+              <ErrorState what="Could not read the block aggregate." />
+            ) : mostBlocked.length === 0 ? (
               <EmptyState
                 title="No pattern yet"
                 body="An account appears here once at least two different people have blocked it."
@@ -222,17 +209,17 @@ export default async function ModerationPage({
                           href={`/users?user=${row.blocked_id}`}
                           className="group flex min-w-0 items-center gap-2.5"
                         >
-                          <Avatar name={row.name} />
+                          <Avatar name={row.full_name} />
                           <span
                             dir="auto"
                             className="truncate font-medium text-ink group-hover:underline group-hover:decoration-accent group-hover:underline-offset-4"
                           >
-                            {row.name?.trim() || 'Unnamed'}
+                            {row.full_name?.trim() || 'Unnamed'}
                           </span>
                         </Link>
                       </TD>
                       <TD align="right">
-                        <Badge tone={row.count >= 4 ? 'danger' : 'warn'}>{fmtNum(row.count)} people</Badge>
+                        <Badge tone={row.block_count >= 4 ? 'danger' : 'warn'}>{fmtNum(row.block_count)} people</Badge>
                       </TD>
                     </TR>
                   ))}
@@ -243,7 +230,9 @@ export default async function ModerationPage({
 
           <Panel className="overflow-hidden">
             <PanelHead title="Recently resolved" hint="The last 25 decisions." />
-            {resolved.length === 0 ? (
+            {resolvedRes.error ? (
+              <ErrorState what="Could not read resolved reports." />
+            ) : resolved.length === 0 ? (
               <EmptyState
                 title="Nothing resolved yet"
                 body="Decisions you make above are listed here, and in full detail under Activity."

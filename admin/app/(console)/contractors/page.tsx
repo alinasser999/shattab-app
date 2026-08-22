@@ -109,7 +109,11 @@ export default async function ContractorsPage({
           <PanelHead
             title="Verification queue"
             hint="Oldest first. Document links are signed and expire after five minutes."
-            action={<Badge tone={pending.length > 0 ? 'warn' : 'ok'}>{pending.length} pending</Badge>}
+            action={
+              <Badge tone={queueRes.error ? 'danger' : pending.length > 0 ? 'warn' : 'ok'}>
+                {queueRes.error ? 'Unavailable' : `${pending.length} pending`}
+              </Badge>
+            }
           />
           {queueRes.error ? (
             <ErrorState what="Could not read the verification queue." />

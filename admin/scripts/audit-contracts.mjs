@@ -10,8 +10,13 @@ async function text(file) {
 }
 
 const adminActions = await readFile(path.join(adminRoot, 'lib/actions.ts'), 'utf8');
+const middleware = await readFile(path.join(adminRoot, 'proxy.ts'), 'utf8');
 const moderationPage = await readFile(
   path.join(adminRoot, 'app', '(console)', 'moderation', 'page.tsx'),
+  'utf8',
+);
+const userDrawer = await readFile(
+  path.join(adminRoot, 'app', '(console)', 'users', 'drawer.tsx'),
   'utf8',
 );
 const flutterModeration = await text('lib/features/moderation/data/moderation_repository.dart');
@@ -21,7 +26,7 @@ const hardeningMigration = await readFile(
 );
 
 const sourceFiles = [
-  await readFile(path.join(adminRoot, 'middleware.ts'), 'utf8'),
+  await readFile(path.join(adminRoot, 'proxy.ts'), 'utf8'),
   await readFile(path.join(adminRoot, 'lib', 'supabase', 'server.ts'), 'utf8'),
   adminActions,
 ];
@@ -45,5 +50,8 @@ assert(adminActions.includes('returnPath(path'), 'Server actions must sanitize f
 assert(hardeningMigration.includes('admin_require_action'), 'Database action authorization guard is missing.');
 assert(hardeningMigration.includes("raise exception 'reason_required'"), 'Database reason validation is missing.');
 assert(hardeningMigration.includes("r.target_type = 'profile'"), 'Database report handling is missing profile reports.');
+assert(middleware.includes('Do not redirect signed-in users away from /login'), 'Authenticated login must not redirect-loop.');
+assert(moderationPage.includes("rpc('admin_most_blocked'"), 'Moderation must use the complete database block aggregate.');
+assert(userDrawer.includes("adminLevel === 'owner'"), 'Plan controls must fail closed for non-owners.');
 
-console.log('Admin contract audit passed: security boundary, redirect guard, and report enums are aligned.');
+console.log('Admin contract audit passed: security boundary, redirect guard, report enums, and aggregate reads are aligned.');

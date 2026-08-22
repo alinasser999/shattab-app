@@ -18,7 +18,7 @@ import { Button, Input, Label, Panel } from '@/components/ui';
  * database decides what that is worth. Signing in with an ordinary account
  * succeeds and then shows nothing, which is the correct outcome.
  */
-export function LoginForm({ next }: { next: string }) {
+export function LoginForm({ next, denied = false }: { next: string; denied?: boolean }) {
   const router = useRouter();
 
   const [email, setEmail] = useState('');
@@ -47,7 +47,7 @@ export function LoginForm({ next }: { next: string }) {
     }
 
     // A full navigation rather than a client-side push. The session cookie was
-    // only just written, and the middleware has to see it on a fresh request.
+    // only just written, and the proxy has to see it on a fresh request.
     router.replace(next);
     router.refresh();
   }
@@ -65,6 +65,18 @@ export function LoginForm({ next }: { next: string }) {
           <p className="mt-1 text-sm text-ink-3">
             Operator accounts use email and password. Separate from the app, which signs in by phone.
           </p>
+
+          {denied ? (
+            <div role="alert" className="mt-4 rounded-md border border-line-strong bg-raised px-3 py-2.5">
+              <p className="text-sm font-medium text-ink">This account is not an admin.</p>
+              <p className="mt-0.5 text-xs text-ink-2">
+                Sign out, then use an operator account to enter the console.
+              </p>
+              <form action="/api/signout" method="post" className="mt-2">
+                <Button type="submit" variant="secondary" size="sm">Sign out</Button>
+              </form>
+            </div>
+          ) : null}
 
           <form onSubmit={signIn} className="mt-5">
             <Label htmlFor="email">Email</Label>

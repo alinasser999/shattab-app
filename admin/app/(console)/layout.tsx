@@ -7,14 +7,14 @@ import { Button } from '@/components/ui';
 /**
  * Shell for every authenticated page.
  *
- * The admin check lives here rather than only in middleware because middleware
+ * The admin check lives here rather than only in the proxy because the proxy
  * knows whether you are signed in, not whether you are an admin. A signed-in
  * non-admin would otherwise reach the layout and see chrome around a set of
  * empty panels, which looks like a broken console instead of a closed door.
  */
 export default async function ConsoleLayout({ children }: { children: React.ReactNode }) {
   const admin = await currentAdmin();
-  if (!admin) redirect('/login');
+  if (!admin) redirect('/login?denied=1');
 
   // Queue counts drive the sidebar badges. Read here so every page shows the
   // same numbers and no page has to fetch them again.

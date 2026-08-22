@@ -1,6 +1,6 @@
 # Shattab Admin
 
-Operations console for the Shattab marketplace. Next.js 15 (App Router), reading
+Operations console for the Shattab marketplace. Next.js 16 (App Router), reading
 the same Supabase project as the Flutter app.
 
 ## The one thing to understand
@@ -15,9 +15,9 @@ inside Postgres:
 - every mutation writes a row to `admin_audit_log`, which no admin can edit or
   delete from the console
 
-So a leaked build of this app grants nothing. If the middleware were deleted
+So a leaked build of this app grants nothing. If the proxy were deleted
 outright, a non-admin reaching `/users` would still see nothing, because the
-database refuses them independently. Middleware here is a signpost, not a gate.
+database refuses them independently. The proxy here is a signpost, not a gate.
 
 ## Setup
 
@@ -96,10 +96,11 @@ illegal export from a route file, which is a real error this project already hit
 ## Audit and production notes
 
 The current audit, connectivity map, permission matrix, and staging test
-matrix live in [`docs/`](docs/). The admin hardening migration is
-`supabase/migrations/20260803035018_admin_hardening_report_contract.sql` in the
-repository root. Apply it to staging before deploying the matching console
-build; the new `owner`/`moderator` action guard is enforced by PostgreSQL.
+matrix live in [`docs/`](docs/). Apply
+`supabase/migrations/20260803035018_admin_hardening_report_contract.sql` and
+`supabase/migrations/20260820010358_admin_most_blocked_aggregate.sql` to
+staging before deploying the matching console build; the `owner`/`moderator`
+action guard and complete moderation aggregate are enforced by PostgreSQL.
 
 ## Deliberately not here
 

@@ -149,7 +149,9 @@ export default async function ActivityPage({
             title="Sign-in activity"
             hint="From auth.users. Session count is live sessions, which is the closest honest signal GoTrue keeps — it is not a login counter."
           />
-          {signins.length === 0 ? (
+          {signinsRes.error ? (
+            <ErrorState what="Could not read sign-in activity." />
+          ) : signins.length === 0 ? (
             <EmptyState
               title="No sign-ins recorded"
               body="An account appears here once it completes an OTP login in the app."

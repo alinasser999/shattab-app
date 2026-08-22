@@ -21,7 +21,7 @@ export async function supabaseServer() {
         try {
           for (const { name, value, options } of list) store.set(name, value, options);
         } catch {
-          // Server Components cannot set cookies. The middleware refreshes the
+          // Server Components cannot set cookies. The proxy refreshes the
           // session on every request, so a failure here is expected and safe to
           // swallow — this is the one place where doing so is not a silent bug.
         }
@@ -56,6 +56,10 @@ export async function currentAdmin() {
   if (!isAdmin) return null;
 
   const { data: level, error: levelError } = await supabase.rpc('admin_level');
+  // The level is what turns the broad admin read boundary into a least-
+  // privilege write boundary. If the migration is missing or the RPC fails,
+  // do not silently treat an unknown level as owner access.
+  if (levelError || (level !== 'owner' && level !== 'moderator')) return null;
 
   const { data: profile } = await supabase
     .from('profiles')
@@ -67,6 +71,6 @@ export async function currentAdmin() {
     id: user.id,
     phone: user.phone ?? profile?.phone ?? '',
     name: profile?.full_name ?? '',
-    level: levelError ? null : level === 'owner' ? 'owner' : 'moderator',
+    level: level === 'owner' ? 'owner' : 'moderator',
   };
 }

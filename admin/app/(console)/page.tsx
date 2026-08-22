@@ -124,7 +124,9 @@ export default async function OverviewPage({
               title="Daily activity"
               hint="Last 30 days. Zero-activity days are shown as gaps, not skipped."
             />
-            {days.length === 0 ? (
+            {seriesRes.error ? (
+              <ErrorState what="Could not read daily activity." />
+            ) : days.length === 0 ? (
               <EmptyState
                 title="No activity yet"
                 body="Signups, briefs and quotes appear here the day they happen."
@@ -144,16 +146,20 @@ export default async function OverviewPage({
 
           <Panel>
             <PanelHead title="Marketplace funnel" hint="Each step as a share of the one above it." />
-            <Funnel
-              steps={[
-                { label: 'Homeowners', value: f.homeowners ?? 0 },
-                { label: 'Posted a brief', value: f.posted_brief ?? 0 },
-                { label: 'Briefs with a quote', value: f.briefs_quoted ?? 0, note: liquidityNote(f) },
-                { label: 'Quote accepted', value: f.briefs_accepted ?? 0 },
-                { label: 'Job completed', value: f.briefs_completed ?? 0 },
-                { label: 'Reviewed', value: f.briefs_reviewed ?? 0 },
-              ]}
-            />
+            {funnelRes.error ? (
+              <ErrorState what="Could not read the marketplace funnel." />
+            ) : (
+              <Funnel
+                steps={[
+                  { label: 'Homeowners', value: f.homeowners ?? 0 },
+                  { label: 'Posted a brief', value: f.posted_brief ?? 0 },
+                  { label: 'Briefs with a quote', value: f.briefs_quoted ?? 0, note: liquidityNote(f) },
+                  { label: 'Quote accepted', value: f.briefs_accepted ?? 0 },
+                  { label: 'Job completed', value: f.briefs_completed ?? 0 },
+                  { label: 'Reviewed', value: f.briefs_reviewed ?? 0 },
+                ]}
+              />
+            )}
           </Panel>
         </div>
 
@@ -207,7 +213,9 @@ export default async function OverviewPage({
         <div className="grid gap-5 lg:grid-cols-2">
           <Panel>
             <PanelHead title="Newest accounts" action={<SeeAll href="/users" />} />
-            {signups.length === 0 ? (
+            {signupsRes.error ? (
+              <ErrorState what="Could not read recent signups." />
+            ) : signups.length === 0 ? (
               <EmptyState title="Nobody has signed up yet" body="New accounts appear here as they register." />
             ) : (
               <Table>
@@ -239,7 +247,9 @@ export default async function OverviewPage({
 
           <Panel>
             <PanelHead title="Most recent sign-ins" action={<SeeAll href="/activity" />} />
-            {signins.length === 0 ? (
+            {signinsRes.error ? (
+              <ErrorState what="Could not read recent sign-ins." />
+            ) : signins.length === 0 ? (
               <EmptyState
                 title="No sign-ins recorded"
                 body="An account shows here once it completes an OTP login."
