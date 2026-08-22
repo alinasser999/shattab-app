@@ -8,7 +8,13 @@ enum PostType {
   final String dbValue;
 
   static PostType fromDb(String value) {
-    return PostType.values.firstWhere((e) => e.dbValue == value);
+    // Tolerant like every other wire enum: a newer migration adding a
+    // post_type must not crash an older client's feed parsing. Unknown
+    // values render as the generic showcase type rather than throwing.
+    for (final e in PostType.values) {
+      if (e.dbValue == value) return e;
+    }
+    return PostType.projectShowcase;
   }
 }
 

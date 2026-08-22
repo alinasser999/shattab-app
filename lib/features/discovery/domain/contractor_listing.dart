@@ -21,6 +21,7 @@ class ContractorListing {
     this.reviewAvg = 0,
     this.verified = false,
     this.plan = 'free',
+    this.planExpiresAt,
     this.isSponsored = false,
     this.memberSince,
     this.providerKind = ProviderKind.contractor,
@@ -56,6 +57,11 @@ class ContractorListing {
   /// Subscription plan: 'free' | 'pro'.
   final String plan;
 
+  /// When the Pro subscription lapses. Mirrored from contractor_profiles by
+  /// the catalogue RPCs; null for free plans and for rows cached before the
+  /// field shipped.
+  final DateTime? planExpiresAt;
+
   /// Paid catalogue placement. This is deliberately separate from earned
   /// verification/tier signals and must always be rendered with disclosure.
   final bool isSponsored;
@@ -71,7 +77,14 @@ class ContractorListing {
   /// the better-credentialled supply is exactly the supply worth keeping.
   final ProviderKind providerKind;
 
-  bool get isPro => plan == 'pro';
+  /// Active Pro = plan 'pro' and not expired, same rule as
+  /// ContractorProfile.isPro and BillingState.isProActive. Before the
+  /// expiry field shipped through the catalogue RPCs this checked the plan
+  /// flag alone, so an expired-but-unflipped row rendered paid badges.
+  bool get isPro =>
+      plan == 'pro' &&
+      planExpiresAt != null &&
+      planExpiresAt!.isAfter(DateTime.now());
 
   ContractorListing copyWith({String? phone}) => ContractorListing(
     id: id,
@@ -90,6 +103,7 @@ class ContractorListing {
     reviewAvg: reviewAvg,
     verified: verified,
     plan: plan,
+    planExpiresAt: planExpiresAt,
     isSponsored: isSponsored,
     memberSince: memberSince,
     providerKind: providerKind,
@@ -146,6 +160,10 @@ class ContractorListing {
       reviewAvg: reviewAvg,
       verified: (cp?['verified'] as bool?) ?? false,
       plan: (cp?['plan'] as String?) ?? 'free',
+      planExpiresAt: switch (cp?['plan_expires_at']) {
+        final String s => DateTime.tryParse(s),
+        _ => null,
+      },
       isSponsored: (json['is_sponsored'] as bool?) ?? false,
       providerKind: ProviderKind.fromWire(cp?['provider_kind'] as String?),
       memberSince: switch (cp?['created_at']) {

@@ -40,6 +40,91 @@ jobs:
       # release target so mobile-only plugin and manifest errors are caught.
       - run: flutter build apk --release
 
+  admin-console:
+    name: Admin console build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: admin
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: admin/package-lock.json
+
+      - run: npm ci
+
+      # The check that counts, per admin/README.md: source contracts first,
+      # then types, then a real production build.
+      - run: npm run audit:contracts
+      - run: npm run typecheck
+      - run: npm run build
+        env:
+          # Build-time placeholders; the console talks to the real project
+          # only when deployed with its own env. No secrets live here.
+          NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder-anon-key
+
+  database-contracts:
+    name: Database contracts (replay + RLS)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    # Non-blocking on purpose, for now: this job replays the whole migration
+    # directory against an empty database, and weeks of live-applied drift
+    # mean the first runs may surface gaps that predate today's fixes.
+    # Flip continue-on-error to false once the replay is green end to end —
+    # at that point a fresh environment is provably buildable from disk.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      # Boots the local Docker stack and replays every migration file in
+      # order. This is the fresh-environment test: any missing dependency,
+      # wrong ordering or unreplayable statement fails here.
+      - run: supabase db reset
+
+      # pgTAP-style contract suite against the freshly replayed schema.
+      # Individual failed assertions print "not ok" without failing psql's
+      # exit code, so grep for them explicitly.
+      - name: Run RLS regression suite
+        run: |
+          PGPASSWORD=postgres psql \
+            -h localhost -p 54322 -U postgres -d postgres \
+            -v ON_ERROR_STOP=1 \
+            -f supabase/tests/rls_regression.sql | tee tap_output.txt
+          if grep -q "^not ok" tap_output.txt; then
+            echo "::error::RLS regression suite has failing assertions"
+            exit 1
+          fi
+
+  ios-build:
+    name: iOS compile gate
+    runs-on: macos-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.4'
+          cache: true
+
+      - run: flutter pub get
+      - run: cp .env.example .env
+      - run: dart run build_runner build
+
+      # Compile-only: no signing identity exists in CI. Without this gate,
+      # iOS-only compile errors reach CI never (the Linux jobs cannot see them).
+      - run: flutter build ios --release --no-codesign
+
 # Database migration lint and remote Supabase advisors remain separate gates:
 # they require an explicitly configured staging project and must not run against
 # production from an untrusted pull request.

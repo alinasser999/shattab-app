@@ -41,6 +41,15 @@ String? roleGuard(Ref ref, GoRouterState state) {
     return Routes.splash;
   }
 
+  // A failed profile fetch (transient network error at startup) must not be
+  // read as "no profile" — routing an onboarded user into role-select looks
+  // like their account vanished. Park on splash instead: CurrentProfile
+  // retries internally and rebuilds when connectivity returns, and the
+  // router refreshes when the provider resolves.
+  if (profileAsync.hasError) {
+    return path == Routes.splash ? null : Routes.splash;
+  }
+
   final profile = profileAsync.value;
   if (profile == null) {
     return path == Routes.onboardingRoleSelect

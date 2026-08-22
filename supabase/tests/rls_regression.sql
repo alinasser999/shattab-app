@@ -4,7 +4,7 @@
 
 begin;
 
-select plan(20);
+select plan(27);
 
 select ok(
   (select relrowsecurity from pg_class where oid = 'public.profiles'::regclass),
@@ -153,6 +153,71 @@ select ok(
     'execute'
   ),
   'moderation block aggregate is not anonymous'
+);
+
+-- ── Hire-integrity contract (20260822090001) ──────────────────
+
+select ok(
+  exists (
+    select 1 from pg_policies
+    where schemaname = 'public'
+      and tablename = 'quotes'
+      and policyname = 'homeowner_status'
+      and cmd = 'UPDATE'
+      and with_check like '%''declined''%'
+      and with_check not like '%accepted%'
+  ),
+  'homeowners can only decline directly; accepting goes through the RPC'
+);
+select ok(
+  exists (
+    select 1 from pg_trigger
+    where tgrelid = 'public.quotes'::regclass
+      and tgname = 'only_rpc_accepts_quotes'
+      and not tgisinternal
+  ),
+  'direct quote accepts are gated to the accept_quote RPC transaction'
+);
+select ok(
+  position('hired_at is null' in pg_get_functiondef('public.accept_quote(uuid)'::regprocedure)) > 0,
+  'accept_quote claims the brief atomically instead of read-then-write'
+);
+
+-- ── Suspension covers edits, not just inserts (20260822090002) ─
+
+select ok(
+  (select count(*) from pg_trigger
+    where tgname = 'reject_if_suspended_update'
+      and not tgisinternal
+      and tgrelid in (
+        'public.posts'::regclass,
+        'public.post_comments'::regclass,
+        'public.quotes'::regclass,
+        'public.briefs'::regclass,
+        'public.reviews'::regclass
+      )) = 5,
+  'suspended accounts cannot edit their existing content either'
+);
+
+-- ── Search escaping + catalogue expiry (20260822090003/05) ────
+
+select ok(
+  (select position(repeat(chr(92), 4) in pg_get_functiondef(p.oid)) = 0
+     from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public' and p.proname = 'discover_contractors_cursor'),
+  'search cursor uses correct LIKE escaping literals (no doubled backslashes)'
+);
+select ok(
+  (select position('plan_expires_at' in pg_get_functiondef(p.oid)) > 0
+     from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public' and p.proname = 'discover_contractors_cursor'),
+  'catalogue emits subscription expiry so Pro badges honour it'
+);
+select ok(
+  (select position('plan_expires_at' in pg_get_functiondef(p.oid)) > 0
+     from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public' and p.proname = 'list_sponsored_contractors'),
+  'sponsored rail emits subscription expiry so Pro badges honour it'
 );
 
 select * from finish();

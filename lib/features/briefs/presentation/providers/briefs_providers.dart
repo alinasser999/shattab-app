@@ -210,19 +210,33 @@ class BriefsController extends _$BriefsController {
     );
 
     if (photos.isNotEmpty) {
-      final urls = <String>[];
-      for (var i = 0; i < photos.length; i++) {
-        final p = photos[i];
-        final url = await repo.uploadPhoto(
-          homeownerId: session.user.id,
-          draftId: brief.id,
-          seq: i,
-          file: p.file,
-          bytes: p.bytes,
-        );
-        urls.add(url);
+      try {
+        // Upload in parallel — five sequential round-trips dominated brief
+        // creation latency on mobile data.
+        final urls = await Future.wait(<Future<String>>[
+          for (var i = 0; i < photos.length; i++)
+            repo.uploadPhoto(
+              homeownerId: session.user.id,
+              draftId: brief.id,
+              seq: i,
+              file: photos[i].file,
+              bytes: photos[i].bytes,
+            ),
+        ]);
+        await repo.setPhotoUrls(brief.id, urls);
+      } catch (e) {
+        // Compensate: a brief left open with none of its photos reads as
+        // spam to every matched contractor. This brief is seconds old and
+        // quote-less, so delete-or-cancel resolves to a hard delete; if the
+        // network is gone entirely the brief remains visible and deletable
+        // from My Requests rather than being lost.
+        try {
+          await repo.deleteOrCancelBrief(brief.id);
+        } catch (_) {
+          // Secondary failure — surface the primary upload error.
+        }
+        rethrow;
       }
-      await repo.setPhotoUrls(brief.id, urls);
     }
 
     ref.invalidate(myBriefsProvider);
