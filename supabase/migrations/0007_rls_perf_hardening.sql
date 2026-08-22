@@ -4,6 +4,36 @@
 -- logically identical to what it replaces. Flagged by Supabase's own
 -- `auth_rls_initplan` performance lint ahead of go-live.
 
+-- Replayability guard: portfolio_projects was created live in M3 and never
+-- landed in an earlier migration, yet the policies below (and the posts FK
+-- in 0008) reference it. On production this is a no-op; on a fresh replay
+-- it creates the exact table shape extracted from live on 2026-08-22,
+-- before the first policy touches it.
+create table if not exists public.portfolio_projects (
+  id uuid primary key default gen_random_uuid(),
+  contractor_id uuid not null references public.profiles(id) on delete cascade,
+  title text not null constraint portfolio_projects_title_check
+    check (length(title) >= 2 and length(title) <= 120),
+  description text,
+  cover_photo_url text not null,
+  photo_urls text[] not null default '{}'::text[],
+  category text,
+  apartment_type text,
+  location text,
+  year_completed integer,
+  "position" integer not null default 0,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists portfolio_contractor_idx
+  on public.portfolio_projects (contractor_id, "position" desc, created_at desc);
+
+drop trigger if exists set_portfolio_updated_at on public.portfolio_projects;
+create trigger set_portfolio_updated_at
+  before update on public.portfolio_projects
+  for each row execute function public.tg_set_updated_at();
+
 -- briefs
 drop policy if exists "contractor read direct briefs" on public.briefs;
 create policy "contractor read direct briefs" on public.briefs
