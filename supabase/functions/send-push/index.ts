@@ -129,8 +129,8 @@ async function accessToken(): Promise<string> {
   const now = Math.floor(Date.now() / 1000);
   if (cachedToken && cachedToken.expiresAt > now + 60) return cachedToken.value;
 
-  const clientEmail = Deno.env.get('FCM_CLIENT_EMAIL')!;
-  const privateKey = Deno.env.get('FCM_PRIVATE_KEY')!;
+  const clientEmail = requiredEnv('FCM_CLIENT_EMAIL');
+  const privateKey = requiredEnv('FCM_PRIVATE_KEY');
 
   const header = base64url(JSON.stringify({ alg: 'RS256', typ: 'JWT' }));
   const claim = base64url(
@@ -168,12 +168,25 @@ async function accessToken(): Promise<string> {
   if (!res.ok) throw new Error(`oauth ${res.status}: ${await res.text()}`);
 
   const json = await res.json();
+  if (typeof json.access_token !== 'string' || json.access_token.length === 0) {
+    throw new Error('oauth response did not contain an access token');
+  }
   cachedToken = { value: json.access_token, expiresAt: now + 3500 };
   return cachedToken.value;
 }
 
+function requiredEnv(name: string): string {
+  const value = Deno.env.get(name)?.trim();
+  if (!value) throw new Error(`${name} is not configured`);
+  return value;
+}
+
 // ── handler ────────────────────────────────────────────────────────────────
 Deno.serve(async (req) => {
+  if (req.method !== 'POST') {
+    return new Response('method not allowed', { status: 405 });
+  }
+
   // The webhook is the only legitimate caller. Without this check the endpoint
   // is an open push relay: anyone who learned the URL could address a
   // notification at any user id they could guess.
@@ -189,8 +202,8 @@ Deno.serve(async (req) => {
   }
 
   const admin = createClient(
-    Deno.env.get('SUPABASE_URL')!,
-    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+    requiredEnv('SUPABASE_URL'),
+    requiredEnv('SUPABASE_SERVICE_ROLE_KEY'),
   );
 
   const { data: devices, error } = await admin
@@ -204,52 +217,68 @@ Deno.serve(async (req) => {
   if (!devices?.length) return new Response('no devices', { status: 200 });
 
   const bearer = await accessToken();
-  const projectId = Deno.env.get('FCM_PROJECT_ID')!;
+  const projectId = requiredEnv('FCM_PROJECT_ID');
   const endpoint =
     `https://fcm.googleapis.com/v1/projects/${projectId}/messages:send`;
 
   const stale: string[] = [];
+  let sent = 0;
+  let failed = 0;
 
   await Promise.all(
     devices.map(async (device) => {
       const title = copy(record.title_key, device.locale);
       const bodyText = copy(record.body_key, device.locale);
 
-      const res = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${bearer}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          message: {
-            token: device.token,
-            notification: { title, body: bodyText },
-            // Routing data only. Nothing here is a secret: entity ids are
-            // already RLS-guarded, and the app re-fetches the row before it
-            // renders anything from it.
-            data: {
-              notification_id: String(record.id ?? ''),
-              kind: String(record.kind ?? ''),
-              entity_type: String(record.entity_type ?? ''),
-              entity_id: String(record.entity_id ?? ''),
-            },
-            android: { priority: 'HIGH', notification: { sound: 'default' } },
-            apns: { payload: { aps: { sound: 'default', badge: 1 } } },
+      try {
+        const res = await fetch(endpoint, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${bearer}`,
+            'Content-Type': 'application/json',
           },
-        }),
-      });
+          body: JSON.stringify({
+            message: {
+              token: device.token,
+              notification: { title, body: bodyText },
+              // Routing data only. Nothing here is a secret: entity ids are
+              // already RLS-guarded, and the app re-fetches the row before it
+              // renders anything from it.
+              data: {
+                notification_id: String(record.id ?? ''),
+                kind: String(record.kind ?? ''),
+                entity_type: String(record.entity_type ?? ''),
+                entity_id: String(record.entity_id ?? ''),
+              },
+              android: { priority: 'HIGH', notification: { sound: 'default' } },
+              apns: { payload: { aps: { sound: 'default', badge: 1 } } },
+            },
+          }),
+        });
 
-      if (res.ok) return;
+        if (res.ok) {
+          sent += 1;
+          return;
+        }
 
-      const text = await res.text();
-      // 404 / UNREGISTERED means the install is gone. Keeping the row means
-      // retrying a dead address on every future notification, so drop it here
-      // rather than growing the table forever.
-      if (res.status === 404 || text.includes('UNREGISTERED')) {
-        stale.push(device.token);
-      } else {
-        console.error(`fcm ${res.status} for ${record.id}: ${text}`);
+        const responseText = await res.text();
+        // 404 / UNREGISTERED means the install is gone. Keeping the row means
+        // retrying a dead address on every future notification, so drop it
+        // rather than growing the table forever.
+        if (res.status === 404 || responseText.includes('UNREGISTERED')) {
+          stale.push(device.token);
+          return;
+        }
+        failed += 1;
+        console.error(`fcm ${res.status} for ${record.id}`, {
+          token_suffix: String(device.token).slice(-8),
+        });
+      } catch (error) {
+        failed += 1;
+        console.error(`fcm delivery failed for ${record.id}`, {
+          token_suffix: String(device.token).slice(-8),
+          error: String(error),
+        });
       }
     }),
   );
@@ -260,7 +289,8 @@ Deno.serve(async (req) => {
 
   return new Response(
     JSON.stringify({
-      sent: devices.length - stale.length,
+      sent,
+      failed,
       pruned: stale.length,
     }),
     { headers: { 'Content-Type': 'application/json' } },

@@ -1,0 +1,3 @@
+-- The application currently has no committed demo fixtures.
+-- Keep the seed entrypoint present so `supabase db reset` can run the full
+-- migration and policy-test workflow without a missing-file failure.
