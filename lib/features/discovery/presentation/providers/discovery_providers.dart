@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../../../core/cache/provider_cache.dart';
 import '../../data/discovery_repository.dart';
 import '../../domain/contractor_listing.dart';
 
@@ -41,10 +42,24 @@ class DiscoveryFiltersController extends _$DiscoveryFiltersController {
   void clear() => state = const DiscoveryFilters();
 }
 
+/// Paid placements are loaded independently so a slow sponsored query never
+/// blocks the organic catalogue or its skeleton state.
+@riverpod
+Future<List<ContractorListing>> sponsoredProfessionals(
+  Ref ref,
+  String? specialty,
+  String? city,
+) {
+  return ref
+      .watch(discoveryRepositoryProvider)
+      .fetchSponsoredProfessionals(specialty: specialty, city: city);
+}
+
 @Riverpod(retry: discoveryRetry)
 class DiscoverContractors extends _$DiscoverContractors {
   bool _hasMore = true;
   bool _loadingMore = false;
+  DiscoveryCursor? _cursor;
 
   /// Whether more pages may remain — false once a short (< pageSize) page lands.
   bool get hasMore => _hasMore;
@@ -55,9 +70,10 @@ class DiscoverContractors extends _$DiscoverContractors {
     _loadingMore = false;
     final page = await ref
         .read(discoveryRepositoryProvider)
-        .fetchContractors(filters);
-    _hasMore = page.length == DiscoveryRepository.pageSize;
-    return page;
+        .fetchContractorsPage(filters);
+    _cursor = page.cursor;
+    _hasMore = page.hasMore;
+    return page.items;
   }
 
   /// Fetch the next page and append. No-op while in flight or exhausted, so
@@ -69,11 +85,16 @@ class DiscoverContractors extends _$DiscoverContractors {
     _loadingMore = true;
     try {
       final filters = ref.read(discoveryFiltersControllerProvider);
-      final next = await ref
+      final page = await ref
           .read(discoveryRepositoryProvider)
-          .fetchContractors(filters, offset: current.length);
-      _hasMore = next.length == DiscoveryRepository.pageSize;
-      state = AsyncData([...current, ...next]);
+          .fetchContractorsPage(filters, after: _cursor);
+      _cursor = page.cursor;
+      _hasMore = page.hasMore;
+      final ids = current.map((item) => item.id).toSet();
+      state = AsyncData([
+        ...current,
+        ...page.items.where((item) => ids.add(item.id)),
+      ]);
     } finally {
       _loadingMore = false;
     }
@@ -88,6 +109,7 @@ class DiscoverContractors extends _$DiscoverContractors {
 class TopRatedProfessionals extends _$TopRatedProfessionals {
   bool _hasMore = true;
   bool _loadingMore = false;
+  DiscoveryCursor? _cursor;
 
   bool get hasMore => _hasMore;
 
@@ -95,9 +117,12 @@ class TopRatedProfessionals extends _$TopRatedProfessionals {
   Future<List<ContractorListing>> build() async {
     _hasMore = true;
     _loadingMore = false;
-    final page = await ref.read(discoveryRepositoryProvider).fetchTopRated();
-    _hasMore = page.length == DiscoveryRepository.pageSize;
-    return page;
+    final page = await ref
+        .read(discoveryRepositoryProvider)
+        .fetchTopRatedPage();
+    _cursor = page.cursor;
+    _hasMore = page.hasMore;
+    return page.items;
   }
 
   Future<void> loadMore() async {
@@ -106,14 +131,15 @@ class TopRatedProfessionals extends _$TopRatedProfessionals {
     if (current == null) return;
     _loadingMore = true;
     try {
-      final next = await ref
+      final page = await ref
           .read(discoveryRepositoryProvider)
-          .fetchTopRated(offset: current.length);
-      _hasMore = next.length == DiscoveryRepository.pageSize;
+          .fetchTopRatedPage(after: _cursor);
+      _cursor = page.cursor;
+      _hasMore = page.hasMore;
       final ids = current.map((item) => item.id).toSet();
       state = AsyncData([
         ...current,
-        ...next.where((item) => ids.add(item.id)),
+        ...page.items.where((item) => ids.add(item.id)),
       ]);
     } finally {
       _loadingMore = false;
@@ -126,6 +152,7 @@ class TopRatedProfessionals extends _$TopRatedProfessionals {
 class AllProfessionals extends _$AllProfessionals {
   bool _hasMore = true;
   bool _loadingMore = false;
+  DiscoveryCursor? _cursor;
 
   bool get hasMore => _hasMore;
 
@@ -135,9 +162,10 @@ class AllProfessionals extends _$AllProfessionals {
     _loadingMore = false;
     final page = await ref
         .read(discoveryRepositoryProvider)
-        .fetchContractors(const DiscoveryFilters());
-    _hasMore = page.length == DiscoveryRepository.pageSize;
-    return page;
+        .fetchContractorsPage(const DiscoveryFilters());
+    _cursor = page.cursor;
+    _hasMore = page.hasMore;
+    return page.items;
   }
 
   Future<void> loadMore() async {
@@ -146,14 +174,15 @@ class AllProfessionals extends _$AllProfessionals {
     if (current == null) return;
     _loadingMore = true;
     try {
-      final next = await ref
+      final page = await ref
           .read(discoveryRepositoryProvider)
-          .fetchContractors(const DiscoveryFilters(), offset: current.length);
-      _hasMore = next.length == DiscoveryRepository.pageSize;
+          .fetchContractorsPage(const DiscoveryFilters(), after: _cursor);
+      _cursor = page.cursor;
+      _hasMore = page.hasMore;
       final ids = current.map((item) => item.id).toSet();
       state = AsyncData([
         ...current,
-        ...next.where((item) => ids.add(item.id)),
+        ...page.items.where((item) => ids.add(item.id)),
       ]);
     } finally {
       _loadingMore = false;
@@ -166,6 +195,7 @@ class AllProfessionals extends _$AllProfessionals {
 class NearbyProfessionals extends _$NearbyProfessionals {
   bool _hasMore = true;
   bool _loadingMore = false;
+  DiscoveryCursor? _cursor;
 
   bool get hasMore => _hasMore;
 
@@ -175,9 +205,10 @@ class NearbyProfessionals extends _$NearbyProfessionals {
     _loadingMore = false;
     final page = await ref
         .read(discoveryRepositoryProvider)
-        .fetchContractors(DiscoveryFilters(city: city));
-    _hasMore = page.length == DiscoveryRepository.pageSize;
-    return page;
+        .fetchContractorsPage(DiscoveryFilters(city: city));
+    _cursor = page.cursor;
+    _hasMore = page.hasMore;
+    return page.items;
   }
 
   Future<void> loadMore() async {
@@ -186,17 +217,15 @@ class NearbyProfessionals extends _$NearbyProfessionals {
     if (current == null) return;
     _loadingMore = true;
     try {
-      final next = await ref
+      final page = await ref
           .read(discoveryRepositoryProvider)
-          .fetchContractors(
-            DiscoveryFilters(city: city),
-            offset: current.length,
-          );
-      _hasMore = next.length == DiscoveryRepository.pageSize;
+          .fetchContractorsPage(DiscoveryFilters(city: city), after: _cursor);
+      _cursor = page.cursor;
+      _hasMore = page.hasMore;
       final ids = current.map((item) => item.id).toSet();
       state = AsyncData([
         ...current,
-        ...next.where((item) => ids.add(item.id)),
+        ...page.items.where((item) => ids.add(item.id)),
       ]);
     } finally {
       _loadingMore = false;
@@ -204,7 +233,20 @@ class NearbyProfessionals extends _$NearbyProfessionals {
   }
 }
 
+/// One professional, by id.
+///
+/// Held briefly after the last listener. This is the provider a homeowner
+/// re-enters most: open a profile, back to the catalogue, open the next,
+/// return to the first. Without a window every one of those returns showed a
+/// skeleton for a record already on the device.
+///
+/// `ReviewController.submit` invalidates this to refresh the aggregate rating,
+/// which disposes the provider and cancels the window with it.
 @Riverpod(retry: discoveryRetry)
-Future<ContractorListing?> contractorById(Ref ref, String id) {
-  return ref.watch(discoveryRepositoryProvider).fetchContractor(id);
+Future<ContractorListing?> contractorById(Ref ref, String id) async {
+  final listing = await ref
+      .watch(discoveryRepositoryProvider)
+      .fetchContractor(id);
+  cacheFor(ref, cacheWindow);
+  return listing;
 }

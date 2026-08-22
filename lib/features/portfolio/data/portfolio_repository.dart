@@ -8,10 +8,29 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/media/media_storage.dart';
 import '../../../core/media/media_storage_provider.dart';
 import '../../../core/supabase/supabase_provider.dart';
-import '../../../core/utils/upload_policy.dart';
+import '../../../core/utils/image_compression.dart';
 import '../domain/portfolio_project.dart';
 
 part 'portfolio_repository.g.dart';
+
+/// Stable cursor for the cross-contractor completed-work collection.
+///
+/// [createdAt] is the primary ordering key and [id] breaks ties when multiple
+/// projects are created in the same timestamp precision window.
+class PortfolioCursor {
+  const PortfolioCursor({required this.createdAt, required this.id});
+
+  factory PortfolioCursor.fromProject(PortfolioProject project) =>
+      PortfolioCursor(
+        createdAt:
+            project.createdAt ??
+            DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
+        id: project.id,
+      );
+
+  final DateTime createdAt;
+  final String id;
+}
 
 class PortfolioRepository {
   PortfolioRepository(this._client, [MediaStorageService? mediaStorage])
@@ -54,15 +73,20 @@ class PortfolioRepository {
   /// dedicated "real work" collection. A stable id tie-breaker keeps the
   /// boundary deterministic when two projects share a timestamp.
   Future<List<PortfolioProject>> fetchRecentPage({
-    int offset = 0,
+    PortfolioCursor? after,
     int limit = 12,
   }) async {
-    final rows = await _client
-        .from('portfolio_projects')
-        .select()
+    var query = _client.from('portfolio_projects').select();
+    if (after != null) {
+      final iso = after.createdAt.toUtc().toIso8601String();
+      query = query.or(
+        'created_at.lt.$iso,and(created_at.eq.$iso,id.lt.${after.id})',
+      );
+    }
+    final rows = await query
         .order('created_at', ascending: false)
         .order('id', ascending: false)
-        .range(offset, offset + limit - 1);
+        .limit(limit);
     return rows.map(PortfolioProject.fromJson).toList();
   }
 
@@ -154,10 +178,8 @@ class PortfolioRepository {
     final path = '$contractorId/$draftId/$seq.jpg';
     late final Uint8List uploadBytes;
     if (file != null) {
-      UploadPolicy.validateImageLength(await file.length());
       uploadBytes = await file.readAsBytes();
     } else if (bytes != null) {
-      UploadPolicy.validateImageBytes(bytes);
       uploadBytes = bytes;
     } else {
       throw ArgumentError('uploadPhoto needs file or bytes');
@@ -177,7 +199,7 @@ class PortfolioRepository {
     final storage = _client.storage.from('portfolio-photos');
     await storage.uploadBinary(
       path,
-      uploadBytes,
+      await ImageCompression.prepare(uploadBytes),
       fileOptions: const FileOptions(upsert: true, contentType: 'image/jpeg'),
     );
     return storage.getPublicUrl(path);
@@ -187,7 +209,7 @@ class PortfolioRepository {
     // Fetch project to clean up storage files before deleting the DB row.
     final project = await fetchById(projectId);
     if (project != null) {
-      await _removeStoragePhotos(project.photoUrls);
+      await _removeStoragePhotos([...project.photoUrls, project.coverPhotoUrl]);
     }
     await _client.from('portfolio_projects').delete().eq('id', projectId);
   }

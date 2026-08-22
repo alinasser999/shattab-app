@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:batsh/core/l10n/l10n_extension.dart';
+import '../../../core/analytics/app_analytics.dart';
 import '../../../core/l10n/catalog_labels.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/batsh_icon_size.dart';
@@ -13,19 +14,20 @@ import '../../../core/theme/batsh_motion.dart';
 import '../../../core/theme/batsh_radius.dart';
 import '../../../core/theme/batsh_spacing.dart';
 import '../../../core/theme/batsh_typography.dart';
-import '../../../core/widgets/batsh_empty_state.dart';
+import '../../../core/theme/theme_extension.dart';
 import '../../../core/widgets/batsh_bottom_nav.dart';
 import 'widgets/discover_cards.dart';
-import 'widgets/featured_professional_card.dart';
 import 'widgets/discover_hero.dart';
-import 'widgets/recent_work_rail.dart';
-import '../../../core/widgets/batsh_error.dart';
 import '../../../core/widgets/batsh_filter_sheet.dart';
 import '../../../core/widgets/batsh_sheet.dart';
 import '../../../core/widgets/batsh_scaffold.dart';
 import '../../../core/widgets/batsh_shimmer.dart';
+import '../../../core/widgets/batsh_snack.dart';
 import '../../../core/widgets/contractor_card.dart';
+import '../../../core/widgets/shattab_experience_state.dart';
+import '../../../core/widgets/shattab_pattern.dart';
 import '../../../core/utils/error_mapper.dart';
+import '../../../core/utils/support_contact.dart';
 import '../../auth/presentation/sign_in_sheet.dart';
 import '../../onboarding/domain/onboarding_models.dart';
 import '../../onboarding/presentation/providers/onboarding_provider.dart';
@@ -33,24 +35,22 @@ import '../../saved/presentation/providers/saved_providers.dart';
 import '../domain/contractor_listing.dart';
 import '../domain/professional_curation.dart';
 import 'providers/discovery_providers.dart';
+import 'professional_directory_screen.dart';
 import '../../../core/widgets/batsh_search_bar.dart';
 import '../../../core/widgets/batsh_section_header.dart';
 import '../../notifications/presentation/providers/notifications_providers.dart';
+import 'widgets/featured_professional_card.dart';
+import 'widgets/recent_work_rail.dart';
+import 'widgets/sponsored_professional_rail.dart';
 
-/// Discover, composed as a magazine rather than as a feed.
+enum _DiscoverSortMode { topRated, newest }
+
+/// Homeowner-facing professional discovery catalogue.
 ///
-/// The screen used to be four stacked lists — a search bar, a chip row, two
-/// identical contractor rails and a column of the same card again — under an
-/// app bar that named the tab the bottom nav had already named. Everything
-/// looked equally important, so the eye had nowhere to land, and the
-/// photography, the only thing that sells a renovation, was never bigger than
-/// a thumbnail.
-///
-/// The order now descends in weight: a full-bleed [DiscoverHero] with the
-/// search field on its edge, a glyph row for one-tap browse, exactly one
-/// [FeaturedProfessionalCard] carrying the screen's only primary button, then
-/// the work itself, then quieter nearby and ranked sections, then the full
-/// catalogue. Nothing about the data, filters, or paging changes.
+/// The hero and category shortcuts make the purpose of this tab clear, then
+/// the rest of the screen stays focused on one searchable, saveable catalogue.
+/// A single list avoids asking people to decode several overlapping rankings
+/// before they can compare the professionals they came to find.
 class DiscoverScreen extends ConsumerStatefulWidget {
   const DiscoverScreen({super.key});
 
@@ -65,6 +65,10 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
   // scroll view mid-gesture.
   final ScrollController _scrollCtrl = ScrollController();
   Timer? _debounce;
+  bool _loadingMore = false;
+  Object? _paginationError;
+  _DiscoverSortMode _sortMode = _DiscoverSortMode.topRated;
+  final Map<String, bool> _optimisticSaved = <String, bool>{};
 
   int get _activeFilterCount {
     final f = ref.read(discoveryFiltersControllerProvider);
@@ -159,6 +163,12 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
     ref
         .read(discoveryFiltersControllerProvider.notifier)
         .setCity(selected.isEmpty ? null : selected);
+    unawaited(
+      AppAnalytics.track(
+        'discovery_location_changed',
+        properties: {'has_city_filter': selected.isNotEmpty},
+      ),
+    );
 
     if (_scrollCtrl.hasClients) {
       await _scrollCtrl.animateTo(
@@ -169,6 +179,54 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
     }
   }
 
+  bool get _hasMore => ref.read(discoverContractorsProvider.notifier).hasMore;
+
+  Future<void> _loadMore() async {
+    if (_loadingMore || !_hasMore) return;
+    setState(() {
+      _loadingMore = true;
+      _paginationError = null;
+    });
+    try {
+      await ref.read(discoverContractorsProvider.notifier).loadMore();
+    } catch (error) {
+      if (mounted) setState(() => _paginationError = error);
+    } finally {
+      if (mounted) setState(() => _loadingMore = false);
+    }
+  }
+
+  Future<void> _refresh() async {
+    ref.invalidate(discoverContractorsProvider);
+    await ref.read(discoverContractorsProvider.future);
+  }
+
+  Future<void> _toggleSaved({
+    required String contractorId,
+    required bool currentlySaved,
+  }) async {
+    if (_optimisticSaved.containsKey(contractorId)) return;
+    if (mounted) {
+      setState(() => _optimisticSaved[contractorId] = !currentlySaved);
+    }
+    try {
+      await ref.read(savedControllerProvider.notifier).toggle(contractorId);
+      if (mounted) setState(() => _optimisticSaved.remove(contractorId));
+    } catch (error) {
+      if (!mounted) return;
+      setState(() => _optimisticSaved.remove(contractorId));
+      BatshSnack.error(context, ErrorMapper.map(error));
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollCtrl.addListener(() {
+      if (_scrollCtrl.position.extentAfter < 520) _loadMore();
+    });
+  }
+
   @override
   void dispose() {
     _debounce?.cancel();
@@ -177,46 +235,66 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
     super.dispose();
   }
 
+  String? _discoveryReason(
+    BuildContext context,
+    ContractorListing listing,
+    String? browseCity,
+  ) {
+    if (browseCity != null && listing.serviceAreas.contains(browseCity)) {
+      return context.l10n.nearYouIn(browseCity);
+    }
+    if (listing.verified) return context.l10n.verifiedIdentity;
+    if (listing.hasReviews) {
+      return context.l10n.verifiedReviewFromCompletedJob;
+    }
+    if (listing.projectsCompleted > 0) {
+      return '${listing.projectsCompleted} ${context.l10n.completedProjectsShort}';
+    }
+    return null;
+  }
+
   /// Handed to the hero rather than placed beside it, so the field keeps its
   /// element — and therefore its focus and its keyboard — when the hero
   /// collapses the moment a query is typed.
   Widget _buildSearchRow() {
     return Directionality(
-      // The reference composition keeps the search field wide on the left and
-      // the filter action tucked on the right; the field itself remains RTL.
-      textDirection: TextDirection.ltr,
-      child: Row(
+      textDirection: TextDirection.rtl,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Expanded(
-            child: Directionality(
-              textDirection: TextDirection.rtl,
-              child: BatshSearchBar(
-                hintText: context.l10n.searchHint,
-                controller: _searchCtrl,
-                onChanged: (v) {
-                  _debounce?.cancel();
-                  _debounce = Timer(const Duration(milliseconds: 300), () {
-                    ref
-                        .read(discoveryFiltersControllerProvider.notifier)
-                        .setSearch(v);
-                  });
-                },
-                onClear: () {
-                  _searchCtrl.clear();
-                  ref
-                      .read(discoveryFiltersControllerProvider.notifier)
-                      .setSearch(null);
-                },
-              ),
-            ),
+          BatshSearchBar(
+            hintText: context.l10n.discoverSearchHint,
+            controller: _searchCtrl,
+            onChanged: (v) {
+              _debounce?.cancel();
+              _debounce = Timer(const Duration(milliseconds: 300), () {
+                ref
+                    .read(discoveryFiltersControllerProvider.notifier)
+                    .setSearch(v);
+              });
+            },
+            onClear: () {
+              _searchCtrl.clear();
+              ref
+                  .read(discoveryFiltersControllerProvider.notifier)
+                  .setSearch(null);
+            },
           ),
-          const SizedBox(width: BatshSpacing.xs),
-          Directionality(
-            textDirection: TextDirection.rtl,
-            child: BatshFilterButton(
-              activeCount: _activeFilterCount,
-              onTap: () => _openFilterSheet(context),
-            ),
+          const SizedBox(height: BatshSpacing.xs),
+          Row(
+            children: [
+              Expanded(
+                child: _DiscoverSortButton(
+                  mode: _sortMode,
+                  onSelected: (mode) => setState(() => _sortMode = mode),
+                ),
+              ),
+              const SizedBox(width: BatshSpacing.sm),
+              BatshFilterButton(
+                activeCount: _activeFilterCount,
+                onTap: () => _openFilterSheet(context),
+              ),
+            ],
           ),
         ],
       ),
@@ -224,9 +302,18 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => const ProfessionalDirectoryScreen();
+
+  // Kept temporarily as a compatibility reference while the new catalogue
+  // settles. It is not mounted by the route; the provider and interaction
+  // contracts remain here for an easy rollback without losing the old flow.
+  // ignore: unused_element
+  Widget _legacyBuild(BuildContext context) {
     final filters = ref.watch(discoveryFiltersControllerProvider);
     final contractorsAsync = ref.watch(discoverContractorsProvider);
+    final sponsoredAsync = ref.watch(
+      sponsoredProfessionalsProvider(filters.specialty, filters.city),
+    );
     final savedIds = ref.watch(savedContractorIdsProvider).value ?? {};
 
     return BatshScaffold(
@@ -236,85 +323,108 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
       padding: EdgeInsets.zero,
       body: contractorsAsync.when(
         loading: () => const _DiscoverSkeleton(),
-        error: (e, _) => BatshError(
-          message: ErrorMapper.map(e),
-          onRetry: () => ref.invalidate(discoverContractorsProvider),
+        error: (e, _) => Padding(
+          padding: const EdgeInsets.all(BatshSpacing.gutter),
+          child: ShattabExperienceState(
+            icon: Icons.cloud_off_outlined,
+            title: context.l10n.unknownErrorRetry,
+            message: ErrorMapper.map(e),
+            actionLabel: context.l10n.tryAgain,
+            onAction: () => ref.invalidate(discoverContractorsProvider),
+            secondaryActionLabel: context.l10n.helpSupport,
+            onSecondaryAction: () => openShattabSupport(context),
+            pattern: ShattabPatternKind.contour,
+          ),
         ),
         data: (list) {
           if (list.isEmpty) {
-            return Center(
-              child: BatshEmptyState(
-                title: context.l10n.noContractorsTitle,
-                message: context.l10n.noContractorsMessage,
-                icon: Icons.search_off_outlined,
-                kind: filters.isEmpty
-                    ? BatshEmptyStateKind.nothingYet
-                    : BatshEmptyStateKind.noResults,
-                action: OutlinedButton(
-                  onPressed: () {
-                    if (filters.isEmpty) {
-                      ref.invalidate(discoverContractorsProvider);
-                    } else {
-                      _searchCtrl.clear();
-                      ref
-                          .read(discoveryFiltersControllerProvider.notifier)
-                          .clear();
-                    }
-                  },
-                  child: Text(
-                    filters.isEmpty
-                        ? context.l10n.tryAgain
-                        : context.l10n.clearFilters,
-                  ),
-                ),
+            final filtered = !filters.isEmpty;
+            return Padding(
+              padding: const EdgeInsets.all(BatshSpacing.gutter),
+              child: ShattabExperienceState(
+                icon: filtered
+                    ? Icons.filter_alt_off_outlined
+                    : Icons.search_off_outlined,
+                title: filtered
+                    ? context.l10n.noResultsFound
+                    : context.l10n.noContractorsTitle,
+                message: filtered
+                    ? context.l10n.noContractorsMessage
+                    : context.l10n.noContractorsMessage,
+                actionLabel: filtered
+                    ? context.l10n.clearFilters
+                    : context.l10n.tryAgain,
+                onAction: () {
+                  if (filtered) {
+                    _searchCtrl.clear();
+                    ref
+                        .read(discoveryFiltersControllerProvider.notifier)
+                        .clear();
+                  } else {
+                    ref.invalidate(discoverContractorsProvider);
+                  }
+                },
+                pattern: filtered
+                    ? ShattabPatternKind.lattice
+                    : ShattabPatternKind.arches,
               ),
             );
           }
 
-          const shelfPool = 20;
+          final myCity = ref.watch(homeownerProfileProvider).value?.city;
+          final browseCity = filters.city ?? myCity;
+          final visibleList = [...list]
+            ..sort((a, b) {
+              if (_sortMode == _DiscoverSortMode.newest) {
+                final aDate =
+                    a.memberSince ?? DateTime.fromMillisecondsSinceEpoch(0);
+                final bDate =
+                    b.memberSince ?? DateTime.fromMillisecondsSinceEpoch(0);
+                final byDate = bDate.compareTo(aDate);
+                return byDate != 0 ? byDate : a.id.compareTo(b.id);
+              }
+
+              final byRating = (b.rating ?? -1).compareTo(a.rating ?? -1);
+              if (byRating != 0) return byRating;
+              final byReviews = b.reviewCount.compareTo(a.reviewCount);
+              if (byReviews != 0) return byReviews;
+              final byProjects = b.projectsCompleted.compareTo(
+                a.projectsCompleted,
+              );
+              return byProjects != 0 ? byProjects : a.id.compareTo(b.id);
+            });
+
           final showShelves = filters.isEmpty;
-          final pool = list.take(shelfPool);
+          final pool = visibleList.take(20);
           final featured = showShelves ? pickFeaturedProfessional(pool) : null;
           final topRated = showShelves
               ? rankTopRated(pool, limit: 5)
               : <ContractorListing>[];
           final topRatedList = featured == null
               ? topRated
-              : topRated.where((c) => c.id != featured.id).toList();
-          final myCity = ref.watch(homeownerProfileProvider).value?.city;
-          final browseCity = filters.city ?? myCity;
+              : topRated.where((item) => item.id != featured.id).toList();
           final nearYou =
               (showShelves && browseCity != null && browseCity.isNotEmpty)
               ? rankNearbyProfessionals(pool, browseCity)
               : <ContractorListing>[];
-          final showNearYou = nearYou.isNotEmpty;
           final shelfIds = {
             if (featured != null) featured.id,
-            ...topRated.map((c) => c.id),
+            ...topRated.map((item) => item.id),
           };
           final rest = shelfIds.isEmpty
-              ? list
-              : list.where((c) => !shelfIds.contains(c.id)).toList();
+              ? visibleList
+              : visibleList
+                    .where((item) => !shelfIds.contains(item.id))
+                    .toList();
 
           void open(String id) =>
               context.push(Routes.homeownerContractorProfilePath(id));
 
-          // Every section title sits on the same rhythm: a section-sized gap
-          // above it, a sibling-sized one below. The header widget's own
-          // padding is zeroed so the spacing is decided here, in one place.
-          //
-          // [major] is spent twice on this screen and no more: on the one
-          // professional it argues for, and on the catalogue the whole tab
-          // exists to open. The proximity and rating shelves stay standard —
-          // they are the supporting cast, and saying so in type is what makes
-          // the other two land.
           SliverToBoxAdapter header(
             String title, {
             BatshSectionEmphasis emphasis = BatshSectionEmphasis.standard,
             VoidCallback? onViewAll,
-            Key? key,
           }) => SliverToBoxAdapter(
-            key: key,
             child: Padding(
               padding: const EdgeInsets.fromLTRB(
                 BatshSpacing.sectionH,
@@ -366,10 +476,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
           }
 
           return RefreshIndicator(
-            onRefresh: () async {
-              ref.invalidate(discoverContractorsProvider);
-              await ref.read(discoverContractorsProvider.future);
-            },
+            onRefresh: _refresh,
             child: CustomScrollView(
               key: const PageStorageKey<String>('homeowner-discover-scroll'),
               controller: _scrollCtrl,
@@ -379,10 +486,6 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
                   child: DiscoverHero(
                     searchRow: _buildSearchRow(),
                     collapsed: !filters.isEmpty,
-                    // Use the art-directed visual fallback for the cover. A
-                    // professional's real cover still powers their card and
-                    // public profile; this keeps the browse hero intentional
-                    // when the catalog has no agreed campaign asset.
                     coverUrl: null,
                     locationLabel: browseCity,
                     unreadCount: ref.watch(unreadNotificationsProvider),
@@ -442,7 +545,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
                       ),
                     ),
                   ),
-                if (filters.isEmpty) ...[
+                if (showShelves) ...[
                   const SliverToBoxAdapter(
                     child: SizedBox(height: BatshSpacing.md),
                   ),
@@ -455,6 +558,15 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
                     ),
                   ),
                 ],
+                if (filters.searchQuery?.trim().isEmpty != false &&
+                    sponsoredAsync.hasValue &&
+                    sponsoredAsync.value!.isNotEmpty)
+                  SliverToBoxAdapter(
+                    child: SponsoredProfessionalRail(
+                      listings: sponsoredAsync.value!,
+                      onTap: (listing) => open(listing.id),
+                    ),
+                  ),
                 if (featured != null) ...[
                   header(
                     context.l10n.featuredProfessional,
@@ -475,15 +587,11 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
                     ),
                   ),
                 ],
-                // Only while browsing. Once a filter is on, the homeowner is
-                // in a task — "a plumber in Giza" — and a rail of unrelated
-                // finished work is something to scroll past on the way to the
-                // list they asked for.
-                if (filters.isEmpty)
+                if (showShelves)
                   SliverToBoxAdapter(
                     child: RecentWorkRail(fallbackContractorId: featured?.id),
                   ),
-                if (showNearYou) ...[
+                if (nearYou.isNotEmpty) ...[
                   header(
                     context.l10n.nearYouIn(browseCity!),
                     onViewAll: () => context.push(
@@ -583,17 +691,26 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
                       BatshSpacing.xxl,
                     ),
                     sliver: SliverList(
-                      delegate: SliverChildBuilderDelegate((context, i) {
-                        // Near the end → pull the next page. Notifier guards
-                        // against duplicate in-flight / exhausted fetches.
-                        if (i >= rest.length - 3) {
+                      delegate: SliverChildBuilderDelegate((context, index) {
+                        if (index == rest.length) {
+                          return _DiscoverFooter(
+                            loading: _loadingMore,
+                            error: _paginationError,
+                            hasMore: _hasMore,
+                            onRetry: _loadMore,
+                          );
+                        }
+
+                        if (index >= rest.length - 3) {
                           WidgetsBinding.instance.addPostFrameCallback((_) {
-                            ref
-                                .read(discoverContractorsProvider.notifier)
-                                .loadMore();
+                            if (mounted) _loadMore();
                           });
                         }
-                        final item = rest[i];
+
+                        final item = rest[index];
+                        final isSaved =
+                            _optimisticSaved[item.id] ??
+                            savedIds.contains(item.id);
                         return Padding(
                           padding: const EdgeInsets.only(
                             bottom: BatshSpacing.lg,
@@ -601,24 +718,38 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
                           child: reveal(
                             ContractorCard(
                               listing: item,
-                              isSaved: savedIds.contains(item.id),
+                              isSaved: isSaved,
+                              discoveryReason: _discoveryReason(
+                                context,
+                                item,
+                                browseCity,
+                              ),
                               onToggleSave: () => runSignedIn(
                                 context,
                                 ref,
                                 reason: context.l10n.signInToSave,
-                                action: () => ref
-                                    .read(savedControllerProvider.notifier)
-                                    .toggle(item.id),
+                                action: () => _toggleSaved(
+                                  contractorId: item.id,
+                                  currentlySaved: savedIds.contains(item.id),
+                                ),
                               ),
                               onTap: () => open(item.id),
                             ),
-                            i,
+                            index,
                           ),
                         );
-                      }, childCount: rest.length),
+                      }, childCount: rest.length + 1),
                     ),
                   ),
-                ],
+                ] else
+                  SliverToBoxAdapter(
+                    child: _DiscoverFooter(
+                      loading: _loadingMore,
+                      error: _paginationError,
+                      hasMore: _hasMore,
+                      onRetry: _loadMore,
+                    ),
+                  ),
                 SliverToBoxAdapter(
                   child: SizedBox(
                     height: BatshBottomNav.contentBottomInset(context),
@@ -628,6 +759,68 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
             ),
           );
         },
+      ),
+    );
+  }
+}
+
+class _DiscoverSortButton extends StatelessWidget {
+  const _DiscoverSortButton({required this.mode, required this.onSelected});
+
+  final _DiscoverSortMode mode;
+  final ValueChanged<_DiscoverSortMode> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final label = mode == _DiscoverSortMode.topRated
+        ? context.l10n.topRated
+        : context.l10n.filterNewestFirst;
+    return PopupMenuButton<_DiscoverSortMode>(
+      tooltip: context.l10n.topRated,
+      onSelected: onSelected,
+      position: PopupMenuPosition.under,
+      itemBuilder: (context) => [
+        PopupMenuItem(
+          value: _DiscoverSortMode.topRated,
+          child: Text(context.l10n.topRated),
+        ),
+        PopupMenuItem(
+          value: _DiscoverSortMode.newest,
+          child: Text(context.l10n.filterNewestFirst),
+        ),
+      ],
+      child: Container(
+        height: 42,
+        padding: const EdgeInsets.symmetric(horizontal: BatshSpacing.md),
+        decoration: BoxDecoration(
+          color: context.colorScheme.surfaceContainerLowest,
+          borderRadius: BatshRadius.brFull,
+          border: Border.all(
+            color: context.colorScheme.outlineVariant.withValues(alpha: 0.8),
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.keyboard_arrow_down_rounded,
+              size: BatshIconSize.md,
+              color: context.colorScheme.onSurfaceVariant,
+            ),
+            const SizedBox(width: BatshSpacing.xs),
+            Flexible(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: BatshTypography.labelMd.copyWith(
+                  color: context.colorScheme.onSurface,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -816,6 +1009,39 @@ class _LocationPickerOption extends StatelessWidget {
   }
 }
 
+class _DiscoverFooter extends StatelessWidget {
+  const _DiscoverFooter({
+    required this.loading,
+    required this.error,
+    required this.hasMore,
+    required this.onRetry,
+  });
+
+  final bool loading;
+  final Object? error;
+  final bool hasMore;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    if (loading) return const BatshPaginationSkeleton();
+    if (error != null) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: BatshSpacing.md),
+        child: OutlinedButton.icon(
+          onPressed: onRetry,
+          icon: const Icon(Icons.refresh_rounded),
+          label: Text(context.l10n.tryAgain),
+        ),
+      );
+    }
+    return Semantics(
+      label: hasMore ? context.l10n.loadingMore : context.l10n.allProfessionals,
+      child: const SizedBox(height: BatshSpacing.md),
+    );
+  }
+}
+
 /// The same composition in grey, so the swap to content shifts nothing.
 class _DiscoverSkeleton extends StatelessWidget {
   const _DiscoverSkeleton();
@@ -828,7 +1054,7 @@ class _DiscoverSkeleton extends StatelessWidget {
       children: [
         // Hero: the cover, with the search pill hanging off its edge.
         SizedBox(
-          height: 324,
+          height: 286,
           child: Stack(
             children: [
               const Positioned.fill(
@@ -836,7 +1062,7 @@ class _DiscoverSkeleton extends StatelessWidget {
                 left: 0,
                 right: 0,
                 child: BatshShimmerBox(
-                  height: 324,
+                  height: 286,
                   borderRadius: BatshRadius.brXs,
                 ),
               ),
@@ -870,7 +1096,6 @@ class _DiscoverSkeleton extends StatelessWidget {
             ),
           ),
         ),
-        const SizedBox(height: BatshSpacing.xxl),
         Padding(
           padding: const EdgeInsets.symmetric(
             horizontal: BatshSpacing.sectionH,
@@ -884,31 +1109,59 @@ class _DiscoverSkeleton extends StatelessWidget {
                 borderRadius: BatshRadius.brXs,
               ),
               const SizedBox(height: BatshSpacing.md),
-              // The featured card's own silhouette, not a rectangle standing
-              // in for it — the swap to content must not move anything.
-              const FeaturedProfessionalCardSkeleton(),
+              for (var i = 0; i < 3; i++) ...[
+                const _DiscoverListingSkeleton(),
+                if (i < 2) const SizedBox(height: BatshSpacing.lg),
+              ],
             ],
           ),
         ),
-        const SizedBox(height: BatshSpacing.xxl),
-        SizedBox(
-          height: NearbyProfessionalCard.height,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            physics: const NeverScrollableScrollPhysics(),
-            padding: const EdgeInsets.symmetric(
-              horizontal: BatshSpacing.sectionH,
-            ),
-            itemCount: 3,
-            separatorBuilder: (_, _) => const SizedBox(width: BatshSpacing.md),
-            itemBuilder: (_, _) => const BatshShimmerBox(
-              width: NearbyProfessionalCard.width,
-              height: NearbyProfessionalCard.height,
-              borderRadius: BatshRadius.brImage,
+      ],
+    );
+  }
+}
+
+class _DiscoverListingSkeleton extends StatelessWidget {
+  const _DiscoverListingSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerLowest,
+        borderRadius: BatshRadius.brCard,
+        border: Border.all(color: colorScheme.outlineVariant),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const BatshShimmerBox(
+            height: 190,
+            borderRadius: BorderRadius.vertical(
+              top: Radius.circular(BatshRadius.card),
             ),
           ),
-        ),
-      ],
+          Padding(
+            padding: const EdgeInsets.all(BatshSpacing.md),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: const [
+                BatshShimmerBox(width: 160, height: 16),
+                SizedBox(height: BatshSpacing.sm),
+                BatshShimmerBox(width: double.infinity, height: 12),
+                SizedBox(height: BatshSpacing.xs),
+                BatshShimmerBox(width: 110, height: 12),
+                SizedBox(height: BatshSpacing.md),
+                Align(
+                  alignment: AlignmentDirectional.centerEnd,
+                  child: BatshShimmerBox(width: 96, height: 12),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

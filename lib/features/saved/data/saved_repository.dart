@@ -7,46 +7,85 @@ import '../../discovery/domain/contractor_listing.dart';
 
 part 'saved_repository.g.dart';
 
+/// Stable cursor for the homeowner's saved-professionals collection.
+///
+/// `saved_at` is the primary ordering key and the contractor id breaks ties
+/// when two saves share the same timestamp precision.
+class SavedCursor {
+  const SavedCursor({required this.savedAt, required this.contractorId});
+
+  final DateTime savedAt;
+  final String contractorId;
+
+  factory SavedCursor.fromRow(Map<String, dynamic> row) {
+    final rawSavedAt = row['saved_at'];
+    final savedAt = rawSavedAt is DateTime
+        ? rawSavedAt
+        : DateTime.tryParse(rawSavedAt?.toString() ?? '');
+    if (savedAt == null) {
+      throw const FormatException('saved_cursor_missing_timestamp');
+    }
+    return SavedCursor(savedAt: savedAt, contractorId: row['id'] as String);
+  }
+}
+
 class SavedRepository {
   SavedRepository(this._client);
   final SupabaseClient _client;
+
+  static const int pageSize = 20;
+
+  Future<SavedPage> fetchSavedPage(
+    String homeownerId, {
+    SavedCursor? after,
+    int limit = pageSize,
+  }) async {
+    final boundedLimit = limit.clamp(1, 50).toInt();
+    final rows = await _client
+        .rpc(
+          'get_saved_contractors_cursor',
+          params: {
+            'p_homeowner_id': homeownerId,
+            'p_limit': boundedLimit,
+            'p_after_saved_at': after?.savedAt.toUtc().toIso8601String(),
+            'p_after_contractor_id': after?.contractorId,
+          },
+        )
+        .timeout(const Duration(seconds: 15));
+    final rawRows = (rows as List)
+        .map((row) => Map<String, dynamic>.from(row as Map))
+        .toList(growable: false);
+    return SavedPage(
+      items: rawRows.map(ContractorListing.fromJoined).toList(growable: false),
+      cursor: rawRows.isEmpty ? null : SavedCursor.fromRow(rawRows.last),
+      requestedLimit: boundedLimit,
+    );
+  }
 
   Future<Set<String>> fetchSavedIds(String homeownerId) async {
     final rows = await _client
         .from('saved_contractors')
         .select('contractor_id')
-        .eq('homeowner_id', homeownerId);
+        .eq('homeowner_id', homeownerId)
+        .timeout(const Duration(seconds: 10));
     return rows.map((r) => r['contractor_id'] as String).toSet();
   }
 
   Future<List<ContractorListing>> fetchSavedListings(String homeownerId) async {
-    final saved = await _client
-        .from('saved_contractors')
-        .select(
-          'contractor:profiles!contractor_id(id, full_name, phone, contractor_profiles!inner(business_name, bio, logo_url, cover_photo_url, headline, specialties, service_areas, years_experience, projects_completed, response_rate))',
-        )
-        .eq('homeowner_id', homeownerId)
-        .order('saved_at', ascending: false)
-        // Bounded: this join pulls a full contractor profile per saved row, so
-        // an unbounded read gets expensive faster than the row count suggests.
-        .limit(100);
-    return saved
-        .map(
-          (r) => ContractorListing.fromJoined(
-            r['contractor'] as Map<String, dynamic>,
-          ),
-        )
-        .toList();
+    return (await fetchSavedPage(homeownerId)).items;
   }
 
   Future<void> save({
     required String homeownerId,
     required String contractorId,
   }) async {
-    await _client.from('saved_contractors').upsert({
-      'homeowner_id': homeownerId,
-      'contractor_id': contractorId,
-    }, onConflict: 'homeowner_id, contractor_id');
+    await _client
+        .from('saved_contractors')
+        .upsert({
+          'homeowner_id': homeownerId,
+          'contractor_id': contractorId,
+        }, onConflict: 'homeowner_id, contractor_id')
+        .timeout(const Duration(seconds: 15));
   }
 
   Future<void> unsave({
@@ -57,10 +96,25 @@ class SavedRepository {
         .from('saved_contractors')
         .delete()
         .eq('homeowner_id', homeownerId)
-        .eq('contractor_id', contractorId);
+        .eq('contractor_id', contractorId)
+        .timeout(const Duration(seconds: 15));
   }
 }
 
 @Riverpod(keepAlive: true)
 SavedRepository savedRepository(Ref ref) =>
     SavedRepository(ref.watch(supabaseClientProvider));
+
+class SavedPage {
+  const SavedPage({
+    required this.items,
+    required this.cursor,
+    required this.requestedLimit,
+  });
+
+  final List<ContractorListing> items;
+  final SavedCursor? cursor;
+  final int requestedLimit;
+
+  bool get hasMore => items.length == requestedLimit;
+}

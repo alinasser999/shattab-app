@@ -77,13 +77,13 @@ class BatshTypography {
   static TextStyle get bodyMd =>
       _style(size: 15, weight: FontWeight.w400, lineHeight: 24);
   static TextStyle get bodySm =>
-      _style(size: 13, weight: FontWeight.w400, lineHeight: 20);
+      _style(size: 14, weight: FontWeight.w400, lineHeight: 21);
   static TextStyle get labelLg =>
       _style(size: 15, weight: FontWeight.w600, lineHeight: 22);
   static TextStyle get labelMd =>
       _style(size: 13, weight: FontWeight.w500, lineHeight: 18);
   static TextStyle get labelSm =>
-      _style(size: 11, weight: FontWeight.w500, lineHeight: 16);
+      _style(size: 12, weight: FontWeight.w500, lineHeight: 17);
 
   /// Maps onto Material 3 [TextTheme] slots.
   ///

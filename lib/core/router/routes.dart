@@ -53,6 +53,8 @@ class Routes {
   static const String contractorAppearance = '/c/profile/settings/appearance';
   static const String contractorLanguage = '/c/profile/settings/language';
   static const String contractorEditProfile = '/c/profile/edit';
+  static const String contractorPrivacy = '/c/profile/privacy';
+  static const String contractorTerms = '/c/profile/terms';
 
   // Monetization (full-screen, above the shell)
   static const String pro = '/pro';

@@ -14,6 +14,7 @@ import '../../../../core/utils/error_mapper.dart';
 import '../../../../core/router/routes.dart';
 import '../../../../core/supabase/supabase_provider.dart';
 import '../../briefs/presentation/providers/briefs_providers.dart';
+import '../../billing/presentation/providers/billing_providers.dart';
 import '../../../../core/theme/batsh_radius.dart';
 import '../../../../core/theme/batsh_shadows.dart';
 import '../../../../core/theme/batsh_spacing.dart';
@@ -46,6 +47,7 @@ import '../../../core/widgets/batsh_snack.dart';
 import '../../../core/widgets/batsh_bottom_nav.dart';
 import '../../../core/widgets/notification_preferences_sheet.dart';
 import '../../../core/theme/batsh_motion.dart';
+import '../../../core/utils/support_contact.dart';
 
 import 'package:batsh/core/theme/theme_extension.dart';
 part 'profile_screen_contractor.dart';
@@ -246,15 +248,25 @@ class _HomeownerProfile extends ConsumerWidget {
             const _DarkModeTile(),
             const _MotionModeTile(),
             const _LanguageTile(),
-            _LegalTile(
+            _SettingsTile(
               icon: Icons.privacy_tip_outlined,
               label: context.l10n.privacyPolicy,
-              url: _privacyPolicyUrl,
+              trailing: Icon(
+                Icons.chevron_left,
+                color: context.colorScheme.onSurfaceVariant,
+                size: BatshIconSize.md,
+              ),
+              onTap: () => context.push(Routes.homeownerPrivacy),
             ),
-            _LegalTile(
+            _SettingsTile(
               icon: Icons.description_outlined,
               label: context.l10n.termsOfService,
-              url: _termsUrl,
+              trailing: Icon(
+                Icons.chevron_left,
+                color: context.colorScheme.onSurfaceVariant,
+                size: BatshIconSize.md,
+              ),
+              onTap: () => context.push(Routes.homeownerTerms),
             ),
             const _DeleteAccountTile(),
           ],

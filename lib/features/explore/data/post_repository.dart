@@ -7,7 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/media/media_storage.dart';
 import '../../../core/media/media_storage_provider.dart';
 import '../../../core/supabase/supabase_provider.dart';
-import '../../../core/utils/upload_policy.dart';
+import '../../../core/utils/image_compression.dart';
 import '../domain/post.dart';
 
 part 'post_repository.g.dart';
@@ -17,7 +17,7 @@ part 'post_repository.g.dart';
 const _postSelect = '''
   id, author_id, author_role, post_type, caption, media_urls,
   category, governorate, city, portfolio_project_id, created_at,
-  profiles!posts_author_id_fkey(full_name, avatar_url, phone),
+  profiles!posts_author_id_fkey(full_name, avatar_url),
   post_likes(count),
   post_comments(count)
 ''';
@@ -73,6 +73,43 @@ List<Map<String, dynamic>> applyAuthorIdentities(
   ];
 }
 
+/// Fills only the flat public identity fields returned by the feed RPC.
+///
+/// The feed projection does not embed `profiles`, so a row can be perfectly
+/// valid while still arriving without a display name or avatar. Keep any
+/// identity already supplied by the RPC and enrich only the missing fields.
+/// This also keeps phone numbers out of the community feed model.
+List<Map<String, dynamic>> applyFeedAuthorIdentities(
+  List<Map<String, dynamic>> rows,
+  Map<String, Map<String, dynamic>> identities,
+) {
+  return [
+    for (final row in rows)
+      () {
+        final identity =
+            identities[authorIdentityKey(
+              row['author_id'] as String? ?? '',
+              row['author_role'] as String? ?? '',
+            )];
+        if (identity == null) return row;
+
+        final currentName = (row['author_name'] as String?)?.trim() ?? '';
+        final currentAvatar =
+            (row['author_avatar_url'] as String?)?.trim() ?? '';
+        final resolvedName = (identity['full_name'] as String?)?.trim();
+        final resolvedAvatar = (identity['avatar_url'] as String?)?.trim();
+
+        return {
+          ...row,
+          if (currentName.isEmpty && resolvedName?.isNotEmpty == true)
+            'author_name': resolvedName,
+          if (currentAvatar.isEmpty && resolvedAvatar?.isNotEmpty == true)
+            'author_avatar_url': resolvedAvatar,
+        };
+      }(),
+  ];
+}
+
 class PostRepository {
   PostRepository(this._client, [MediaStorageService? mediaStorage])
     : _mediaStorage = mediaStorage;
@@ -112,7 +149,7 @@ class PostRepository {
   /// of one author's work collapses to a single call.
   Future<List<Map<String, dynamic>>> _hydrateAuthors(
     List<Map<String, dynamic>> rows, {
-    bool includePhone = true,
+    bool includePhone = false,
   }) async {
     bool needsIdentity(Map<String, dynamic> row) {
       final profile = row['profiles'];
@@ -145,6 +182,45 @@ class PostRepository {
     );
 
     return applyAuthorIdentities(rows, identities);
+  }
+
+  /// Hydrates the flat author fields returned by `get_for_you_feed`.
+  ///
+  /// The feed RPC intentionally owns ranking and interaction state, while the
+  /// public identity RPC owns the RLS-safe name/avatar projection. Joining the
+  /// two here prevents a blank author header without exposing private contact
+  /// data or requiring the UI to run a query per card.
+  Future<List<Map<String, dynamic>>> _hydrateFeedRows(
+    List<Map<String, dynamic>> rows,
+  ) async {
+    final keys = <String, ({String id, String role})>{};
+    for (final row in rows) {
+      final name = (row['author_name'] as String?)?.trim() ?? '';
+      if (name.isNotEmpty) continue;
+
+      final id = row['author_id'] as String?;
+      final role = row['author_role'] as String?;
+      if (id != null && role != null) {
+        keys[authorIdentityKey(id, role)] = (id: id, role: role);
+      }
+    }
+    if (keys.isEmpty) return rows;
+
+    final identities = <String, Map<String, dynamic>>{};
+    await Future.wait(
+      keys.entries.map((entry) async {
+        final resolved = await _withCommunityAuthor({
+          'author_id': entry.value.id,
+          'author_role': entry.value.role,
+        }, includePhone: false);
+        final profile = resolved['profiles'];
+        if (profile is Map<String, dynamic>) {
+          identities[entry.key] = profile;
+        }
+      }),
+    );
+
+    return applyFeedAuthorIdentities(rows, identities);
   }
 
   Post _fromRow(Map<String, dynamic> m, Set<String> liked, Set<String> saved) {
@@ -182,7 +258,7 @@ class PostRepository {
   /// data through the profiles table.
   Future<Map<String, dynamic>> _withCommunityAuthor(
     Map<String, dynamic> row, {
-    bool includePhone = true,
+    bool includePhone = false,
   }) async {
     final profile = row['profiles'];
     final hasName =
@@ -222,7 +298,7 @@ class PostRepository {
     DateTime? beforeCreatedAt,
     String? beforeId,
   }) async {
-    final rows = await _client.rpc(
+    final result = await _client.rpc(
       'get_for_you_feed',
       params: {
         // Guests have no uuid — null keeps is_liked/is_saved false server-side.
@@ -232,9 +308,11 @@ class PostRepository {
         'p_before_id': beforeId,
       },
     );
-    return (rows as List)
-        .map((r) => Post.fromJson(r as Map<String, dynamic>))
-        .toList();
+    final rows = [
+      for (final row in result as List) Map<String, dynamic>.from(row as Map),
+    ];
+    final hydratedRows = await _hydrateFeedRows(rows);
+    return hydratedRows.map(Post.fromJson).toList();
   }
 
   Future<Post?> fetchById(String postId, String userId) async {
@@ -242,10 +320,36 @@ class PostRepository {
         .from('posts')
         .select(_postSelect)
         .eq('id', postId)
-        .maybeSingle();
+        .maybeSingle()
+        .timeout(const Duration(seconds: 15));
     if (row == null) return null;
     final (liked, saved) = await _userInteractions(userId, [postId]);
-    final hydrated = await _withCommunityAuthor(Map<String, dynamic>.from(row));
+    var hydrated = await _withCommunityAuthor(Map<String, dynamic>.from(row));
+    final authorRole = hydrated['author_role'] as String?;
+    final authorId = hydrated['author_id'] as String?;
+    if (authorRole == 'contractor' && authorId != null && userId.isNotEmpty) {
+      try {
+        final contact = await _client.rpc(
+          'get_contractor_contact',
+          params: {'p_contractor_id': authorId},
+        );
+        if (contact is List && contact.isNotEmpty) {
+          final phone =
+              (contact.first as Map<String, dynamic>)['phone'] as String?;
+          if (phone?.trim().isNotEmpty == true) {
+            final current = hydrated['profiles'];
+            final profile = current is Map
+                ? Map<String, dynamic>.from(current)
+                : <String, dynamic>{};
+            profile['phone'] = phone;
+            hydrated = {...hydrated, 'profiles': profile};
+          }
+        }
+      } catch (_) {
+        // Contact is an enhancement for authenticated detail surfaces. A
+        // missing permission or an older database must not break post reading.
+      }
+    }
     return _fromRow(hydrated, liked, saved);
   }
 
@@ -391,10 +495,9 @@ class PostRepository {
   }
 
   Future<List<PostComment>> fetchComments(String postId) async {
-    final rows = await _client.rpc(
-      'get_post_comments',
-      params: {'p_post_id': postId},
-    );
+    final rows = await _client
+        .rpc('get_post_comments', params: {'p_post_id': postId})
+        .timeout(const Duration(seconds: 15));
     return (rows as List)
         .map((row) => PostComment.fromJson(row as Map<String, dynamic>))
         .toList();
@@ -424,20 +527,21 @@ class PostRepository {
     return maps.map((m) => _fromRow(m, liked, saved)).toList();
   }
 
-  /// Returns the latest public community posts authored by a contractor.
+  /// Returns the latest public community posts authored by one account.
   ///
   /// This deliberately uses the narrow community projection rather than the
   /// account-owned select, so profile pages cannot leak contact information.
   Future<List<Post>> fetchCommunityPostsByAuthor({
     required String authorId,
     required String viewerId,
+    String authorRole = 'contractor',
     int limit = 3,
   }) async {
     final rows = await _client
         .from('posts')
         .select(_communityPostSelect)
         .eq('author_id', authorId)
-        .eq('author_role', 'contractor')
+        .eq('author_role', authorRole)
         .order('created_at', ascending: false)
         .order('id', ascending: false)
         .limit(limit);
@@ -489,7 +593,6 @@ class PostRepository {
     Uint8List bytes,
     String fileName,
   ) async {
-    UploadPolicy.validateImageBytes(bytes);
     final path = '$userId/${DateTime.now().millisecondsSinceEpoch}_$fileName';
     final mediaStorage = _mediaStorage;
     if (mediaStorage != null) {
@@ -504,7 +607,16 @@ class PostRepository {
       );
       return result.url;
     }
-    await _client.storage.from('post-media').uploadBinary(path, bytes);
+    await _client.storage
+        .from('post-media')
+        .uploadBinary(
+          path,
+          await ImageCompression.prepare(bytes),
+          fileOptions: const FileOptions(
+            upsert: false,
+            contentType: 'image/jpeg',
+          ),
+        );
     return _client.storage.from('post-media').getPublicUrl(path);
   }
 }

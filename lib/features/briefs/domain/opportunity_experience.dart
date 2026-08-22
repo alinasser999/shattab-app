@@ -56,6 +56,37 @@ class OpportunityFilters {
       (recency == OpportunityRecency.any ? 0 : 1) +
       (hideApplied ? 1 : 0);
 
+  /// A stable key for the part of the filter state that belongs in the
+  /// server query. Sort order, applied state, and nearby/not-applied focus
+  /// stay client-side; time-window filters are pushed down to the query.
+  String get serverQueryKey {
+    final sortedSpecialties = specialties.toList()..sort();
+    return [
+      city ?? '',
+      sortedSpecialties.join(','),
+      _serverMaxAge?.inMinutes ?? '',
+    ].join('|');
+  }
+
+  Duration? get _serverMaxAge {
+    final ages = <Duration>[];
+    final focusAge = switch (focus) {
+      OpportunityFocus.fresh => const Duration(hours: 24),
+      OpportunityFocus.thisWeek => const Duration(days: 7),
+      _ => null,
+    };
+    if (focusAge != null) ages.add(focusAge);
+    final recencyAge = switch (recency) {
+      OpportunityRecency.any => null,
+      OpportunityRecency.today => const Duration(hours: 24),
+      OpportunityRecency.thisWeek => const Duration(days: 7),
+      OpportunityRecency.thisMonth => const Duration(days: 30),
+    };
+    if (recencyAge != null) ages.add(recencyAge);
+    if (ages.isEmpty) return null;
+    return ages.reduce((a, b) => a <= b ? a : b);
+  }
+
   OpportunityFilters copyWith({
     OpportunityFocus? focus,
     Set<String>? specialties,
@@ -79,6 +110,12 @@ class OpportunityFilters {
     hideApplied: hideApplied,
     sort: sort,
   );
+
+  DateTime? serverCreatedAfter({DateTime? now}) {
+    final maxAge = _serverMaxAge;
+    if (maxAge == null) return null;
+    return (now ?? DateTime.now()).subtract(maxAge);
+  }
 }
 
 class OpportunityFeedMetrics {

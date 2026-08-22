@@ -1,18 +1,20 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
+import '../../../../core/cache/media_cache.dart';
 import '../../../../core/l10n/l10n_extension.dart';
 import '../../../../core/theme/batsh_motion.dart';
 import '../../../../core/theme/batsh_radius.dart';
 import '../../../../core/theme/batsh_spacing.dart';
 import '../../../../core/theme/batsh_typography.dart';
+import '../../../../core/utils/image_url.dart';
 
 import 'package:batsh/core/theme/theme_extension.dart';
 
 /// Curated visual fallbacks for accounts that do not have enough public work.
 /// They are presentation-only and never replace data returned by Supabase.
 const mockupHeroImage =
-    'https://images.unsplash.com/photo-1503387762-592deb58ef4e?auto=format&fit=crop&w=1600&q=86';
+    'https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=1600&q=88';
 
 const mockupPortfolioImages = [
   'https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=900&q=86',
@@ -50,12 +52,22 @@ class MockupImage extends StatelessWidget {
       ),
     );
 
-    if (url == null || url!.isEmpty) return fallback;
+    if (!isDisplayableImageUrl(url)) return fallback;
 
     return CachedNetworkImage(
-      imageUrl: url!,
+      // Asks the server for the size actually being drawn. Inert until
+      // Supabase image transforms are enabled on the plan, at which point
+      // every caller below stops pulling a 1600px upload for a 68px tile
+      // without any of them changing.
+      imageUrl: sizedImageUrl(url!, width: memCacheWidth),
+      // The app's own store rather than the 200-object default.
+      cacheManager: mediaCacheManager,
       fit: fit,
       memCacheWidth: memCacheWidth,
+      // Downscale once, on the way to disk, instead of decoding the full
+      // original on every rebuild. memCacheWidth alone bounds the decode but
+      // still keeps the original bytes on disk to re-decode from.
+      maxWidthDiskCache: memCacheWidth,
       fadeInDuration: MediaQuery.disableAnimationsOf(context)
           ? Duration.zero
           : BatshMotion.normal,
@@ -84,11 +96,20 @@ class MockupSampleBadge extends StatelessWidget {
         children: [
           const Icon(Icons.image_outlined, size: 13, color: Colors.white),
           const SizedBox(width: BatshSpacing.xxs),
-          Text(
-            context.l10n.sampleImagesLabel,
-            style: BatshTypography.labelSm.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.w700,
+          // The badge floats over a photograph whose width belongs to whatever
+          // card it lands in — as narrow as half a card on the home page. At a
+          // large text scale the label outgrows that slot, so it has to be
+          // allowed to shrink. The Row still hugs its content at the default
+          // scale, so nothing moves.
+          Flexible(
+            child: Text(
+              context.l10n.sampleImagesLabel,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: BatshTypography.labelSm.copyWith(
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
         ],

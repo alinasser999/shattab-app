@@ -7,6 +7,7 @@ import '../theme/batsh_radius.dart';
 import '../theme/batsh_spacing.dart';
 import '../theme/batsh_typography.dart';
 import '../theme/batsh_icon_size.dart';
+import 'batsh_sheet.dart';
 
 import 'package:batsh/core/theme/theme_extension.dart';
 
@@ -93,14 +94,24 @@ class TierBadge extends StatelessWidget {
 /// Spells out exactly how a level is reached, including the line saying it
 /// cannot be bought. The badge is worth nothing as a trust signal if the reader
 /// cannot check what produced it.
-Future<void> showTierExplainer(BuildContext context) => showDialog<void>(
-  context: context,
-  builder: (ctx) => AlertDialog(
-    title: Text(context.l10n.tierHowTitle),
-    content: Column(
+Future<void> showTierExplainer(BuildContext context) => BatshSheet.show<void>(
+  context,
+  builder: (sheetContext) => Padding(
+    padding: const EdgeInsets.fromLTRB(
+      BatshSpacing.gutter,
+      BatshSpacing.sm,
+      BatshSpacing.gutter,
+      BatshSpacing.md,
+    ),
+    child: Column(
       mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        Text(
+          context.l10n.tierHowTitle,
+          style: BatshTypography.titleLg.copyWith(fontWeight: FontWeight.w700),
+        ),
+        const SizedBox(height: BatshSpacing.md),
         Text(context.l10n.tierHowGold, style: BatshTypography.bodyMd),
         const SizedBox(height: BatshSpacing.xs),
         Text(context.l10n.tierHowSilver, style: BatshTypography.bodyMd),
@@ -111,13 +122,15 @@ Future<void> showTierExplainer(BuildContext context) => showDialog<void>(
             color: context.colorScheme.onSurfaceVariant,
           ),
         ),
+        const SizedBox(height: BatshSpacing.sm),
+        Align(
+          alignment: AlignmentDirectional.centerEnd,
+          child: TextButton(
+            onPressed: () => Navigator.of(sheetContext).pop(),
+            child: Text(context.l10n.done),
+          ),
+        ),
       ],
     ),
-    actions: [
-      TextButton(
-        onPressed: () => Navigator.of(ctx).pop(),
-        child: Text(context.l10n.done),
-      ),
-    ],
   ),
 );

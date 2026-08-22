@@ -1,9 +1,13 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/l10n/l10n_extension.dart';
+import '../../../../core/analytics/app_analytics.dart';
+import '../../../../core/analytics/marketplace_events.dart';
 import '../../../../core/router/routes.dart';
 import '../../../../core/theme/batsh_icon_size.dart';
 import '../../../../core/theme/batsh_motion.dart';
@@ -32,32 +36,34 @@ import '../../domain/opportunity_experience.dart';
 import '../providers/briefs_providers.dart';
 import '../providers/opportunity_experience_provider.dart';
 import '../widgets/completion_card.dart';
+import '../widgets/brief_lifecycle_timeline.dart';
 
-class PostDetailScreen extends ConsumerWidget {
+class PostDetailScreen extends ConsumerStatefulWidget {
   const PostDetailScreen({super.key, required this.postId});
 
   final String postId;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final briefAsync = ref.watch(briefByIdProvider(postId));
-    final quoteAsync = ref.watch(myQuoteForBriefProvider(postId));
+  ConsumerState<PostDetailScreen> createState() => _PostDetailScreenState();
+}
+
+class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
+  @override
+  void initState() {
+    super.initState();
+    unawaited(AppAnalytics.track(MarketplaceEvents.opportunityOpened));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final briefAsync = ref.watch(briefByIdProvider(widget.postId));
+    final quoteAsync = ref.watch(myQuoteForBriefProvider(widget.postId));
     final contractor = ref.watch(contractorProfileProvider).value;
     final portfolio = ref.watch(myPortfolioProvider).value ?? const [];
     final interactions = ref.watch(opportunityInteractionsProvider);
-    final saved = interactions.savedIds.contains(postId);
+    final saved = interactions.savedIds.contains(widget.postId);
 
-    void toggleSaved() {
-      final isSaved = ref
-          .read(opportunityInteractionsProvider.notifier)
-          .toggleSaved(postId);
-      BatshSnack.success(
-        context,
-        isSaved
-            ? context.l10n.opportunitySaved
-            : context.l10n.opportunityRemovedFromSaved,
-      );
-    }
+    void toggleSaved() => unawaited(_toggleSaved(widget.postId));
 
     return BatshScaffold(
       title: context.l10n.opportunityDetailsTitle,
@@ -77,7 +83,7 @@ class PostDetailScreen extends ConsumerWidget {
         loading: () => const _OpportunityDetailSkeleton(),
         error: (error, _) => BatshError(
           message: ErrorMapper.map(error),
-          onRetry: () => ref.invalidate(briefByIdProvider(postId)),
+          onRetry: () => ref.invalidate(briefByIdProvider(widget.postId)),
         ),
         data: (brief) {
           if (brief == null) {
@@ -98,6 +104,8 @@ class PostDetailScreen extends ConsumerWidget {
                 brief: brief,
                 match: match,
                 quote: quote,
+                quoteLoading: quoteAsync.isLoading,
+                quoteFailed: quoteAsync.hasError,
                 contractor: contractor,
                 homeowner: homeownerAsync.value,
                 homeownerLoading: homeownerAsync.isLoading,
@@ -118,6 +126,24 @@ class PostDetailScreen extends ConsumerWidget {
       ),
     );
   }
+
+  Future<void> _toggleSaved(String briefId) async {
+    try {
+      final saved = await ref
+          .read(opportunityInteractionsProvider.notifier)
+          .toggleSaved(briefId);
+      if (!mounted) return;
+      BatshSnack.success(
+        context,
+        saved
+            ? context.l10n.opportunitySaved
+            : context.l10n.opportunityRemovedFromSaved,
+      );
+    } catch (_) {
+      if (!mounted) return;
+      BatshSnack.error(context, context.l10n.somethingWentWrong);
+    }
+  }
 }
 
 class _OpportunityDetailBody extends StatelessWidget {
@@ -125,6 +151,8 @@ class _OpportunityDetailBody extends StatelessWidget {
     required this.brief,
     required this.match,
     required this.quote,
+    required this.quoteLoading,
+    required this.quoteFailed,
     required this.contractor,
     required this.homeowner,
     required this.homeownerLoading,
@@ -139,6 +167,8 @@ class _OpportunityDetailBody extends StatelessWidget {
   final Brief brief;
   final OpportunityMatch match;
   final Quote? quote;
+  final bool quoteLoading;
+  final bool quoteFailed;
   final ContractorProfile? contractor;
   final PublicHomeownerProfile? homeowner;
   final bool homeownerLoading;
@@ -176,7 +206,15 @@ class _OpportunityDetailBody extends StatelessWidget {
               _PageWidth(
                 child: _OpportunityTrustBar(brief: brief, quote: quote),
               ),
-              _PageWidth(child: _OpportunityTimeline(brief: brief)),
+              _PageWidth(
+                child: BriefLifecycleTimeline(
+                  brief: brief,
+                  audience: BriefLifecycleAudience.contractor,
+                  myQuote: quote,
+                  quoteLoading: quoteLoading,
+                  quoteFailed: quoteFailed,
+                ),
+              ),
               _PageWidth(
                 child: CompletionCard(
                   brief: brief,
@@ -744,126 +782,6 @@ class _MetricDivider extends StatelessWidget {
       width: 1,
       height: 56,
       color: context.colorScheme.outlineVariant.withValues(alpha: 0.5),
-    );
-  }
-}
-
-class _OpportunityTimeline extends StatelessWidget {
-  const _OpportunityTimeline({required this.brief});
-
-  final Brief brief;
-
-  int get _stage => switch (brief.stage) {
-    BriefStage.open => 0,
-    BriefStage.hired => 1,
-    BriefStage.completionRequested || BriefStage.completed => 2,
-  };
-
-  @override
-  Widget build(BuildContext context) {
-    final labels = [
-      context.l10n.timelineAcceptOffers,
-      context.l10n.timelineChooseContractor,
-      context.l10n.timelineStartWork,
-    ];
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        BatshSpacing.md,
-        0,
-        BatshSpacing.md,
-        BatshSpacing.md,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            context.l10n.opportunityTimeline,
-            style: BatshTypography.titleMd.copyWith(
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: BatshSpacing.md),
-          Row(
-            children: [
-              for (var index = 0; index < labels.length; index++) ...[
-                Expanded(
-                  child: _TimelineStep(
-                    label: labels[index],
-                    complete: index <= _stage,
-                    current: index == _stage,
-                  ),
-                ),
-                if (index < labels.length - 1)
-                  Expanded(
-                    child: Container(
-                      height: 2,
-                      color: index < _stage
-                          ? context.colorScheme.primary
-                          : context.colorScheme.outlineVariant,
-                    ),
-                  ),
-              ],
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _TimelineStep extends StatelessWidget {
-  const _TimelineStep({
-    required this.label,
-    required this.complete,
-    required this.current,
-  });
-
-  final String label;
-  final bool complete;
-  final bool current;
-
-  @override
-  Widget build(BuildContext context) {
-    final color = complete
-        ? context.colorScheme.primary
-        : context.colorScheme.outlineVariant;
-    return Column(
-      children: [
-        Container(
-          width: 34,
-          height: 34,
-          decoration: BoxDecoration(
-            color: current
-                ? color
-                : complete
-                ? context.colorScheme.primaryContainer
-                : context.colorScheme.surfaceContainerHigh,
-            shape: BoxShape.circle,
-          ),
-          child: Icon(
-            complete ? Icons.check_rounded : Icons.circle_outlined,
-            size: BatshIconSize.xs,
-            color: current
-                ? context.colorScheme.onPrimary
-                : complete
-                ? context.colorScheme.primary
-                : context.colorScheme.onSurfaceVariant,
-          ),
-        ),
-        const SizedBox(height: BatshSpacing.xs),
-        Text(
-          label,
-          textAlign: TextAlign.center,
-          maxLines: 2,
-          style: BatshTypography.labelSm.copyWith(
-            color: current
-                ? context.colorScheme.onSurface
-                : context.colorScheme.onSurfaceVariant,
-            fontWeight: current ? FontWeight.w700 : FontWeight.w500,
-            height: 1.3,
-          ),
-        ),
-      ],
     );
   }
 }

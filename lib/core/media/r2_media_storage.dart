@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../utils/image_compression.dart';
 import '../utils/upload_policy.dart';
 import 'media_storage.dart';
 
@@ -19,22 +20,34 @@ class CloudflareR2MediaStorage {
     required String signerUrl,
     required String publicBaseUrl,
     required Set<MediaCategory> enabledCategories,
+    required bool uploadsEnabled,
   }) : _supabase = supabase,
        _http = httpClient,
        _signerUrl = signerUrl.replaceFirst(RegExp(r'/+$'), ''),
        _publicBaseUrl = publicBaseUrl.replaceFirst(RegExp(r'/+$'), ''),
-       _enabledCategories = enabledCategories;
+       _enabledCategories = enabledCategories,
+       _uploadsEnabled = uploadsEnabled;
 
   final SupabaseClient _supabase;
   final http.Client _http;
   final String _signerUrl;
   final String _publicBaseUrl;
   final Set<MediaCategory> _enabledCategories;
+  final bool _uploadsEnabled;
 
-  bool get isEnabled =>
-      _signerUrl.isNotEmpty &&
-      _publicBaseUrl.isNotEmpty &&
-      _enabledCategories.isNotEmpty;
+  /// Whether the R2 boundary is *reachable* — signer and public host are
+  /// configured — regardless of the rollout flag.
+  ///
+  /// Deliberately independent of [canUpload]. Turning the rollout off must not
+  /// strand media already in the bucket: if this went false with the flag,
+  /// [ownsUrl] would stop recognising every stored R2 URL, deletes would route
+  /// to Supabase where the object does not exist, and account deletion would
+  /// silently leave the user's photos public forever.
+  bool get isEnabled => _signerUrl.isNotEmpty && _publicBaseUrl.isNotEmpty;
+
+  /// Whether *new* uploads should go to R2. This is the rollout switch.
+  bool get canUpload =>
+      isEnabled && _uploadsEnabled && _enabledCategories.isNotEmpty;
 
   bool supports(MediaCategory category) =>
       _enabledCategories.contains(category);
@@ -59,10 +72,13 @@ class CloudflareR2MediaStorage {
     required String contentType,
     bool upsert = true,
   }) async {
-    if (!isEnabled || !supports(category)) {
+    if (!canUpload || !supports(category)) {
       throw const MediaStorageException('r2_category_disabled');
     }
-    UploadPolicy.validateImageBytes(bytes);
+    final isImage = contentType.startsWith('image/');
+    final uploadBytes = isImage ? await ImageCompression.prepare(bytes) : bytes;
+    final uploadContentType = isImage ? 'image/jpeg' : contentType;
+    UploadPolicy.validateImageBytes(uploadBytes);
     if (userId.trim().isEmpty) {
       throw const MediaStorageException('missing_user_id');
     }
@@ -72,8 +88,8 @@ class CloudflareR2MediaStorage {
       body: {
         'category': category.wireName,
         'file_name': fileName,
-        'content_type': contentType,
-        'content_length': bytes.length,
+        'content_type': uploadContentType,
+        'content_length': uploadBytes.length,
         'upsert': upsert,
       },
     );
@@ -89,15 +105,33 @@ class CloudflareR2MediaStorage {
           (key, value) => MapEntry(key.toString(), value.toString()),
         ) ??
         <String, String>{};
+
+    // The signer now signs content-length, so a mismatch here would surface as
+    // an opaque SignatureDoesNotMatch from R2. Fail early with a name that says
+    // what actually went wrong.
+    int? signedLength;
+    for (final entry in signedHeaders.entries) {
+      if (entry.key.toLowerCase() == 'content-length') {
+        signedLength = int.tryParse(entry.value);
+      }
+    }
+    if (signedLength != null && signedLength != uploadBytes.length) {
+      throw const MediaStorageException('r2_content_length_mismatch');
+    }
+
     final uploadHeaders = <String, String>{
-      'Content-Type': contentType,
-      ...signedHeaders,
+      'Content-Type': uploadContentType,
+      // Content-Length is omitted deliberately: package:http derives it from
+      // the body, and setting it by hand risks a duplicate or conflicting
+      // header on the very value the signature covers.
+      for (final entry in signedHeaders.entries)
+        if (entry.key.toLowerCase() != 'content-length') entry.key: entry.value,
     };
 
     late final http.Response uploadResponse;
     try {
       uploadResponse = await _http
-          .put(Uri.parse(uploadUrl), headers: uploadHeaders, body: bytes)
+          .put(Uri.parse(uploadUrl), headers: uploadHeaders, body: uploadBytes)
           .timeout(const Duration(seconds: 45));
     } catch (error) {
       throw MediaStorageException('r2_upload_unreachable', cause: error);
@@ -111,7 +145,7 @@ class CloudflareR2MediaStorage {
     try {
       final finalized = await _post(
         '/v1/media/finalize',
-        body: {'object_key': objectKey, 'content_type': contentType},
+        body: {'object_key': objectKey, 'content_type': uploadContentType},
       );
       final finalizedUrl = finalized['public_url'] as String?;
       if (finalizedUrl == null) {

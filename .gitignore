@@ -103,3 +103,4 @@ infra/media-signer/.dev.vars
 /found_trust.txt
 /trust_signals_lines.txt
 /supabase_login.txt
+.vercel

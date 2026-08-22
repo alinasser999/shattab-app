@@ -82,6 +82,7 @@ PortfolioProject createTestPortfolioProject({
   String? location,
   int? yearCompleted,
   int position = 0,
+  DateTime? createdAt,
 }) => PortfolioProject(
   id: id,
   contractorId: contractorId,
@@ -94,4 +95,5 @@ PortfolioProject createTestPortfolioProject({
   location: location,
   yearCompleted: yearCompleted,
   position: position,
+  createdAt: createdAt,
 );

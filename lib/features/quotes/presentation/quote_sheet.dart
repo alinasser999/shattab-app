@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -5,17 +7,21 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:batsh/core/l10n/l10n_extension.dart';
 import '../../../core/theme/batsh_motion.dart';
+import '../../../core/theme/batsh_radius.dart';
 import '../../../core/theme/batsh_spacing.dart';
 import '../../../core/theme/batsh_typography.dart';
 import '../../../core/logging/app_logger.dart';
+import '../../../core/services/form_draft_store.dart';
 import '../../../core/utils/error_mapper.dart';
 import '../../../core/widgets/batsh_button.dart';
+import '../../../core/widgets/batsh_draft_status.dart';
 import '../../../core/widgets/batsh_text_field.dart';
 import '../domain/quote.dart';
 import 'providers/quotes_providers.dart';
 import '../../../core/theme/batsh_icon_size.dart';
 import '../../../core/widgets/batsh_sheet.dart';
 import '../../../core/widgets/batsh_snack.dart';
+import '../../../core/widgets/shattab_pattern.dart';
 
 import 'package:batsh/core/theme/theme_extension.dart';
 
@@ -51,6 +57,11 @@ class _QuoteSheetState extends ConsumerState<_QuoteSheet> {
   String? _priceError;
   bool _submitting = false;
   bool _done = false;
+  Timer? _draftTimer;
+  bool _draftRestored = false;
+  bool _draftSaved = false;
+
+  String get _draftKey => 'quote:${widget.briefId}';
 
   @override
   void initState() {
@@ -60,15 +71,64 @@ class _QuoteSheetState extends ConsumerState<_QuoteSheet> {
     _max = TextEditingController(text: e?.priceMax?.toString() ?? '');
     _duration = TextEditingController(text: e?.durationText ?? '');
     _note = TextEditingController(text: e?.note ?? '');
+    for (final controller in [_min, _max, _duration, _note]) {
+      controller.addListener(_scheduleDraftSave);
+    }
+    unawaited(_restoreDraft());
   }
 
   @override
   void dispose() {
+    _draftTimer?.cancel();
+    if (!_done) unawaited(_persistDraft());
+    for (final controller in [_min, _max, _duration, _note]) {
+      controller.removeListener(_scheduleDraftSave);
+    }
     _min.dispose();
     _max.dispose();
     _duration.dispose();
     _note.dispose();
     super.dispose();
+  }
+
+  void _scheduleDraftSave() {
+    _draftTimer?.cancel();
+    _draftTimer = Timer(const Duration(milliseconds: 400), () {
+      unawaited(_persistDraft(showStatus: true));
+    });
+  }
+
+  Future<void> _restoreDraft() async {
+    final draft = await FormDraftStore.read(_draftKey);
+    if (!mounted || draft == null || draft.isEmpty) return;
+    _min.text = (draft['min'] as String?) ?? _min.text;
+    _max.text = (draft['max'] as String?) ?? _max.text;
+    _duration.text = (draft['duration'] as String?) ?? _duration.text;
+    _note.text = (draft['note'] as String?) ?? _note.text;
+    setState(() {
+      _draftRestored = true;
+      _draftSaved = true;
+    });
+  }
+
+  Future<void> _persistDraft({bool showStatus = false}) async {
+    final hasContent = [
+      _min,
+      _max,
+      _duration,
+      _note,
+    ].any((controller) => controller.text.trim().isNotEmpty);
+    if (!hasContent) {
+      await FormDraftStore.clear(_draftKey);
+      return;
+    }
+    await FormDraftStore.write(_draftKey, {
+      'min': _min.text,
+      'max': _max.text,
+      'duration': _duration.text,
+      'note': _note.text,
+    });
+    if (showStatus && mounted) setState(() => _draftSaved = true);
   }
 
   Future<void> _submit() async {
@@ -100,6 +160,8 @@ class _QuoteSheetState extends ConsumerState<_QuoteSheet> {
                 : _duration.text.trim(),
             note: note,
           );
+      if (!mounted) return;
+      await FormDraftStore.clear(_draftKey);
       if (!mounted) return;
       HapticFeedback.mediumImpact();
       setState(() => _done = true);
@@ -148,6 +210,10 @@ class _QuoteSheetState extends ConsumerState<_QuoteSheet> {
               : context.l10n.editQuote,
           style: BatshTypography.titleLg,
         ),
+        if (_draftRestored || _draftSaved) ...[
+          const SizedBox(height: BatshSpacing.xs),
+          BatshDraftStatus(restored: _draftRestored),
+        ],
         const SizedBox(height: BatshSpacing.lg),
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -214,37 +280,82 @@ class _SuccessView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: BatshSpacing.xl),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-                padding: const EdgeInsets.all(BatshSpacing.gutter),
-                decoration: BoxDecoration(
-                  color: context.colorScheme.successContainer,
-                  shape: BoxShape.circle,
+    final scheme = context.colorScheme;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerLowest,
+        borderRadius: BatshRadius.brCard,
+        border: Border.all(color: scheme.outlineVariant.withValues(alpha: 0.7)),
+      ),
+      child: ClipRRect(
+        borderRadius: BatshRadius.brCard,
+        child: Stack(
+          children: [
+            PositionedDirectional(
+              top: -14,
+              end: -8,
+              width: 140,
+              height: 110,
+              child: IgnorePointer(
+                child: ExcludeSemantics(
+                  child: Opacity(
+                    opacity: 0.18,
+                    child: ShattabPattern(
+                      kind: ShattabPatternKind.terrazzo,
+                      color: scheme.primary,
+                      opacity: 0.32,
+                    ),
+                  ),
                 ),
-                child: Icon(
-                  Icons.check_rounded,
-                  color: context.colorScheme.success,
-                  size: BatshIconSize.xxl,
-                ),
-              )
-              .animate()
-              .scale(
-                duration: 400.ms,
-                curve: BatshMotion.springCelebrate,
-                begin: const Offset(0.4, 0.4),
-                end: const Offset(1, 1),
-              )
-              .fadeIn(duration: 200.ms),
-          const SizedBox(height: BatshSpacing.gutter),
-          Text(
-            context.l10n.quoteSentSuccess,
-            style: BatshTypography.titleLg,
-          ).animate().fadeIn(delay: 150.ms, duration: 300.ms),
-        ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(BatshSpacing.xl),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                        padding: const EdgeInsets.all(BatshSpacing.gutter),
+                        decoration: BoxDecoration(
+                          color: scheme.primaryContainer,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.send_rounded,
+                          color: scheme.primary,
+                          size: BatshIconSize.xxl,
+                        ),
+                      )
+                      .animate()
+                      .scale(
+                        duration: 400.ms,
+                        curve: BatshMotion.springCelebrate,
+                        begin: const Offset(0.4, 0.4),
+                        end: const Offset(1, 1),
+                      )
+                      .fadeIn(duration: 200.ms),
+                  const SizedBox(height: BatshSpacing.gutter),
+                  Text(
+                    context.l10n.quoteSentTitle,
+                    textAlign: TextAlign.center,
+                    style: BatshTypography.titleLg.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ).animate().fadeIn(delay: 150.ms, duration: 300.ms),
+                  const SizedBox(height: BatshSpacing.xs),
+                  Text(
+                    context.l10n.quoteSentMessage,
+                    textAlign: TextAlign.center,
+                    style: BatshTypography.bodyMd.copyWith(
+                      color: scheme.onSurfaceVariant,
+                      height: 1.5,
+                    ),
+                  ).animate().fadeIn(delay: 200.ms, duration: 300.ms),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

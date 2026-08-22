@@ -24,6 +24,7 @@ class PushService {
 
   static bool _available = false;
   static StreamSubscription<String>? _refreshSub;
+  static int _registrationGeneration = 0;
 
   /// True once Firebase started and messaging is usable on this device.
   static bool get isAvailable => _available;
@@ -56,6 +57,7 @@ class PushService {
     String locale,
   ) async {
     if (!_available) return;
+    final generation = ++_registrationGeneration;
 
     try {
       final messaging = FirebaseMessaging.instance;
@@ -67,14 +69,16 @@ class PushService {
       }
 
       final token = await messaging.getToken();
-      if (token != null) await _store(client, userId, token, locale);
+      if (token != null) {
+        await _store(client, userId, token, locale, generation: generation);
+      }
 
       // A token can rotate at any time (restore from backup, cleared cache,
       // long idle). Missing a rotation means silently never reaching this
       // device again, with nothing on either end reporting a failure.
       await _refreshSub?.cancel();
       _refreshSub = messaging.onTokenRefresh.listen(
-        (next) => _store(client, userId, next, locale),
+        (next) => _store(client, userId, next, locale, generation: generation),
         onError: (Object error, StackTrace stackTrace) => AppLogger.warning(
           'push_token_refresh_failed',
           error: error,
@@ -94,6 +98,7 @@ class PushService {
   /// previous account's notifications — which is why this runs on sign-out
   /// rather than letting the row age out on its own.
   static Future<void> unregister(SupabaseClient client) async {
+    _registrationGeneration++;
     await _refreshSub?.cancel();
     _refreshSub = null;
     if (!_available) return;
@@ -116,8 +121,10 @@ class PushService {
     SupabaseClient client,
     String userId,
     String token,
-    String locale,
-  ) async {
+    String locale, {
+    required int generation,
+  }) async {
+    if (generation != _registrationGeneration) return;
     try {
       await client.from('device_tokens').upsert({
         'token': token,

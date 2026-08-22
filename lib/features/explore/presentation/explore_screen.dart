@@ -1,17 +1,23 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:batsh/core/l10n/l10n_extension.dart';
+import '../../../core/analytics/app_analytics.dart';
+import '../../../core/analytics/marketplace_events.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/batsh_radius.dart';
 import '../../../core/theme/batsh_shadows.dart';
 import '../../../core/theme/batsh_spacing.dart';
+import '../../../core/theme/batsh_typography.dart';
 import '../../../core/utils/error_mapper.dart';
 import '../../../core/widgets/batsh_bottom_nav.dart';
+import '../../../core/widgets/batsh_button.dart';
 import '../../../core/widgets/batsh_dialog.dart';
-import '../../../core/widgets/batsh_error.dart';
 import '../../../core/widgets/batsh_snack.dart';
+import '../../../core/widgets/batsh_shimmer.dart';
 import '../../auth/presentation/providers/auth_provider.dart';
 import '../../auth/presentation/sign_in_sheet.dart';
 import '../domain/post.dart';
@@ -80,6 +86,14 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
     });
   }
 
+  Future<void> _signInForFeed() async {
+    await showSignInSheet(context, reason: context.l10n.signInToInteract);
+    if (!mounted) return;
+    if (ref.read(currentSessionProvider) != null) {
+      ref.invalidate(exploreFeedProvider);
+    }
+  }
+
   void _openTypedCreatePost(CommunityPostKind kind) {
     _ensureAuth(
       context,
@@ -88,6 +102,12 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
   }
 
   void _openPostAuthor(Post post) {
+    unawaited(
+      AppAnalytics.track(
+        MarketplaceEvents.communityAuthorProfileOpened,
+        properties: {'author_role': post.authorRole},
+      ),
+    );
     final onContractorSide = _explorePrefix().startsWith('/c/');
     final currentUserId = ref.read(currentSessionProvider)?.user.id;
 
@@ -233,8 +253,12 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
           feed.when(
             loading: () => const _CommunityFeedSkeleton(),
             error: (error, _) => _CommunityFeedError(
-              message: ErrorMapper.map(error),
+              requiresSignIn: _feedRequiresSignIn(
+                error,
+                isGuest: session == null,
+              ),
               onRetry: () => ref.invalidate(exploreFeedProvider),
+              onSignIn: _signInForFeed,
             ),
             data: (posts) {
               final visiblePosts = _filterPosts(posts);
@@ -246,6 +270,9 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
               }
 
               final hasMore = ref.read(exploreFeedProvider.notifier).hasMore;
+              final paginationError = ref
+                  .read(exploreFeedProvider.notifier)
+                  .paginationError;
               return Column(
                 children: [
                   for (var i = 0; i < visiblePosts.length; i++) ...[
@@ -262,6 +289,12 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                             await ref
                                 .read(postControllerProvider.notifier)
                                 .toggleLike(visiblePosts[i]);
+                            unawaited(
+                              AppAnalytics.track(
+                                MarketplaceEvents.communityPostLiked,
+                                properties: {'liked': !visiblePosts[i].isLiked},
+                              ),
+                            );
                           } catch (error) {
                             if (context.mounted) {
                               BatshSnack.error(context, ErrorMapper.map(error));
@@ -275,6 +308,12 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                             await ref
                                 .read(postControllerProvider.notifier)
                                 .toggleSave(visiblePosts[i]);
+                            unawaited(
+                              AppAnalytics.track(
+                                MarketplaceEvents.communityPostSaved,
+                                properties: {'saved': !visiblePosts[i].isSaved},
+                              ),
+                            );
                           } catch (error) {
                             if (context.mounted) {
                               BatshSnack.error(context, ErrorMapper.map(error));
@@ -297,7 +336,13 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                     if (i != visiblePosts.length - 1)
                       const SizedBox(height: BatshSpacing.md),
                   ],
-                  if (hasMore) ...[
+                  if (paginationError != null) ...[
+                    const SizedBox(height: BatshSpacing.lg),
+                    _PaginationError(
+                      onRetry: () =>
+                          ref.read(exploreFeedProvider.notifier).loadMore(),
+                    ),
+                  ] else if (hasMore) ...[
                     const SizedBox(height: BatshSpacing.lg),
                     const _PaginationHint(),
                   ],
@@ -319,6 +364,17 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
       ),
     );
   }
+}
+
+bool _feedRequiresSignIn(Object error, {required bool isGuest}) {
+  if (!isGuest) return false;
+  final message = error.toString().toLowerCase();
+  return message.contains('permission') ||
+      message.contains('unauthorized') ||
+      message.contains('not_authorized') ||
+      message.contains('jwt') ||
+      message.contains('session') ||
+      message.contains('invalid input syntax for type uuid');
 }
 
 class _CommunityFeedSkeleton extends StatelessWidget {
@@ -346,29 +402,33 @@ class _CommunityFeedSkeleton extends StatelessWidget {
                 Row(
                   textDirection: TextDirection.rtl,
                   children: [
-                    _SkeletonBlock(width: 44, height: 44, radius: 22),
+                    const BatshShimmerBox(
+                      width: 44,
+                      height: 44,
+                      borderRadius: BatshRadius.brFull,
+                    ),
                     const SizedBox(width: BatshSpacing.sm),
                     const Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
-                          _SkeletonBlock(width: double.infinity, height: 14),
+                          BatshShimmerBox(width: double.infinity, height: 14),
                           SizedBox(height: BatshSpacing.xs),
-                          _SkeletonBlock(width: 110, height: 10),
+                          BatshShimmerBox(width: 110, height: 10),
                         ],
                       ),
                     ),
                   ],
                 ),
                 const SizedBox(height: BatshSpacing.md),
-                const _SkeletonBlock(width: double.infinity, height: 16),
+                const BatshShimmerBox(width: double.infinity, height: 16),
                 const SizedBox(height: BatshSpacing.xs),
-                const _SkeletonBlock(width: 190, height: 16),
+                const BatshShimmerBox(width: 190, height: 16),
                 const SizedBox(height: BatshSpacing.md),
-                _SkeletonBlock(
+                const BatshShimmerBox(
                   width: double.infinity,
                   height: 184,
-                  radius: BatshRadius.brLg.topLeft.x,
+                  borderRadius: BatshRadius.brLg,
                 ),
               ],
             ),
@@ -380,39 +440,108 @@ class _CommunityFeedSkeleton extends StatelessWidget {
   }
 }
 
-class _SkeletonBlock extends StatelessWidget {
-  const _SkeletonBlock({
-    required this.width,
-    required this.height,
-    this.radius = BatshRadius.sm,
+class _CommunityFeedError extends StatelessWidget {
+  const _CommunityFeedError({
+    required this.requiresSignIn,
+    required this.onRetry,
+    required this.onSignIn,
   });
 
-  final double width;
-  final double height;
-  final double radius;
+  final bool requiresSignIn;
+  final VoidCallback onRetry;
+  final VoidCallback onSignIn;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: width,
-      height: height,
-      decoration: BoxDecoration(
-        color: context.colorScheme.surfaceContainerHigh,
-        borderRadius: BorderRadius.circular(radius),
+    final title = requiresSignIn
+        ? context.l10n.communityFeedGuestErrorTitle
+        : context.l10n.communityFeedErrorTitle;
+    final message = requiresSignIn
+        ? context.l10n.communityFeedGuestErrorMessage
+        : context.l10n.communityFeedErrorMessage;
+    final actionLabel = requiresSignIn
+        ? context.l10n.signInAction
+        : context.l10n.tryAgain;
+
+    return Semantics(
+      container: true,
+      liveRegion: true,
+      label: '$title. $message',
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: BatshSpacing.lg,
+          vertical: BatshSpacing.xxl,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 64,
+              height: 64,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: context.colorScheme.error.withValues(alpha: 0.10),
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: context.colorScheme.error.withValues(alpha: 0.20),
+                ),
+              ),
+              child: Icon(
+                requiresSignIn
+                    ? Icons.lock_outline_rounded
+                    : Icons.error_outline_rounded,
+                color: context.colorScheme.error,
+                size: 34,
+              ),
+            ),
+            const SizedBox(height: BatshSpacing.lg),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: BatshTypography.titleLg.copyWith(
+                color: context.colorScheme.onSurface,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: BatshSpacing.xs),
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 310),
+              child: Text(
+                message,
+                textAlign: TextAlign.center,
+                style: BatshTypography.bodyMd.copyWith(
+                  color: context.colorScheme.onSurfaceVariant,
+                  height: 1.55,
+                ),
+              ),
+            ),
+            const SizedBox(height: BatshSpacing.lg),
+            SizedBox(
+              width: double.infinity,
+              child: BatshButton(
+                label: actionLabel,
+                onPressed: requiresSignIn ? onSignIn : onRetry,
+                fullWidth: true,
+                icon: requiresSignIn
+                    ? Icons.login_rounded
+                    : Icons.refresh_rounded,
+              ),
+            ),
+            if (requiresSignIn) ...[
+              const SizedBox(height: BatshSpacing.xs),
+              TextButton(
+                onPressed: onRetry,
+                style: TextButton.styleFrom(
+                  minimumSize: const Size.fromHeight(BatshSpacing.minHitArea),
+                  foregroundColor: context.colorScheme.primary,
+                ),
+                child: Text(context.l10n.tryAgain),
+              ),
+            ],
+          ],
+        ),
       ),
     );
-  }
-}
-
-class _CommunityFeedError extends StatelessWidget {
-  const _CommunityFeedError({required this.message, required this.onRetry});
-
-  final String message;
-  final VoidCallback onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    return BatshError(message: message, onRetry: onRetry);
   }
 }
 
@@ -421,19 +550,29 @@ class _PaginationHint extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: BatshSpacing.lg),
+      child: BatshPaginationSkeleton(
+        key: const ValueKey('community-pagination-loading'),
+      ),
+    );
+  }
+}
+
+class _PaginationError extends StatelessWidget {
+  const _PaginationError({required this.onRetry});
+
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
     return Semantics(
       liveRegion: true,
-      label: context.l10n.communityLoadingMore,
-      child: Padding(
-        padding: const EdgeInsets.only(bottom: BatshSpacing.lg),
-        child: SizedBox(
-          width: 22,
-          height: 22,
-          child: CircularProgressIndicator(
-            strokeWidth: 2,
-            color: context.colorScheme.primary,
-          ),
-        ),
+      label: context.l10n.loadMoreError,
+      child: OutlinedButton.icon(
+        onPressed: onRetry,
+        icon: const Icon(Icons.refresh_rounded),
+        label: Text(context.l10n.tryAgain),
       ),
     );
   }

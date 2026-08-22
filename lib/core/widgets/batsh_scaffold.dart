@@ -6,6 +6,8 @@ import '../theme/batsh_spacing.dart';
 import '../theme/batsh_typography.dart';
 
 import 'package:batsh/core/theme/theme_extension.dart';
+import 'batsh_pattern_background.dart';
+import 'shattab_pattern.dart';
 
 enum BatshHeaderStyle { normal, primary }
 
@@ -19,7 +21,7 @@ class BatshScaffold extends StatelessWidget {
     this.bottomNavigationBar,
     this.floatingActionButton,
     this.padding = const EdgeInsets.symmetric(
-      horizontal: BatshSpacing.marginMobile,
+      horizontal: BatshSpacing.pageGutter,
     ),
     this.showAppBar = true,
     this.centerTitle = true,
@@ -29,6 +31,9 @@ class BatshScaffold extends StatelessWidget {
     this.backgroundColor,
     this.extendBodyBehindAppBar = false,
     this.headerStyle = BatshHeaderStyle.normal,
+    this.patternKind = ShattabPatternKind.contour,
+    this.patternOpacity = 0.065,
+    this.showPattern = true,
   });
 
   final Widget body;
@@ -46,6 +51,9 @@ class BatshScaffold extends StatelessWidget {
   final Color? backgroundColor;
   final bool extendBodyBehindAppBar;
   final BatshHeaderStyle headerStyle;
+  final ShattabPatternKind patternKind;
+  final double patternOpacity;
+  final bool showPattern;
 
   @override
   Widget build(BuildContext context) {
@@ -66,6 +74,19 @@ class BatshScaffold extends StatelessWidget {
             curve: BatshMotion.easeOut,
           );
     }
+
+    final pageBody = Column(
+      children: [
+        if (isPrimary)
+          Container(
+            height: 1,
+            color: context.colorScheme.primary.withValues(alpha: 0.15),
+          )
+        else if (showAppBar)
+          Container(height: 0.5, color: context.colorScheme.outlineVariant),
+        Expanded(child: bodyContent),
+      ],
+    );
 
     return Scaffold(
       backgroundColor: backgroundColor ?? context.colorScheme.surface,
@@ -104,18 +125,13 @@ class BatshScaffold extends StatelessWidget {
           : null,
       bottomNavigationBar: bottomNavigationBar,
       floatingActionButton: floatingActionButton,
-      body: Column(
-        children: [
-          if (isPrimary)
-            Container(
-              height: 1,
-              color: context.colorScheme.primary.withValues(alpha: 0.15),
+      body: showPattern
+          ? BatshPatternBackground(
+              kind: patternKind,
+              opacity: patternOpacity,
+              child: pageBody,
             )
-          else if (showAppBar)
-            Container(height: 0.5, color: context.colorScheme.outlineVariant),
-          Expanded(child: bodyContent),
-        ],
-      ),
+          : pageBody,
     );
   }
 }

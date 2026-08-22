@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
@@ -60,18 +59,15 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
   }
 
   Future<void> _pickImages() async {
-    final files = await _picker.pickMultiImage();
+    final files = await _picker.pickMultiImage(
+      maxWidth: 1600,
+      imageQuality: 85,
+    );
     if (files.isEmpty) return;
     final bytes = <Uint8List>[];
     for (final f in files) {
       final original = await f.readAsBytes();
-      final compressed = await FlutterImageCompress.compressWithList(
-        original,
-        minWidth: 1200,
-        minHeight: 1200,
-        quality: 75,
-      );
-      bytes.add(compressed);
+      bytes.add(original);
     }
     setState(() => _selectedImages = [..._selectedImages, ...bytes]);
   }

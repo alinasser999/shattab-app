@@ -123,13 +123,24 @@ class _LoginCardState extends ConsumerState<_LoginCard> {
     try {
       final repo = ref.read(authRepositoryProvider);
       if (_isSignUp) {
-        await repo.signUpWithPhonePassword(phone: phone, password: password);
+        final response = await repo.signUpWithPhonePassword(
+          phone: phone,
+          password: password,
+        );
+        if (response.session == null) {
+          // Supabase returns no session when phone confirmation is enabled.
+          // Do not turn that valid response into the generic server error.
+          if (!mounted) return;
+          setState(() => _formError = context.l10n.signupNeedsConfirmation);
+          return;
+        }
       } else {
         await repo.signInWithPhonePassword(phone: phone, password: password);
       }
-      // Session now exists → router redirect handles navigation; refresh so the
-      // freshly-created profile row is loaded.
-      await ref.read(currentProfileProvider.notifier).refresh();
+      // The auth-state listener and role guard own navigation. Do not block a
+      // successful sign-in on a second profile query; a transient RLS/network
+      // failure there used to turn a valid account creation into a generic
+      // "service unavailable" error.
     } catch (e) {
       if (!mounted) return;
       setState(() => _formError = ErrorMapper.map(e));

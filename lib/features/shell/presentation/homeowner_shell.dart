@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:batsh/core/l10n/l10n_extension.dart';
 import '../../../core/widgets/batsh_bottom_nav.dart';
+import '../../../core/widgets/batsh_pattern_background.dart';
 
 import 'package:batsh/core/theme/theme_extension.dart';
 
@@ -21,7 +22,7 @@ class HomeownerShell extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: context.colorScheme.surface,
-      body: navigationShell,
+      body: BatshPatternBackground(child: navigationShell),
       bottomNavigationBar: BatshBottomNav(
         currentIndex: navigationShell.currentIndex,
         onTap: _goToTab,

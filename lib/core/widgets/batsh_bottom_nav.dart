@@ -45,9 +45,8 @@ class BatshBottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final horizontalInset = MediaQuery.sizeOf(context).width <= 340
-        ? BatshSpacing.xs
-        : BatshSpacing.ml;
+    final isCompact = MediaQuery.sizeOf(context).width <= 340;
+    final horizontalInset = isCompact ? 0.0 : BatshSpacing.ml;
 
     return SafeArea(
       top: false,
@@ -65,7 +64,7 @@ class BatshBottomNav extends StatelessWidget {
             borderRadius: BatshRadius.brFull,
             border: Border.all(
               color: context.colorScheme.outlineVariant.withValues(alpha: 0.4),
-              width: 1,
+              width: isCompact ? 0 : 1,
             ),
             boxShadow: BatshShadows.floating,
           ),
@@ -231,7 +230,7 @@ class _NavItemState extends State<_NavItem>
                       // Solid onSurfaceVariant (not alpha-dimmed) to clear the
                       // 4.5:1 body-text contrast floor on the white bar.
                       style: BatshTypography.labelSm.copyWith(
-                        fontSize: isCompact ? 10 : null,
+                        fontSize: 12,
                         color: widget.isSelected
                             ? context.colorScheme.primary
                             : context.colorScheme.onSurfaceVariant,

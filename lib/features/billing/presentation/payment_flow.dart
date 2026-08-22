@@ -13,6 +13,7 @@ import '../../../core/widgets/batsh_button.dart';
 import '../../../core/widgets/photo_picker.dart';
 import '../data/payment_repository.dart';
 import '../pricing.dart';
+import 'providers/billing_providers.dart';
 import '../../../core/theme/batsh_icon_size.dart';
 import '../../../core/widgets/batsh_sheet.dart';
 import '../../../core/widgets/batsh_snack.dart';
@@ -24,23 +25,33 @@ import 'package:batsh/core/theme/theme_extension.dart';
 Future<void> showPaymentMethods(
   BuildContext context, {
   required bool annual,
+  String purpose = 'pro',
+  String? planTerm,
 }) async {
   final method = await BatshSheet.show<String>(
     context,
-    builder: (_) => const _MethodsSheet(),
+    builder: (_) => _MethodsSheet(purpose: purpose),
   );
   if (!context.mounted || method == null) return;
   if (method == 'instapay') {
-    await Navigator.of(
-      context,
-    ).push(MaterialPageRoute(builder: (_) => InstaPayScreen(annual: annual)));
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => InstaPayScreen(
+          annual: annual,
+          purpose: purpose,
+          planTerm: planTerm,
+        ),
+      ),
+    );
   } else if (method == 'applepay') {
     BatshSnack.info(context, context.l10n.applePaySoon);
   }
 }
 
 class _MethodsSheet extends StatelessWidget {
-  const _MethodsSheet();
+  const _MethodsSheet({required this.purpose});
+
+  final String purpose;
 
   @override
   Widget build(BuildContext context) {
@@ -52,8 +63,12 @@ class _MethodsSheet extends StatelessWidget {
         const SizedBox(height: BatshSpacing.md),
         _MethodTile(
           icon: Icons.swap_horiz_rounded,
-          title: context.l10n.payInstapay,
-          subtitle: context.l10n.payInstapaySub,
+          title: purpose == 'sponsored'
+              ? context.l10n.paySpecialPlacement
+              : context.l10n.payInstapay,
+          subtitle: purpose == 'sponsored'
+              ? context.l10n.paySpecialPlacementSub
+              : context.l10n.payInstapaySub,
           onTap: () => Navigator.of(context).pop('instapay'),
         ),
         const SizedBox(height: BatshSpacing.sm),
@@ -164,8 +179,15 @@ class _MethodTile extends StatelessWidget {
 // ── InstaPay flow ────────────────────────────────────────────────────────────
 
 class InstaPayScreen extends ConsumerStatefulWidget {
-  const InstaPayScreen({super.key, required this.annual});
+  const InstaPayScreen({
+    super.key,
+    required this.annual,
+    this.purpose = 'pro',
+    this.planTerm,
+  });
   final bool annual;
+  final String purpose;
+  final String? planTerm;
 
   @override
   ConsumerState<InstaPayScreen> createState() => _InstaPayScreenState();
@@ -185,6 +207,16 @@ class _InstaPayScreenState extends ConsumerState<InstaPayScreen> {
   /// across retries lets the database recognise the repeat and keep one row.
   final _idempotencyKey = PaymentRepository.newIdempotencyKey();
 
+  bool get _isSponsored => widget.purpose == 'sponsored';
+
+  int get _amount => _isSponsored
+      ? BatshPricing.featuredWeekEgp
+      : BatshPricing.proPrice(annual: widget.annual);
+
+  String get _term =>
+      widget.planTerm ??
+      (_isSponsored ? 'weekly' : (widget.annual ? 'annual' : 'monthly'));
+
   @override
   void dispose() {
     _refController.dispose();
@@ -201,9 +233,8 @@ class _InstaPayScreenState extends ConsumerState<InstaPayScreen> {
       await ref
           .read(paymentRepositoryProvider)
           .submitInstapay(
-            purpose: 'pro',
-            planTerm: widget.annual ? 'annual' : 'monthly',
-            amountEgp: BatshPricing.proPrice(annual: widget.annual),
+            purpose: widget.purpose,
+            planTerm: _term,
             idempotencyKey: _idempotencyKey,
             proofFile: _proof!.file,
             proofBytes: _proof!.bytes,
@@ -211,6 +242,7 @@ class _InstaPayScreenState extends ConsumerState<InstaPayScreen> {
                 ? null
                 : _refController.text.trim(),
           );
+      ref.invalidate(billingStateProvider);
       if (mounted) setState(() => _submitted = true);
     } catch (_) {
       if (mounted) {
@@ -225,22 +257,29 @@ class _InstaPayScreenState extends ConsumerState<InstaPayScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: context.colorScheme.surface,
-      appBar: AppBar(title: Text(context.l10n.instapayTitle)),
+      appBar: AppBar(
+        title: Text(
+          _isSponsored
+              ? context.l10n.specialPlacementTitle
+              : context.l10n.instapayTitle,
+        ),
+      ),
       body: _submitted ? _success() : _form(),
     );
   }
 
   Widget _form() {
-    final amount = BatshPricing.proPrice(annual: widget.annual);
     return SingleChildScrollView(
       padding: const EdgeInsets.all(BatshSpacing.gutter),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _infoCard(
-            label: context.l10n.instapayAmountLabel,
+            label: _isSponsored
+                ? context.l10n.specialPlacementAmountLabel
+                : context.l10n.instapayAmountLabel,
             child: Text(
-              S.money(amount),
+              S.money(_amount),
               style: BatshTypography.displayMd.copyWith(
                 color: context.colorScheme.primary,
               ),
@@ -274,7 +313,9 @@ class _InstaPayScreenState extends ConsumerState<InstaPayScreen> {
           ),
           const SizedBox(height: BatshSpacing.lg),
           Text(
-            context.l10n.instapayUploadLabel,
+            _isSponsored
+                ? context.l10n.specialPlacementUploadLabel
+                : context.l10n.instapayUploadLabel,
             style: BatshTypography.labelLg,
           ),
           const SizedBox(height: BatshSpacing.sm),
@@ -287,12 +328,16 @@ class _InstaPayScreenState extends ConsumerState<InstaPayScreen> {
           TextField(
             controller: _refController,
             decoration: InputDecoration(
-              labelText: context.l10n.instapayRefLabel,
+              labelText: _isSponsored
+                  ? context.l10n.specialPlacementReferenceLabel
+                  : context.l10n.instapayRefLabel,
             ),
           ),
           const SizedBox(height: BatshSpacing.xl),
           BatshButton(
-            label: context.l10n.instapaySubmit,
+            label: _isSponsored
+                ? context.l10n.specialPlacementSubmit
+                : context.l10n.instapaySubmit,
             icon: Icons.send_rounded,
             isLoading: _loading,
             onPressed: _submit,
@@ -340,13 +385,17 @@ class _InstaPayScreenState extends ConsumerState<InstaPayScreen> {
             ),
             const SizedBox(height: BatshSpacing.lg),
             Text(
-              context.l10n.instapaySubmittedTitle,
+              _isSponsored
+                  ? context.l10n.specialPlacementSubmittedTitle
+                  : context.l10n.instapaySubmittedTitle,
               textAlign: TextAlign.center,
               style: BatshTypography.headlineSm,
             ),
             const SizedBox(height: BatshSpacing.sm),
             Text(
-              context.l10n.instapaySubmittedBody,
+              _isSponsored
+                  ? context.l10n.specialPlacementSubmittedBody
+                  : context.l10n.instapaySubmittedBody,
               textAlign: TextAlign.center,
               style: BatshTypography.bodyMd.copyWith(
                 color: context.colorScheme.onSurfaceVariant,
@@ -354,7 +403,9 @@ class _InstaPayScreenState extends ConsumerState<InstaPayScreen> {
             ),
             const SizedBox(height: BatshSpacing.xl),
             BatshButton(
-              label: context.l10n.instapayDone,
+              label: _isSponsored
+                  ? context.l10n.specialPlacementDone
+                  : context.l10n.instapayDone,
               onPressed: () => Navigator.of(context).pop(),
             ),
           ],

@@ -112,4 +112,70 @@ void main() {
       expect(result.single['profiles']['full_name'], 'Real Name');
     });
   });
+
+  group('applyFeedAuthorIdentities', () {
+    test('fills missing public name and avatar fields', () {
+      final rows = [
+        {
+          'id': 'p1',
+          'author_id': 'u1',
+          'author_role': 'homeowner',
+          'author_name': null,
+          'author_avatar_url': null,
+        },
+      ];
+
+      final result = applyFeedAuthorIdentities(rows, {
+        authorIdentityKey('u1', 'homeowner'): {
+          'full_name': 'سارة أحمد',
+          'avatar_url': 'https://cdn.example/avatar.jpg',
+          'phone': '+201000000000',
+        },
+      });
+
+      expect(result.single['author_name'], 'سارة أحمد');
+      expect(
+        result.single['author_avatar_url'],
+        'https://cdn.example/avatar.jpg',
+      );
+      expect(result.single.containsKey('phone'), isFalse);
+    });
+
+    test('preserves supplied feed identity and isolates roles', () {
+      final rows = [
+        {
+          'id': 'p1',
+          'author_id': 'same-id',
+          'author_role': 'contractor',
+          'author_name': 'اسم من الخلاصة',
+          'author_avatar_url': 'https://cdn.example/original.jpg',
+        },
+        {
+          'id': 'p2',
+          'author_id': 'same-id',
+          'author_role': 'homeowner',
+          'author_name': null,
+          'author_avatar_url': null,
+        },
+      ];
+
+      final result = applyFeedAuthorIdentities(rows, {
+        authorIdentityKey('same-id', 'homeowner'): {
+          'full_name': 'صاحب البيت',
+          'avatar_url': 'https://cdn.example/homeowner.jpg',
+        },
+      });
+
+      expect(result[0]['author_name'], 'اسم من الخلاصة');
+      expect(
+        result[0]['author_avatar_url'],
+        'https://cdn.example/original.jpg',
+      );
+      expect(result[1]['author_name'], 'صاحب البيت');
+      expect(
+        result[1]['author_avatar_url'],
+        'https://cdn.example/homeowner.jpg',
+      );
+    });
+  });
 }

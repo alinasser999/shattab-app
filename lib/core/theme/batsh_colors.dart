@@ -137,6 +137,20 @@ class BatshColors {
     onInverseSurface: inverseOnSurface,
     inversePrimary: inversePrimary,
     surfaceTint: surfaceTint,
+    // Declared above but never handed to the scheme, so every
+    // `colorScheme.primaryFixed` in the app resolved to Flutter's fallback —
+    // `primary` — and every `onPrimaryFixed` to `onPrimary`. Two dozen call
+    // sites asked for a pale peach plate and got solid terracotta, several of
+    // them then painting terracotta ink on top of it.
+    //
+    // The fixed roles are identical in both themes by definition; that is what
+    // "fixed" means in Material 3, and it is why the dark scheme below passes
+    // the same five values.
+    primaryFixed: primaryFixed,
+    primaryFixedDim: primaryFixedDim,
+    onPrimaryFixed: onPrimaryFixed,
+    onPrimaryFixedVariant: onPrimaryFixedVariant,
+    tertiaryFixed: tertiaryFixed,
   );
 
   // Dark scheme (for future dark mode support)
@@ -174,5 +188,10 @@ class BatshColors {
     onInverseSurface: Color(0xFF1F1B14),
     inversePrimary: Color(0xFF9E3D18),
     surfaceTint: Color(0xFFFFB59D),
+    primaryFixed: primaryFixed,
+    primaryFixedDim: primaryFixedDim,
+    onPrimaryFixed: onPrimaryFixed,
+    onPrimaryFixedVariant: onPrimaryFixedVariant,
+    tertiaryFixed: tertiaryFixed,
   );
 }

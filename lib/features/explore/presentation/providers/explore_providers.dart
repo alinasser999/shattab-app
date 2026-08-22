@@ -12,9 +12,14 @@ class ExploreFeed extends _$ExploreFeed {
   static const _pageSize = 10;
   bool _loading = false;
   bool _hasMore = true;
+  Object? _paginationError;
 
   /// Whether another page might exist — drives the trailing loader.
   bool get hasMore => _hasMore;
+
+  /// A page failure must not erase cards already on screen. The view uses this
+  /// to render a local retry affordance at the end of the feed.
+  Object? get paginationError => _paginationError;
 
   @override
   AsyncValue<List<Post>> build() {
@@ -36,6 +41,7 @@ class ExploreFeed extends _$ExploreFeed {
       );
       _hasMore = posts.length == _pageSize;
       if (cursor == null) {
+        _paginationError = null;
         state = AsyncData(posts);
       } else {
         final current = state.value ?? const <Post>[];
@@ -44,16 +50,25 @@ class ExploreFeed extends _$ExploreFeed {
           ...current,
           ...posts.where((post) => ids.add(post.id)),
         ]);
+        _paginationError = null;
       }
     } catch (e, st) {
       // Only surface a fresh-load failure. A page>0 failure keeps the list
       // the user already has so a flaky scroll doesn't wipe the feed.
-      if (cursor == null) state = AsyncError(e, st);
+      if (cursor == null) {
+        state = AsyncError(e, st);
+      } else {
+        _paginationError = e;
+        final current = state.value;
+        if (current != null) state = AsyncData(current);
+      }
     }
   }
 
   Future<void> refresh() async {
+    _loading = false;
     _hasMore = true;
+    _paginationError = null;
     state = const AsyncLoading();
     await _fetchPage();
   }
@@ -63,6 +78,7 @@ class ExploreFeed extends _$ExploreFeed {
     final current = state.value;
     if (current == null || current.isEmpty) return;
     _loading = true;
+    _paginationError = null;
     await _fetchPage(cursor: current.last);
     _loading = false;
   }
@@ -82,6 +98,14 @@ class ExploreFeed extends _$ExploreFeed {
 // tear the controller down mid-await and its next ref use would throw.
 @Riverpod(keepAlive: true)
 class PostController extends _$PostController {
+  bool _publishing = false;
+  final Set<String> _likeWrites = <String>{};
+  final Set<String> _saveWrites = <String>{};
+  final Set<String> _commentWrites = <String>{};
+  final Set<String> _commentLikeWrites = <String>{};
+  final Set<String> _commentEdits = <String>{};
+  final Set<String> _commentDeletes = <String>{};
+
   @override
   AsyncValue<void> build() => const AsyncData(null);
 
@@ -96,6 +120,8 @@ class PostController extends _$PostController {
     String? city,
     String? portfolioProjectId,
   }) async {
+    if (_publishing) return;
+    _publishing = true;
     state = const AsyncLoading();
     try {
       final repo = ref.read(postRepositoryProvider);
@@ -115,6 +141,8 @@ class PostController extends _$PostController {
     } catch (e, st) {
       state = AsyncError(e, st);
       rethrow;
+    } finally {
+      _publishing = false;
     }
   }
 
@@ -127,6 +155,7 @@ class PostController extends _$PostController {
   Future<void> toggleLike(Post post) async {
     final userId = ref.read(currentSessionProvider)?.user.id;
     if (userId == null) return;
+    if (!_likeWrites.add(post.id)) return;
     final optimistic = post.copyWith(
       isLiked: !post.isLiked,
       likeCount: post.likeCount + (post.isLiked ? -1 : 1),
@@ -141,6 +170,8 @@ class PostController extends _$PostController {
     } catch (_) {
       feed.patchPost(post); // rollback
       rethrow;
+    } finally {
+      _likeWrites.remove(post.id);
     }
   }
 
@@ -150,6 +181,7 @@ class PostController extends _$PostController {
   Future<void> toggleSave(Post post) async {
     final userId = ref.read(currentSessionProvider)?.user.id;
     if (userId == null) return;
+    if (!_saveWrites.add(post.id)) return;
     final optimistic = post.copyWith(isSaved: !post.isSaved);
     final feed = ref.read(exploreFeedProvider.notifier);
     feed.patchPost(optimistic);
@@ -162,6 +194,8 @@ class PostController extends _$PostController {
     } catch (_) {
       feed.patchPost(post); // rollback
       rethrow;
+    } finally {
+      _saveWrites.remove(post.id);
     }
   }
 
@@ -173,16 +207,21 @@ class PostController extends _$PostController {
     String? parentCommentId,
   }) async {
     final userId = ref.read(currentSessionProvider)?.user.id ?? '';
-    await ref
-        .read(postRepositoryProvider)
-        .addComment(
-          postId: postId,
-          userId: userId,
-          content: content,
-          parentCommentId: parentCommentId,
-        );
-    ref.invalidate(postCommentsProvider(postId));
-    ref.invalidate(postByIdProvider(postId));
+    if (!_commentWrites.add(postId)) return;
+    try {
+      await ref
+          .read(postRepositoryProvider)
+          .addComment(
+            postId: postId,
+            userId: userId,
+            content: content,
+            parentCommentId: parentCommentId,
+          );
+      ref.invalidate(postCommentsProvider(postId));
+      ref.invalidate(postByIdProvider(postId));
+    } finally {
+      _commentWrites.remove(postId);
+    }
   }
 
   Future<void> updateComment({
@@ -192,10 +231,19 @@ class PostController extends _$PostController {
   }) async {
     final userId = ref.read(currentSessionProvider)?.user.id;
     if (userId == null) return;
-    await ref
-        .read(postRepositoryProvider)
-        .updateComment(commentId: commentId, userId: userId, content: content);
-    ref.invalidate(postCommentsProvider(postId));
+    if (!_commentEdits.add(commentId)) return;
+    try {
+      await ref
+          .read(postRepositoryProvider)
+          .updateComment(
+            commentId: commentId,
+            userId: userId,
+            content: content,
+          );
+      ref.invalidate(postCommentsProvider(postId));
+    } finally {
+      _commentEdits.remove(commentId);
+    }
   }
 
   Future<void> deleteComment({
@@ -204,11 +252,16 @@ class PostController extends _$PostController {
   }) async {
     final userId = ref.read(currentSessionProvider)?.user.id;
     if (userId == null) return;
-    await ref
-        .read(postRepositoryProvider)
-        .deleteComment(commentId: commentId, userId: userId);
-    ref.invalidate(postCommentsProvider(postId));
-    ref.invalidate(postByIdProvider(postId));
+    if (!_commentDeletes.add(commentId)) return;
+    try {
+      await ref
+          .read(postRepositoryProvider)
+          .deleteComment(commentId: commentId, userId: userId);
+      ref.invalidate(postCommentsProvider(postId));
+      ref.invalidate(postByIdProvider(postId));
+    } finally {
+      _commentDeletes.remove(commentId);
+    }
   }
 
   Future<void> toggleCommentLike({
@@ -217,14 +270,19 @@ class PostController extends _$PostController {
   }) async {
     final userId = ref.read(currentSessionProvider)?.user.id;
     if (userId == null) return;
-    await ref
-        .read(postRepositoryProvider)
-        .toggleCommentLike(
-          commentId: comment.id,
-          userId: userId,
-          liked: !comment.isLiked,
-        );
-    ref.invalidate(postCommentsProvider(postId));
+    if (!_commentLikeWrites.add(comment.id)) return;
+    try {
+      await ref
+          .read(postRepositoryProvider)
+          .toggleCommentLike(
+            commentId: comment.id,
+            userId: userId,
+            liked: !comment.isLiked,
+          );
+      ref.invalidate(postCommentsProvider(postId));
+    } finally {
+      _commentLikeWrites.remove(comment.id);
+    }
   }
 
   Future<void> deletePost(String postId) async {
@@ -254,6 +312,20 @@ final contractorCommunityPostsProvider = FutureProvider.autoDispose
           .read(postRepositoryProvider)
           .fetchCommunityPostsByAuthor(
             authorId: contractorId,
+            viewerId: viewerId,
+          );
+    });
+
+/// Public homeowner-profile preview of the author's latest community posts.
+/// It uses the same contact-safe projection as contractor activity.
+final homeownerCommunityPostsProvider = FutureProvider.autoDispose
+    .family<List<Post>, String>((ref, homeownerId) {
+      final viewerId = ref.read(currentSessionProvider)?.user.id ?? '';
+      return ref
+          .read(postRepositoryProvider)
+          .fetchCommunityPostsByAuthor(
+            authorId: homeownerId,
+            authorRole: 'homeowner',
             viewerId: viewerId,
           );
     });

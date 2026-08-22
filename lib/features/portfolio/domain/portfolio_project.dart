@@ -11,6 +11,7 @@ class PortfolioProject {
     this.apartmentType,
     this.location,
     this.yearCompleted,
+    this.createdAt,
   });
 
   final String id;
@@ -25,6 +26,9 @@ class PortfolioProject {
   final int? yearCompleted;
   final int position;
 
+  /// Database creation time used for stable cross-contractor pagination.
+  final DateTime? createdAt;
+
   factory PortfolioProject.fromJson(Map<String, dynamic> json) =>
       PortfolioProject(
         id: json['id'] as String,
@@ -38,5 +42,9 @@ class PortfolioProject {
         location: json['location'] as String?,
         yearCompleted: json['year_completed'] as int?,
         position: (json['position'] as int?) ?? 0,
+        createdAt: switch (json['created_at']) {
+          final String value => DateTime.tryParse(value),
+          _ => null,
+        },
       );
 }

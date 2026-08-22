@@ -1,4 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -7,6 +9,10 @@ import 'package:go_router/go_router.dart';
 import 'package:share_plus/share_plus.dart';
 
 import 'package:batsh/core/l10n/l10n_extension.dart';
+import '../../../core/utils/error_mapper.dart';
+import '../../../core/analytics/app_analytics.dart';
+import '../../../core/analytics/marketplace_events.dart';
+import '../../../core/utils/image_url.dart';
 import '../../../core/theme/batsh_motion.dart';
 import '../../../core/theme/batsh_radius.dart';
 import '../../../core/theme/batsh_spacing.dart';
@@ -31,22 +37,35 @@ import '../../../core/widgets/batsh_pressable.dart';
 
 import 'package:batsh/core/theme/theme_extension.dart';
 
-class PostDetailScreen extends ConsumerWidget {
+class PostDetailScreen extends ConsumerStatefulWidget {
   const PostDetailScreen({super.key, required this.postId});
 
   final String postId;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final postAsync = ref.watch(postByIdProvider(postId));
-    final commentsAsync = ref.watch(postCommentsProvider(postId));
+  ConsumerState<PostDetailScreen> createState() => _PostDetailScreenState();
+}
+
+class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
+  @override
+  void initState() {
+    super.initState();
+    unawaited(AppAnalytics.track(MarketplaceEvents.communityPostOpened));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final postAsync = ref.watch(postByIdProvider(widget.postId));
+    final commentsAsync = ref.watch(postCommentsProvider(widget.postId));
 
     return BatshScaffold(
       title: context.l10n.exploreTitle,
       body: postAsync.when(
         loading: () => const BatshPostSkeleton(),
-        error: (e, _) =>
-            BatshError(onRetry: () => ref.invalidate(postByIdProvider(postId))),
+        error: (e, _) => BatshError(
+          message: ErrorMapper.map(e),
+          onRetry: () => ref.invalidate(postByIdProvider(widget.postId)),
+        ),
         data: (post) {
           if (post == null) {
             // Not a failure: the post is gone. Nothing to retry — retrying
@@ -67,8 +86,13 @@ class PostDetailScreen extends ConsumerWidget {
               commentsLoading: true,
             ),
             // Comments failing shouldn't hide the post — show it with none.
-            error: (_, __) =>
-                _PostDetailContent(post: post, comments: const []),
+            error: (error, _) => _PostDetailContent(
+              post: post,
+              comments: const [],
+              commentsError: ErrorMapper.map(error),
+              onRetryComments: () =>
+                  ref.invalidate(postCommentsProvider(widget.postId)),
+            ),
             data: (comments) =>
                 _PostDetailContent(post: post, comments: comments),
           );
@@ -83,6 +107,8 @@ class _PostDetailContent extends ConsumerStatefulWidget {
     required this.post,
     required this.comments,
     this.commentsLoading = false,
+    this.commentsError,
+    this.onRetryComments,
   });
 
   final Post post;
@@ -91,6 +117,8 @@ class _PostDetailContent extends ConsumerStatefulWidget {
   /// Comments are still in flight. The post itself is already here, so only
   /// the comment list is stood in for.
   final bool commentsLoading;
+  final String? commentsError;
+  final VoidCallback? onRetryComments;
 
   @override
   ConsumerState<_PostDetailContent> createState() => _PostDetailContentState();
@@ -138,9 +166,21 @@ class _PostDetailContentState extends ConsumerState<_PostDetailContent> {
       'https://shattab.app/explore/post/${post.id}',
       subject: post.caption,
     );
+    unawaited(
+      AppAnalytics.track(
+        MarketplaceEvents.communityPostShared,
+        properties: const {'channel': 'system_share'},
+      ),
+    );
   }
 
   void _navigateToProfile(Post post) {
+    unawaited(
+      AppAnalytics.track(
+        MarketplaceEvents.communityAuthorProfileOpened,
+        properties: {'author_role': post.authorRole},
+      ),
+    );
     final onContractorSide = GoRouterState.of(
       context,
     ).matchedLocation.startsWith('/c/');
@@ -163,6 +203,12 @@ class _PostDetailContentState extends ConsumerState<_PostDetailContent> {
   }
 
   void _navigateToCommenter(PostComment comment) {
+    unawaited(
+      AppAnalytics.track(
+        MarketplaceEvents.communityCommenterProfileOpened,
+        properties: {'author_role': comment.userRole ?? 'unknown'},
+      ),
+    );
     final current = ref.read(currentSessionProvider)?.user.id;
     final onContractorSide = GoRouterState.of(
       context,
@@ -222,6 +268,16 @@ class _PostDetailContentState extends ConsumerState<_PostDetailContent> {
               : context.l10n.commentUpdated,
         );
       }
+      unawaited(
+        AppAnalytics.track(
+          editing == null
+              ? MarketplaceEvents.communityCommentCreated
+              : MarketplaceEvents.communityCommentEdited,
+          properties: editing == null
+              ? {'is_reply': replyingTo != null}
+              : const {},
+        ),
+      );
     } catch (error) {
       if (mounted) {
         final msg = error.toString().contains('rate_limit')
@@ -270,6 +326,12 @@ class _PostDetailContentState extends ConsumerState<_PostDetailContent> {
         await ref
             .read(postControllerProvider.notifier)
             .toggleCommentLike(postId: widget.post.id, comment: comment);
+        unawaited(
+          AppAnalytics.track(
+            MarketplaceEvents.communityCommentLiked,
+            properties: {'liked': !comment.isLiked},
+          ),
+        );
       } catch (_) {
         if (mounted) BatshSnack.error(context, context.l10n.unknownErrorRetry);
       }
@@ -302,6 +364,7 @@ class _PostDetailContentState extends ConsumerState<_PostDetailContent> {
       await ref
           .read(postControllerProvider.notifier)
           .deleteComment(postId: widget.post.id, commentId: comment.id);
+      unawaited(AppAnalytics.track(MarketplaceEvents.communityCommentDeleted));
       if (mounted) BatshSnack.success(context, context.l10n.commentDeleted);
     } catch (_) {
       if (mounted) BatshSnack.error(context, context.l10n.unknownErrorRetry);
@@ -380,7 +443,12 @@ class _PostDetailContentState extends ConsumerState<_PostDetailContent> {
               const SizedBox(height: BatshSpacing.gutter),
               Text(context.l10n.commentsTitle, style: BatshTypography.labelMd),
               const SizedBox(height: BatshSpacing.sm),
-              if (widget.commentsLoading)
+              if (widget.commentsError != null)
+                _CommentsError(
+                  message: widget.commentsError!,
+                  onRetry: widget.onRetryComments,
+                )
+              else if (widget.commentsLoading)
                 const BatshCommentsSkeleton()
               else if (widget.comments.isEmpty)
                 Padding(
@@ -419,16 +487,22 @@ class _PostDetailContentState extends ConsumerState<_PostDetailContent> {
   Widget _buildHeader(Post post) {
     final session = ref.read(currentSessionProvider);
     final isOwner = session?.user.id == post.authorId;
+    final authorName = post.authorName?.trim().isNotEmpty == true
+        ? post.authorName!.trim()
+        : context.l10n.communityMemberFallback;
+    final authorAvatar = isDisplayableImageUrl(post.authorAvatarUrl)
+        ? sizedImageUrl(post.authorAvatarUrl!, width: 96)
+        : null;
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         BatshPressable(
           onTap: () => _navigateToProfile(post),
-          semanticLabel: post.authorName ?? '',
+          semanticLabel: authorName,
           child: AvatarWithInitials(
-            imageUrl: post.authorAvatarUrl,
-            name: post.authorName ?? '',
+            imageUrl: authorAvatar,
+            name: authorName,
             radius: 22,
           ),
         ),
@@ -443,7 +517,7 @@ class _PostDetailContentState extends ConsumerState<_PostDetailContent> {
                     child: BatshPressable(
                       onTap: () => _navigateToProfile(post),
                       child: Text(
-                        post.authorName ?? '',
+                        authorName,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: BatshTypography.labelMd,
@@ -549,9 +623,15 @@ class _PostDetailContentState extends ConsumerState<_PostDetailContent> {
           label: post.likeCount > 0
               ? '${post.likeCount}'
               : context.l10n.likeLabel,
-          onTap: () => _optimistic(
-            () => ref.read(postControllerProvider.notifier).toggleLike(post),
-          ),
+          onTap: () => _optimistic(() async {
+            await ref.read(postControllerProvider.notifier).toggleLike(post);
+            unawaited(
+              AppAnalytics.track(
+                MarketplaceEvents.communityPostLiked,
+                properties: {'liked': !post.isLiked},
+              ),
+            );
+          }),
           haptic: HapticStrength.light,
         ),
         const SizedBox(width: BatshSpacing.sm),
@@ -572,9 +652,15 @@ class _PostDetailContentState extends ConsumerState<_PostDetailContent> {
         _ActionBtn(
           icon: post.isSaved ? Icons.bookmark : Icons.bookmark_border,
           color: post.isSaved ? context.colorScheme.tertiary : null,
-          onTap: () => _optimistic(
-            () => ref.read(postControllerProvider.notifier).toggleSave(post),
-          ),
+          onTap: () => _optimistic(() async {
+            await ref.read(postControllerProvider.notifier).toggleSave(post);
+            unawaited(
+              AppAnalytics.track(
+                MarketplaceEvents.communityPostSaved,
+                properties: {'saved': !post.isSaved},
+              ),
+            );
+          }),
           haptic: HapticStrength.light,
         ),
       ],
@@ -587,6 +673,9 @@ class _PostDetailContentState extends ConsumerState<_PostDetailContent> {
     final name = c.userName?.trim().isNotEmpty == true
         ? c.userName!.trim()
         : context.l10n.communityMemberFallback;
+    final avatarUrl = isDisplayableImageUrl(c.userAvatarUrl)
+        ? sizedImageUrl(c.userAvatarUrl!, width: 72)
+        : null;
     return Padding(
       padding: EdgeInsetsDirectional.only(
         start: c.parentCommentId == null ? 0 : BatshSpacing.lg,
@@ -600,7 +689,7 @@ class _PostDetailContentState extends ConsumerState<_PostDetailContent> {
             onTap: () => _navigateToCommenter(c),
             semanticLabel: name,
             child: AvatarWithInitials(
-              imageUrl: c.userAvatarUrl,
+              imageUrl: avatarUrl,
               name: name,
               radius: 16,
             ),
@@ -846,6 +935,55 @@ class _PostDetailContentState extends ConsumerState<_PostDetailContent> {
     return d == 1
         ? context.l10n.agoDay
         : context.l10n.agoDays.replaceFirst('%s', '$d');
+  }
+}
+
+class _CommentsError extends StatelessWidget {
+  const _CommentsError({required this.message, this.onRetry});
+
+  final String message;
+  final VoidCallback? onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      container: true,
+      label: message,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: context.colorScheme.errorContainer.withValues(alpha: 0.35),
+          borderRadius: BatshRadius.brLg,
+          border: Border.all(
+            color: context.colorScheme.error.withValues(alpha: 0.18),
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsetsDirectional.fromSTEB(
+            BatshSpacing.sm,
+            BatshSpacing.sm,
+            BatshSpacing.md,
+            BatshSpacing.sm,
+          ),
+          child: Row(
+            children: [
+              Icon(
+                Icons.error_outline_rounded,
+                color: context.colorScheme.error,
+                size: BatshIconSize.md,
+              ),
+              const SizedBox(width: BatshSpacing.sm),
+              Expanded(child: Text(message, style: BatshTypography.bodySm)),
+              if (onRetry != null)
+                TextButton.icon(
+                  onPressed: onRetry,
+                  icon: const Icon(Icons.refresh_rounded),
+                  label: Text(context.l10n.tryAgain),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 

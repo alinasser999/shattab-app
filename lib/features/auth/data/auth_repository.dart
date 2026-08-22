@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/media/media_storage.dart';
 import '../../../core/media/media_storage_provider.dart';
+import '../../../core/notifications/push_service.dart';
 import '../../../core/supabase/supabase_provider.dart';
 import '../domain/profile.dart';
 
@@ -59,7 +60,10 @@ class AuthRepository {
   Future<bool> signInWithApple() =>
       _client.auth.signInWithOAuth(OAuthProvider.apple);
 
-  Future<void> signOut() => _client.auth.signOut();
+  Future<void> signOut() async {
+    await PushService.unregister(_client);
+    await _client.auth.signOut();
+  }
 
   /// Permanently deletes the signed-in user and everything they own.
   ///
@@ -77,6 +81,7 @@ class AuthRepository {
     // not run the irreversible Supabase deletion RPC.
     await _mediaStorage?.purgeOwnedPublicMedia();
     await _client.rpc('delete_my_account');
+    await PushService.unregister(_client);
     await _client.auth.signOut();
   }
 
@@ -95,15 +100,19 @@ class AuthRepository {
     return Profile.fromJson(row);
   }
 
-  Future<({String name, String phone})?> fetchProfileNameAndPhone(
-    String profileId,
+  /// Returns contact details only for the homeowner attached to a brief the
+  /// signed-in contractor is authorized to view. A profile id alone is not a
+  /// sufficient authorization boundary: it would turn this into an arbitrary
+  /// phone directory if a caller could swap the id in the request.
+  Future<({String name, String phone})?> fetchHomeownerContactForBrief(
+    String briefId,
   ) async {
-    final row = await _client
-        .from('profiles')
-        .select('full_name, phone')
-        .eq('id', profileId)
-        .maybeSingle();
-    if (row == null) return null;
+    final rows = await _client.rpc(
+      'get_homeowner_contact_for_brief',
+      params: {'p_brief_id': briefId},
+    );
+    if (rows is! List || rows.isEmpty || rows.first is! Map) return null;
+    final row = Map<String, dynamic>.from(rows.first as Map);
     return (
       name: (row['full_name'] as String?) ?? '',
       phone: (row['phone'] as String?) ?? '',

@@ -10,7 +10,7 @@ import '../../../core/analytics/app_analytics.dart';
 import '../../../core/media/media_storage.dart';
 import '../../../core/media/media_storage_provider.dart';
 import '../../../core/supabase/supabase_provider.dart';
-import '../../../core/utils/upload_policy.dart';
+import '../../../core/utils/image_compression.dart';
 import '../../onboarding/domain/onboarding_models.dart';
 import '../domain/brief.dart';
 import '../domain/homeowner_profile_preview.dart';
@@ -40,13 +40,19 @@ class BriefsRepository {
   /// Page size for the opportunities feed. Bounds every fetch — the previous
   /// query had no limit at all and pulled every matching open brief.
   static const int pageSize = 20;
+  static const int listReadLimit = 100;
+  static const _readTimeout = Duration(seconds: 15);
+  static const _writeTimeout = Duration(seconds: 20);
 
   Future<List<Brief>> fetchMine(String homeownerId) async {
     final rows = await _client
         .from('briefs')
         .select()
         .eq('homeowner_id', homeownerId)
-        .order('created_at', ascending: false);
+        .order('created_at', ascending: false)
+        .order('id', ascending: false)
+        .limit(listReadLimit)
+        .timeout(_readTimeout);
     return rows.map(Brief.fromJson).toList();
   }
 
@@ -55,9 +61,59 @@ class BriefsRepository {
         .from('briefs')
         .select()
         .eq('id', id)
-        .maybeSingle();
+        .maybeSingle()
+        .timeout(_readTimeout);
     if (row == null) return null;
     return Brief.fromJson(row);
+  }
+
+  /// Returns the contractor's durable opportunity bookmarks.
+  ///
+  /// This is intentionally separate from [fetchOpportunitiesForContractor]:
+  /// a bookmark is a user-owned interaction, not part of the public brief
+  /// projection. Keeping it as a bounded id-only query also avoids loading
+  /// duplicate brief payloads merely to paint bookmark state.
+  Future<Set<String>> fetchSavedBriefIds(String contractorId) async {
+    final rows = await _client
+        .from('saved_briefs')
+        .select('brief_id')
+        .eq('contractor_id', contractorId)
+        .order('created_at', ascending: false)
+        .order('brief_id', ascending: false)
+        .limit(500)
+        .timeout(_readTimeout);
+    return {
+      for (final row in rows as List)
+        if (row['brief_id'] is String) row['brief_id'] as String,
+    };
+  }
+
+  /// Makes one bookmark transition durable and idempotent.
+  Future<void> setSavedBrief({
+    required String contractorId,
+    required String briefId,
+    required bool saved,
+  }) async {
+    if (saved) {
+      try {
+        // INSERT keeps the RLS contract narrow. A duplicate bookmark is an
+        // idempotent success, so this does not need UPDATE/upsert privileges.
+        await _client
+            .from('saved_briefs')
+            .insert({'contractor_id': contractorId, 'brief_id': briefId})
+            .timeout(_writeTimeout);
+      } on PostgrestException catch (error) {
+        if (error.code != '23505') rethrow;
+      }
+      return;
+    }
+
+    await _client
+        .from('saved_briefs')
+        .delete()
+        .eq('contractor_id', contractorId)
+        .eq('brief_id', briefId)
+        .timeout(_writeTimeout);
   }
 
   /// Returns the contact-free homeowner projection allowed to contractors.
@@ -71,7 +127,8 @@ class BriefsRepository {
           .from('homeowner_public_profiles')
           .select()
           .eq('profile_id', homeownerId)
-          .maybeSingle();
+          .maybeSingle()
+          .timeout(const Duration(seconds: 15));
     } on PostgrestException catch (error) {
       // Older environments may not have the public projection migration yet.
       // Treat that as an unavailable profile instead of allowing Riverpod to
@@ -91,23 +148,33 @@ class BriefsRepository {
   ///
   /// Search covers `work_description` only: the description is where the words
   /// a contractor types actually live, and keeping it to one column avoids an
-  /// `or(...)` that would collide with the cursor's. City and district stay on
-  /// the filter sheet.
+  /// `or(...)` that would collide with the cursor's. City, specialties, and
+  /// recency are also pushed into this query when the filter state provides
+  /// them, so a filtered page cannot hide matching records on later pages.
   Future<List<Brief>> fetchOpportunitiesForContractor({
     String? searchQuery,
     BriefCursor? after,
+    String? city,
+    Set<String>? targetSpecialties,
+    DateTime? createdAfter,
     int limit = pageSize,
   }) async {
     final profile = await _client
         .from('contractor_profiles')
         .select('specialties, service_areas')
         .eq('profile_id', _uid)
-        .maybeSingle();
+        .maybeSingle()
+        .timeout(_readTimeout);
 
-    final specialties =
-        (profile?['specialties'] as List?)?.cast<String>() ?? <String>[];
+    // A contractor without a profile/preferences is not a meaningful match.
+    // Returning every open brief here would turn incomplete onboarding into a
+    // misleading, unpersonalized marketplace feed.
+    if (profile == null) return const <Brief>[];
+
+    final profileSpecialties =
+        (profile['specialties'] as List?)?.cast<String>() ?? <String>[];
     final serviceAreas =
-        (profile?['service_areas'] as List?)?.cast<String>() ?? <String>[];
+        (profile['service_areas'] as List?)?.cast<String>() ?? <String>[];
 
     var query = _client
         .from('briefs')
@@ -119,11 +186,23 @@ class BriefsRepository {
         ) // hired jobs leave the feed (migration 0009)
         .eq('status', 'open');
 
-    if (specialties.isNotEmpty) {
-      query = query.overlaps('target_specialties', specialties);
+    final specialties = targetSpecialties
+        ?.where((value) => value.isNotEmpty)
+        .toList();
+    final effectiveSpecialties = specialties?.isNotEmpty == true
+        ? specialties!
+        : profileSpecialties;
+    if (effectiveSpecialties.isNotEmpty) {
+      query = query.overlaps('target_specialties', effectiveSpecialties);
     }
-    if (serviceAreas.isNotEmpty) {
+    if (city != null && city.trim().isNotEmpty) {
+      query = query.eq('city', city.trim());
+    } else if (serviceAreas.isNotEmpty) {
       query = query.inFilter('city', serviceAreas);
+    }
+
+    if (createdAfter != null) {
+      query = query.gte('created_at', createdAfter.toUtc().toIso8601String());
     }
 
     final q = sanitizeLikePattern(searchQuery);
@@ -145,7 +224,8 @@ class BriefsRepository {
     final rows = await query
         .order('created_at', ascending: false)
         .order('id', ascending: false)
-        .limit(limit);
+        .limit(limit)
+        .timeout(_readTimeout);
     return rows.map(Brief.fromJson).toList();
   }
 
@@ -169,7 +249,8 @@ class BriefsRepository {
           'work_description': workDescription,
           'target_specialties': targetSpecialties,
         })
-        .eq('id', briefId);
+        .eq('id', briefId)
+        .timeout(_writeTimeout);
   }
 
   /// Removes a brief, degrading to cancel when contractors have already quoted.
@@ -180,10 +261,9 @@ class BriefsRepository {
   /// quote arriving in between — and losing that race destroys a contractor's
   /// work through the `on delete cascade`.
   Future<String> deleteOrCancelBrief(String briefId) async {
-    final result = await _client.rpc(
-      'delete_or_cancel_brief',
-      params: {'p_brief_id': briefId},
-    );
+    final result = await _client
+        .rpc('delete_or_cancel_brief', params: {'p_brief_id': briefId})
+        .timeout(_writeTimeout);
     return result as String? ?? 'cancelled';
   }
 
@@ -193,7 +273,9 @@ class BriefsRepository {
   /// RPC owns authorization (caller must hold the accepted quote) and is
   /// idempotent, so a double tap cannot re-notify.
   Future<void> requestCompletion(String briefId) async {
-    await _client.rpc('request_completion', params: {'p_brief_id': briefId});
+    await _client
+        .rpc('request_completion', params: {'p_brief_id': briefId})
+        .timeout(_writeTimeout);
   }
 
   /// Homeowner confirms the work is done (migration 0019).
@@ -202,7 +284,9 @@ class BriefsRepository {
   /// contractor's `projects_completed`. Idempotent in SQL, so a retry after a
   /// dropped connection cannot double-count.
   Future<void> confirmCompletion(String briefId) async {
-    await _client.rpc('confirm_completion', params: {'p_brief_id': briefId});
+    await _client
+        .rpc('confirm_completion', params: {'p_brief_id': briefId})
+        .timeout(_writeTimeout);
   }
 
   /// Strips LIKE metacharacters so a user typing `%` doesn't turn their search
@@ -230,7 +314,10 @@ class BriefsRepository {
         .not('target_contractor_id', 'is', 'null')
         .eq('target_contractor_id', _uid)
         .neq('status', 'cancelled') // a cancelled request must leave the inbox
-        .order('created_at', ascending: false);
+        .order('created_at', ascending: false)
+        .order('id', ascending: false)
+        .limit(listReadLimit)
+        .timeout(_readTimeout);
     return rows.map(Brief.fromJson).toList();
   }
 
@@ -257,7 +344,8 @@ class BriefsRepository {
           'target_specialties': targetSpecialties,
         })
         .select()
-        .single();
+        .single()
+        .timeout(_writeTimeout);
 
     // Supply side of the marketplace: every quote, hire and review descends
     // from a brief, so this is the denominator the rest of the funnel gets
@@ -286,11 +374,16 @@ class BriefsRepository {
     await _client
         .from('briefs')
         .update({'status': 'cancelled'})
-        .eq('id', briefId);
+        .eq('id', briefId)
+        .timeout(_writeTimeout);
   }
 
   Future<void> setPhotoUrls(String briefId, List<String> urls) async {
-    await _client.from('briefs').update({'photo_urls': urls}).eq('id', briefId);
+    await _client
+        .from('briefs')
+        .update({'photo_urls': urls})
+        .eq('id', briefId)
+        .timeout(_writeTimeout);
   }
 
   /// Uploads a single photo to brief-photos bucket. Returns the public URL.
@@ -305,10 +398,8 @@ class BriefsRepository {
     final path = '$homeownerId/$draftId/$seq.jpg';
     late final Uint8List uploadBytes;
     if (file != null) {
-      UploadPolicy.validateImageLength(await file.length());
       uploadBytes = await file.readAsBytes();
     } else if (bytes != null) {
-      UploadPolicy.validateImageBytes(bytes);
       uploadBytes = bytes;
     } else {
       throw ArgumentError('uploadPhoto needs either file or bytes');
@@ -326,11 +417,16 @@ class BriefsRepository {
       return result.url;
     }
     final storage = _client.storage.from('brief-photos');
-    await storage.uploadBinary(
-      path,
-      uploadBytes,
-      fileOptions: const FileOptions(upsert: true, contentType: 'image/jpeg'),
-    );
+    await storage
+        .uploadBinary(
+          path,
+          await ImageCompression.prepare(uploadBytes),
+          fileOptions: const FileOptions(
+            upsert: true,
+            contentType: 'image/jpeg',
+          ),
+        )
+        .timeout(const Duration(seconds: 30));
     return storage.getPublicUrl(path);
   }
 }

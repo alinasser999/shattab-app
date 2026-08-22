@@ -46,6 +46,10 @@ class _BatshErrorState extends ConsumerState<BatshError> {
     final message = widget.message;
     final onRetry = widget.onRetry;
     final reduced = MediaQuery.disableAnimationsOf(context);
+    final isOffline = ref.watch(connectivityProvider).value == false;
+    final resolvedMessage = isOffline
+        ? context.l10n.errNetwork
+        : message ?? context.l10n.unknownErrorRetry;
 
     final icon = Semantics(
       label: context.l10n.errServerError,
@@ -69,7 +73,7 @@ class _BatshErrorState extends ConsumerState<BatshError> {
               );
 
     return Semantics(
-      label: message ?? context.l10n.errServerError,
+      label: resolvedMessage,
       child: Center(
         child: Padding(
           padding: const EdgeInsets.all(BatshSpacing.lg),
@@ -78,10 +82,7 @@ class _BatshErrorState extends ConsumerState<BatshError> {
             children: [
               animatedIcon,
               const SizedBox(height: BatshSpacing.gutter),
-              _AnimatedText(
-                message: message ?? context.l10n.unknownErrorRetry,
-                reduced: reduced,
-              ),
+              _AnimatedText(message: resolvedMessage, reduced: reduced),
               if (onRetry != null) ...[
                 const SizedBox(height: BatshSpacing.lg),
                 _AnimatedButton(onRetry: onRetry, reduced: reduced),

@@ -21,6 +21,15 @@ class ErrorMapper {
     if (msg.contains('signups') && msg.contains('disabled')) {
       return S.errSignupDisabled;
     }
+    if (msg.contains('phone_provider_disabled') ||
+        msg.contains('phone provider') && msg.contains('disabled')) {
+      return S.errSignupDisabled;
+    }
+    if (msg.contains('weak password') ||
+        msg.contains('password should') ||
+        msg.contains('password must')) {
+      return S.errInvalidData;
+    }
     if (msg.contains('already registered') ||
         msg.contains('already been registered') ||
         msg.contains('user already exists')) {

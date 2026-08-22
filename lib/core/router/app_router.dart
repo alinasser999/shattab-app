@@ -549,6 +549,26 @@ GoRouter appRouter(Ref ref) {
                       ),
                     ],
                   ),
+                  GoRoute(
+                    path: 'privacy',
+                    parentNavigatorKey: _rootNavigatorKey,
+                    pageBuilder: (_, state) => fadeSlidePage(
+                      const HomeownerLegalScreen(
+                        document: HomeownerLegalDocument.privacy,
+                      ),
+                      state,
+                    ),
+                  ),
+                  GoRoute(
+                    path: 'terms',
+                    parentNavigatorKey: _rootNavigatorKey,
+                    pageBuilder: (_, state) => fadeSlidePage(
+                      const HomeownerLegalScreen(
+                        document: HomeownerLegalDocument.terms,
+                      ),
+                      state,
+                    ),
+                  ),
                 ],
               ),
             ],

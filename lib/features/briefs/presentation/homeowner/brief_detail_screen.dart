@@ -23,6 +23,7 @@ import '../../../quotes/presentation/widgets/quotes_received_section.dart';
 import '../../domain/brief.dart';
 import '../providers/briefs_providers.dart';
 import '../widgets/completion_card.dart';
+import '../widgets/brief_lifecycle_timeline.dart';
 import 'create_post_screen.dart';
 import '../../../../core/theme/batsh_icon_size.dart';
 import '../../../../core/widgets/batsh_snack.dart';
@@ -91,6 +92,8 @@ class BriefDetailScreen extends ConsumerWidget {
           final children = <Widget>[
             const SizedBox(height: BatshSpacing.md),
             _StatusRow(brief: brief, date: date),
+            const SizedBox(height: BatshSpacing.lg),
+            BriefLifecycleTimeline(brief: brief),
             const SizedBox(height: BatshSpacing.lg),
           ];
           if (brief.photoUrls.isNotEmpty) {

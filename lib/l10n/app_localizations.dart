@@ -350,6 +350,12 @@ abstract class AppLocalizations {
   /// **'أكّد كلمة السر'**
   String get confirmPasswordHint;
 
+  /// No description provided for @signupNeedsConfirmation.
+  ///
+  /// In ar, this message translates to:
+  /// **'اتعمل الحساب. أكّد رقمك من الرسالة وبعدين سجّل دخولك.'**
+  String get signupNeedsConfirmation;
+
   /// No description provided for @signInAction.
   ///
   /// In ar, this message translates to:
@@ -1376,6 +1382,30 @@ abstract class AppLocalizations {
   /// **'مش قادرين نحمّل منشوراته دلوقتي'**
   String get communityPostsLoadError;
 
+  /// No description provided for @communityFeedErrorTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'مش قادرين نجيب منشورات المجتمع دلوقتي'**
+  String get communityFeedErrorTitle;
+
+  /// No description provided for @communityFeedErrorMessage.
+  ///
+  /// In ar, this message translates to:
+  /// **'حصلت مشكلة مؤقتة في تحميل المنشورات. جرّب تاني بعد لحظات.'**
+  String get communityFeedErrorMessage;
+
+  /// No description provided for @communityFeedGuestErrorTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'سجّل دخولك عشان تفتح المجتمع'**
+  String get communityFeedGuestErrorTitle;
+
+  /// No description provided for @communityFeedGuestErrorMessage.
+  ///
+  /// In ar, this message translates to:
+  /// **'تسجيل الدخول بيخليك تشوف المنشورات وتتفاعل مع أهل الخبرة وتحفظ اللي يعجبك.'**
+  String get communityFeedGuestErrorMessage;
+
   /// No description provided for @communityClearFilter.
   ///
   /// In ar, this message translates to:
@@ -1976,6 +2006,174 @@ abstract class AppLocalizations {
   /// **'اشتراك برو مفعّل'**
   String get proActiveLine;
 
+  /// No description provided for @sponsoredProfessionals.
+  ///
+  /// In ar, this message translates to:
+  /// **'محترفين مميزين'**
+  String get sponsoredProfessionals;
+
+  /// No description provided for @paidPlacementLabel.
+  ///
+  /// In ar, this message translates to:
+  /// **'إعلان مدفوع'**
+  String get paidPlacementLabel;
+
+  /// No description provided for @specialProTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'ظهور مميز'**
+  String get specialProTitle;
+
+  /// No description provided for @specialProSubtitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'خلّي ملفك يظهر في بداية النتائج المناسبة ليك'**
+  String get specialProSubtitle;
+
+  /// No description provided for @specialProValueLine.
+  ///
+  /// In ar, this message translates to:
+  /// **'مساحة واضحة لشغلك، من غير ما نخلط الإعلان بالثقة'**
+  String get specialProValueLine;
+
+  /// No description provided for @specialProBenefit.
+  ///
+  /// In ar, this message translates to:
+  /// **'ظهور مميز لمدة ٧ أيام في النتائج المناسبة لمجالك ومناطق شغلك'**
+  String get specialProBenefit;
+
+  /// No description provided for @specialProFairness.
+  ///
+  /// In ar, this message translates to:
+  /// **'التقييم والتوثيق والأعمال المنجزة تفضل مستقلة عن الدفع'**
+  String get specialProFairness;
+
+  /// No description provided for @specialProPriceLine.
+  ///
+  /// In ar, this message translates to:
+  /// **'١٩٩ جنيه لمدة ٧ أيام'**
+  String get specialProPriceLine;
+
+  /// No description provided for @specialProCta.
+  ///
+  /// In ar, this message translates to:
+  /// **'اطلب الظهور المميز'**
+  String get specialProCta;
+
+  /// No description provided for @specialProActive.
+  ///
+  /// In ar, this message translates to:
+  /// **'الظهور المميز شغال'**
+  String get specialProActive;
+
+  /// No description provided for @specialProExpiresOn.
+  ///
+  /// In ar, this message translates to:
+  /// **'الظهور المميز مستمر لحد {date}'**
+  String specialProExpiresOn(String date);
+
+  /// No description provided for @specialProPending.
+  ///
+  /// In ar, this message translates to:
+  /// **'طلب الظهور قيد المراجعة'**
+  String get specialProPending;
+
+  /// No description provided for @specialProPendingBody.
+  ///
+  /// In ar, this message translates to:
+  /// **'هنراجع التحويل ونفعّل الظهور بعد الموافقة.'**
+  String get specialProPendingBody;
+
+  /// No description provided for @specialProActivationNote.
+  ///
+  /// In ar, this message translates to:
+  /// **'بعد رفع إيصال التحويل، فريقنا يراجع الطلب يدويًا.'**
+  String get specialProActivationNote;
+
+  /// No description provided for @specialProManage.
+  ///
+  /// In ar, this message translates to:
+  /// **'إدارة الظهور المميز'**
+  String get specialProManage;
+
+  /// No description provided for @specialProNoGuarantee.
+  ///
+  /// In ar, this message translates to:
+  /// **'الظهور يساعد العملاء يلاقوك، لكنه لا يضمن طلبات أو تقييمات.'**
+  String get specialProNoGuarantee;
+
+  /// No description provided for @specialProScreenTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'ظهورك المميز'**
+  String get specialProScreenTitle;
+
+  /// No description provided for @paymentWeekly.
+  ///
+  /// In ar, this message translates to:
+  /// **'أسبوعي'**
+  String get paymentWeekly;
+
+  /// No description provided for @paySpecialPlacement.
+  ///
+  /// In ar, this message translates to:
+  /// **'اطلب الظهور المميز'**
+  String get paySpecialPlacement;
+
+  /// No description provided for @paySpecialPlacementSub.
+  ///
+  /// In ar, this message translates to:
+  /// **'١٩٩ جنيه لمدة ٧ أيام بعد مراجعة التحويل'**
+  String get paySpecialPlacementSub;
+
+  /// No description provided for @specialPlacementSubmittedTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'طلب الظهور اتبعت'**
+  String get specialPlacementSubmittedTitle;
+
+  /// No description provided for @specialPlacementSubmittedBody.
+  ///
+  /// In ar, this message translates to:
+  /// **'هنراجع التحويل ونفعّل الظهور بعد الموافقة.'**
+  String get specialPlacementSubmittedBody;
+
+  /// No description provided for @specialPlacementDone.
+  ///
+  /// In ar, this message translates to:
+  /// **'رجوع'**
+  String get specialPlacementDone;
+
+  /// No description provided for @specialPlacementAmountLabel.
+  ///
+  /// In ar, this message translates to:
+  /// **'قيمة الظهور المميز'**
+  String get specialPlacementAmountLabel;
+
+  /// No description provided for @specialPlacementUploadLabel.
+  ///
+  /// In ar, this message translates to:
+  /// **'ارفع إيصال التحويل'**
+  String get specialPlacementUploadLabel;
+
+  /// No description provided for @specialPlacementReferenceLabel.
+  ///
+  /// In ar, this message translates to:
+  /// **'رقم العملية (اختياري)'**
+  String get specialPlacementReferenceLabel;
+
+  /// No description provided for @specialPlacementSubmit.
+  ///
+  /// In ar, this message translates to:
+  /// **'إرسال الطلب'**
+  String get specialPlacementSubmit;
+
+  /// No description provided for @specialPlacementTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'إرسال طلب ظهور مميز'**
+  String get specialPlacementTitle;
+
   /// No description provided for @tierGold.
   ///
   /// In ar, this message translates to:
@@ -2017,6 +2215,18 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'هوية موثّقة'**
   String get verifiedIdentity;
+
+  /// No description provided for @verifiedIdentityTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'إيه معنى موثّق؟'**
+  String get verifiedIdentityTitle;
+
+  /// No description provided for @verifiedIdentityBody.
+  ///
+  /// In ar, this message translates to:
+  /// **'فريق شطّب راجع مستندات الهوية اللي قدمها المحترف. العلامة دي لا تعني ضمان نتيجة كل مشروع أو إن كل أعماله اتراجعت.'**
+  String get verifiedIdentityBody;
 
   /// No description provided for @verifiedBusiness.
   ///
@@ -2855,20 +3065,68 @@ abstract class AppLocalizations {
   /// No description provided for @discoverHeroKicker.
   ///
   /// In ar, this message translates to:
-  /// **'محترفين موثوقين، وشغل واضح'**
+  /// **'اختار الصح لبيتك'**
   String get discoverHeroKicker;
 
   /// No description provided for @discoverHeroTitle.
   ///
   /// In ar, this message translates to:
-  /// **'بيتك يستاهل حد تطمنله'**
+  /// **'المحترفين'**
   String get discoverHeroTitle;
 
   /// No description provided for @discoverHeroSubtitle.
   ///
   /// In ar, this message translates to:
-  /// **'اختار محترف شغله واضح وتقييماته حقيقية.'**
+  /// **'محترفين موثوقين وشغل واضح'**
   String get discoverHeroSubtitle;
+
+  /// No description provided for @professionalsDirectorySubtitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'اختار محترف مناسب لمشروعك'**
+  String get professionalsDirectorySubtitle;
+
+  /// No description provided for @professionalsDirectoryHint.
+  ///
+  /// In ar, this message translates to:
+  /// **'محترفين موثوقين قريبين منك'**
+  String get professionalsDirectoryHint;
+
+  /// No description provided for @professionalsAvailable.
+  ///
+  /// In ar, this message translates to:
+  /// **'{count} محترف متاح ليك'**
+  String professionalsAvailable(int count);
+
+  /// No description provided for @trustedProfessionals.
+  ///
+  /// In ar, this message translates to:
+  /// **'محترفين موثوقين'**
+  String get trustedProfessionals;
+
+  /// No description provided for @trustedProfessionalsHint.
+  ///
+  /// In ar, this message translates to:
+  /// **'بناءً على تقييمات وشغل حقيقي'**
+  String get trustedProfessionalsHint;
+
+  /// No description provided for @changeBrowseLocationShort.
+  ///
+  /// In ar, this message translates to:
+  /// **'تغيير المكان'**
+  String get changeBrowseLocationShort;
+
+  /// No description provided for @discoverPageTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'المحترفين'**
+  String get discoverPageTitle;
+
+  /// No description provided for @discoverSearchHint.
+  ///
+  /// In ar, this message translates to:
+  /// **'بتدور على مين؟'**
+  String get discoverSearchHint;
 
   /// No description provided for @featuredProfessional.
   ///
@@ -2953,6 +3211,12 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'تصفّح بالتخصص'**
   String get browseByCategory;
+
+  /// No description provided for @homeServicesTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'خدماتنا'**
+  String get homeServicesTitle;
 
   /// No description provided for @more.
   ///
@@ -3259,6 +3523,132 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'تفاصيل الطلب'**
   String get briefDetailTitle;
+
+  /// No description provided for @briefLifecycleTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'رحلة طلبك'**
+  String get briefLifecycleTitle;
+
+  /// No description provided for @briefLifecycleRequestPosted.
+  ///
+  /// In ar, this message translates to:
+  /// **'تم نشر الطلب'**
+  String get briefLifecycleRequestPosted;
+
+  /// No description provided for @briefLifecycleRequestPostedBody.
+  ///
+  /// In ar, this message translates to:
+  /// **'تفاصيل طلبك اتسجلت وتقدر تتابع تحديثاته هنا.'**
+  String get briefLifecycleRequestPostedBody;
+
+  /// No description provided for @briefLifecycleWaitingForQuotes.
+  ///
+  /// In ar, this message translates to:
+  /// **'في انتظار العروض'**
+  String get briefLifecycleWaitingForQuotes;
+
+  /// No description provided for @briefLifecycleWaitingForQuotesBody.
+  ///
+  /// In ar, this message translates to:
+  /// **'العروض هتظهر هنا أول ما يوصل عرض جديد.'**
+  String get briefLifecycleWaitingForQuotesBody;
+
+  /// No description provided for @briefLifecycleQuotesReceived.
+  ///
+  /// In ar, this message translates to:
+  /// **'وصلت عروض'**
+  String get briefLifecycleQuotesReceived;
+
+  /// No description provided for @briefLifecycleQuotesReceivedBody.
+  ///
+  /// In ar, this message translates to:
+  /// **'راجع العروض واختار المحترف الأنسب ليك.'**
+  String get briefLifecycleQuotesReceivedBody;
+
+  /// No description provided for @briefLifecycleQuotesLoading.
+  ///
+  /// In ar, this message translates to:
+  /// **'بنحدّث حالة العروض...'**
+  String get briefLifecycleQuotesLoading;
+
+  /// No description provided for @briefLifecycleQuotesError.
+  ///
+  /// In ar, this message translates to:
+  /// **'مش قادرين نحدّث العروض دلوقتي. افتح قسم العروض وحاول تاني.'**
+  String get briefLifecycleQuotesError;
+
+  /// No description provided for @briefLifecycleWorkStarted.
+  ///
+  /// In ar, this message translates to:
+  /// **'بدأ التنفيذ'**
+  String get briefLifecycleWorkStarted;
+
+  /// No description provided for @briefLifecycleWorkStartedBody.
+  ///
+  /// In ar, this message translates to:
+  /// **'اتقبل العرض، والخطوة الجاية متابعة التنفيذ.'**
+  String get briefLifecycleWorkStartedBody;
+
+  /// No description provided for @briefLifecycleConfirmCompletion.
+  ///
+  /// In ar, this message translates to:
+  /// **'أكد اكتمال الشغل'**
+  String get briefLifecycleConfirmCompletion;
+
+  /// No description provided for @briefLifecycleConfirmCompletionBody.
+  ///
+  /// In ar, this message translates to:
+  /// **'راجع النتيجة وأكد إن الشغل خلص.'**
+  String get briefLifecycleConfirmCompletionBody;
+
+  /// No description provided for @briefLifecycleCompleted.
+  ///
+  /// In ar, this message translates to:
+  /// **'اكتمل الشغل'**
+  String get briefLifecycleCompleted;
+
+  /// No description provided for @briefLifecycleCompletedBody.
+  ///
+  /// In ar, this message translates to:
+  /// **'تقدر تسيب تقييم موثّق عن تجربتك.'**
+  String get briefLifecycleCompletedBody;
+
+  /// No description provided for @briefLifecycleCancelled.
+  ///
+  /// In ar, this message translates to:
+  /// **'تم إلغاء الطلب'**
+  String get briefLifecycleCancelled;
+
+  /// No description provided for @briefLifecycleCancelledBody.
+  ///
+  /// In ar, this message translates to:
+  /// **'الطلب ده مش متاح لاستقبال عروض جديدة.'**
+  String get briefLifecycleCancelledBody;
+
+  /// No description provided for @briefNextStepQuotes.
+  ///
+  /// In ar, this message translates to:
+  /// **'راجع العروض واختار المحترف'**
+  String get briefNextStepQuotes;
+
+  /// No description provided for @briefNextStepFollowWork.
+  ///
+  /// In ar, this message translates to:
+  /// **'تابع تنفيذ الشغل'**
+  String get briefNextStepFollowWork;
+
+  /// No description provided for @briefNextStepConfirmWork.
+  ///
+  /// In ar, this message translates to:
+  /// **'راجع وأكد اكتمال الشغل'**
+  String get briefNextStepConfirmWork;
+
+  /// No description provided for @briefNextStepReview.
+  ///
+  /// In ar, this message translates to:
+  /// **'شارك تقييمك الموثّق'**
+  String get briefNextStepReview;
 
   /// No description provided for @cancelBriefTitle.
   ///
@@ -5756,6 +6146,12 @@ abstract class AppLocalizations {
   /// **'عندك {count} فرص مناسبة لشغلك'**
   String matchingOpportunitiesHeader(int count);
 
+  /// No description provided for @opportunityCompactSummary.
+  ///
+  /// In ar, this message translates to:
+  /// **'{count} مناسبة · {fresh} جديدة النهارده · {area} في مناطق شغلك'**
+  String opportunityCompactSummary(int count, int fresh, int area);
+
   /// No description provided for @projectPhotoLabel.
   ///
   /// In ar, this message translates to:
@@ -6661,6 +7057,504 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'حد عمل إعجاب على تعليقك.'**
   String get notificationCommentLikedBody;
+
+  /// No description provided for @homeHeroTitleLead.
+  ///
+  /// In ar, this message translates to:
+  /// **'بيتك'**
+  String get homeHeroTitleLead;
+
+  /// No description provided for @homeHeroTitleRest.
+  ///
+  /// In ar, this message translates to:
+  /// **'يستاهل حد يتقنه'**
+  String get homeHeroTitleRest;
+
+  /// No description provided for @homeHeroSubtitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'محترفين موثوقين، قريبين من بيتك'**
+  String get homeHeroSubtitle;
+
+  /// No description provided for @homeSearchHint.
+  ///
+  /// In ar, this message translates to:
+  /// **'ابحث عن خدمة أو محترف...'**
+  String get homeSearchHint;
+
+  /// No description provided for @homeQuickStartTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'ابدأ طلبك بسرعة'**
+  String get homeQuickStartTitle;
+
+  /// No description provided for @homeQuickNearbyTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'محترفون قريبون منك'**
+  String get homeQuickNearbyTitle;
+
+  /// No description provided for @homeQuickNearbySubtitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'تواصل أسهل وأسرع'**
+  String get homeQuickNearbySubtitle;
+
+  /// No description provided for @homeQuickRequestsTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'تابع طلباتك'**
+  String get homeQuickRequestsTitle;
+
+  /// No description provided for @homeQuickRequestsSubtitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'كلها في مكان واحد'**
+  String get homeQuickRequestsSubtitle;
+
+  /// No description provided for @homeQuickQuoteTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'اطلب عرض سعر'**
+  String get homeQuickQuoteTitle;
+
+  /// No description provided for @homeQuickQuoteSubtitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'مجانًا وسريعة'**
+  String get homeQuickQuoteSubtitle;
+
+  /// No description provided for @homeActiveRequestTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'طلبك الحالي'**
+  String get homeActiveRequestTitle;
+
+  /// No description provided for @homeActiveRequestFallback.
+  ///
+  /// In ar, this message translates to:
+  /// **'طلبك جاهز للمتابعة مع المحترفين.'**
+  String get homeActiveRequestFallback;
+
+  /// No description provided for @homeViewProfile.
+  ///
+  /// In ar, this message translates to:
+  /// **'عرض الملف'**
+  String get homeViewProfile;
+
+  /// No description provided for @homeContactWhatsApp.
+  ///
+  /// In ar, this message translates to:
+  /// **'تواصل واتساب'**
+  String get homeContactWhatsApp;
+
+  /// No description provided for @homeStartTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'ابدأ من هنا'**
+  String get homeStartTitle;
+
+  /// No description provided for @homeStartDiscoverTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'اكتشف المحترفين'**
+  String get homeStartDiscoverTitle;
+
+  /// No description provided for @homeStartDiscoverSubtitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'اعرف مين يناسب بيتك'**
+  String get homeStartDiscoverSubtitle;
+
+  /// No description provided for @homeStartQuoteTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'اطلب عرض سعر'**
+  String get homeStartQuoteTitle;
+
+  /// No description provided for @homeStartQuoteSubtitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'احكي لنا عن اللي محتاجه'**
+  String get homeStartQuoteSubtitle;
+
+  /// No description provided for @homeStartWorkTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'شوف شغل اتعمل'**
+  String get homeStartWorkTitle;
+
+  /// No description provided for @homeStartWorkSubtitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'مشاريع حقيقية قبل وبعد'**
+  String get homeStartWorkSubtitle;
+
+  /// No description provided for @homeStartCommunityTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'اسأل أهل الخبرة'**
+  String get homeStartCommunityTitle;
+
+  /// No description provided for @homeStartCommunitySubtitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'تجارب ونصايح من مجتمعنا'**
+  String get homeStartCommunitySubtitle;
+
+  /// No description provided for @homeProcessTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'من الفكرة للتنفيذ'**
+  String get homeProcessTitle;
+
+  /// No description provided for @homeProcessStepOne.
+  ///
+  /// In ar, this message translates to:
+  /// **'احكي عن احتياجك'**
+  String get homeProcessStepOne;
+
+  /// No description provided for @homeProcessStepOneBody.
+  ///
+  /// In ar, this message translates to:
+  /// **'قول لنا عايز تشطب إيه'**
+  String get homeProcessStepOneBody;
+
+  /// No description provided for @homeProcessStepTwo.
+  ///
+  /// In ar, this message translates to:
+  /// **'اختار المناسب ليك'**
+  String get homeProcessStepTwo;
+
+  /// No description provided for @homeProcessStepTwoBody.
+  ///
+  /// In ar, this message translates to:
+  /// **'شوف شغل حقيقي وتواصل'**
+  String get homeProcessStepTwoBody;
+
+  /// No description provided for @homeProcessStepThree.
+  ///
+  /// In ar, this message translates to:
+  /// **'ابدأ بثقة'**
+  String get homeProcessStepThree;
+
+  /// No description provided for @homeProcessStepThreeBody.
+  ///
+  /// In ar, this message translates to:
+  /// **'تابع طلبك خطوة بخطوة'**
+  String get homeProcessStepThreeBody;
+
+  /// No description provided for @homeCommunityInviteTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'اسأل أهل الخبرة'**
+  String get homeCommunityInviteTitle;
+
+  /// No description provided for @homeCommunityInviteBody.
+  ///
+  /// In ar, this message translates to:
+  /// **'شوف تجارب حقيقية من ناس بدأت من نفس المكان.'**
+  String get homeCommunityInviteBody;
+
+  /// No description provided for @homeClosingCtaTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'جاهز تبدأ؟'**
+  String get homeClosingCtaTitle;
+
+  /// No description provided for @homeClosingCtaBody.
+  ///
+  /// In ar, this message translates to:
+  /// **'احكي لنا عن بيتك وخلي الاختيار أسهل.'**
+  String get homeClosingCtaBody;
+
+  /// No description provided for @homeClosingCtaAction.
+  ///
+  /// In ar, this message translates to:
+  /// **'ابدأ طلبك'**
+  String get homeClosingCtaAction;
+
+  /// No description provided for @profileVerifiedStat.
+  ///
+  /// In ar, this message translates to:
+  /// **'موثوق ومعتمد'**
+  String get profileVerifiedStat;
+
+  /// No description provided for @profileAboutCompany.
+  ///
+  /// In ar, this message translates to:
+  /// **'نبذة عن الشركة'**
+  String get profileAboutCompany;
+
+  /// No description provided for @profileShowMore.
+  ///
+  /// In ar, this message translates to:
+  /// **'عرض المزيد'**
+  String get profileShowMore;
+
+  /// No description provided for @profileShowLess.
+  ///
+  /// In ar, this message translates to:
+  /// **'عرض أقل'**
+  String get profileShowLess;
+
+  /// No description provided for @profileServicesTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'خدماتنا'**
+  String get profileServicesTitle;
+
+  /// No description provided for @profileHighlightsTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'أبرز الأعمال'**
+  String get profileHighlightsTitle;
+
+  /// No description provided for @profileProjectsTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'مشاريع منفذة'**
+  String get profileProjectsTitle;
+
+  /// No description provided for @profileTabAbout.
+  ///
+  /// In ar, this message translates to:
+  /// **'نبذة'**
+  String get profileTabAbout;
+
+  /// No description provided for @profileTabWork.
+  ///
+  /// In ar, this message translates to:
+  /// **'أعمالنا'**
+  String get profileTabWork;
+
+  /// No description provided for @profileTabReviews.
+  ///
+  /// In ar, this message translates to:
+  /// **'التقييمات'**
+  String get profileTabReviews;
+
+  /// No description provided for @profileClosingTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'جاهز نبدأ مشروعك؟'**
+  String get profileClosingTitle;
+
+  /// No description provided for @profileClosingBody.
+  ///
+  /// In ar, this message translates to:
+  /// **'تواصل معه الآن واحصل على عرض سعر مجاني.'**
+  String get profileClosingBody;
+
+  /// No description provided for @profileClosingAction.
+  ///
+  /// In ar, this message translates to:
+  /// **'اطلب عرض سعر الآن'**
+  String get profileClosingAction;
+
+  /// No description provided for @profileDirectCall.
+  ///
+  /// In ar, this message translates to:
+  /// **'اتصال مباشر'**
+  String get profileDirectCall;
+
+  /// No description provided for @profileFilterAll.
+  ///
+  /// In ar, this message translates to:
+  /// **'الكل'**
+  String get profileFilterAll;
+
+  /// No description provided for @homeLiveActivityTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'آخر تحديثات طلبك'**
+  String get homeLiveActivityTitle;
+
+  /// No description provided for @homeLiveLatestActivity.
+  ///
+  /// In ar, this message translates to:
+  /// **'آخر نشاط'**
+  String get homeLiveLatestActivity;
+
+  /// No description provided for @homeLiveEmptyTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'لسه مابدأتش'**
+  String get homeLiveEmptyTitle;
+
+  /// No description provided for @homeLiveEmptyMessage.
+  ///
+  /// In ar, this message translates to:
+  /// **'ابدأ بطلب سريع، وخلي المحترفين يشوفوا احتياجك.'**
+  String get homeLiveEmptyMessage;
+
+  /// No description provided for @homeLiveStartAction.
+  ///
+  /// In ar, this message translates to:
+  /// **'ابدأ طلبك'**
+  String get homeLiveStartAction;
+
+  /// No description provided for @homeLiveOpenRequests.
+  ///
+  /// In ar, this message translates to:
+  /// **'شوف طلباتك'**
+  String get homeLiveOpenRequests;
+
+  /// No description provided for @homeLiveOpenNotifications.
+  ///
+  /// In ar, this message translates to:
+  /// **'شوف الإشعارات'**
+  String get homeLiveOpenNotifications;
+
+  /// No description provided for @homeLiveErrorTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'مش قادرين نجيب آخر تحديث'**
+  String get homeLiveErrorTitle;
+
+  /// No description provided for @homeLiveAwaitingOffers.
+  ///
+  /// In ar, this message translates to:
+  /// **'مستنيين العروض'**
+  String get homeLiveAwaitingOffers;
+
+  /// No description provided for @homeLiveWorkInProgress.
+  ///
+  /// In ar, this message translates to:
+  /// **'الشغل شغال'**
+  String get homeLiveWorkInProgress;
+
+  /// No description provided for @homeLiveReviewCompletion.
+  ///
+  /// In ar, this message translates to:
+  /// **'راجع الانتهاء'**
+  String get homeLiveReviewCompletion;
+
+  /// No description provided for @homeLiveCompleted.
+  ///
+  /// In ar, this message translates to:
+  /// **'المشروع اكتمل'**
+  String get homeLiveCompleted;
+
+  /// No description provided for @homeLiveRequestPosted.
+  ///
+  /// In ar, this message translates to:
+  /// **'اتنشر'**
+  String get homeLiveRequestPosted;
+
+  /// Number of unread notifications shown on the homeowner home activity card
+  ///
+  /// In ar, this message translates to:
+  /// **'{count} إشعار'**
+  String homeLiveUnreadCount(int count);
+
+  /// No description provided for @quoteSentTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'عرضك اتبعت'**
+  String get quoteSentTitle;
+
+  /// No description provided for @quoteSentMessage.
+  ///
+  /// In ar, this message translates to:
+  /// **'صاحب الطلب استلم تفاصيل عرضك. هتوصلك أي تحديثات هنا.'**
+  String get quoteSentMessage;
+
+  /// No description provided for @draftRestored.
+  ///
+  /// In ar, this message translates to:
+  /// **'رجعنا لك المسودة اللي حفظتها'**
+  String get draftRestored;
+
+  /// No description provided for @draftSavedAutomatically.
+  ///
+  /// In ar, this message translates to:
+  /// **'اتحفظ تلقائياً على الجهاز ده'**
+  String get draftSavedAutomatically;
+
+  /// No description provided for @trustEvidenceTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'علامات واضحة تساعدك تختار'**
+  String get trustEvidenceTitle;
+
+  /// No description provided for @trustEvidenceBody.
+  ///
+  /// In ar, this message translates to:
+  /// **'راجع الأدلة اللي نقدر نثبتها قبل ما تبدأ كلامك مع المحترف.'**
+  String get trustEvidenceBody;
+
+  /// No description provided for @trustNewProfessional.
+  ///
+  /// In ar, this message translates to:
+  /// **'محترف جديد على شطب'**
+  String get trustNewProfessional;
+
+  /// No description provided for @trustSafetyBody.
+  ///
+  /// In ar, this message translates to:
+  /// **'لو حاجة مش واضحة، راجع التفاصيل أو كلّم شطب قبل ما تاخد قرار.'**
+  String get trustSafetyBody;
+
+  /// No description provided for @profileSafetyTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'اختيارك على وضوح'**
+  String get profileSafetyTitle;
+
+  /// No description provided for @profileSafetyBody.
+  ///
+  /// In ar, this message translates to:
+  /// **'تقدر تبلغ عن الحساب أو تحظره، وفريق شطب موجود لو احتجت مساعدة.'**
+  String get profileSafetyBody;
+
+  /// No description provided for @reportProfileAction.
+  ///
+  /// In ar, this message translates to:
+  /// **'إبلاغ عن الحساب'**
+  String get reportProfileAction;
+
+  /// No description provided for @blockProfileAction.
+  ///
+  /// In ar, this message translates to:
+  /// **'حظر الحساب'**
+  String get blockProfileAction;
+
+  /// No description provided for @homeFeaturedEmptyTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'هنرشح لك محترف مناسب قريب'**
+  String get homeFeaturedEmptyTitle;
+
+  /// No description provided for @homeFeaturedEmptyMessage.
+  ///
+  /// In ar, this message translates to:
+  /// **'لما تتوفر بيانات أكتر، هنظهر لك اختيار مبني على التقييمات والشغل المنشور.'**
+  String get homeFeaturedEmptyMessage;
+
+  /// No description provided for @homeProjectsLoadErrorTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'مش قادرين نعرض الشغل دلوقتي'**
+  String get homeProjectsLoadErrorTitle;
+
+  /// No description provided for @homeProjectsLoadErrorMessage.
+  ///
+  /// In ar, this message translates to:
+  /// **'حاول تاني عشان تشوف أعمال حقيقية من محترفين شطب.'**
+  String get homeProjectsLoadErrorMessage;
+
+  /// No description provided for @homeProjectsEmptyTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'الشغل الحقيقي هيظهر هنا'**
+  String get homeProjectsEmptyTitle;
+
+  /// No description provided for @homeProjectsEmptyMessage.
+  ///
+  /// In ar, this message translates to:
+  /// **'استكشف أعمال المحترفين وشوف تفاصيل التنفيذ قبل ما تختار.'**
+  String get homeProjectsEmptyMessage;
 }
 
 class _AppLocalizationsDelegate

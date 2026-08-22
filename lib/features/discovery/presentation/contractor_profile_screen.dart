@@ -45,6 +45,12 @@ class ContractorProfileScreen extends ConsumerWidget {
             ),
           );
         }
+        // No docked action bar. The profile now asks twice in the flow of the
+        // page — a filled quote button directly under the identity block, and
+        // a closing panel after the evidence — which is the approved
+        // composition. A third, permanently docked copy of the same action
+        // would compete with both and eat the bottom inset the shell's own
+        // navigation already occupies.
         return Scaffold(
           backgroundColor: context.colorScheme.surface,
           body: RefreshIndicator(
@@ -52,7 +58,6 @@ class ContractorProfileScreen extends ConsumerWidget {
                 ref.invalidate(contractorByIdProvider(contractorId)),
             child: PublicProfessionalProfile(listing: c),
           ),
-          bottomNavigationBar: ProfessionalProfileActionBar(listing: c),
         );
       },
     );

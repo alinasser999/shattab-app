@@ -41,10 +41,12 @@ class BatshFilterButton extends StatelessWidget {
     super.key,
     required this.activeCount,
     required this.onTap,
+    this.height = 42,
   });
 
   final int activeCount;
   final VoidCallback onTap;
+  final double height;
 
   @override
   Widget build(BuildContext context) {
@@ -67,7 +69,7 @@ class BatshFilterButton extends StatelessWidget {
         },
         borderRadius: BatshRadius.brFull,
         child: Container(
-          height: 42,
+          height: height,
           padding: const EdgeInsets.symmetric(horizontal: BatshSpacing.md),
           decoration: BoxDecoration(
             border: Border.all(color: borderColor),

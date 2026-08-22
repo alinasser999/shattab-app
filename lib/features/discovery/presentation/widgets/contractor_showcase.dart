@@ -16,8 +16,10 @@ import '../../../../core/utils/image_url.dart';
 import 'package:batsh/core/l10n/l10n_extension.dart';
 import '../../../../core/widgets/batsh_button.dart';
 import '../../../../core/widgets/batsh_pressable.dart';
+import '../../../../core/widgets/batsh_sheet.dart';
 import '../../../../core/widgets/contact_buttons.dart';
 import '../../../../core/widgets/tier_badge.dart';
+import '../../../../core/utils/support_contact.dart';
 import '../../../auth/presentation/sign_in_sheet.dart';
 import '../../../onboarding/domain/onboarding_models.dart';
 import '../../../portfolio/domain/portfolio_project.dart';
@@ -25,11 +27,14 @@ import '../../../portfolio/presentation/providers/portfolio_providers.dart';
 import '../../../reviews/presentation/reviews_sheet.dart';
 import '../../../saved/presentation/providers/saved_providers.dart';
 import '../../../explore/presentation/widgets/contractor_community_posts.dart';
+import '../../../moderation/data/moderation_repository.dart';
+import '../../../moderation/presentation/report_sheet.dart';
 import '../../domain/contractor_listing.dart';
 import '../../../../core/theme/batsh_icon_size.dart';
 import '../../../../core/widgets/batsh_badge.dart';
 
 import 'package:batsh/core/theme/theme_extension.dart';
+import 'professional_profile_sections.dart';
 part 'contractor_showcase_header.dart';
 part 'contractor_showcase_sections.dart';
 
@@ -141,6 +146,11 @@ class ContractorShowcase extends ConsumerWidget {
                     icon: const Icon(Icons.share_outlined),
                     onPressed: () => _shareContractor(context, listing),
                   ),
+                  IconButton(
+                    tooltip: context.l10n.profileSafetyTitle,
+                    icon: const Icon(Icons.more_horiz_rounded),
+                    onPressed: () => _openProfileSafety(context, ref, listing),
+                  ),
                 ],
           // The avatar is anchored to the bottom of the hero rather than pulled
           // up into the body with a negative offset. The previous version used
@@ -179,6 +189,10 @@ class ContractorShowcase extends ConsumerWidget {
                 reviewCount: effectiveCount,
                 onTap: () => showReviewsSheet(context, listing.id),
               ),
+              if (!_isOwner) ...[
+                const SizedBox(height: BatshSpacing.md),
+                ProfileTrustEvidence(listing: listing),
+              ],
               const SizedBox(height: BatshSpacing.lg),
               if (_isOwner) ...[
                 _OwnerActions(onEdit: onEdit),
@@ -255,6 +269,65 @@ class ContractorShowcase extends ConsumerWidget {
         ),
       ],
     );
+  }
+}
+
+Future<void> _openProfileSafety(
+  BuildContext context,
+  WidgetRef ref,
+  ContractorListing listing,
+) async {
+  final action = await BatshSheet.show<String>(
+    context,
+    builder: (sheetContext) => Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(context.l10n.profileSafetyTitle, style: BatshTypography.titleLg),
+        const SizedBox(height: BatshSpacing.xs),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: BatshSpacing.md),
+          child: Text(
+            context.l10n.profileSafetyBody,
+            textAlign: TextAlign.center,
+            style: BatshTypography.bodySm.copyWith(
+              color: context.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ),
+        ListTile(
+          leading: const Icon(Icons.flag_outlined),
+          title: Text(context.l10n.reportProfileAction),
+          onTap: () => Navigator.of(sheetContext).pop('report'),
+        ),
+        ListTile(
+          leading: Icon(Icons.block_outlined, color: context.colorScheme.error),
+          title: Text(
+            context.l10n.blockProfileAction,
+            style: TextStyle(color: context.colorScheme.error),
+          ),
+          onTap: () => Navigator.of(sheetContext).pop('block'),
+        ),
+        ListTile(
+          leading: const Icon(Icons.support_agent_outlined),
+          title: Text(context.l10n.helpSupport),
+          onTap: () => Navigator.of(sheetContext).pop('support'),
+        ),
+      ],
+    ),
+  );
+
+  if (!context.mounted) return;
+  if (action == 'report') {
+    await showReportSheet(
+      context,
+      target: ReportTarget.profile,
+      targetId: listing.id,
+    );
+  } else if (action == 'block') {
+    final blocked = await confirmAndBlock(context, ref, listing.id);
+    if (blocked && context.mounted) Navigator.of(context).maybePop();
+  } else if (action == 'support') {
+    openShattabSupport(context);
   }
 }
 
@@ -397,7 +470,7 @@ class _StatsRow extends StatelessWidget {
           label: context.l10n.projectsCompleted,
           icon: Icons.home_work_outlined,
         ),
-      if (contractor.yearsExperience != null)
+      if (contractor.yearsExperience != null && contractor.yearsExperience! > 0)
         _StatCard(
           value: '${contractor.yearsExperience}',
           label: context.l10n.experienceYears,

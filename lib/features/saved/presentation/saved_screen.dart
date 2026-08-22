@@ -40,10 +40,14 @@ class SavedScreen extends ConsumerWidget {
           message: ErrorMapper.map(e),
           onRetry: () => ref.invalidate(savedContractorsProvider),
         ),
-        data: (list) {
+        data: (collection) {
+          final list = collection.items;
           return RefreshIndicator(
             backgroundColor: context.colorScheme.surfaceContainerLowest,
-            onRefresh: () async => ref.invalidate(savedContractorsProvider),
+            onRefresh: () async {
+              final refresh = ref.refresh(savedContractorsProvider.future);
+              await refresh;
+            },
             child: list.isEmpty
                 ? ListView(
                     physics: const AlwaysScrollableScrollPhysics(),
@@ -66,41 +70,99 @@ class SavedScreen extends ConsumerWidget {
                       ),
                     ],
                   )
-                : ListView.separated(
-                    padding: const EdgeInsets.fromLTRB(
-                      BatshSpacing.md,
-                      BatshSpacing.sm,
-                      BatshSpacing.md,
-                      128,
-                    ),
-                    itemCount: list.length,
-                    separatorBuilder: (_, _) =>
-                        const SizedBox(height: BatshSpacing.sm),
-                    itemBuilder: (context, i) {
-                      final contractor = list[i];
-                      final reduced = MediaQuery.disableAnimationsOf(context);
-                      final card = ContractorCard(
-                        key: ValueKey(contractor.id),
-                        listing: contractor,
-                        isSaved: true,
-                        onToggleSave: () => ref
-                            .read(savedControllerProvider.notifier)
-                            .toggle(contractor.id),
-                        onTap: () => context.push(
-                          Routes.homeownerContractorProfilePath(contractor.id),
-                        ),
-                      );
-                      if (reduced) return card;
-                      return card
-                          .animate(delay: (55 * i.clamp(0, 6)).ms)
-                          .fadeIn(duration: 240.ms, curve: BatshMotion.easeOut)
-                          .slideY(begin: 0.03, end: 0);
+                : NotificationListener<ScrollNotification>(
+                    onNotification: (notification) {
+                      if (notification.metrics.extentAfter < 360 &&
+                          collection.hasMore &&
+                          !collection.isLoadingMore) {
+                        ref.read(savedContractorsProvider.notifier).loadMore();
+                      }
+                      return false;
                     },
+                    child: ListView.separated(
+                      padding: const EdgeInsets.fromLTRB(
+                        BatshSpacing.md,
+                        BatshSpacing.sm,
+                        BatshSpacing.md,
+                        128,
+                      ),
+                      itemCount:
+                          list.length +
+                          (collection.hasMore ||
+                                  collection.isLoadingMore ||
+                                  collection.loadMoreError != null
+                              ? 1
+                              : 0),
+                      separatorBuilder: (_, _) =>
+                          const SizedBox(height: BatshSpacing.sm),
+                      itemBuilder: (context, i) {
+                        if (i == list.length) {
+                          return _SavedLoadMoreFooter(
+                            collection: collection,
+                            onRetry: () => ref
+                                .read(savedContractorsProvider.notifier)
+                                .loadMore(),
+                          );
+                        }
+                        final contractor = list[i];
+                        final reduced = MediaQuery.disableAnimationsOf(context);
+                        final card = ContractorCard(
+                          key: ValueKey(contractor.id),
+                          listing: contractor,
+                          isSaved: true,
+                          onToggleSave: () => ref
+                              .read(savedControllerProvider.notifier)
+                              .toggle(contractor.id),
+                          onTap: () => context.push(
+                            Routes.homeownerContractorProfilePath(
+                              contractor.id,
+                            ),
+                          ),
+                        );
+                        if (reduced) return card;
+                        return card
+                            .animate(delay: (55 * i.clamp(0, 6)).ms)
+                            .fadeIn(
+                              duration: 240.ms,
+                              curve: BatshMotion.easeOut,
+                            )
+                            .slideY(begin: 0.03, end: 0);
+                      },
+                    ),
                   ),
           );
         },
       ),
     );
+  }
+}
+
+class _SavedLoadMoreFooter extends StatelessWidget {
+  const _SavedLoadMoreFooter({required this.collection, required this.onRetry});
+
+  final SavedContractorsState collection;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    if (collection.isLoadingMore) {
+      return const Padding(
+        padding: EdgeInsets.all(BatshSpacing.md),
+        child: Center(child: CircularProgressIndicator.adaptive()),
+      );
+    }
+    if (collection.loadMoreError != null) {
+      return Semantics(
+        liveRegion: true,
+        label: context.l10n.loadMoreError,
+        child: TextButton.icon(
+          onPressed: onRetry,
+          icon: const Icon(Icons.refresh_rounded),
+          label: Text(context.l10n.retry),
+        ),
+      );
+    }
+    return const SizedBox.shrink();
   }
 }
 

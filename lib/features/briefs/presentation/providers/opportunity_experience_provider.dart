@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../data/briefs_repository.dart';
 import '../../domain/opportunity_experience.dart';
 
 class OpportunityFiltersNotifier extends Notifier<OpportunityFilters> {
@@ -99,6 +100,10 @@ class OpportunityPaginationNotifier
   void complete() => state = const OpportunityPaginationState();
 
   void fail(Object error) => state = OpportunityPaginationState(error: error);
+
+  void clearError() {
+    if (state.error != null) state = const OpportunityPaginationState();
+  }
 }
 
 final opportunityPaginationProvider =
@@ -136,13 +141,31 @@ class OpportunityInteractionsNotifier
     return const OpportunityInteractions();
   }
 
-  bool toggleSaved(String briefId) {
+  Future<bool> toggleSaved(String briefId) async {
+    final session = ref.read(currentSessionProvider);
+    if (session == null) throw StateError('authentication_required');
+
+    final previous = state;
     final next = {...state.savedIds};
     final isSaved = !next.remove(briefId);
     if (isSaved) next.add(briefId);
     state = state.copyWith(savedIds: next);
     unawaited(_persist());
-    return isSaved;
+
+    try {
+      await ref
+          .read(briefsRepositoryProvider)
+          .setSavedBrief(
+            contractorId: session.user.id,
+            briefId: briefId,
+            saved: isSaved,
+          );
+      return isSaved;
+    } catch (error) {
+      if (ref.mounted) state = previous;
+      unawaited(_persist());
+      rethrow;
+    }
   }
 
   void markViewed(String briefId) {
@@ -159,6 +182,19 @@ class OpportunityInteractionsNotifier
       savedIds: prefs.getStringList('${prefix}_saved')?.toSet() ?? {},
       viewedIds: prefs.getStringList('${prefix}_viewed')?.toSet() ?? {},
     );
+
+    final session = ref.read(currentSessionProvider);
+    if (session == null) return;
+    try {
+      final savedIds = await ref
+          .read(briefsRepositoryProvider)
+          .fetchSavedBriefIds(session.user.id);
+      if (!ref.mounted) return;
+      state = state.copyWith(savedIds: savedIds);
+      await _persist();
+    } catch (_) {
+      // Keep the local fallback until the next authenticated restore.
+    }
   }
 
   Future<void> _persist() async {

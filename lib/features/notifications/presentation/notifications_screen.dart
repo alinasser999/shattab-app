@@ -6,21 +6,22 @@ import 'package:go_router/go_router.dart';
 
 import 'package:batsh/core/l10n/l10n_extension.dart';
 import '../../../core/analytics/app_analytics.dart';
+import '../../../core/notifications/notification_destination.dart';
 import '../../../core/theme/batsh_icon_size.dart';
 import '../../../core/theme/batsh_radius.dart';
 import '../../../core/theme/batsh_spacing.dart';
 import '../../../core/theme/batsh_typography.dart';
 import '../../../core/theme/theme_extension.dart';
 import '../../../core/utils/error_mapper.dart';
-import '../../../core/widgets/batsh_empty_state.dart';
-import '../../../core/widgets/batsh_error.dart';
-import '../../../core/widgets/batsh_loading.dart';
+import '../../../core/utils/support_contact.dart';
+import '../../../core/widgets/batsh_shimmer.dart';
 import '../../../core/widgets/batsh_snack.dart';
 import '../../../core/widgets/notification_preferences_sheet.dart';
-import '../../auth/domain/profile.dart';
+import '../../../core/widgets/shattab_experience_state.dart';
+import '../../../core/widgets/shattab_pattern.dart';
 import '../../auth/presentation/providers/auth_provider.dart';
-import '../../../core/router/routes.dart';
 import '../domain/app_notification.dart';
+import 'notification_copy.dart';
 import 'providers/notifications_providers.dart';
 
 class NotificationsScreen extends ConsumerWidget {
@@ -50,36 +51,76 @@ class NotificationsScreen extends ConsumerWidget {
           ),
         ],
       ),
-      body: notifications.when(
-        loading: () => const BatshLoading(),
-        error: (error, _) => BatshError(
-          message: ErrorMapper.map(error),
-          onRetry: () => ref.invalidate(notificationsProvider),
-        ),
-        data: (items) => items.isEmpty
-            ? BatshEmptyState(
-                icon: Icons.notifications_none_rounded,
-                title: context.l10n.notificationEmptyTitle,
-                message: context.l10n.notificationEmptyBody,
-              )
-            : RefreshIndicator(
-                onRefresh: () async => ref.invalidate(notificationsProvider),
-                child: ListView.separated(
-                  padding: const EdgeInsets.fromLTRB(
-                    BatshSpacing.gutter,
-                    BatshSpacing.sm,
-                    BatshSpacing.gutter,
-                    BatshSpacing.xxl,
-                  ),
-                  itemCount: items.length,
-                  separatorBuilder: (_, _) =>
-                      const SizedBox(height: BatshSpacing.xs),
-                  itemBuilder: (context, index) => _NotificationTile(
-                    item: items[index],
-                    onTap: () => _openNotification(context, ref, items[index]),
+      body: Stack(
+        children: [
+          Positioned.fill(
+            child: IgnorePointer(
+              child: ExcludeSemantics(
+                child: Opacity(
+                  opacity: 0.12,
+                  child: ShattabPattern(
+                    kind: ShattabPatternKind.lattice,
+                    color: context.colorScheme.primary,
+                    opacity: 0.30,
                   ),
                 ),
               ),
+            ),
+          ),
+          notifications.when(
+            loading: () => const Padding(
+              padding: EdgeInsets.all(BatshSpacing.gutter),
+              child: BatshNotificationSkeleton(),
+            ),
+            error: (error, _) => Center(
+              child: Padding(
+                padding: const EdgeInsets.all(BatshSpacing.gutter),
+                child: ShattabExperienceState(
+                  icon: Icons.cloud_off_outlined,
+                  title: context.l10n.unknownErrorRetry,
+                  message: ErrorMapper.map(error),
+                  actionLabel: context.l10n.tryAgain,
+                  onAction: () => ref.invalidate(notificationsProvider),
+                  secondaryActionLabel: context.l10n.helpSupport,
+                  onSecondaryAction: () => openShattabSupport(context),
+                  pattern: ShattabPatternKind.contour,
+                ),
+              ),
+            ),
+            data: (items) => items.isEmpty
+                ? Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(BatshSpacing.gutter),
+                      child: ShattabExperienceState(
+                        icon: Icons.notifications_none_rounded,
+                        title: context.l10n.notificationEmptyTitle,
+                        message: context.l10n.notificationEmptyBody,
+                        pattern: ShattabPatternKind.arches,
+                      ),
+                    ),
+                  )
+                : RefreshIndicator(
+                    onRefresh: () async =>
+                        ref.invalidate(notificationsProvider),
+                    child: ListView.separated(
+                      padding: const EdgeInsets.fromLTRB(
+                        BatshSpacing.gutter,
+                        BatshSpacing.sm,
+                        BatshSpacing.gutter,
+                        BatshSpacing.xxl,
+                      ),
+                      itemCount: items.length,
+                      separatorBuilder: (_, _) =>
+                          const SizedBox(height: BatshSpacing.xs),
+                      itemBuilder: (context, index) => _NotificationTile(
+                        item: items[index],
+                        onTap: () =>
+                            _openNotification(context, ref, items[index]),
+                      ),
+                    ),
+                  ),
+          ),
+        ],
       ),
     );
   }
@@ -111,23 +152,13 @@ class NotificationsScreen extends ConsumerWidget {
         properties: {'kind': item.kind},
       ),
     );
-    final entityId = item.entityId;
-    if (entityId == null || !context.mounted) return;
-
     final role = ref.read(currentProfileProvider).value?.role;
-    if (item.entityType == 'brief') {
-      context.push(
-        role == UserRole.contractor
-            ? Routes.contractorPostDetailPath(entityId)
-            : Routes.homeownerBriefDetailPath(entityId),
-      );
-    } else if (item.entityType == 'post') {
-      context.push(
-        role == UserRole.contractor
-            ? Routes.contractorCommunityPostPath(entityId)
-            : Routes.homeownerCommunityPostPath(entityId),
-      );
-    }
+    final destination = notificationDestination(
+      entityType: item.entityType,
+      entityId: item.entityId,
+      role: role,
+    );
+    if (destination != null && context.mounted) context.push(destination);
   }
 }
 
@@ -144,7 +175,8 @@ class _NotificationTile extends StatelessWidget {
         : context.colorScheme.primary;
     return Semantics(
       button: true,
-      label: '${_title(context)}. ${_body(context)}',
+      label:
+          '${notificationTitle(context, item)}. ${notificationBody(context, item)}',
       child: Material(
         color: item.isRead
             ? context.colorScheme.surfaceContainerLowest
@@ -173,7 +205,7 @@ class _NotificationTile extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        _title(context),
+                        notificationTitle(context, item),
                         style: BatshTypography.titleMd.copyWith(
                           fontWeight: item.isRead
                               ? FontWeight.w600
@@ -182,7 +214,7 @@ class _NotificationTile extends StatelessWidget {
                       ),
                       const SizedBox(height: BatshSpacing.xxs),
                       Text(
-                        _body(context),
+                        notificationBody(context, item),
                         style: BatshTypography.bodySm.copyWith(
                           color: context.colorScheme.onSurfaceVariant,
                         ),
@@ -219,46 +251,6 @@ class _NotificationTile extends StatelessWidget {
     'post_liked' || 'comment_liked' => Icons.favorite_border_rounded,
     'post_commented' || 'comment_replied' => Icons.chat_bubble_outline_rounded,
     _ => Icons.notifications_none_rounded,
-  };
-
-  String _title(BuildContext context) => switch (item.titleKey) {
-    'notificationNewQuoteTitle' => context.l10n.notificationNewQuoteTitle,
-    'notificationQuoteDecisionTitle' =>
-      context.l10n.notificationQuoteDecisionTitle,
-    'notificationCompletionTitle' => context.l10n.notificationCompletionTitle,
-    'notificationNewReviewTitle' => context.l10n.notificationNewReviewTitle,
-    'notificationVerificationTitle' =>
-      context.l10n.notificationVerificationTitle,
-    'notificationPaymentTitle' => context.l10n.notificationPaymentTitle,
-    'notificationCommunityTitle' => context.l10n.notificationCommunityTitle,
-    _ => context.l10n.notificationsTitle,
-  };
-
-  String _body(BuildContext context) => switch (item.bodyKey) {
-    'notificationNewQuoteBody' => context.l10n.notificationNewQuoteBody,
-    'notificationQuoteAcceptedBody' =>
-      context.l10n.notificationQuoteAcceptedBody,
-    'notificationQuoteDeclinedBody' =>
-      context.l10n.notificationQuoteDeclinedBody,
-    'notificationCompletionRequestedBody' =>
-      context.l10n.notificationCompletionRequestedBody,
-    'notificationJobCompletedBody' => context.l10n.notificationJobCompletedBody,
-    'notificationNewReviewBody' => context.l10n.notificationNewReviewBody,
-    'notificationVerificationApprovedBody' =>
-      context.l10n.notificationVerificationApprovedBody,
-    'notificationVerificationRejectedBody' =>
-      context.l10n.notificationVerificationRejectedBody,
-    'notificationPaymentApprovedBody' =>
-      context.l10n.notificationPaymentApprovedBody,
-    'notificationPaymentRejectedBody' =>
-      context.l10n.notificationPaymentRejectedBody,
-    'notificationPostLikedBody' => context.l10n.notificationPostLikedBody,
-    'notificationPostCommentedBody' =>
-      context.l10n.notificationPostCommentedBody,
-    'notificationCommentRepliedBody' =>
-      context.l10n.notificationCommentRepliedBody,
-    'notificationCommentLikedBody' => context.l10n.notificationCommentLikedBody,
-    _ => context.l10n.notificationsSubtitle,
   };
 
   String _relativeTime(BuildContext context) {

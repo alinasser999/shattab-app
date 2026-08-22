@@ -14,6 +14,7 @@ import '../../../../core/widgets/batsh_error.dart';
 import '../../../../core/widgets/batsh_scaffold.dart';
 import '../../../../core/widgets/batsh_shimmer.dart';
 import '../../../onboarding/domain/onboarding_models.dart';
+import '../../../explore/presentation/widgets/contractor_community_posts.dart';
 import '../../domain/homeowner_profile_preview.dart';
 import '../providers/briefs_providers.dart';
 
@@ -84,6 +85,16 @@ class _HomeownerProfileBody extends StatelessWidget {
           details: details,
           location: location,
           interests: interests,
+        ),
+        const SizedBox(height: BatshSpacing.lg),
+        Text(
+          context.l10n.communityPostsTitle,
+          style: BatshTypography.titleMd.copyWith(fontWeight: FontWeight.w800),
+        ),
+        const SizedBox(height: BatshSpacing.sm),
+        ContractorCommunityPosts(
+          contractorId: profile.profile.id,
+          authorRole: 'homeowner',
         ),
         const SizedBox(height: BatshSpacing.md),
         _PrivacyNote(),

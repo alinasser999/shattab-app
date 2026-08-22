@@ -1,10 +1,12 @@
 import 'dart:io';
 
-import 'package:flutter/foundation.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../l10n/l10n_extension.dart';
+import '../cache/media_cache.dart';
+import '../utils/image_url.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../models/draft_photo.dart';
@@ -12,9 +14,6 @@ import '../theme/batsh_radius.dart';
 import '../theme/batsh_spacing.dart';
 import '../theme/batsh_typography.dart';
 import '../theme/batsh_icon_size.dart';
-import '../utils/upload_policy.dart';
-import 'batsh_snack.dart';
-
 import 'package:batsh/core/theme/theme_extension.dart';
 
 /// Multi-photo picker (max [maxPhotos], default 5). Returns [DraftPhoto] entries
@@ -54,26 +53,11 @@ class _PhotoPickerState extends State<PhotoPicker> {
     );
     if (picked.isEmpty) return;
     final newPhotos = <DraftPhoto>[];
-    var rejected = false;
     for (final x in picked) {
       if (kIsWeb) {
-        final bytes = await x.readAsBytes();
-        try {
-          UploadPolicy.validateImageBytes(bytes);
-        } on UploadPolicyException {
-          rejected = true;
-          continue;
-        }
-        newPhotos.add(DraftPhoto(bytes: bytes));
+        newPhotos.add(DraftPhoto(bytes: await x.readAsBytes()));
       } else {
-        final file = File(x.path);
-        try {
-          UploadPolicy.validateImageLength(await file.length());
-        } on UploadPolicyException {
-          rejected = true;
-          continue;
-        }
-        newPhotos.add(DraftPhoto(file: file));
+        newPhotos.add(DraftPhoto(file: File(x.path)));
       }
     }
     if (newPhotos.isNotEmpty) {
@@ -84,9 +68,6 @@ class _PhotoPickerState extends State<PhotoPicker> {
         ].take(widget.maxPhotos).toList(),
       );
       widget.onChanged(_photos);
-    }
-    if (rejected && mounted) {
-      BatshSnack.error(context, context.l10n.errPhotoUpload);
     }
   }
 
@@ -177,17 +158,17 @@ class _PhotoTile extends StatelessWidget {
       image = Image.file(photo.file!, fit: BoxFit.cover);
     } else if (photo.bytes != null) {
       image = Image.memory(photo.bytes!, fit: BoxFit.cover);
-    } else if (photo.url != null) {
+    } else if (isDisplayableImageUrl(photo.url)) {
       image = CachedNetworkImage(
-        imageUrl: photo.url!,
+        imageUrl: sizedImageUrl(photo.url!, width: 288),
+        cacheManager: mediaCacheManager,
         fit: BoxFit.cover,
-        placeholder: (_, _) =>
-            Container(color: context.colorScheme.surfaceContainer),
-        errorWidget: (_, _, _) =>
-            Container(color: context.colorScheme.surfaceContainer),
+        memCacheWidth: 288,
+        placeholder: (_, _) => const _PhotoFallback(),
+        errorWidget: (_, _, _) => const _PhotoFallback(),
       );
     } else {
-      image = const SizedBox.shrink();
+      image = const _PhotoFallback();
     }
 
     return Stack(
@@ -242,13 +223,34 @@ class PhotoGallery extends StatelessWidget {
             width: 200,
             height: 160,
             color: context.colorScheme.surfaceContainer,
-            child: CachedNetworkImage(
-              imageUrl: urls[i],
-              fit: BoxFit.cover,
-              placeholder: (_, _) => const SizedBox.shrink(),
-              errorWidget: (_, _, _) => const SizedBox.shrink(),
-            ),
+            child: isDisplayableImageUrl(urls[i])
+                ? CachedNetworkImage(
+                    imageUrl: sizedImageUrl(urls[i], width: 600),
+                    cacheManager: mediaCacheManager,
+                    fit: BoxFit.cover,
+                    memCacheWidth: 600,
+                    placeholder: (_, _) => const _PhotoFallback(),
+                    errorWidget: (_, _, _) => const _PhotoFallback(),
+                  )
+                : const _PhotoFallback(),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PhotoFallback extends StatelessWidget {
+  const _PhotoFallback();
+
+  @override
+  Widget build(BuildContext context) {
+    return ColoredBox(
+      color: context.colorScheme.surfaceContainer,
+      child: Center(
+        child: Icon(
+          Icons.image_not_supported_outlined,
+          color: context.colorScheme.onSurfaceVariant,
         ),
       ),
     );

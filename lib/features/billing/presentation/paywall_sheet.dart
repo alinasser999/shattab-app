@@ -24,18 +24,27 @@ Future<void> showPaywallSheet(BuildContext context, {String purpose = 'pro'}) {
       BatshSpacing.gutter,
     ),
     builder: (_) => _PaywallSheet(
+      purpose: purpose,
       onSubscribe: () {
         Navigator.of(context).pop();
-        unawaited(showPaymentMethods(context, annual: false));
+        unawaited(
+          showPaymentMethods(
+            context,
+            annual: false,
+            purpose: purpose,
+            planTerm: purpose == 'sponsored' ? 'weekly' : null,
+          ),
+        );
       },
     ),
   );
 }
 
 class _PaywallSheet extends StatelessWidget {
-  const _PaywallSheet({required this.onSubscribe});
+  const _PaywallSheet({required this.onSubscribe, required this.purpose});
 
   final VoidCallback onSubscribe;
+  final String purpose;
 
   @override
   Widget build(BuildContext context) {
@@ -62,13 +71,17 @@ class _PaywallSheet extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    context.l10n.paywallTitle,
+                    purpose == 'sponsored'
+                        ? context.l10n.specialProTitle
+                        : context.l10n.paywallTitle,
                     style: BatshTypography.titleLg.copyWith(
                       fontWeight: FontWeight.w700,
                     ),
                   ),
                   Text(
-                    context.l10n.paywallSubtitle,
+                    purpose == 'sponsored'
+                        ? context.l10n.specialProSubtitle
+                        : context.l10n.paywallSubtitle,
                     style: BatshTypography.bodySm.copyWith(
                       color: context.colorScheme.onSurfaceVariant,
                     ),
@@ -79,14 +92,24 @@ class _PaywallSheet extends StatelessWidget {
           ],
         ),
         const SizedBox(height: BatshSpacing.lg),
-        _Benefit(text: context.l10n.proBenefitQuotes),
-        _Benefit(text: context.l10n.proBenefitRequests),
-        _Benefit(text: context.l10n.proBenefitRanking),
-        _Benefit(text: context.l10n.proBenefitPhotos),
+        if (purpose == 'sponsored') ...[
+          _Benefit(text: context.l10n.specialProBenefit),
+          _Benefit(text: context.l10n.specialProFairness),
+          _Benefit(text: context.l10n.specialProNoGuarantee),
+        ] else ...[
+          _Benefit(text: context.l10n.proBenefitQuotes),
+          _Benefit(text: context.l10n.proBenefitRequests),
+          _Benefit(text: context.l10n.proBenefitRanking),
+          _Benefit(text: context.l10n.proBenefitPhotos),
+        ],
         const SizedBox(height: BatshSpacing.lg),
         BatshButton(
-          label: context.l10n.upgradeToProCta,
-          icon: Icons.workspace_premium_outlined,
+          label: purpose == 'sponsored'
+              ? context.l10n.specialProCta
+              : context.l10n.upgradeToProCta,
+          icon: purpose == 'sponsored'
+              ? Icons.campaign_outlined
+              : Icons.workspace_premium_outlined,
           onPressed: onSubscribe,
         ),
       ],

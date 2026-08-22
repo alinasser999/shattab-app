@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 
 import 'package:batsh/core/l10n/l10n_extension.dart';
 import 'package:batsh/core/l10n/strings.dart';
@@ -12,21 +14,25 @@ import '../pricing.dart';
 import 'payment_flow.dart';
 import '../../../core/theme/batsh_icon_size.dart';
 import '../../../core/theme/batsh_motion.dart';
+import '../domain/billing_state.dart';
+import 'providers/billing_providers.dart';
+import '../../../core/widgets/shattab_pattern.dart';
 
 import 'package:batsh/core/theme/theme_extension.dart';
 
 /// Shattab Pro subscription page. The one surface that earns a Committed /
 /// Drenched treatment (aspirational terracotta hero) inside an otherwise
-/// Restrained product. Presentational: the CTA is inert until Paymob is wired
-/// (Phase 3). Message is contractor ROI, not "luxury".
-class ProScreen extends StatefulWidget {
+/// Restrained product. InstaPay is a manual verification flow; processor-backed
+/// payment methods remain explicitly marked as pending. Message is contractor
+/// ROI, not "luxury".
+class ProScreen extends ConsumerStatefulWidget {
   const ProScreen({super.key});
 
   @override
-  State<ProScreen> createState() => _ProScreenState();
+  ConsumerState<ProScreen> createState() => _ProScreenState();
 }
 
-class _ProScreenState extends State<ProScreen> {
+class _ProScreenState extends ConsumerState<ProScreen> {
   bool _annual = false;
 
   void _subscribe() {
@@ -34,9 +40,20 @@ class _ProScreenState extends State<ProScreen> {
     showPaymentMethods(context, annual: _annual);
   }
 
+  void _subscribeSpecialPlacement() {
+    showPaymentMethods(
+      context,
+      annual: false,
+      purpose: 'sponsored',
+      planTerm: 'weekly',
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final motion = !MediaQuery.disableAnimationsOf(context);
+    final billingState = ref.watch(billingStateProvider);
+    final billing = billingState.asData?.value;
     return Scaffold(
       backgroundColor: context.colorScheme.surface,
       body: SingleChildScrollView(
@@ -56,7 +73,22 @@ class _ProScreenState extends State<ProScreen> {
                   onToggle: (v) => setState(() => _annual = v),
                   onSubscribe: _subscribe,
                   motion: motion,
+                  billing: billing,
+                  billingLoading: billingState.isLoading,
                 ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                BatshSpacing.gutter,
+                0,
+                BatshSpacing.gutter,
+                BatshSpacing.xl,
+              ),
+              child: _SpecialPlacementCard(
+                billing: billing,
+                billingLoading: billingState.isLoading,
+                onSubscribe: _subscribeSpecialPlacement,
               ),
             ),
             Padding(
@@ -94,41 +126,46 @@ class _Hero extends StatelessWidget {
         right: BatshSpacing.gutter,
       ),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            context.colorScheme.primary,
-            context.colorScheme.onPrimaryFixedVariant, // deep terracotta
-          ],
-        ),
+        color: context.colorScheme.primary,
         borderRadius: BorderRadius.vertical(
           bottom: Radius.circular(BatshRadius.xxl),
         ),
       ),
-      child: Column(
+      child: Stack(
         children: [
-          Align(
-            alignment: AlignmentDirectional.centerStart,
-            child: BackButton(color: context.colorScheme.onPrimary),
-          ),
-          const SizedBox(height: BatshSpacing.xs),
-          _Medallion(motion: motion),
-          const SizedBox(height: BatshSpacing.md),
-          Text(
-            context.l10n.proScreenTitle,
-            textAlign: TextAlign.center,
-            style: BatshTypography.displayMd.copyWith(
+          Positioned.fill(
+            child: ShattabPattern(
+              kind: ShattabPatternKind.contour,
               color: context.colorScheme.onPrimary,
+              opacity: 0.10,
+              strokeWidth: 0.8,
             ),
           ),
-          const SizedBox(height: BatshSpacing.xs),
-          Text(
-            context.l10n.proValueLine,
-            textAlign: TextAlign.center,
-            style: BatshTypography.bodyLg.copyWith(
-              color: context.colorScheme.onPrimary.withValues(alpha: 0.88),
-            ),
+          Column(
+            children: [
+              Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: BackButton(color: context.colorScheme.onPrimary),
+              ),
+              const SizedBox(height: BatshSpacing.xs),
+              _Medallion(motion: motion),
+              const SizedBox(height: BatshSpacing.md),
+              Text(
+                context.l10n.proScreenTitle,
+                textAlign: TextAlign.center,
+                style: BatshTypography.displayMd.copyWith(
+                  color: context.colorScheme.onPrimary,
+                ),
+              ),
+              const SizedBox(height: BatshSpacing.xs),
+              Text(
+                context.l10n.proValueLine,
+                textAlign: TextAlign.center,
+                style: BatshTypography.bodyLg.copyWith(
+                  color: context.colorScheme.onPrimary.withValues(alpha: 0.88),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -192,12 +229,16 @@ class _PlanCard extends StatelessWidget {
     required this.onToggle,
     required this.onSubscribe,
     required this.motion,
+    required this.billing,
+    required this.billingLoading,
   });
 
   final bool annual;
   final ValueChanged<bool> onToggle;
   final VoidCallback onSubscribe;
   final bool motion;
+  final BillingState? billing;
+  final bool billingLoading;
 
   @override
   Widget build(BuildContext context) {
@@ -208,6 +249,8 @@ class _PlanCard extends StatelessWidget {
       context.l10n.proBenefitPhotos,
       context.l10n.proBenefitSeen,
     ];
+    final isActive = billing?.isProActive ?? false;
+    final hasPendingRequest = billing?.hasPendingProRequest ?? false;
     return Container(
       decoration: BoxDecoration(
         color: context.colorScheme.surfaceContainerLowest,
@@ -218,6 +261,27 @@ class _PlanCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          if (isActive) ...[
+            _BillingStatusBanner(
+              icon: Icons.verified_rounded,
+              title: context.l10n.proActiveLine,
+              message: billing?.planExpiresAt == null
+                  ? context.l10n.proManageSubtitle
+                  : context.l10n.proExpiresOn(
+                      _formatDate(context, billing!.planExpiresAt!),
+                    ),
+              color: context.colorScheme.secondary,
+            ),
+            const SizedBox(height: BatshSpacing.md),
+          ] else if (hasPendingRequest) ...[
+            _BillingStatusBanner(
+              icon: Icons.schedule_rounded,
+              title: context.l10n.instapaySubmittedTitle,
+              message: context.l10n.requestsPaymentNote,
+              color: context.colorScheme.tertiary,
+            ),
+            const SizedBox(height: BatshSpacing.md),
+          ],
           _PlanToggle(annual: annual, onToggle: onToggle),
           const SizedBox(height: BatshSpacing.lg),
           _PriceBlock(annual: annual),
@@ -234,9 +298,15 @@ class _PlanCard extends StatelessWidget {
             _BenefitRow(text: benefits[i], index: i, motion: motion),
           const SizedBox(height: BatshSpacing.lg),
           BatshButton(
-            label: context.l10n.startFreeMonth,
+            label: isActive
+                ? context.l10n.proActiveLine
+                : hasPendingRequest
+                ? context.l10n.instapaySubmittedTitle
+                : context.l10n.upgradeToProCta,
             icon: Icons.workspace_premium_outlined,
-            onPressed: onSubscribe,
+            onPressed: billingLoading || isActive || hasPendingRequest
+                ? null
+                : onSubscribe,
           ),
           const SizedBox(height: BatshSpacing.sm),
           Text(
@@ -244,6 +314,59 @@ class _PlanCard extends StatelessWidget {
             textAlign: TextAlign.center,
             style: BatshTypography.labelMd.copyWith(
               color: context.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatDate(BuildContext context, DateTime date) => DateFormat(
+    'd MMM yyyy',
+    Localizations.localeOf(context).languageCode,
+  ).format(date);
+}
+
+class _BillingStatusBanner extends StatelessWidget {
+  const _BillingStatusBanner({
+    required this.icon,
+    required this.title,
+    required this.message,
+    required this.color,
+  });
+
+  final IconData icon;
+  final String title;
+  final String message;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(BatshSpacing.sm),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.10),
+        borderRadius: BatshRadius.brMd,
+        border: Border.all(color: color.withValues(alpha: 0.28)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: color, size: BatshIconSize.md),
+          const SizedBox(width: BatshSpacing.sm),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: BatshTypography.labelLg),
+                const SizedBox(height: BatshSpacing.xxs),
+                Text(
+                  message,
+                  style: BatshTypography.bodySm.copyWith(
+                    color: context.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -434,6 +557,207 @@ class _BenefitRow extends StatelessWidget {
 }
 
 // ── Free vs Pro comparison ───────────────────────────────────────────────────
+
+class _SpecialPlacementCard extends StatelessWidget {
+  const _SpecialPlacementCard({
+    required this.billing,
+    required this.billingLoading,
+    required this.onSubscribe,
+  });
+
+  final BillingState? billing;
+  final bool billingLoading;
+  final VoidCallback onSubscribe;
+
+  @override
+  Widget build(BuildContext context) {
+    final active = billing?.isSponsoredActive ?? false;
+    final pending = billing?.hasPendingSponsoredRequest ?? false;
+    final statusColor = active
+        ? context.colorScheme.secondary
+        : context.colorScheme.tertiary;
+    final statusMessage = active && billing?.sponsoredUntil != null
+        ? context.l10n.specialProExpiresOn(
+            _formatDate(context, billing!.sponsoredUntil!),
+          )
+        : pending
+        ? context.l10n.specialProPendingBody
+        : context.l10n.specialProActivationNote;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: context.colorScheme.surfaceContainerLowest,
+        borderRadius: BatshRadius.brCard,
+        border: Border.all(color: statusColor.withValues(alpha: 0.24)),
+        boxShadow: BatshShadows.subtle,
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Stack(
+        children: [
+          PositionedDirectional(
+            top: 0,
+            end: 0,
+            width: 150,
+            height: 150,
+            child: IgnorePointer(
+              child: ShattabPattern(
+                kind: ShattabPatternKind.arches,
+                color: context.colorScheme.primary,
+                opacity: 0.055,
+                strokeWidth: 0.8,
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(BatshSpacing.lg),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: context.colorScheme.tertiaryContainer,
+                        borderRadius: BatshRadius.brMd,
+                      ),
+                      child: Icon(
+                        Icons.campaign_outlined,
+                        color: context.colorScheme.onTertiaryContainer,
+                      ),
+                    ),
+                    const SizedBox(width: BatshSpacing.md),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  context.l10n.specialProTitle,
+                                  style: BatshTypography.titleLg.copyWith(
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: BatshSpacing.xs),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: BatshSpacing.xs,
+                                  vertical: BatshSpacing.xxs,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: context.colorScheme.tertiaryContainer,
+                                  borderRadius: BatshRadius.brFull,
+                                ),
+                                child: Text(
+                                  context.l10n.paidPlacementLabel,
+                                  style: BatshTypography.labelSm.copyWith(
+                                    color:
+                                        context.colorScheme.onTertiaryContainer,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: BatshSpacing.xxs),
+                          Text(
+                            context.l10n.specialProSubtitle,
+                            style: BatshTypography.bodySm.copyWith(
+                              color: context.colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: BatshSpacing.md),
+                Text(
+                  context.l10n.specialProValueLine,
+                  style: BatshTypography.bodyMd,
+                ),
+                const SizedBox(height: BatshSpacing.sm),
+                _PlacementBenefit(
+                  icon: Icons.visibility_outlined,
+                  text: context.l10n.specialProBenefit,
+                ),
+                _PlacementBenefit(
+                  icon: Icons.verified_outlined,
+                  text: context.l10n.specialProFairness,
+                ),
+                const SizedBox(height: BatshSpacing.sm),
+                Text(
+                  statusMessage,
+                  style: BatshTypography.labelMd.copyWith(
+                    color: context.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: BatshSpacing.md),
+                BatshButton(
+                  label: active
+                      ? context.l10n.specialProActive
+                      : pending
+                      ? context.l10n.specialProPending
+                      : context.l10n.specialProCta,
+                  icon: active
+                      ? Icons.check_circle_outline_rounded
+                      : pending
+                      ? Icons.schedule_outlined
+                      : Icons.arrow_back_rounded,
+                  isLoading: billingLoading,
+                  onPressed: active || pending ? null : onSubscribe,
+                ),
+                const SizedBox(height: BatshSpacing.sm),
+                Text(
+                  '${context.l10n.specialProPriceLine} · ${context.l10n.specialProNoGuarantee}',
+                  textAlign: TextAlign.center,
+                  style: BatshTypography.labelSm.copyWith(
+                    color: context.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatDate(BuildContext context, DateTime date) => DateFormat(
+    'd MMM yyyy',
+    Localizations.localeOf(context).languageCode,
+  ).format(date);
+}
+
+class _PlacementBenefit extends StatelessWidget {
+  const _PlacementBenefit({required this.icon, required this.text});
+
+  final IconData icon;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: BatshSpacing.xs),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            icon,
+            size: BatshIconSize.md,
+            color: context.colorScheme.tertiary,
+          ),
+          const SizedBox(width: BatshSpacing.sm),
+          Expanded(child: Text(text, style: BatshTypography.bodySm)),
+        ],
+      ),
+    );
+  }
+}
 
 class _CompareTable extends StatelessWidget {
   const _CompareTable();

@@ -331,19 +331,7 @@ class _CollectionFooter extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (loading) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(vertical: BatshSpacing.lg),
-        child: Center(
-          child: Semantics(
-            label: context.l10n.loadingMore,
-            child: const SizedBox(
-              width: 24,
-              height: 24,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            ),
-          ),
-        ),
-      );
+      return const BatshPaginationSkeleton();
     }
     if (error != null) {
       return Padding(

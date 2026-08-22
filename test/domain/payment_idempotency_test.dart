@@ -1,6 +1,8 @@
 import 'package:batsh/features/billing/data/payment_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'dart:io';
+
 /// The key is the only thing standing between a lost response and a contractor
 /// being charged twice for one Pro subscription.
 ///
@@ -11,6 +13,27 @@ import 'package:flutter_test/flutter_test.dart';
 /// (regenerating per tap defeats the constraint entirely — that half is
 /// enforced by holding it as a `final` field in `_InstaPayScreenState`).
 void main() {
+  test('payment submission stays server-priced', () {
+    final repository = File(
+      'lib/features/billing/data/payment_repository.dart',
+    ).readAsStringSync();
+    final migration = File(
+      'supabase/migrations/20260814103000_payment_submission_validation.sql',
+    ).readAsStringSync();
+
+    expect(repository, isNot(contains('amountEgp')));
+    expect(repository, contains("'submit_payment_request'"));
+    expect(repository, isNot(contains("from('payment_requests')")));
+    expect(repository, contains('upsert: false'));
+    expect(repository, isNot(contains('upsert: true')));
+    expect(migration, contains('when \'monthly\' then 299'));
+    expect(migration, contains('when \'annual\' then 2990'));
+    expect(
+      migration,
+      contains('revoke all on function public.submit_payment_request'),
+    );
+  });
+
   group('PaymentRepository.newIdempotencyKey', () {
     test('is 32 hex characters', () {
       expect(

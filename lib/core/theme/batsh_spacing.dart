@@ -47,6 +47,15 @@ class BatshSpacing {
   /// Screen edges, and the gap between items in a list.
   static const double marginMobile = md;
 
+  /// Default page gutter for content screens. Full-bleed compositions opt out
+  /// explicitly; ordinary forms and lists get enough breathing room without
+  /// making the mobile content column feel narrow.
+  static const double pageGutter = 20;
+
+  /// Separation between major content groups when a screen needs a wider beat
+  /// than the compact card/list rhythm.
+  static const double sectionGap = 28;
+
   // `cardPadding` and `sectionV` used to sit here with zero references between
   // them. An alias nothing calls is not a design decision, it is a suggestion
   // the codebase declined.

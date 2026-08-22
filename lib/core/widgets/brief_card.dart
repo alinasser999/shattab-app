@@ -92,8 +92,74 @@ class BriefCard extends StatelessWidget {
                     ],
                   ],
                 ),
+                const SizedBox(height: BatshSpacing.xs),
+                _NextStep(brief: brief),
               ],
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _NextStep extends StatelessWidget {
+  const _NextStep({required this.brief});
+
+  final Brief brief;
+
+  @override
+  Widget build(BuildContext context) {
+    final (label, icon, color) = switch (brief.stage) {
+      BriefStage.open => (
+        context.l10n.briefNextStepQuotes,
+        Icons.request_quote_outlined,
+        context.colorScheme.primary,
+      ),
+      BriefStage.hired => (
+        context.l10n.briefNextStepFollowWork,
+        Icons.handyman_outlined,
+        context.colorScheme.primary,
+      ),
+      BriefStage.completionRequested => (
+        context.l10n.briefNextStepConfirmWork,
+        Icons.task_alt_outlined,
+        context.colorScheme.tertiary,
+      ),
+      BriefStage.completed => (
+        context.l10n.briefNextStepReview,
+        Icons.star_outline_rounded,
+        context.colorScheme.secondary,
+      ),
+    };
+    final cancelled = brief.status == BriefStatus.cancelled;
+    return Semantics(
+      label: cancelled ? context.l10n.statusCancelled : label,
+      child: Row(
+        children: [
+          Icon(
+            cancelled ? Icons.block_outlined : icon,
+            size: BatshIconSize.inline,
+            color: cancelled ? context.colorScheme.onSurfaceVariant : color,
+          ),
+          const SizedBox(width: BatshSpacing.xxs),
+          Expanded(
+            child: Text(
+              cancelled ? context.l10n.statusCancelled : label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: BatshTypography.labelSm.copyWith(
+                color: cancelled ? context.colorScheme.onSurfaceVariant : color,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          Icon(
+            Directionality.of(context) == TextDirection.rtl
+                ? Icons.arrow_back_ios_rounded
+                : Icons.arrow_forward_ios_rounded,
+            size: BatshIconSize.xs,
+            color: context.colorScheme.onSurfaceVariant,
           ),
         ],
       ),

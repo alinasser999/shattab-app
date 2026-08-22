@@ -1,4 +1,5 @@
 import 'package:batsh/features/briefs/domain/brief.dart';
+import 'package:batsh/features/briefs/domain/brief_lifecycle.dart';
 import 'package:batsh/features/onboarding/domain/onboarding_models.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -98,6 +99,67 @@ void main() {
       expect(_brief().isActive, isTrue);
       expect(_brief(hiredAt: t1).isActive, isFalse);
       expect(_brief(status: BriefStatus.cancelled).isActive, isFalse);
+    });
+  });
+
+  group('BriefLifecycle', () {
+    test('keeps an open request at the quote decision step', () {
+      expect(
+        BriefLifecycle.currentStep(_brief(), hasQuotes: false),
+        BriefLifecycleStep.quotes,
+      );
+      expect(
+        BriefLifecycle.state(
+          _brief(),
+          BriefLifecycleStep.requestPosted,
+          hasQuotes: false,
+        ),
+        BriefLifecycleStepState.complete,
+      );
+      expect(
+        BriefLifecycle.state(
+          _brief(),
+          BriefLifecycleStep.quotes,
+          hasQuotes: false,
+        ),
+        BriefLifecycleStepState.current,
+      );
+    });
+
+    test('moves to work after a quote is accepted', () {
+      final brief = _brief(hiredAt: t1);
+      expect(
+        BriefLifecycle.currentStep(brief, hasQuotes: true),
+        BriefLifecycleStep.work,
+      );
+      expect(
+        BriefLifecycle.state(brief, BriefLifecycleStep.quotes, hasQuotes: true),
+        BriefLifecycleStepState.complete,
+      );
+      expect(
+        BriefLifecycle.state(brief, BriefLifecycleStep.work, hasQuotes: true),
+        BriefLifecycleStepState.current,
+      );
+    });
+
+    test('marks the full journey complete only after confirmation', () {
+      final brief = _brief(hiredAt: t1, completedAt: t3);
+      for (final step in BriefLifecycleStep.values) {
+        expect(
+          BriefLifecycle.state(brief, step, hasQuotes: true),
+          BriefLifecycleStepState.complete,
+        );
+      }
+    });
+
+    test('does not present a cancelled request as active progress', () {
+      final brief = _brief(status: BriefStatus.cancelled);
+      for (final step in BriefLifecycleStep.values) {
+        expect(
+          BriefLifecycle.state(brief, step, hasQuotes: false),
+          BriefLifecycleStepState.upcoming,
+        );
+      }
     });
   });
 

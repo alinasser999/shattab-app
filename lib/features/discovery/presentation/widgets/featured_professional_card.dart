@@ -69,7 +69,7 @@ class FeaturedProfessionalCard extends StatelessWidget {
     final name = listing.businessName.isNotEmpty
         ? listing.businessName
         : listing.fullName;
-    final isPlaceholder = listing.coverPhotoUrl?.trim().isNotEmpty != true;
+    final isPlaceholder = !isDisplayableImageUrl(listing.coverPhotoUrl);
 
     return Semantics(
       button: true,
@@ -423,6 +423,43 @@ class _StatsRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final stats = <Widget>[
+      if (listing.hasReviews)
+        _Stat(
+          value: listing.rating!.toStringAsFixed(1),
+          label: '${listing.reviewCount} ${context.l10n.reviewsCount}',
+          below: BatshStars(
+            rating: listing.reviewAvg,
+            size: BatshIconSize.inline,
+            color: BatshColors.starGold,
+          ),
+        ),
+      if (listing.projectsCompleted > 0)
+        _Stat(
+          value: '${listing.projectsCompleted}',
+          label: context.l10n.completedProjectsShort,
+          icon: Icons.apartment_rounded,
+        ),
+      if (listing.yearsExperience != null && listing.yearsExperience! > 0)
+        _Stat(
+          value: '${listing.yearsExperience}',
+          label: context.l10n.yearsExperience,
+        ),
+    ];
+
+    if (stats.isEmpty) {
+      return Align(
+        alignment: AlignmentDirectional.center,
+        child: Text(
+          context.l10n.newBadge,
+          style: BatshTypography.labelMd.copyWith(
+            color: BatshColors.onSurfaceVariant,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      );
+    }
+
     const divider = VerticalDivider(
       width: 1,
       thickness: 1,
@@ -434,35 +471,10 @@ class _StatsRow extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Expanded(
-            child: _Stat(
-              value: '(${listing.reviewCount})',
-              label: context.l10n.customerReviews,
-            ),
-          ),
-          divider,
-          Expanded(
-            child: _Stat(
-              // No rating until somebody has left one.
-              value:
-                  listing.rating?.toStringAsFixed(1) ?? context.l10n.newBadge,
-              below: listing.hasReviews
-                  ? BatshStars(
-                      rating: listing.reviewAvg,
-                      size: BatshIconSize.inline,
-                      color: BatshColors.starGold,
-                    )
-                  : null,
-            ),
-          ),
-          divider,
-          Expanded(
-            child: _Stat(
-              value: '${listing.projectsCompleted}',
-              label: context.l10n.completedProjectsShort,
-              icon: Icons.apartment_rounded,
-            ),
-          ),
+          for (var index = 0; index < stats.length; index++) ...[
+            if (index > 0) divider,
+            Expanded(child: stats[index]),
+          ],
         ],
       ),
     );

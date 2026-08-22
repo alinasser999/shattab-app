@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/router/routes.dart';
+import '../../../../core/services/form_draft_store.dart';
 
 import 'package:batsh/core/l10n/l10n_extension.dart';
 import '../../../../core/theme/batsh_motion.dart';
@@ -11,6 +14,7 @@ import '../../../../core/theme/batsh_spacing.dart';
 import '../../../../core/theme/batsh_typography.dart';
 import '../../../../core/widgets/batsh_button.dart';
 import '../../../../core/widgets/batsh_chip.dart';
+import '../../../../core/widgets/batsh_draft_status.dart';
 import '../../../../core/widgets/batsh_loading.dart';
 import '../../../../core/widgets/batsh_scaffold.dart';
 import '../../../../core/widgets/batsh_text_field.dart';
@@ -51,12 +55,22 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
   bool _hydrated = false;
   bool _busy = false;
   String? _error;
+  Timer? _draftTimer;
+  bool _draftRestored = false;
+  bool _draftSaved = false;
+  late final String _draftKey;
 
   @override
   void initState() {
     super.initState();
+    final userId = ref.read(currentSessionProvider)?.user.id ?? 'anonymous';
+    _draftKey = 'brief:new:$userId';
     final editing = widget.editing;
-    if (editing == null) return;
+    _descCtrl.addListener(_scheduleDraftSave);
+    if (editing == null) {
+      unawaited(_restoreDraft());
+      return;
+    }
     // Prefilling here rather than in build's hydration path: that path seeds
     // defaults from the homeowner's own profile, which would overwrite the
     // brief's actual values.
@@ -70,8 +84,64 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
 
   @override
   void dispose() {
+    _draftTimer?.cancel();
+    if (!widget.isEditing) unawaited(_persistDraft());
+    _descCtrl.removeListener(_scheduleDraftSave);
     _descCtrl.dispose();
     super.dispose();
+  }
+
+  void _scheduleDraftSave() {
+    if (widget.isEditing) return;
+    _draftTimer?.cancel();
+    _draftTimer = Timer(const Duration(milliseconds: 450), () {
+      unawaited(_persistDraft(showStatus: true));
+    });
+  }
+
+  Future<void> _restoreDraft() async {
+    final draft = await FormDraftStore.read(_draftKey);
+    if (!mounted || draft == null || draft.isEmpty) return;
+    final apartmentName = draft['apartment_type'] as String?;
+    ApartmentType? restoredApartment;
+    for (final value in ApartmentType.values) {
+      if (value.name == apartmentName) restoredApartment = value;
+    }
+    setState(() {
+      _descCtrl.text = (draft['description'] as String?) ?? '';
+      _apartmentType = restoredApartment;
+      _city = draft['city'] as String?;
+      _district = draft['district'] as String?;
+      _targetSpecialties
+        ..clear()
+        ..addAll(
+          ((draft['specialties'] as List?) ?? const []).whereType<String>(),
+        );
+      _hydrated = true;
+      _draftRestored = true;
+      _draftSaved = true;
+    });
+  }
+
+  Future<void> _persistDraft({bool showStatus = false}) async {
+    if (widget.isEditing) return;
+    final hasContent =
+        _descCtrl.text.trim().isNotEmpty ||
+        _apartmentType != null ||
+        _city != null ||
+        _targetSpecialties.isNotEmpty;
+    if (!hasContent) {
+      await FormDraftStore.clear(_draftKey);
+      return;
+    }
+    await FormDraftStore.write(_draftKey, {
+      'description': _descCtrl.text,
+      'apartment_type': _apartmentType?.name,
+      'city': _city,
+      'district': _district,
+      'specialties': _targetSpecialties.toList(),
+    });
+    if (showStatus && mounted) setState(() => _draftSaved = true);
   }
 
   Future<void> _submit() async {
@@ -125,6 +195,8 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
             );
       }
       if (!mounted) return;
+      if (!widget.isEditing) await FormDraftStore.clear(_draftKey);
+      if (!mounted) return;
       BatshSnack.success(
         context,
         widget.isEditing
@@ -165,6 +237,10 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
           color: context.colorScheme.onSurfaceVariant,
         ),
       ),
+      if (_draftRestored || _draftSaved) ...[
+        const SizedBox(height: BatshSpacing.xs),
+        BatshDraftStatus(restored: _draftRestored),
+      ],
       const SizedBox(height: BatshSpacing.lg),
       BatshTextField(
         controller: _descCtrl,
@@ -196,6 +272,8 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
                 } else {
                   _targetSpecialties.add(e.key);
                 }
+                _draftRestored = false;
+                _scheduleDraftSave();
               }),
             ),
         ],
@@ -216,7 +294,11 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
             BatshChip(
               label: OnboardingCatalog.apartmentLabels[t] ?? t.name,
               selected: _apartmentType == t,
-              onTap: () => setState(() => _apartmentType = t),
+              onTap: () => setState(() {
+                _apartmentType = t;
+                _draftRestored = false;
+                _scheduleDraftSave();
+              }),
             ),
         ],
       ),
@@ -236,7 +318,11 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
             BatshChip(
               label: c.city,
               selected: _city == c.city,
-              onTap: () => setState(() => _city = c.city),
+              onTap: () => setState(() {
+                _city = c.city;
+                _draftRestored = false;
+                _scheduleDraftSave();
+              }),
             ),
         ],
       ),

@@ -56,6 +56,7 @@ class OpportunitySearch extends _$OpportunitySearch {
 class ContractorOpportunities extends _$ContractorOpportunities {
   bool _hasMore = true;
   bool _loadingMore = false;
+  DateTime? _createdAfter;
 
   /// Whether more pages may remain — false once a short page lands.
   bool get hasMore => _hasMore;
@@ -63,11 +64,21 @@ class ContractorOpportunities extends _$ContractorOpportunities {
   @override
   Future<List<Brief>> build() async {
     final query = ref.watch(opportunitySearchProvider);
+    ref.watch(
+      opportunityFiltersProvider.select((filters) => filters.serverQueryKey),
+    );
+    final filters = ref.read(opportunityFiltersProvider);
+    _createdAfter = filters.serverCreatedAfter();
     ref.read(opportunityPaginationProvider.notifier).complete();
     _loadingMore = false;
     final page = await ref
         .read(briefsRepositoryProvider)
-        .fetchOpportunitiesForContractor(searchQuery: query);
+        .fetchOpportunitiesForContractor(
+          searchQuery: query,
+          city: filters.city,
+          targetSpecialties: filters.specialties,
+          createdAfter: _createdAfter,
+        );
     _hasMore = page.length == BriefsRepository.pageSize;
     return page;
   }
@@ -82,11 +93,15 @@ class ContractorOpportunities extends _$ContractorOpportunities {
     ref.read(opportunityPaginationProvider.notifier).begin();
     var failed = false;
     try {
+      final filters = ref.read(opportunityFiltersProvider);
       final next = await ref
           .read(briefsRepositoryProvider)
           .fetchOpportunitiesForContractor(
             searchQuery: ref.read(opportunitySearchProvider),
             after: BriefCursor.fromBrief(current.last),
+            city: filters.city,
+            targetSpecialties: filters.specialties,
+            createdAfter: _createdAfter,
           );
       _hasMore = next.length == BriefsRepository.pageSize;
       final merged = mergeUniqueOpportunityPages(current, next);
@@ -112,6 +127,8 @@ Future<List<Brief>> contractorDirectBriefs(Ref ref) =>
 // tear the controller down mid-await and its next ref use would throw.
 @Riverpod(keepAlive: true)
 class BriefsController extends _$BriefsController {
+  bool _creating = false;
+
   @override
   void build() {}
 
@@ -123,15 +140,21 @@ class BriefsController extends _$BriefsController {
     required String workDescription,
     required List<DraftPhoto> photos,
   }) async {
-    return _create(
-      targetContractorId: contractorId,
-      apartmentType: apartmentType,
-      city: city,
-      district: district,
-      workDescription: workDescription,
-      photos: photos,
-      targetSpecialties: const [],
-    );
+    if (_creating) throw StateError('brief_creation_in_progress');
+    _creating = true;
+    try {
+      return await _create(
+        targetContractorId: contractorId,
+        apartmentType: apartmentType,
+        city: city,
+        district: district,
+        workDescription: workDescription,
+        photos: photos,
+        targetSpecialties: const [],
+      );
+    } finally {
+      _creating = false;
+    }
   }
 
   Future<Brief> createPost({
@@ -142,15 +165,21 @@ class BriefsController extends _$BriefsController {
     required List<String> targetSpecialties,
     required List<DraftPhoto> photos,
   }) async {
-    return _create(
-      targetContractorId: null,
-      apartmentType: apartmentType,
-      city: city,
-      district: district,
-      workDescription: workDescription,
-      photos: photos,
-      targetSpecialties: targetSpecialties,
-    );
+    if (_creating) throw StateError('brief_creation_in_progress');
+    _creating = true;
+    try {
+      return await _create(
+        targetContractorId: null,
+        apartmentType: apartmentType,
+        city: city,
+        district: district,
+        workDescription: workDescription,
+        photos: photos,
+        targetSpecialties: targetSpecialties,
+      );
+    } finally {
+      _creating = false;
+    }
   }
 
   Future<Brief> _create({

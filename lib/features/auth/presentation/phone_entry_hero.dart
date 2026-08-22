@@ -4,7 +4,7 @@ class _BackgroundLayer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Image.asset(
-      'assets/images/login_bg.png',
+      'assets/images/login_bg_optimized.jpg',
       fit: BoxFit.cover,
       alignment: Alignment.center,
     );

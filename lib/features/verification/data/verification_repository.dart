@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/models/draft_photo.dart';
 import '../../../core/supabase/supabase_provider.dart';
+import '../../../core/utils/image_compression.dart';
 import '../../../core/utils/upload_policy.dart';
 
 /// Status of a contractor's most recent verification request.
@@ -49,30 +50,28 @@ class VerificationRepository {
     for (var i = 0; i < docs.length; i++) {
       final name = '$uid/${DateTime.now().millisecondsSinceEpoch}_$i.jpg';
       final d = docs[i];
-      if (d.file != null) {
-        UploadPolicy.validateImageLength(await d.file!.length());
-        await storage.upload(
-          name,
-          d.file!,
-          fileOptions: const FileOptions(
-            upsert: true,
-            contentType: 'image/jpeg',
-          ),
-        );
-      } else if (d.bytes != null) {
-        UploadPolicy.validateImageBytes(d.bytes!);
-        await storage.uploadBinary(
-          name,
-          d.bytes!,
-          fileOptions: const FileOptions(
-            upsert: true,
-            contentType: 'image/jpeg',
-          ),
-        );
-      } else {
-        continue;
-      }
+      final bytes = d.file != null
+          ? await ImageCompression.prepare(await d.file!.readAsBytes())
+          : d.bytes != null
+          ? await ImageCompression.prepare(d.bytes!)
+          : null;
+      if (bytes == null) continue;
+      UploadPolicy.validateImageBytes(bytes);
+      await storage.uploadBinary(
+        name,
+        bytes,
+        fileOptions: const FileOptions(
+          // Each document gets a fresh path. Overwrite permission would add
+          // risk without enabling a real verification workflow.
+          upsert: false,
+          contentType: 'image/jpeg',
+        ),
+      );
       paths.add(name);
+    }
+
+    if (paths.isEmpty) {
+      throw ArgumentError('no valid verification documents provided');
     }
 
     await _client.from('verification_requests').insert({

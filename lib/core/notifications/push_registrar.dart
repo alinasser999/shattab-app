@@ -5,10 +5,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../features/auth/presentation/providers/auth_provider.dart';
+import '../../features/notifications/presentation/providers/notifications_providers.dart';
 import '../l10n/locale_provider.dart';
 import '../router/app_router.dart';
 import '../router/routes.dart';
 import '../supabase/supabase_provider.dart';
+import '../notifications/notification_destination.dart';
 import 'push_service.dart';
 
 part 'push_registrar.g.dart';
@@ -44,20 +46,31 @@ class PushRegistrar extends _$PushRegistrar {
     unawaited(_listenForTaps());
   }
 
-  /// A tap opens the notifications list rather than deep-linking straight to
-  /// the entity.
-  ///
-  /// The list's own `_openNotification` already resolves entity type *and*
-  /// viewer role into a route; reproducing that here would be a second copy of
-  /// the mapping, free to drift out of step. It also lands the user somewhere
-  /// with context rather than on a bare detail screen they cannot place.
+  /// Push taps use the same entity/role mapping as the in-app inbox. If a
+  /// legacy or malformed payload has no routeable entity, fall back to the
+  /// inbox so the tap still has a useful destination.
   Future<void> _listenForTaps() async {
     if (_tapsWired || !PushService.isAvailable) return;
     _tapsWired = true;
 
     void open(RemoteMessage? message) {
       if (message == null) return;
-      ref.read(appRouterProvider).push(Routes.notifications);
+      final data = message.data;
+      final role = ref.read(currentProfileProvider).value?.role;
+      final destination = notificationDestination(
+        entityType: data['entity_type']?.toString(),
+        entityId: data['entity_id']?.toString(),
+        role: role,
+      );
+      final notificationId = data['notification_id']?.toString();
+      if (notificationId != null && notificationId.isNotEmpty) {
+        unawaited(
+          ref
+              .read(notificationsControllerProvider.notifier)
+              .markRead(notificationId),
+        );
+      }
+      ref.read(appRouterProvider).push(destination ?? Routes.notifications);
     }
 
     // Cold start: the tap that launched the process.

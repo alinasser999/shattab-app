@@ -8,7 +8,7 @@ class ContractorListing {
     required this.id,
     required this.fullName,
     required this.businessName,
-    required this.phone,
+    this.phone = '',
     required this.specialties,
     required this.serviceAreas,
     required this.projectsCompleted,
@@ -21,6 +21,7 @@ class ContractorListing {
     this.reviewAvg = 0,
     this.verified = false,
     this.plan = 'free',
+    this.isSponsored = false,
     this.memberSince,
     this.providerKind = ProviderKind.contractor,
   });
@@ -28,6 +29,10 @@ class ContractorListing {
   final String id;
   final String fullName;
   final String businessName;
+
+  /// Loaded only for an explicit profile/contact surface, never for catalogue
+  /// cards. Keeping this optional prevents a list query from becoming a phone
+  /// directory and reduces the payload for the most frequently used request.
   final String phone;
   final List<String> specialties;
   final List<String> serviceAreas;
@@ -51,6 +56,10 @@ class ContractorListing {
   /// Subscription plan: 'free' | 'pro'.
   final String plan;
 
+  /// Paid catalogue placement. This is deliberately separate from earned
+  /// verification/tier signals and must always be rendered with disclosure.
+  final bool isSponsored;
+
   /// When the contractor profile was created — powers "member since".
   final DateTime? memberSince;
 
@@ -63,6 +72,28 @@ class ContractorListing {
   final ProviderKind providerKind;
 
   bool get isPro => plan == 'pro';
+
+  ContractorListing copyWith({String? phone}) => ContractorListing(
+    id: id,
+    fullName: fullName,
+    businessName: businessName,
+    phone: phone ?? this.phone,
+    specialties: specialties,
+    serviceAreas: serviceAreas,
+    projectsCompleted: projectsCompleted,
+    bio: bio,
+    logoUrl: logoUrl,
+    coverPhotoUrl: coverPhotoUrl,
+    headline: headline,
+    yearsExperience: yearsExperience,
+    reviewCount: reviewCount,
+    reviewAvg: reviewAvg,
+    verified: verified,
+    plan: plan,
+    isSponsored: isSponsored,
+    memberSince: memberSince,
+    providerKind: providerKind,
+  );
 
   /// Trust tier derived from real signals. Gold = verified + a track record;
   /// silver = some jobs done; else bronze. No paid shortcut to gold.
@@ -115,6 +146,7 @@ class ContractorListing {
       reviewAvg: reviewAvg,
       verified: (cp?['verified'] as bool?) ?? false,
       plan: (cp?['plan'] as String?) ?? 'free',
+      isSponsored: (json['is_sponsored'] as bool?) ?? false,
       providerKind: ProviderKind.fromWire(cp?['provider_kind'] as String?),
       memberSince: switch (cp?['created_at']) {
         final String s => DateTime.tryParse(s),

@@ -24,13 +24,20 @@ import 'post_card.dart';
 /// post interactions still open the existing post detail screen, so replies,
 /// comment likes, and moderation keep one source of truth.
 class ContractorCommunityPosts extends ConsumerWidget {
-  const ContractorCommunityPosts({super.key, required this.contractorId});
+  const ContractorCommunityPosts({
+    super.key,
+    required this.contractorId,
+    this.authorRole = 'contractor',
+  });
 
   final String contractorId;
+  final String authorRole;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final posts = ref.watch(contractorCommunityPostsProvider(contractorId));
+    final posts = authorRole == 'homeowner'
+        ? ref.watch(homeownerCommunityPostsProvider(contractorId))
+        : ref.watch(contractorCommunityPostsProvider(contractorId));
 
     return posts.when(
       loading: () => const _CommunityPostsLoading(),
@@ -59,6 +66,7 @@ class ContractorCommunityPosts extends ConsumerWidget {
                 post: items[index],
                 index: index,
                 contractorId: contractorId,
+                authorRole: authorRole,
               ),
             ],
           ],
@@ -73,11 +81,13 @@ class _PostPreview extends ConsumerWidget {
     required this.post,
     required this.index,
     required this.contractorId,
+    required this.authorRole,
   });
 
   final Post post;
   final int index;
   final String contractorId;
+  final String authorRole;
 
   bool _isContractorSide(BuildContext context) =>
       GoRouterState.of(context).matchedLocation.startsWith('/c/');
@@ -100,11 +110,19 @@ class _PostPreview extends ConsumerWidget {
       return;
     }
 
-    context.push(
-      isContractorSide
-          ? Routes.contractorCommunityContractorProfilePath(post.authorId)
-          : Routes.homeownerContractorProfilePath(post.authorId),
-    );
+    if (post.authorRole == 'contractor') {
+      context.push(
+        isContractorSide
+            ? Routes.contractorCommunityContractorProfilePath(post.authorId)
+            : Routes.homeownerContractorProfilePath(post.authorId),
+      );
+    } else {
+      context.push(
+        isContractorSide
+            ? Routes.contractorHomeownerProfilePath(post.authorId)
+            : Routes.homeownerCommunityMemberPath(post.authorId),
+      );
+    }
   }
 
   void _toggleLike(BuildContext context, WidgetRef ref) {

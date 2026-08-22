@@ -221,6 +221,39 @@ void main() {
     expect(merged.map((item) => item.id), ['one', 'two', 'three']);
   });
 
+  test('server filter key is stable and excludes client-only controls', () {
+    const first = OpportunityFilters(
+      specialties: {'paint', 'full_reno'},
+      city: 'القاهرة',
+      recency: OpportunityRecency.thisWeek,
+      sort: OpportunitySort.recommended,
+    );
+    const sameServerQuery = OpportunityFilters(
+      specialties: {'full_reno', 'paint'},
+      city: 'القاهرة',
+      recency: OpportunityRecency.thisWeek,
+      sort: OpportunitySort.newest,
+    );
+
+    expect(first.serverQueryKey, sameServerQuery.serverQueryKey);
+    expect(
+      const OpportunityFilters(focus: OpportunityFocus.nearby).serverQueryKey,
+      const OpportunityFilters().serverQueryKey,
+    );
+  });
+
+  test('server created-after uses the narrowest active age window', () {
+    const filters = OpportunityFilters(
+      focus: OpportunityFocus.thisWeek,
+      recency: OpportunityRecency.today,
+    );
+
+    expect(
+      filters.serverCreatedAfter(now: now),
+      now.subtract(const Duration(hours: 24)),
+    );
+  });
+
   test('headline uses the first meaningful sentence', () {
     expect(
       opportunityHeadline('تشطيب عيادة أسنان. تفاصيل إضافية للمشروع.'),

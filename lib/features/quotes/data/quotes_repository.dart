@@ -12,6 +12,9 @@ class QuotesRepository {
   QuotesRepository(this._client);
   final SupabaseClient _client;
 
+  static const _readTimeout = Duration(seconds: 15);
+  static const _writeTimeout = Duration(seconds: 20);
+
   String get _uid {
     final id = _client.auth.currentUser?.id;
     if (id == null) throw StateError('No authenticated user.');
@@ -33,7 +36,8 @@ class QuotesRepository {
         .select()
         .eq('brief_id', briefId)
         .order('created_at', ascending: true)
-        .limit(maxRows);
+        .limit(maxRows)
+        .timeout(_readTimeout);
     return rows.map(Quote.fromJson).toList();
   }
 
@@ -44,7 +48,8 @@ class QuotesRepository {
         .select()
         .eq('contractor_id', _uid)
         .order('created_at', ascending: false)
-        .limit(maxRows);
+        .limit(maxRows)
+        .timeout(_readTimeout);
     return rows.map(Quote.fromJson).toList();
   }
 
@@ -65,7 +70,8 @@ class QuotesRepository {
         .select('*, briefs(*)')
         .eq('contractor_id', _uid)
         .order('created_at', ascending: false)
-        .limit(maxRows);
+        .limit(maxRows)
+        .timeout(_readTimeout);
 
     return rows.map((row) {
       final embedded = row['briefs'];
@@ -84,7 +90,9 @@ class QuotesRepository {
   /// client-side, so the number shown in the UI and the number the RLS policy
   /// enforces come from one definition and cannot disagree.
   Future<({bool isPro, int used, int quota})> fetchQuota() async {
-    final rows = await _client.rpc('my_quote_quota') as List<dynamic>;
+    final rows =
+        await _client.rpc('my_quote_quota').timeout(_readTimeout)
+            as List<dynamic>;
     if (rows.isEmpty) {
       // No row means no contractor profile — treat as no allowance rather than
       // guessing generously.
@@ -105,7 +113,8 @@ class QuotesRepository {
         .select()
         .eq('brief_id', briefId)
         .eq('contractor_id', _uid)
-        .maybeSingle();
+        .maybeSingle()
+        .timeout(_readTimeout);
     if (row == null) return null;
     return Quote.fromJson(row);
   }
@@ -131,7 +140,8 @@ class QuotesRepository {
           'status': 'sent',
         }, onConflict: 'brief_id,contractor_id')
         .select()
-        .single();
+        .single()
+        .timeout(_writeTimeout);
     return Quote.fromJson(row);
   }
 
@@ -143,14 +153,17 @@ class QuotesRepository {
   /// status update (RLS: homeowner_status restricts the allowed values).
   Future<void> setStatus(String quoteId, QuoteStatus status) async {
     if (status == QuoteStatus.accepted) {
-      await _client.rpc('accept_quote', params: {'p_quote_id': quoteId});
+      await _client
+          .rpc('accept_quote', params: {'p_quote_id': quoteId})
+          .timeout(_writeTimeout);
       return;
     }
     final rows = await _client
         .from('quotes')
         .update({'status': status.name})
         .eq('id', quoteId)
-        .select();
+        .select()
+        .timeout(_writeTimeout);
     if (rows.isEmpty) {
       throw StateError('Quote not found or cannot be updated.');
     }

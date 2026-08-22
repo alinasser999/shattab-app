@@ -8,21 +8,24 @@ import '../supabase/supabase_provider.dart';
 import 'media_storage.dart';
 import 'r2_media_storage.dart';
 import 'supabase_media_storage.dart';
+import '../utils/image_compression.dart';
 
 final mediaStorageProvider = Provider<MediaStorageService>((ref) {
   final supabase = SupabaseMediaStorage(ref.watch(supabaseClientProvider));
   final httpClient = http.Client();
   ref.onDispose(httpClient.close);
 
-  final signerUrl = Env.r2SignerUrl;
-  final publicBaseUrl = Env.r2PublicBaseUrl;
-  final enabledCategories = _parseCategories(Env.r2PublicMediaCategories);
+  // The URLs are passed through whether or not the rollout flag is on. Only
+  // `uploadsEnabled` follows the flag, so switching R2 off stops new uploads
+  // without stranding objects already in the bucket — deletes and the
+  // account-deletion purge keep working on media uploaded while it was on.
   final r2 = CloudflareR2MediaStorage(
     supabase: ref.watch(supabaseClientProvider),
     httpClient: httpClient,
-    signerUrl: Env.r2PublicMediaEnabled ? (signerUrl ?? '') : '',
-    publicBaseUrl: Env.r2PublicMediaEnabled ? (publicBaseUrl ?? '') : '',
-    enabledCategories: enabledCategories,
+    signerUrl: Env.r2SignerUrl ?? '',
+    publicBaseUrl: Env.r2PublicBaseUrl ?? '',
+    enabledCategories: _parseCategories(Env.r2PublicMediaCategories),
+    uploadsEnabled: Env.r2PublicMediaEnabled,
   );
 
   return _MediaStorageRouter(supabase: supabase, r2: r2);
@@ -49,12 +52,18 @@ class _MediaStorageRouter implements MediaStorageService {
     String? supabasePath,
     bool upsert = true,
   }) async {
-    if (r2.isEnabled && r2.supports(category)) {
+    if (r2.canUpload && r2.supports(category)) {
       try {
+        // SupabaseMediaStorage normalizes images itself. R2 bypasses that
+        // implementation, so normalize at this router boundary as well; the
+        // destination must not change the upload contract for callers.
+        final r2Bytes = contentType.startsWith('image/')
+            ? await ImageCompression.prepare(bytes)
+            : bytes;
         return await r2.uploadPublic(
           category: category,
           userId: userId,
-          bytes: bytes,
+          bytes: r2Bytes,
           fileName: fileName,
           contentType: contentType,
           upsert: upsert,

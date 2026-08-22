@@ -23,23 +23,152 @@ class BatshShimmerBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final box = Container(
+      width: width,
+      height: height,
+      decoration: BoxDecoration(
+        color: context.colorScheme.surfaceContainerHigh,
+        borderRadius: borderRadius ?? BatshRadius.brDefault,
+      ),
+    );
+
+    final reduceMotion = MediaQuery.disableAnimationsOf(context);
     return Semantics(
       label: context.l10n.loading,
-      child:
-          Container(
-                width: width,
-                height: height,
-                decoration: BoxDecoration(
-                  color: context.colorScheme.surfaceContainerHigh,
-                  borderRadius: borderRadius ?? BatshRadius.brDefault,
+      child: reduceMotion
+          ? box
+          : box
+                .animate(onPlay: (ctrl) => ctrl.repeat(reverse: true))
+                .shimmer(
+                  duration: BatshMotion.slower,
+                  curve: BatshMotion.easeInOut,
+                  color: context.colorScheme.surfaceContainerLowest,
                 ),
-              )
-              .animate(onPlay: (ctrl) => ctrl.repeat(reverse: true))
-              .shimmer(
-                duration: BatshMotion.slower,
-                curve: BatshMotion.easeInOut,
-                color: context.colorScheme.surfaceContainerLowest,
-              ),
+    );
+  }
+}
+
+/// Groups a loading surface into one announcement instead of making a screen
+/// reader announce every individual placeholder.
+class BatshSkeletonRegion extends StatelessWidget {
+  const BatshSkeletonRegion({super.key, required this.child, this.label});
+
+  final Widget child;
+  final String? label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      container: true,
+      liveRegion: true,
+      label: label ?? context.l10n.loading,
+      child: ExcludeSemantics(child: child),
+    );
+  }
+}
+
+/// Notification rows keep their real shape while account data is loading.
+class BatshNotificationSkeleton extends StatelessWidget {
+  const BatshNotificationSkeleton({super.key, this.count = 5});
+
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    final reduceMotion = MediaQuery.disableAnimationsOf(context);
+    return BatshSkeletonRegion(
+      child: ListView.separated(
+        padding: const EdgeInsets.fromLTRB(
+          BatshSpacing.gutter,
+          BatshSpacing.sm,
+          BatshSpacing.gutter,
+          BatshSpacing.xxl,
+        ),
+        physics: const NeverScrollableScrollPhysics(),
+        shrinkWrap: true,
+        itemCount: count,
+        separatorBuilder: (_, _) => const SizedBox(height: BatshSpacing.xs),
+        itemBuilder: (_, index) {
+          final tile = _NotificationSkeletonTile();
+          if (reduceMotion) return tile;
+          return tile
+              .animate(delay: BatshMotion.staggerClamped(index))
+              .fadeIn(duration: BatshMotion.normal, curve: BatshMotion.easeOut);
+        },
+      ),
+    );
+  }
+}
+
+class _NotificationSkeletonTile extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(BatshSpacing.md),
+      decoration: BoxDecoration(
+        color: context.colorScheme.surfaceContainerLowest,
+        borderRadius: BatshRadius.brCard,
+        border: Border.all(
+          color: context.colorScheme.outlineVariant.withValues(alpha: 0.5),
+        ),
+      ),
+      child: Row(
+        textDirection: TextDirection.rtl,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: const [
+                BatshShimmerBox(width: 160, height: 16),
+                SizedBox(height: BatshSpacing.xs),
+                BatshShimmerBox(width: double.infinity, height: 12),
+                SizedBox(height: BatshSpacing.xs),
+                Align(
+                  alignment: AlignmentDirectional.centerEnd,
+                  child: BatshShimmerBox(width: 76, height: 10),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: BatshSpacing.md),
+          const BatshShimmerBox(
+            width: 44,
+            height: 44,
+            borderRadius: BatshRadius.brMd,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// A small content-shaped footer used while the next page is being fetched.
+/// It avoids a spinner that visually disconnects from the list above it.
+class BatshPaginationSkeleton extends StatelessWidget {
+  const BatshPaginationSkeleton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return BatshSkeletonRegion(
+      label: context.l10n.loadingMore,
+      child: const Padding(
+        padding: EdgeInsets.symmetric(vertical: BatshSpacing.md),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            BatshShimmerBox(width: 56, height: 10),
+            SizedBox(width: BatshSpacing.sm),
+            BatshShimmerBox(
+              width: 28,
+              height: 28,
+              borderRadius: BatshRadius.brFull,
+            ),
+            SizedBox(width: BatshSpacing.sm),
+            BatshShimmerBox(width: 72, height: 10),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -52,21 +181,25 @@ class BatshListSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final reduceMotion = MediaQuery.disableAnimationsOf(context);
     return ListView.separated(
       padding: const EdgeInsets.all(BatshSpacing.gutter),
       physics: const NeverScrollableScrollPhysics(),
       shrinkWrap: true,
       itemCount: count,
       separatorBuilder: (_, _) => const SizedBox(height: BatshSpacing.md),
-      itemBuilder: (_, i) =>
-          BatshShimmerBox(
-            height: height,
-            borderRadius: BatshRadius.brLg,
-          ).animate().fadeIn(
-            duration: BatshMotion.normal,
-            delay: BatshMotion.staggerClamped(i),
-            curve: BatshMotion.easeOut,
-          ),
+      itemBuilder: (_, i) {
+        final item = BatshShimmerBox(
+          height: height,
+          borderRadius: BatshRadius.brLg,
+        );
+        if (reduceMotion) return item;
+        return item.animate().fadeIn(
+          duration: BatshMotion.normal,
+          delay: BatshMotion.staggerClamped(i),
+          curve: BatshMotion.easeOut,
+        );
+      },
     );
   }
 }

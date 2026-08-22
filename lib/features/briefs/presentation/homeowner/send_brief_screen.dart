@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,11 +8,13 @@ import 'package:go_router/go_router.dart';
 import 'package:batsh/core/l10n/l10n_extension.dart';
 import '../../../../core/models/draft_photo.dart';
 import '../../../../core/router/routes.dart';
+import '../../../../core/services/form_draft_store.dart';
 import '../../../../core/theme/batsh_motion.dart';
 import '../../../../core/theme/batsh_spacing.dart';
 import '../../../../core/theme/batsh_typography.dart';
 import '../../../../core/widgets/batsh_button.dart';
 import '../../../../core/widgets/batsh_chip.dart';
+import '../../../../core/widgets/batsh_draft_status.dart';
 import '../../../../core/widgets/batsh_loading.dart';
 import '../../../../core/widgets/batsh_scaffold.dart';
 import '../../../../core/widgets/batsh_text_field.dart';
@@ -43,11 +47,71 @@ class _SendBriefScreenState extends ConsumerState<SendBriefScreen> {
   bool _hydrated = false;
   bool _busy = false;
   String? _error;
+  Timer? _draftTimer;
+  bool _draftRestored = false;
+  bool _draftSaved = false;
+  late final String _draftKey;
+
+  @override
+  void initState() {
+    super.initState();
+    final userId = ref.read(currentSessionProvider)?.user.id ?? 'anonymous';
+    _draftKey = 'brief:direct:${widget.contractorId}:$userId';
+    _descCtrl.addListener(_scheduleDraftSave);
+    unawaited(_restoreDraft());
+  }
 
   @override
   void dispose() {
+    _draftTimer?.cancel();
+    unawaited(_persistDraft());
+    _descCtrl.removeListener(_scheduleDraftSave);
     _descCtrl.dispose();
     super.dispose();
+  }
+
+  void _scheduleDraftSave() {
+    _draftTimer?.cancel();
+    _draftTimer = Timer(const Duration(milliseconds: 450), () {
+      unawaited(_persistDraft(showStatus: true));
+    });
+  }
+
+  Future<void> _restoreDraft() async {
+    final draft = await FormDraftStore.read(_draftKey);
+    if (!mounted || draft == null || draft.isEmpty) return;
+    final apartmentName = draft['apartment_type'] as String?;
+    ApartmentType? restoredApartment;
+    for (final value in ApartmentType.values) {
+      if (value.name == apartmentName) restoredApartment = value;
+    }
+    setState(() {
+      _descCtrl.text = (draft['description'] as String?) ?? '';
+      _apartmentType = restoredApartment;
+      _city = draft['city'] as String?;
+      _district = draft['district'] as String?;
+      _hydrated = true;
+      _draftRestored = true;
+      _draftSaved = true;
+    });
+  }
+
+  Future<void> _persistDraft({bool showStatus = false}) async {
+    final hasContent =
+        _descCtrl.text.trim().isNotEmpty ||
+        _apartmentType != null ||
+        _city != null;
+    if (!hasContent) {
+      await FormDraftStore.clear(_draftKey);
+      return;
+    }
+    await FormDraftStore.write(_draftKey, {
+      'description': _descCtrl.text,
+      'apartment_type': _apartmentType?.name,
+      'city': _city,
+      'district': _district,
+    });
+    if (showStatus && mounted) setState(() => _draftSaved = true);
   }
 
   Future<void> _submit() async {
@@ -80,6 +144,8 @@ class _SendBriefScreenState extends ConsumerState<SendBriefScreen> {
             workDescription: desc,
             photos: _photos,
           );
+      if (!mounted) return;
+      await FormDraftStore.clear(_draftKey);
       if (!mounted) return;
       context.go(Routes.homeownerBriefSentPath(widget.contractorId));
     } catch (e) {
@@ -118,10 +184,18 @@ class _SendBriefScreenState extends ConsumerState<SendBriefScreen> {
           color: context.colorScheme.onSurfaceVariant,
         ),
       ),
+      if (_draftRestored || _draftSaved) ...[
+        const SizedBox(height: BatshSpacing.xs),
+        BatshDraftStatus(restored: _draftRestored),
+      ],
       const SizedBox(height: BatshSpacing.lg),
       _ApartmentTypeRow(
         selected: _apartmentType,
-        onSelect: (t) => setState(() => _apartmentType = t),
+        onSelect: (t) => setState(() {
+          _apartmentType = t;
+          _draftRestored = false;
+          _scheduleDraftSave();
+        }),
       ),
       const SizedBox(height: BatshSpacing.gutter),
       _CityRow(
@@ -129,6 +203,8 @@ class _SendBriefScreenState extends ConsumerState<SendBriefScreen> {
         onSelect: (c) => setState(() {
           _city = c;
           _district = null;
+          _draftRestored = false;
+          _scheduleDraftSave();
         }),
       ),
       const SizedBox(height: BatshSpacing.gutter),

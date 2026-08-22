@@ -7,6 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/media/media_storage.dart';
 import '../../../core/media/media_storage_provider.dart';
 import '../../../core/supabase/supabase_provider.dart';
+import '../../../core/utils/image_compression.dart';
 import '../../../core/utils/upload_policy.dart';
 import '../../onboarding/domain/onboarding_models.dart';
 
@@ -38,9 +39,9 @@ class HomeownerProfileRepository {
     }
     await _client.storage
         .from('avatars')
-        .upload(
+        .uploadBinary(
           path,
-          file,
+          await ImageCompression.prepare(await file.readAsBytes()),
           fileOptions: const FileOptions(
             upsert: true,
             contentType: 'image/jpeg',

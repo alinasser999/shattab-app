@@ -95,8 +95,11 @@ class _PhoneEntryScreenState extends ConsumerState<PhoneEntryScreen> {
     final state = ref.watch(otpControllerProvider);
     final isMobile = context.isMobile;
     // Suppress the intro once seen (or when the OS asks for reduced motion).
+    // Flutter Web on mobile can recompose the canvas while Safari opens its
+    // keyboard. Avoid the delayed blur/scale choreography there: the form
+    // must be present and stable before the first keystroke.
     final disableMotion =
-        MediaQuery.disableAnimationsOf(context) || _heroIntroSeen;
+        kIsWeb || MediaQuery.disableAnimationsOf(context) || _heroIntroSeen;
     final isWide = MediaQuery.of(context).size.width > 480;
 
     return Scaffold(

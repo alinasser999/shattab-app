@@ -220,7 +220,7 @@ class _ProfileCompletion {
       listing.specialties.isNotEmpty,
       listing.serviceAreas.isNotEmpty,
       listing.bio?.trim().isNotEmpty ?? false,
-      listing.yearsExperience != null,
+      listing.yearsExperience != null && listing.yearsExperience! > 0,
       portfolioCount > 0,
       listing.verified,
     ];
@@ -556,36 +556,38 @@ class _ContractorStatsRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final rating = listing.rating;
+    final tiles = <Widget>[
+      if (rating != null)
+        _ContractorProfileStat(
+          value: rating.toStringAsFixed(1),
+          label: context.l10n.ratingCaption,
+          icon: Icons.star_border_rounded,
+          color: context.colorScheme.warning,
+        ),
+      if (listing.projectsCompleted > 0)
+        _ContractorProfileStat(
+          value: '${listing.projectsCompleted}',
+          label: context.l10n.projects,
+          icon: Icons.work_outline_rounded,
+        ),
+      if (listing.yearsExperience != null && listing.yearsExperience! > 0)
+        _ContractorProfileStat(
+          value: '${listing.yearsExperience}',
+          label: context.l10n.experienceYears,
+          icon: Icons.schedule_outlined,
+        ),
+    ];
+
+    if (tiles.isEmpty) return const SizedBox.shrink();
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: BatshSpacing.sm),
       child: Row(
         children: [
-          Expanded(
-            child: _ContractorProfileStat(
-              value: rating == null ? '—' : rating.toStringAsFixed(1),
-              label: context.l10n.ratingCaption,
-              icon: Icons.star_border_rounded,
-              color: context.colorScheme.warning,
-            ),
-          ),
-          _ContractorStatDivider(),
-          Expanded(
-            child: _ContractorProfileStat(
-              value: '${listing.projectsCompleted}',
-              label: context.l10n.projects,
-              icon: Icons.work_outline_rounded,
-            ),
-          ),
-          _ContractorStatDivider(),
-          Expanded(
-            child: _ContractorProfileStat(
-              value: listing.yearsExperience == null
-                  ? '—'
-                  : '${listing.yearsExperience}',
-              label: context.l10n.experienceYears,
-              icon: Icons.schedule_outlined,
-            ),
-          ),
+          for (var i = 0; i < tiles.length; i++) ...[
+            if (i > 0) _ContractorStatDivider(),
+            Expanded(child: tiles[i]),
+          ],
         ],
       ),
     );
@@ -1155,13 +1157,19 @@ class _PerformancePainter extends CustomPainter {
       color != oldDelegate.color || accent != oldDelegate.accent;
 }
 
-class _ContractorProCard extends StatelessWidget {
+class _ContractorProCard extends ConsumerWidget {
   const _ContractorProCard({required this.listing});
 
   final ContractorListing listing;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final billing = ref.watch(billingStateProvider).asData?.value;
+    final placementStatus = billing?.isSponsoredActive == true
+        ? context.l10n.specialProActive
+        : billing?.hasPendingSponsoredRequest == true
+        ? context.l10n.specialProPending
+        : null;
     final title = listing.isPro
         ? context.l10n.proActiveLine
         : context.l10n.proCardTitle;
@@ -1224,6 +1232,18 @@ class _ContractorProCard extends StatelessWidget {
                                 ),
                               ),
                             ),
+                            if (placementStatus != null) ...[
+                              const SizedBox(height: BatshSpacing.xxs),
+                              Text(
+                                placementStatus,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: BatshTypography.labelSm.copyWith(
+                                  color: context.colorScheme.tertiaryContainer,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ],
                             const SizedBox(height: BatshSpacing.xs),
                             Container(
                               padding: const EdgeInsets.symmetric(

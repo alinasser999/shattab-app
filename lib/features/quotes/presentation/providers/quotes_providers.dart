@@ -46,6 +46,9 @@ Future<List<({Quote quote, Brief? brief})>> myQuotesWithBriefs(Ref ref) =>
 // tear the controller down mid-await and its next ref use would throw.
 @Riverpod(keepAlive: true)
 class QuotesController extends _$QuotesController {
+  final Set<String> _submittingBriefs = <String>{};
+  final Set<String> _statusChanges = <String>{};
+
   @override
   void build() {}
 
@@ -56,27 +59,32 @@ class QuotesController extends _$QuotesController {
     String? durationText,
     required String note,
   }) async {
-    await ref
-        .read(quotesRepositoryProvider)
-        .submit(
-          briefId: briefId,
-          priceMin: priceMin,
-          priceMax: priceMax,
-          durationText: durationText,
-          note: note,
-        );
-    unawaited(
-      AppAnalytics.track(
-        'quote_submitted',
-        properties: {'has_price': priceMin != null || priceMax != null},
-      ),
-    );
-    ref.invalidate(myQuoteForBriefProvider(briefId));
-    ref.invalidate(quotesForBriefProvider(briefId));
-    ref.invalidate(myQuotesProvider);
-    ref.invalidate(myQuotesWithBriefsProvider);
-    // Sending or withdrawing a quote moves the free-quota counter.
-    ref.invalidate(myQuoteQuotaProvider);
+    if (!_submittingBriefs.add(briefId)) return;
+    try {
+      await ref
+          .read(quotesRepositoryProvider)
+          .submit(
+            briefId: briefId,
+            priceMin: priceMin,
+            priceMax: priceMax,
+            durationText: durationText,
+            note: note,
+          );
+      unawaited(
+        AppAnalytics.track(
+          'quote_submitted',
+          properties: {'has_price': priceMin != null || priceMax != null},
+        ),
+      );
+      ref.invalidate(myQuoteForBriefProvider(briefId));
+      ref.invalidate(quotesForBriefProvider(briefId));
+      ref.invalidate(myQuotesProvider);
+      ref.invalidate(myQuotesWithBriefsProvider);
+      // Sending or withdrawing a quote moves the free-quota counter.
+      ref.invalidate(myQuoteQuotaProvider);
+    } finally {
+      _submittingBriefs.remove(briefId);
+    }
   }
 
   Future<void> setStatus({
@@ -84,18 +92,23 @@ class QuotesController extends _$QuotesController {
     required String briefId,
     required QuoteStatus status,
   }) async {
-    await ref.read(quotesRepositoryProvider).setStatus(quoteId, status);
-    unawaited(
-      AppAnalytics.track(
-        'quote_status_changed',
-        properties: {'status': status.name},
-      ),
-    );
-    ref.invalidate(quotesForBriefProvider(briefId));
-    ref.invalidate(myQuoteForBriefProvider(briefId));
-    ref.invalidate(myQuotesProvider);
-    ref.invalidate(myQuotesWithBriefsProvider);
-    // Sending or withdrawing a quote moves the free-quota counter.
-    ref.invalidate(myQuoteQuotaProvider);
+    if (!_statusChanges.add(quoteId)) return;
+    try {
+      await ref.read(quotesRepositoryProvider).setStatus(quoteId, status);
+      unawaited(
+        AppAnalytics.track(
+          'quote_status_changed',
+          properties: {'status': status.name},
+        ),
+      );
+      ref.invalidate(quotesForBriefProvider(briefId));
+      ref.invalidate(myQuoteForBriefProvider(briefId));
+      ref.invalidate(myQuotesProvider);
+      ref.invalidate(myQuotesWithBriefsProvider);
+      // Sending or withdrawing a quote moves the free-quota counter.
+      ref.invalidate(myQuoteQuotaProvider);
+    } finally {
+      _statusChanges.remove(quoteId);
+    }
   }
 }

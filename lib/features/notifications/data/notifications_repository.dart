@@ -11,6 +11,7 @@ class NotificationsRepository {
   NotificationsRepository(this._client);
 
   final SupabaseClient _client;
+  static const _requestTimeout = Duration(seconds: 15);
 
   Future<List<AppNotification>> fetchMine({int limit = 50}) async {
     final userId = _client.auth.currentUser?.id;
@@ -21,7 +22,8 @@ class NotificationsRepository {
         .select()
         .eq('recipient_id', userId)
         .order('created_at', ascending: false)
-        .limit(limit);
+        .limit(limit)
+        .timeout(_requestTimeout);
     return (rows as List)
         .map((row) => AppNotification.fromJson(row as Map<String, dynamic>))
         .toList();
@@ -58,7 +60,8 @@ class NotificationsRepository {
         .from('notifications')
         .update({'read_at': DateTime.now().toUtc().toIso8601String()})
         .eq('id', id)
-        .eq('recipient_id', userId);
+        .eq('recipient_id', userId)
+        .timeout(_requestTimeout);
   }
 
   Future<void> markAllRead() async {
@@ -68,7 +71,8 @@ class NotificationsRepository {
         .from('notifications')
         .update({'read_at': DateTime.now().toUtc().toIso8601String()})
         .eq('recipient_id', userId)
-        .isFilter('read_at', null);
+        .isFilter('read_at', null)
+        .timeout(_requestTimeout);
   }
 }
 

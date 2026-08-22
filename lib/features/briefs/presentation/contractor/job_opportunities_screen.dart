@@ -17,6 +17,7 @@ import '../../../../core/utils/error_mapper.dart';
 import '../../../../core/utils/time_format.dart';
 import '../../../../core/widgets/avatar_with_initials.dart';
 import '../../../../core/widgets/batsh_error.dart';
+import '../../../../core/widgets/batsh_pattern_background.dart';
 import '../../../../core/widgets/batsh_search_bar.dart';
 import '../../../../core/widgets/batsh_shimmer.dart';
 import '../../../../core/widgets/batsh_snack.dart';
@@ -147,6 +148,9 @@ class _JobOpportunitiesScreenState
         child: Stack(
           fit: StackFit.expand,
           children: [
+            const Positioned.fill(
+              child: BatshPatternBackground(child: SizedBox.expand()),
+            ),
             const _OpportunitiesHeroBackground(),
             opportunities.when(
               loading: () => const _OpportunityFeedSkeleton(),
@@ -214,24 +218,6 @@ class _JobOpportunitiesScreenState
                         ),
                         SliverToBoxAdapter(
                           child: _PageWidth(
-                            child: _OpportunityToolbar(
-                              controller: _searchController,
-                              filters: filters,
-                              onChanged: _onQueryChanged,
-                              onClearSearch: _clearQuery,
-                              onOpenFilters: () => _openFilters(
-                                items,
-                                contractor,
-                                appliedIds,
-                                filters,
-                              ),
-                              onFocusChanged: _setFocus,
-                              onSortChanged: _setSort,
-                            ),
-                          ),
-                        ),
-                        SliverToBoxAdapter(
-                          child: _PageWidth(
                             child: Padding(
                               padding: const EdgeInsets.fromLTRB(
                                 BatshSpacing.md,
@@ -251,18 +237,7 @@ class _JobOpportunitiesScreenState
                             ),
                           ),
                         ),
-                        if (ordered.isEmpty)
-                          SliverFillRemaining(
-                            hasScrollBody: false,
-                            child: _EmptyOpportunities(
-                              hasQuery: query.isNotEmpty,
-                              hasFilters: hasFilters,
-                              onClear: _clearAllFilters,
-                              onEditPreferences: () =>
-                                  context.push(Routes.contractorEditProfile),
-                            ),
-                          )
-                        else ...[
+                        if (ordered.isNotEmpty) ...[
                           SliverToBoxAdapter(
                             child: _PageWidth(
                               child: _SectionHeading(
@@ -295,11 +270,47 @@ class _JobOpportunitiesScreenState
                                     ordered.first.id,
                                   ),
                                   onTap: () => _openDetails(ordered.first.id),
-                                  onSave: () => _toggleSaved(ordered.first.id),
+                                  onSave: () =>
+                                      unawaited(_toggleSaved(ordered.first.id)),
                                 ),
                               ),
                             ),
                           ),
+                        ],
+                        SliverToBoxAdapter(
+                          child: _PageWidth(
+                            child: Padding(
+                              padding: EdgeInsets.only(
+                                top: ordered.isEmpty ? 0 : BatshSpacing.gutter,
+                              ),
+                              child: _OpportunityToolbar(
+                                controller: _searchController,
+                                filters: filters,
+                                onChanged: _onQueryChanged,
+                                onClearSearch: _clearQuery,
+                                onOpenFilters: () => _openFilters(
+                                  items,
+                                  contractor,
+                                  appliedIds,
+                                  filters,
+                                ),
+                                onSortChanged: _setSort,
+                              ),
+                            ),
+                          ),
+                        ),
+                        if (ordered.isEmpty)
+                          SliverFillRemaining(
+                            hasScrollBody: false,
+                            child: _EmptyOpportunities(
+                              hasQuery: query.isNotEmpty,
+                              hasFilters: hasFilters,
+                              onClear: _clearAllFilters,
+                              onEditPreferences: () =>
+                                  context.push(Routes.contractorEditProfile),
+                            ),
+                          )
+                        else ...[
                           if (ordered.length > 1)
                             SliverToBoxAdapter(
                               child: _PageWidth(
@@ -329,7 +340,8 @@ class _JobOpportunitiesScreenState
                                     brief.id,
                                   ),
                                   onTap: () => _openDetails(brief.id),
-                                  onSave: () => _toggleSaved(brief.id),
+                                  onSave: () =>
+                                      unawaited(_toggleSaved(brief.id)),
                                 );
                                 final padded = _PageWidth(
                                   child: Padding(
@@ -405,16 +417,22 @@ class _JobOpportunitiesScreenState
     context.push(Routes.contractorPostDetailPath(briefId));
   }
 
-  void _toggleSaved(String briefId) {
-    final saved = ref
-        .read(opportunityInteractionsProvider.notifier)
-        .toggleSaved(briefId);
-    BatshSnack.success(
-      context,
-      saved
-          ? context.l10n.opportunitySaved
-          : context.l10n.opportunityRemovedFromSaved,
-    );
+  Future<void> _toggleSaved(String briefId) async {
+    try {
+      final saved = await ref
+          .read(opportunityInteractionsProvider.notifier)
+          .toggleSaved(briefId);
+      if (!mounted) return;
+      BatshSnack.success(
+        context,
+        saved
+            ? context.l10n.opportunitySaved
+            : context.l10n.opportunityRemovedFromSaved,
+      );
+    } catch (error) {
+      if (!mounted) return;
+      BatshSnack.error(context, ErrorMapper.map(error));
+    }
   }
 
   String _greeting(BuildContext context) {
@@ -646,7 +664,6 @@ class _OpportunityToolbar extends StatelessWidget {
     required this.onChanged,
     required this.onClearSearch,
     required this.onOpenFilters,
-    required this.onFocusChanged,
     required this.onSortChanged,
   });
 
@@ -655,7 +672,6 @@ class _OpportunityToolbar extends StatelessWidget {
   final ValueChanged<String> onChanged;
   final VoidCallback onClearSearch;
   final VoidCallback onOpenFilters;
-  final ValueChanged<OpportunityFocus> onFocusChanged;
   final ValueChanged<OpportunitySort> onSortChanged;
 
   @override
@@ -706,34 +722,7 @@ class _OpportunityToolbar extends StatelessWidget {
                   ),
                 ),
               ),
-            ],
-          ),
-          const SizedBox(height: BatshSpacing.sm),
-          Row(
-            children: [
-              Expanded(
-                child: Wrap(
-                  spacing: BatshSpacing.xs,
-                  runSpacing: BatshSpacing.xs,
-                  children: [
-                    _FocusChip(
-                      label: context.l10n.filterAll,
-                      selected: filters.focus == OpportunityFocus.all,
-                      onSelected: () => onFocusChanged(OpportunityFocus.all),
-                    ),
-                    _FocusChip(
-                      label: context.l10n.filterNearYou,
-                      selected: filters.focus == OpportunityFocus.nearby,
-                      onSelected: () => onFocusChanged(OpportunityFocus.nearby),
-                    ),
-                    _FocusChip(
-                      label: context.l10n.filterFresh,
-                      selected: filters.focus == OpportunityFocus.fresh,
-                      onSelected: () => onFocusChanged(OpportunityFocus.fresh),
-                    ),
-                  ],
-                ),
-              ),
+              const SizedBox(width: BatshSpacing.xs),
               PopupMenuButton<OpportunitySort>(
                 tooltip: context.l10n.opportunitySortTitle,
                 onSelected: onSortChanged,
@@ -771,45 +760,6 @@ class _OpportunityToolbar extends StatelessWidget {
             ],
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _FocusChip extends StatelessWidget {
-  const _FocusChip({
-    required this.label,
-    required this.selected,
-    required this.onSelected,
-  });
-
-  final String label;
-  final bool selected;
-  final VoidCallback onSelected;
-
-  @override
-  Widget build(BuildContext context) {
-    return ChoiceChip(
-      label: Text(label),
-      selected: selected,
-      onSelected: (_) => onSelected(),
-      showCheckmark: false,
-      materialTapTargetSize: MaterialTapTargetSize.padded,
-      labelStyle: BatshTypography.labelSm.copyWith(
-        color: selected
-            ? context.colorScheme.onPrimary
-            : context.colorScheme.onSurface,
-        fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-      ),
-      selectedColor: context.colorScheme.primary,
-      backgroundColor: context.colorScheme.surfaceContainerLowest,
-      side: BorderSide(
-        color: selected
-            ? context.colorScheme.primary
-            : context.colorScheme.outlineVariant,
-      ),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(BatshRadius.md),
       ),
     );
   }
@@ -1103,14 +1053,7 @@ class _LoadMoreProgress extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Semantics(
-      liveRegion: true,
-      label: context.l10n.loadMoreProgress,
-      child: const Padding(
-        padding: EdgeInsets.symmetric(vertical: BatshSpacing.md),
-        child: Center(child: CircularProgressIndicator.adaptive()),
-      ),
-    );
+    return const BatshPaginationSkeleton();
   }
 }
 

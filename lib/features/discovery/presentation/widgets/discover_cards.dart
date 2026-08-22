@@ -8,6 +8,7 @@ import '../../../../core/theme/batsh_shadows.dart';
 import '../../../../core/theme/batsh_spacing.dart';
 import '../../../../core/theme/batsh_typography.dart';
 import '../../../../core/theme/theme_extension.dart';
+import '../../../../core/utils/image_url.dart';
 import '../../../../core/widgets/avatar_with_initials.dart';
 import '../../../../core/widgets/batsh_pressable.dart';
 import '../../domain/contractor_listing.dart';
@@ -30,6 +31,7 @@ class NearbyProfessionalCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final name = _professionalName(listing);
     final area = listing.serviceAreas.firstOrNull ?? '';
+    final hasRealCover = isDisplayableImageUrl(listing.coverPhotoUrl);
     return SizedBox(
       width: width,
       child: BatshPressable(
@@ -45,9 +47,22 @@ class NearbyProfessionalCard extends StatelessWidget {
               children: [
                 SizedBox(
                   width: 104,
-                  child: MockupImage(
-                    url: listing.coverPhotoUrl ?? mockupPortfolioImages[1],
-                    memCacheWidth: 360,
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      MockupImage(
+                        url: hasRealCover
+                            ? listing.coverPhotoUrl
+                            : mockupPortfolioImages[1],
+                        memCacheWidth: 360,
+                      ),
+                      if (!hasRealCover)
+                        const PositionedDirectional(
+                          top: BatshSpacing.xs,
+                          start: BatshSpacing.xs,
+                          child: MockupSampleBadge(),
+                        ),
+                    ],
                   ),
                 ),
                 Expanded(

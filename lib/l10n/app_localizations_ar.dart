@@ -140,6 +140,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get confirmPasswordHint => 'أكّد كلمة السر';
 
   @override
+  String get signupNeedsConfirmation =>
+      'اتعمل الحساب. أكّد رقمك من الرسالة وبعدين سجّل دخولك.';
+
+  @override
   String get signInAction => 'دخول';
 
   @override
@@ -663,6 +667,20 @@ class AppLocalizationsAr extends AppLocalizations {
   String get communityPostsLoadError => 'مش قادرين نحمّل منشوراته دلوقتي';
 
   @override
+  String get communityFeedErrorTitle => 'مش قادرين نجيب منشورات المجتمع دلوقتي';
+
+  @override
+  String get communityFeedErrorMessage =>
+      'حصلت مشكلة مؤقتة في تحميل المنشورات. جرّب تاني بعد لحظات.';
+
+  @override
+  String get communityFeedGuestErrorTitle => 'سجّل دخولك عشان تفتح المجتمع';
+
+  @override
+  String get communityFeedGuestErrorMessage =>
+      'تسجيل الدخول بيخليك تشوف المنشورات وتتفاعل مع أهل الخبرة وتحفظ اللي يعجبك.';
+
+  @override
   String get communityClearFilter => 'عرض كل المنشورات';
 
   @override
@@ -967,6 +985,101 @@ class AppLocalizationsAr extends AppLocalizations {
   String get proActiveLine => 'اشتراك برو مفعّل';
 
   @override
+  String get sponsoredProfessionals => 'محترفين مميزين';
+
+  @override
+  String get paidPlacementLabel => 'إعلان مدفوع';
+
+  @override
+  String get specialProTitle => 'ظهور مميز';
+
+  @override
+  String get specialProSubtitle =>
+      'خلّي ملفك يظهر في بداية النتائج المناسبة ليك';
+
+  @override
+  String get specialProValueLine =>
+      'مساحة واضحة لشغلك، من غير ما نخلط الإعلان بالثقة';
+
+  @override
+  String get specialProBenefit =>
+      'ظهور مميز لمدة ٧ أيام في النتائج المناسبة لمجالك ومناطق شغلك';
+
+  @override
+  String get specialProFairness =>
+      'التقييم والتوثيق والأعمال المنجزة تفضل مستقلة عن الدفع';
+
+  @override
+  String get specialProPriceLine => '١٩٩ جنيه لمدة ٧ أيام';
+
+  @override
+  String get specialProCta => 'اطلب الظهور المميز';
+
+  @override
+  String get specialProActive => 'الظهور المميز شغال';
+
+  @override
+  String specialProExpiresOn(String date) {
+    return 'الظهور المميز مستمر لحد $date';
+  }
+
+  @override
+  String get specialProPending => 'طلب الظهور قيد المراجعة';
+
+  @override
+  String get specialProPendingBody =>
+      'هنراجع التحويل ونفعّل الظهور بعد الموافقة.';
+
+  @override
+  String get specialProActivationNote =>
+      'بعد رفع إيصال التحويل، فريقنا يراجع الطلب يدويًا.';
+
+  @override
+  String get specialProManage => 'إدارة الظهور المميز';
+
+  @override
+  String get specialProNoGuarantee =>
+      'الظهور يساعد العملاء يلاقوك، لكنه لا يضمن طلبات أو تقييمات.';
+
+  @override
+  String get specialProScreenTitle => 'ظهورك المميز';
+
+  @override
+  String get paymentWeekly => 'أسبوعي';
+
+  @override
+  String get paySpecialPlacement => 'اطلب الظهور المميز';
+
+  @override
+  String get paySpecialPlacementSub =>
+      '١٩٩ جنيه لمدة ٧ أيام بعد مراجعة التحويل';
+
+  @override
+  String get specialPlacementSubmittedTitle => 'طلب الظهور اتبعت';
+
+  @override
+  String get specialPlacementSubmittedBody =>
+      'هنراجع التحويل ونفعّل الظهور بعد الموافقة.';
+
+  @override
+  String get specialPlacementDone => 'رجوع';
+
+  @override
+  String get specialPlacementAmountLabel => 'قيمة الظهور المميز';
+
+  @override
+  String get specialPlacementUploadLabel => 'ارفع إيصال التحويل';
+
+  @override
+  String get specialPlacementReferenceLabel => 'رقم العملية (اختياري)';
+
+  @override
+  String get specialPlacementSubmit => 'إرسال الطلب';
+
+  @override
+  String get specialPlacementTitle => 'إرسال طلب ظهور مميز';
+
+  @override
   String get tierGold => 'ذهبي';
 
   @override
@@ -986,6 +1099,13 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get verifiedIdentity => 'هوية موثّقة';
+
+  @override
+  String get verifiedIdentityTitle => 'إيه معنى موثّق؟';
+
+  @override
+  String get verifiedIdentityBody =>
+      'فريق شطّب راجع مستندات الهوية اللي قدمها المحترف. العلامة دي لا تعني ضمان نتيجة كل مشروع أو إن كل أعماله اتراجعت.';
 
   @override
   String get verifiedBusiness => 'نشاط تجاري موثّق';
@@ -1424,13 +1544,39 @@ class AppLocalizationsAr extends AppLocalizations {
   String get searchHint => 'بتدور على مين أو محتاج تعمل إيه؟';
 
   @override
-  String get discoverHeroKicker => 'محترفين موثوقين، وشغل واضح';
+  String get discoverHeroKicker => 'اختار الصح لبيتك';
 
   @override
-  String get discoverHeroTitle => 'بيتك يستاهل حد تطمنله';
+  String get discoverHeroTitle => 'المحترفين';
 
   @override
-  String get discoverHeroSubtitle => 'اختار محترف شغله واضح وتقييماته حقيقية.';
+  String get discoverHeroSubtitle => 'محترفين موثوقين وشغل واضح';
+
+  @override
+  String get professionalsDirectorySubtitle => 'اختار محترف مناسب لمشروعك';
+
+  @override
+  String get professionalsDirectoryHint => 'محترفين موثوقين قريبين منك';
+
+  @override
+  String professionalsAvailable(int count) {
+    return '$count محترف متاح ليك';
+  }
+
+  @override
+  String get trustedProfessionals => 'محترفين موثوقين';
+
+  @override
+  String get trustedProfessionalsHint => 'بناءً على تقييمات وشغل حقيقي';
+
+  @override
+  String get changeBrowseLocationShort => 'تغيير المكان';
+
+  @override
+  String get discoverPageTitle => 'المحترفين';
+
+  @override
+  String get discoverSearchHint => 'بتدور على مين؟';
 
   @override
   String get featuredProfessional => 'محترف مميز';
@@ -1479,6 +1625,9 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get browseByCategory => 'تصفّح بالتخصص';
+
+  @override
+  String get homeServicesTitle => 'خدماتنا';
 
   @override
   String get more => 'المزيد';
@@ -1632,6 +1781,76 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get briefDetailTitle => 'تفاصيل الطلب';
+
+  @override
+  String get briefLifecycleTitle => 'رحلة طلبك';
+
+  @override
+  String get briefLifecycleRequestPosted => 'تم نشر الطلب';
+
+  @override
+  String get briefLifecycleRequestPostedBody =>
+      'تفاصيل طلبك اتسجلت وتقدر تتابع تحديثاته هنا.';
+
+  @override
+  String get briefLifecycleWaitingForQuotes => 'في انتظار العروض';
+
+  @override
+  String get briefLifecycleWaitingForQuotesBody =>
+      'العروض هتظهر هنا أول ما يوصل عرض جديد.';
+
+  @override
+  String get briefLifecycleQuotesReceived => 'وصلت عروض';
+
+  @override
+  String get briefLifecycleQuotesReceivedBody =>
+      'راجع العروض واختار المحترف الأنسب ليك.';
+
+  @override
+  String get briefLifecycleQuotesLoading => 'بنحدّث حالة العروض...';
+
+  @override
+  String get briefLifecycleQuotesError =>
+      'مش قادرين نحدّث العروض دلوقتي. افتح قسم العروض وحاول تاني.';
+
+  @override
+  String get briefLifecycleWorkStarted => 'بدأ التنفيذ';
+
+  @override
+  String get briefLifecycleWorkStartedBody =>
+      'اتقبل العرض، والخطوة الجاية متابعة التنفيذ.';
+
+  @override
+  String get briefLifecycleConfirmCompletion => 'أكد اكتمال الشغل';
+
+  @override
+  String get briefLifecycleConfirmCompletionBody =>
+      'راجع النتيجة وأكد إن الشغل خلص.';
+
+  @override
+  String get briefLifecycleCompleted => 'اكتمل الشغل';
+
+  @override
+  String get briefLifecycleCompletedBody => 'تقدر تسيب تقييم موثّق عن تجربتك.';
+
+  @override
+  String get briefLifecycleCancelled => 'تم إلغاء الطلب';
+
+  @override
+  String get briefLifecycleCancelledBody =>
+      'الطلب ده مش متاح لاستقبال عروض جديدة.';
+
+  @override
+  String get briefNextStepQuotes => 'راجع العروض واختار المحترف';
+
+  @override
+  String get briefNextStepFollowWork => 'تابع تنفيذ الشغل';
+
+  @override
+  String get briefNextStepConfirmWork => 'راجع وأكد اكتمال الشغل';
+
+  @override
+  String get briefNextStepReview => 'شارك تقييمك الموثّق';
 
   @override
   String get cancelBriefTitle => 'إلغاء الطلب؟';
@@ -2942,6 +3161,11 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
+  String opportunityCompactSummary(int count, int fresh, int area) {
+    return '$count مناسبة · $fresh جديدة النهارده · $area في مناطق شغلك';
+  }
+
+  @override
   String get projectPhotoLabel => 'صورة مشروع';
 
   @override
@@ -3426,4 +3650,264 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get notificationCommentLikedBody => 'حد عمل إعجاب على تعليقك.';
+
+  @override
+  String get homeHeroTitleLead => 'بيتك';
+
+  @override
+  String get homeHeroTitleRest => 'يستاهل حد يتقنه';
+
+  @override
+  String get homeHeroSubtitle => 'محترفين موثوقين، قريبين من بيتك';
+
+  @override
+  String get homeSearchHint => 'ابحث عن خدمة أو محترف...';
+
+  @override
+  String get homeQuickStartTitle => 'ابدأ طلبك بسرعة';
+
+  @override
+  String get homeQuickNearbyTitle => 'محترفون قريبون منك';
+
+  @override
+  String get homeQuickNearbySubtitle => 'تواصل أسهل وأسرع';
+
+  @override
+  String get homeQuickRequestsTitle => 'تابع طلباتك';
+
+  @override
+  String get homeQuickRequestsSubtitle => 'كلها في مكان واحد';
+
+  @override
+  String get homeQuickQuoteTitle => 'اطلب عرض سعر';
+
+  @override
+  String get homeQuickQuoteSubtitle => 'مجانًا وسريعة';
+
+  @override
+  String get homeActiveRequestTitle => 'طلبك الحالي';
+
+  @override
+  String get homeActiveRequestFallback => 'طلبك جاهز للمتابعة مع المحترفين.';
+
+  @override
+  String get homeViewProfile => 'عرض الملف';
+
+  @override
+  String get homeContactWhatsApp => 'تواصل واتساب';
+
+  @override
+  String get homeStartTitle => 'ابدأ من هنا';
+
+  @override
+  String get homeStartDiscoverTitle => 'اكتشف المحترفين';
+
+  @override
+  String get homeStartDiscoverSubtitle => 'اعرف مين يناسب بيتك';
+
+  @override
+  String get homeStartQuoteTitle => 'اطلب عرض سعر';
+
+  @override
+  String get homeStartQuoteSubtitle => 'احكي لنا عن اللي محتاجه';
+
+  @override
+  String get homeStartWorkTitle => 'شوف شغل اتعمل';
+
+  @override
+  String get homeStartWorkSubtitle => 'مشاريع حقيقية قبل وبعد';
+
+  @override
+  String get homeStartCommunityTitle => 'اسأل أهل الخبرة';
+
+  @override
+  String get homeStartCommunitySubtitle => 'تجارب ونصايح من مجتمعنا';
+
+  @override
+  String get homeProcessTitle => 'من الفكرة للتنفيذ';
+
+  @override
+  String get homeProcessStepOne => 'احكي عن احتياجك';
+
+  @override
+  String get homeProcessStepOneBody => 'قول لنا عايز تشطب إيه';
+
+  @override
+  String get homeProcessStepTwo => 'اختار المناسب ليك';
+
+  @override
+  String get homeProcessStepTwoBody => 'شوف شغل حقيقي وتواصل';
+
+  @override
+  String get homeProcessStepThree => 'ابدأ بثقة';
+
+  @override
+  String get homeProcessStepThreeBody => 'تابع طلبك خطوة بخطوة';
+
+  @override
+  String get homeCommunityInviteTitle => 'اسأل أهل الخبرة';
+
+  @override
+  String get homeCommunityInviteBody =>
+      'شوف تجارب حقيقية من ناس بدأت من نفس المكان.';
+
+  @override
+  String get homeClosingCtaTitle => 'جاهز تبدأ؟';
+
+  @override
+  String get homeClosingCtaBody => 'احكي لنا عن بيتك وخلي الاختيار أسهل.';
+
+  @override
+  String get homeClosingCtaAction => 'ابدأ طلبك';
+
+  @override
+  String get profileVerifiedStat => 'موثوق ومعتمد';
+
+  @override
+  String get profileAboutCompany => 'نبذة عن الشركة';
+
+  @override
+  String get profileShowMore => 'عرض المزيد';
+
+  @override
+  String get profileShowLess => 'عرض أقل';
+
+  @override
+  String get profileServicesTitle => 'خدماتنا';
+
+  @override
+  String get profileHighlightsTitle => 'أبرز الأعمال';
+
+  @override
+  String get profileProjectsTitle => 'مشاريع منفذة';
+
+  @override
+  String get profileTabAbout => 'نبذة';
+
+  @override
+  String get profileTabWork => 'أعمالنا';
+
+  @override
+  String get profileTabReviews => 'التقييمات';
+
+  @override
+  String get profileClosingTitle => 'جاهز نبدأ مشروعك؟';
+
+  @override
+  String get profileClosingBody => 'تواصل معه الآن واحصل على عرض سعر مجاني.';
+
+  @override
+  String get profileClosingAction => 'اطلب عرض سعر الآن';
+
+  @override
+  String get profileDirectCall => 'اتصال مباشر';
+
+  @override
+  String get profileFilterAll => 'الكل';
+
+  @override
+  String get homeLiveActivityTitle => 'آخر تحديثات طلبك';
+
+  @override
+  String get homeLiveLatestActivity => 'آخر نشاط';
+
+  @override
+  String get homeLiveEmptyTitle => 'لسه مابدأتش';
+
+  @override
+  String get homeLiveEmptyMessage =>
+      'ابدأ بطلب سريع، وخلي المحترفين يشوفوا احتياجك.';
+
+  @override
+  String get homeLiveStartAction => 'ابدأ طلبك';
+
+  @override
+  String get homeLiveOpenRequests => 'شوف طلباتك';
+
+  @override
+  String get homeLiveOpenNotifications => 'شوف الإشعارات';
+
+  @override
+  String get homeLiveErrorTitle => 'مش قادرين نجيب آخر تحديث';
+
+  @override
+  String get homeLiveAwaitingOffers => 'مستنيين العروض';
+
+  @override
+  String get homeLiveWorkInProgress => 'الشغل شغال';
+
+  @override
+  String get homeLiveReviewCompletion => 'راجع الانتهاء';
+
+  @override
+  String get homeLiveCompleted => 'المشروع اكتمل';
+
+  @override
+  String get homeLiveRequestPosted => 'اتنشر';
+
+  @override
+  String homeLiveUnreadCount(int count) {
+    return '$count إشعار';
+  }
+
+  @override
+  String get quoteSentTitle => 'عرضك اتبعت';
+
+  @override
+  String get quoteSentMessage =>
+      'صاحب الطلب استلم تفاصيل عرضك. هتوصلك أي تحديثات هنا.';
+
+  @override
+  String get draftRestored => 'رجعنا لك المسودة اللي حفظتها';
+
+  @override
+  String get draftSavedAutomatically => 'اتحفظ تلقائياً على الجهاز ده';
+
+  @override
+  String get trustEvidenceTitle => 'علامات واضحة تساعدك تختار';
+
+  @override
+  String get trustEvidenceBody =>
+      'راجع الأدلة اللي نقدر نثبتها قبل ما تبدأ كلامك مع المحترف.';
+
+  @override
+  String get trustNewProfessional => 'محترف جديد على شطب';
+
+  @override
+  String get trustSafetyBody =>
+      'لو حاجة مش واضحة، راجع التفاصيل أو كلّم شطب قبل ما تاخد قرار.';
+
+  @override
+  String get profileSafetyTitle => 'اختيارك على وضوح';
+
+  @override
+  String get profileSafetyBody =>
+      'تقدر تبلغ عن الحساب أو تحظره، وفريق شطب موجود لو احتجت مساعدة.';
+
+  @override
+  String get reportProfileAction => 'إبلاغ عن الحساب';
+
+  @override
+  String get blockProfileAction => 'حظر الحساب';
+
+  @override
+  String get homeFeaturedEmptyTitle => 'هنرشح لك محترف مناسب قريب';
+
+  @override
+  String get homeFeaturedEmptyMessage =>
+      'لما تتوفر بيانات أكتر، هنظهر لك اختيار مبني على التقييمات والشغل المنشور.';
+
+  @override
+  String get homeProjectsLoadErrorTitle => 'مش قادرين نعرض الشغل دلوقتي';
+
+  @override
+  String get homeProjectsLoadErrorMessage =>
+      'حاول تاني عشان تشوف أعمال حقيقية من محترفين شطب.';
+
+  @override
+  String get homeProjectsEmptyTitle => 'الشغل الحقيقي هيظهر هنا';
+
+  @override
+  String get homeProjectsEmptyMessage =>
+      'استكشف أعمال المحترفين وشوف تفاصيل التنفيذ قبل ما تختار.';
 }

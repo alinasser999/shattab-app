@@ -35,11 +35,11 @@ class _RequestDetailScreenState extends ConsumerState<RequestDetailScreen> {
   bool _homeownerLoading = true;
   String? _homeownerError;
 
-  Future<void> _fetchHomeowner(String homeownerId) async {
+  Future<void> _fetchHomeowner(String briefId) async {
     try {
       final result = await ref
           .read(authRepositoryProvider)
-          .fetchProfileNameAndPhone(homeownerId);
+          .fetchHomeownerContactForBrief(briefId);
       if (!mounted) return;
       setState(() {
         _homeowner = result;
@@ -71,7 +71,7 @@ class _RequestDetailScreenState extends ConsumerState<RequestDetailScreen> {
           if (_homeownerLoading &&
               _homeownerError == null &&
               _homeowner == null) {
-            _fetchHomeowner(brief.homeownerId);
+            _fetchHomeowner(brief.id);
           }
           final date = intl.DateFormat.yMMMd('ar').format(brief.createdAt);
           final apt =

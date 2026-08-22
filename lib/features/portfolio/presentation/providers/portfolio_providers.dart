@@ -1,20 +1,37 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../../../core/cache/provider_cache.dart';
 import '../../data/portfolio_repository.dart';
 import '../../domain/portfolio_project.dart';
 
 part 'portfolio_providers.g.dart';
 
+/// A professional's finished work. Held briefly after the last listener: the
+/// public profile reads this, and homeowners open, leave and reopen profiles
+/// while comparing.
 @riverpod
 Future<List<PortfolioProject>> portfolioForContractor(
   Ref ref,
   String contractorId,
-) => ref.watch(portfolioRepositoryProvider).fetchForContractor(contractorId);
+) async {
+  final projects = await ref
+      .watch(portfolioRepositoryProvider)
+      .fetchForContractor(contractorId);
+  cacheFor(ref, cacheWindow);
+  return projects;
+}
 
+/// One project. Held for the same reason: the gallery is a grid, and going back
+/// to it to open the next tile is the expected motion.
 @riverpod
-Future<PortfolioProject?> portfolioProject(Ref ref, String projectId) =>
-    ref.watch(portfolioRepositoryProvider).fetchById(projectId);
+Future<PortfolioProject?> portfolioProject(Ref ref, String projectId) async {
+  final project = await ref
+      .watch(portfolioRepositoryProvider)
+      .fetchById(projectId);
+  cacheFor(ref, cacheWindow);
+  return project;
+}
 
 /// Complete-work collection for homeowners. The discover rail stays a small
 /// editorial sample; this provider owns the paginated "عرض الكل" experience.
@@ -46,7 +63,10 @@ class RecentWorkCollection extends _$RecentWorkCollection {
     try {
       final next = await ref
           .read(portfolioRepositoryProvider)
-          .fetchRecentPage(offset: current.length, limit: pageSize);
+          .fetchRecentPage(
+            after: PortfolioCursor.fromProject(current.last),
+            limit: pageSize,
+          );
       _hasMore = next.length == pageSize;
       final ids = current.map((item) => item.id).toSet();
       state = AsyncData([

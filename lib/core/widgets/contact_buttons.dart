@@ -21,9 +21,11 @@ import 'package:batsh/core/theme/theme_extension.dart';
 ///
 /// [subdued] is the default and the right answer nearly everywhere: an
 /// outlined button whose only WhatsApp green is the glyph. [brand] fills with
-/// `#25D366`, and is for a surface where contacting really is the single
-/// thing left to do.
-enum ContactEmphasis { subdued, brand }
+/// `#25D366`, and is for a surface where contacting really is the single thing
+/// left to do. [primary] fills with Shattab's own terracotta and keeps the
+/// green in the glyph — for a card where reaching the professional is the main
+/// action but the page still belongs to Shattab rather than to Meta.
+enum ContactEmphasis { subdued, brand, primary }
 
 /// Returns the Egyptian international format expected by wa.me.
 ///
@@ -45,10 +47,18 @@ class WhatsAppButton extends StatelessWidget {
     required this.phone,
     this.message,
     this.emphasis = ContactEmphasis.subdued,
+    this.label,
   });
 
   final String phone;
   final String? message;
+
+  /// Overrides the visible label. Null keeps each emphasis' own default, which
+  /// is what every caller but the home page's featured card wants — that one
+  /// sits in a narrow column and needs a shorter phrase than the full
+  /// sentence. The Semantics wrapper still announces the full sentence either
+  /// way, so a shorter label never costs a screen-reader user the meaning.
+  final String? label;
 
   /// Defaults to [ContactEmphasis.subdued].
   ///
@@ -99,9 +109,14 @@ class WhatsAppButton extends StatelessWidget {
     return Semantics(
       button: true,
       label: context.l10n.contactViaWhatsApp,
-      child: emphasis == ContactEmphasis.brand
-          ? _brand(context)
-          : _subdued(context),
+      child: switch (emphasis) {
+        ContactEmphasis.brand => _filled(context, BatshColors.whatsApp),
+        ContactEmphasis.primary => _filled(
+          context,
+          context.colorScheme.primary,
+        ),
+        ContactEmphasis.subdued => _subdued(context),
+      },
     );
   }
 
@@ -122,7 +137,7 @@ class WhatsAppButton extends StatelessWidget {
       // and a truncated label on a primary contact route is worse than a
       // terse one. The Semantics wrapper above still announces the full
       // sentence, so nothing is lost to a screen reader.
-      label: Text(context.l10n.whatsappShort),
+      label: Text(label ?? context.l10n.whatsappShort),
       style: OutlinedButton.styleFrom(
         foregroundColor: context.colorScheme.onSurface,
         side: BorderSide(color: context.colorScheme.outline),
@@ -131,18 +146,22 @@ class WhatsAppButton extends StatelessWidget {
     );
   }
 
-  Widget _brand(BuildContext context) {
+  /// The filled form, in whichever colour the emphasis asked for. White ink
+  /// and a white glyph clear 4.5:1 on both `#25D366` and terracotta, so the
+  /// two variants differ only in the fill.
+  Widget _filled(BuildContext context, Color fill) {
     return Material(
-      color: BatshColors.whatsApp,
-      borderRadius: BatshRadius.brDefault,
+      color: fill,
+      borderRadius: BatshRadius.brFull,
       child: InkWell(
-        borderRadius: BatshRadius.brDefault,
+        borderRadius: BatshRadius.brFull,
         onTap: () => _open(context),
         child: Container(
           height: BatshSpacing.minHitArea,
           alignment: Alignment.center,
-          padding: const EdgeInsets.symmetric(horizontal: BatshSpacing.gutter),
+          padding: const EdgeInsets.symmetric(horizontal: BatshSpacing.sm),
           child: Row(
+            mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const Icon(
@@ -150,13 +169,19 @@ class WhatsAppButton extends StatelessWidget {
                 color: Colors.white,
                 size: BatshIconSize.md,
               ),
-              const SizedBox(width: BatshSpacing.sm),
-              Text(
-                context.l10n.contactViaWhatsApp,
-                style: BatshTypography.labelMd.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 16,
+              const SizedBox(width: BatshSpacing.xs),
+              // Shrinks rather than clips: this button is used inside a
+              // half-width card column as well as across a full-width sheet,
+              // and a truncated contact label is worse than a small one.
+              Flexible(
+                child: Text(
+                  label ?? context.l10n.contactViaWhatsApp,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: BatshTypography.labelMd.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
             ],

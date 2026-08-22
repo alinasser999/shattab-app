@@ -7,6 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/media/media_storage.dart';
 import '../../../core/media/media_storage_provider.dart';
 import '../../../core/supabase/supabase_provider.dart';
+import '../../../core/utils/image_compression.dart';
 import '../../../core/utils/upload_policy.dart';
 import '../../discovery/domain/contractor_listing.dart';
 import '../domain/onboarding_models.dart';
@@ -126,7 +127,14 @@ class OnboardingRepository {
     }
     await _client.storage
         .from('contractor-logos')
-        .upload(path, file, fileOptions: const FileOptions(upsert: true));
+        .uploadBinary(
+          path,
+          await ImageCompression.prepare(await file.readAsBytes()),
+          fileOptions: const FileOptions(
+            upsert: true,
+            contentType: 'image/jpeg',
+          ),
+        );
     return _client.storage.from('contractor-logos').getPublicUrl(path);
   }
 
@@ -150,7 +158,14 @@ class OnboardingRepository {
     }
     await _client.storage
         .from('contractor-logos')
-        .upload(path, file, fileOptions: const FileOptions(upsert: true));
+        .uploadBinary(
+          path,
+          await ImageCompression.prepare(await file.readAsBytes()),
+          fileOptions: const FileOptions(
+            upsert: true,
+            contentType: 'image/jpeg',
+          ),
+        );
     // Cache-bust so a re-upload to the same path refreshes in CachedNetworkImage.
     final url = _client.storage.from('contractor-logos').getPublicUrl(path);
     return '$url?v=${DateTime.now().millisecondsSinceEpoch}';

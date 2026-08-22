@@ -143,6 +143,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get confirmPasswordHint => 'Confirm password';
 
   @override
+  String get signupNeedsConfirmation =>
+      'Your account was created. Confirm your phone, then sign in.';
+
+  @override
   String get signInAction => 'Sign in';
 
   @override
@@ -675,6 +679,21 @@ class AppLocalizationsEn extends AppLocalizations {
       'We couldn\'t load these posts right now';
 
   @override
+  String get communityFeedErrorTitle =>
+      'We couldn\'t load the community right now';
+
+  @override
+  String get communityFeedErrorMessage =>
+      'Something temporary interrupted the feed. Try again in a moment.';
+
+  @override
+  String get communityFeedGuestErrorTitle => 'Sign in to open the community';
+
+  @override
+  String get communityFeedGuestErrorMessage =>
+      'Signing in lets you see posts, interact with professionals, and save what matters to you.';
+
+  @override
   String get communityClearFilter => 'Show all posts';
 
   @override
@@ -980,6 +999,101 @@ class AppLocalizationsEn extends AppLocalizations {
   String get proActiveLine => 'Pro subscription active';
 
   @override
+  String get sponsoredProfessionals => 'Featured professionals';
+
+  @override
+  String get paidPlacementLabel => 'Paid placement';
+
+  @override
+  String get specialProTitle => 'Featured placement';
+
+  @override
+  String get specialProSubtitle =>
+      'Put your profile in a clear spot near the right clients';
+
+  @override
+  String get specialProValueLine =>
+      'A visible space for your work without mixing paid reach with trust';
+
+  @override
+  String get specialProBenefit =>
+      'Featured for 7 days in relevant results for your specialties and areas';
+
+  @override
+  String get specialProFairness =>
+      'Ratings, verification, and completed work stay independent from payment';
+
+  @override
+  String get specialProPriceLine => 'EGP 199 for 7 days';
+
+  @override
+  String get specialProCta => 'Request featured placement';
+
+  @override
+  String get specialProActive => 'Featured placement is active';
+
+  @override
+  String specialProExpiresOn(String date) {
+    return 'Featured placement runs until $date';
+  }
+
+  @override
+  String get specialProPending => 'Placement request is under review';
+
+  @override
+  String get specialProPendingBody =>
+      'We will review the transfer and activate placement after approval.';
+
+  @override
+  String get specialProActivationNote =>
+      'After you upload the transfer proof, our team reviews the request manually.';
+
+  @override
+  String get specialProManage => 'Manage featured placement';
+
+  @override
+  String get specialProNoGuarantee =>
+      'Placement helps clients find you, but it does not guarantee requests or ratings.';
+
+  @override
+  String get specialProScreenTitle => 'Your featured placement';
+
+  @override
+  String get paymentWeekly => 'Weekly';
+
+  @override
+  String get paySpecialPlacement => 'Request featured placement';
+
+  @override
+  String get paySpecialPlacementSub =>
+      'EGP 199 for 7 days after transfer review';
+
+  @override
+  String get specialPlacementSubmittedTitle => 'Placement request sent';
+
+  @override
+  String get specialPlacementSubmittedBody =>
+      'We will review the transfer and activate placement after approval.';
+
+  @override
+  String get specialPlacementDone => 'Back';
+
+  @override
+  String get specialPlacementAmountLabel => 'Featured placement price';
+
+  @override
+  String get specialPlacementUploadLabel => 'Upload transfer proof';
+
+  @override
+  String get specialPlacementReferenceLabel => 'Transfer reference (optional)';
+
+  @override
+  String get specialPlacementSubmit => 'Send request';
+
+  @override
+  String get specialPlacementTitle => 'Request featured placement';
+
+  @override
   String get tierGold => 'Gold';
 
   @override
@@ -999,6 +1113,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get verifiedIdentity => 'Identity verified';
+
+  @override
+  String get verifiedIdentityTitle => 'What does verified mean?';
+
+  @override
+  String get verifiedIdentityBody =>
+      'The Shattab team reviewed the identity documents submitted by this professional. This badge does not guarantee the result of every project or mean every piece of work was reviewed.';
 
   @override
   String get verifiedBusiness => 'Business verified';
@@ -1444,14 +1565,41 @@ class AppLocalizationsEn extends AppLocalizations {
   String get searchHint => 'Who are you looking for, or what do you need done?';
 
   @override
-  String get discoverHeroKicker => 'Trusted professionals, visible proof';
+  String get discoverHeroKicker => 'The right people for your home';
 
   @override
-  String get discoverHeroTitle => 'Your home deserves someone you can trust';
+  String get discoverHeroTitle => 'Professionals';
 
   @override
-  String get discoverHeroSubtitle =>
-      'Choose a professional with clear work and real reviews.';
+  String get discoverHeroSubtitle => 'Trusted people and visible work';
+
+  @override
+  String get professionalsDirectorySubtitle =>
+      'Choose the right professional for your project';
+
+  @override
+  String get professionalsDirectoryHint => 'Trusted professionals near you';
+
+  @override
+  String professionalsAvailable(int count) {
+    return '$count professionals available';
+  }
+
+  @override
+  String get trustedProfessionals => 'Trusted professionals';
+
+  @override
+  String get trustedProfessionalsHint =>
+      'Based on real ratings and completed work';
+
+  @override
+  String get changeBrowseLocationShort => 'Change location';
+
+  @override
+  String get discoverPageTitle => 'Professionals';
+
+  @override
+  String get discoverSearchHint => 'Who are you looking for?';
 
   @override
   String get featuredProfessional => 'Featured professional';
@@ -1500,6 +1648,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get browseByCategory => 'Browse by category';
+
+  @override
+  String get homeServicesTitle => 'Services';
 
   @override
   String get more => 'More';
@@ -1653,6 +1804,77 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get briefDetailTitle => 'Request Details';
+
+  @override
+  String get briefLifecycleTitle => 'Your request journey';
+
+  @override
+  String get briefLifecycleRequestPosted => 'Request posted';
+
+  @override
+  String get briefLifecycleRequestPostedBody =>
+      'Your request details are saved here so you can follow every update.';
+
+  @override
+  String get briefLifecycleWaitingForQuotes => 'Waiting for quotes';
+
+  @override
+  String get briefLifecycleWaitingForQuotesBody =>
+      'New quotes will appear here as soon as they arrive.';
+
+  @override
+  String get briefLifecycleQuotesReceived => 'Quotes received';
+
+  @override
+  String get briefLifecycleQuotesReceivedBody =>
+      'Review the quotes and choose the right professional for you.';
+
+  @override
+  String get briefLifecycleQuotesLoading => 'Updating quote status...';
+
+  @override
+  String get briefLifecycleQuotesError =>
+      'We couldn\'t update quotes right now. Open the quotes section and try again.';
+
+  @override
+  String get briefLifecycleWorkStarted => 'Work started';
+
+  @override
+  String get briefLifecycleWorkStartedBody =>
+      'The quote was accepted. Your next step is to follow the work.';
+
+  @override
+  String get briefLifecycleConfirmCompletion => 'Confirm the work is complete';
+
+  @override
+  String get briefLifecycleConfirmCompletionBody =>
+      'Review the result and confirm when the work is finished.';
+
+  @override
+  String get briefLifecycleCompleted => 'Work completed';
+
+  @override
+  String get briefLifecycleCompletedBody =>
+      'You can leave a verified review of your experience.';
+
+  @override
+  String get briefLifecycleCancelled => 'Request cancelled';
+
+  @override
+  String get briefLifecycleCancelledBody =>
+      'This request is no longer available for new quotes.';
+
+  @override
+  String get briefNextStepQuotes => 'Review quotes and choose a professional';
+
+  @override
+  String get briefNextStepFollowWork => 'Follow the work in progress';
+
+  @override
+  String get briefNextStepConfirmWork => 'Review and confirm completion';
+
+  @override
+  String get briefNextStepReview => 'Share your verified review';
 
   @override
   String get cancelBriefTitle => 'Cancel request?';
@@ -2979,6 +3201,11 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String opportunityCompactSummary(int count, int fresh, int area) {
+    return '$count matches · $fresh new today · $area in your work areas';
+  }
+
+  @override
   String get projectPhotoLabel => 'Project photo';
 
   @override
@@ -3470,4 +3697,268 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get notificationCommentLikedBody => 'Someone liked your comment.';
+
+  @override
+  String get homeHeroTitleLead => 'Your home';
+
+  @override
+  String get homeHeroTitleRest => 'deserves someone who gets it right';
+
+  @override
+  String get homeHeroSubtitle => 'Trusted professionals, close to home';
+
+  @override
+  String get homeSearchHint => 'Search for a service or a professional...';
+
+  @override
+  String get homeQuickStartTitle => 'Start your request';
+
+  @override
+  String get homeQuickNearbyTitle => 'Professionals near you';
+
+  @override
+  String get homeQuickNearbySubtitle => 'Easier, faster contact';
+
+  @override
+  String get homeQuickRequestsTitle => 'Track your requests';
+
+  @override
+  String get homeQuickRequestsSubtitle => 'All in one place';
+
+  @override
+  String get homeQuickQuoteTitle => 'Request a quote';
+
+  @override
+  String get homeQuickQuoteSubtitle => 'Free and quick';
+
+  @override
+  String get homeActiveRequestTitle => 'Your current request';
+
+  @override
+  String get homeActiveRequestFallback =>
+      'Your request is ready to follow up with professionals.';
+
+  @override
+  String get homeViewProfile => 'View profile';
+
+  @override
+  String get homeContactWhatsApp => 'Chat on WhatsApp';
+
+  @override
+  String get homeStartTitle => 'Start here';
+
+  @override
+  String get homeStartDiscoverTitle => 'Discover professionals';
+
+  @override
+  String get homeStartDiscoverSubtitle => 'Find the right fit for your home';
+
+  @override
+  String get homeStartQuoteTitle => 'Request a quote';
+
+  @override
+  String get homeStartQuoteSubtitle => 'Tell us what you need';
+
+  @override
+  String get homeStartWorkTitle => 'See real work';
+
+  @override
+  String get homeStartWorkSubtitle => 'Real projects, before and after';
+
+  @override
+  String get homeStartCommunityTitle => 'Ask the community';
+
+  @override
+  String get homeStartCommunitySubtitle =>
+      'Real experiences and finishing tips';
+
+  @override
+  String get homeProcessTitle => 'From idea to execution';
+
+  @override
+  String get homeProcessStepOne => 'Share your needs';
+
+  @override
+  String get homeProcessStepOneBody => 'Tell us what you want to finish';
+
+  @override
+  String get homeProcessStepTwo => 'Choose your fit';
+
+  @override
+  String get homeProcessStepTwoBody => 'See real work and reach out';
+
+  @override
+  String get homeProcessStepThree => 'Start with confidence';
+
+  @override
+  String get homeProcessStepThreeBody => 'Follow your request step by step';
+
+  @override
+  String get homeCommunityInviteTitle => 'Ask the community';
+
+  @override
+  String get homeCommunityInviteBody =>
+      'See real experiences from people who started where you are.';
+
+  @override
+  String get homeClosingCtaTitle => 'Ready to start?';
+
+  @override
+  String get homeClosingCtaBody =>
+      'Tell us about your home and make the choice easier.';
+
+  @override
+  String get homeClosingCtaAction => 'Start your request';
+
+  @override
+  String get profileVerifiedStat => 'Verified & approved';
+
+  @override
+  String get profileAboutCompany => 'About the company';
+
+  @override
+  String get profileShowMore => 'Show more';
+
+  @override
+  String get profileShowLess => 'Show less';
+
+  @override
+  String get profileServicesTitle => 'Our services';
+
+  @override
+  String get profileHighlightsTitle => 'Featured work';
+
+  @override
+  String get profileProjectsTitle => 'Completed projects';
+
+  @override
+  String get profileTabAbout => 'About';
+
+  @override
+  String get profileTabWork => 'Work';
+
+  @override
+  String get profileTabReviews => 'Reviews';
+
+  @override
+  String get profileClosingTitle => 'Ready to start your project?';
+
+  @override
+  String get profileClosingBody => 'Get in touch now and receive a free quote.';
+
+  @override
+  String get profileClosingAction => 'Request a quote now';
+
+  @override
+  String get profileDirectCall => 'Call directly';
+
+  @override
+  String get profileFilterAll => 'All';
+
+  @override
+  String get homeLiveActivityTitle => 'Your request activity';
+
+  @override
+  String get homeLiveLatestActivity => 'Latest activity';
+
+  @override
+  String get homeLiveEmptyTitle => 'Nothing started yet';
+
+  @override
+  String get homeLiveEmptyMessage =>
+      'Start a quick request and let the right professionals see what you need.';
+
+  @override
+  String get homeLiveStartAction => 'Start your request';
+
+  @override
+  String get homeLiveOpenRequests => 'View your requests';
+
+  @override
+  String get homeLiveOpenNotifications => 'View notifications';
+
+  @override
+  String get homeLiveErrorTitle => 'We could not get the latest update';
+
+  @override
+  String get homeLiveAwaitingOffers => 'Waiting for quotes';
+
+  @override
+  String get homeLiveWorkInProgress => 'Work in progress';
+
+  @override
+  String get homeLiveReviewCompletion => 'Review completion';
+
+  @override
+  String get homeLiveCompleted => 'Project complete';
+
+  @override
+  String get homeLiveRequestPosted => 'Posted';
+
+  @override
+  String homeLiveUnreadCount(int count) {
+    return '$count unread';
+  }
+
+  @override
+  String get quoteSentTitle => 'Your quote was sent';
+
+  @override
+  String get quoteSentMessage =>
+      'The homeowner received your quote details. We will show you any updates here.';
+
+  @override
+  String get draftRestored => 'Your saved draft is ready';
+
+  @override
+  String get draftSavedAutomatically => 'Saved automatically on this device';
+
+  @override
+  String get trustEvidenceTitle => 'Evidence you can use';
+
+  @override
+  String get trustEvidenceBody =>
+      'Review the signals we can verify before you start a conversation.';
+
+  @override
+  String get trustNewProfessional => 'New professional on Shattab';
+
+  @override
+  String get trustSafetyBody =>
+      'If something feels unclear, review the details or contact Shattab before deciding.';
+
+  @override
+  String get profileSafetyTitle => 'Choose with clarity';
+
+  @override
+  String get profileSafetyBody =>
+      'You can report or block this account, and Shattab support is here if you need help.';
+
+  @override
+  String get reportProfileAction => 'Report account';
+
+  @override
+  String get blockProfileAction => 'Block account';
+
+  @override
+  String get homeFeaturedEmptyTitle => 'We will recommend a professional soon';
+
+  @override
+  String get homeFeaturedEmptyMessage =>
+      'As more verified work becomes available, this space will show a recommendation grounded in real evidence.';
+
+  @override
+  String get homeProjectsLoadErrorTitle =>
+      'We could not show the work right now';
+
+  @override
+  String get homeProjectsLoadErrorMessage =>
+      'Try again to see real projects from Shattab professionals.';
+
+  @override
+  String get homeProjectsEmptyTitle => 'Real work will appear here';
+
+  @override
+  String get homeProjectsEmptyMessage =>
+      'Explore professional portfolios and see the details before you choose.';
 }

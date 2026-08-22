@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../utils/image_compression.dart';
 import '../utils/upload_policy.dart';
 import 'media_storage.dart';
 
@@ -20,13 +21,16 @@ class SupabaseMediaStorage implements MediaStorageService {
     String? supabasePath,
     bool upsert = true,
   }) async {
-    UploadPolicy.validateImageBytes(bytes);
+    final isImage = contentType.startsWith('image/');
+    final uploadBytes = isImage ? await ImageCompression.prepare(bytes) : bytes;
+    final uploadContentType = isImage ? 'image/jpeg' : contentType;
+    UploadPolicy.validateImageBytes(uploadBytes);
     final path = supabasePath ?? '$userId/$fileName';
     final storage = _client.storage.from(category.supabaseBucket);
     await storage.uploadBinary(
       path,
-      bytes,
-      fileOptions: FileOptions(upsert: upsert, contentType: contentType),
+      uploadBytes,
+      fileOptions: FileOptions(upsert: upsert, contentType: uploadContentType),
     );
     return MediaUploadResult(
       url: storage.getPublicUrl(path),
