@@ -1,8 +1,8 @@
 [
   {
-    "AllowedOrigins": ["https://app.example.com"],
+    "AllowedOrigins": ["https://app.example.com", "http://localhost:6434"],
     "AllowedMethods": ["PUT", "HEAD"],
-    "AllowedHeaders": ["Content-Type"],
+    "AllowedHeaders": ["Content-Type", "Content-Length", "Cache-Control"],
     "ExposeHeaders": ["ETag"],
     "MaxAgeSeconds": 3600
   }

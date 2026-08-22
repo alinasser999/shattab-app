@@ -14,7 +14,17 @@ interface Env {
   R2_PRESIGN_TTL_SECONDS?: string;
 }
 
-const PUBLIC_CATEGORIES = new Set([
+/**
+ * The only categories that may ever reach a public bucket.
+ *
+ * Duplicated on the client as `MediaCategory.canUsePublicR2`, because a Worker
+ * and a Flutter app cannot share a constant. Both sides are pinned by tests to
+ * this exact list — `test/validation.test.ts` here and
+ * `test/core/media/media_storage_test.dart` there — so a category added to one
+ * side without the other fails a build instead of quietly widening what is
+ * public.
+ */
+export const PUBLIC_CATEGORIES = new Set([
   "avatars",
   "contractor-logos",
   "post-media",
@@ -24,6 +34,15 @@ const PUBLIC_CATEGORIES = new Set([
 const IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 const DEFAULT_MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
 const DEFAULT_PRESIGN_TTL_SECONDS = 15 * 60;
+
+/**
+ * Object keys embed a UUID and are never rewritten, so a stored object is
+ * immutable by construction and can be cached for a year. Without this header
+ * the CDN in front of the bucket revalidates constantly, which defeats the
+ * reason for moving media to R2. It is a signed header, so a client cannot
+ * upload media marked `no-store` and quietly hand us the egress bill.
+ */
+export const PUBLIC_CACHE_CONTROL = "public, max-age=31536000, immutable";
 
 export function isPublicCategory(category: string): boolean {
   return PUBLIC_CATEGORIES.has(category);
@@ -160,15 +179,29 @@ async function createUploadUrl(
     throw new HttpError(413, "file_too_large", "The image exceeds the upload limit");
   }
 
+  // Known ceiling: the client writes the object, so an upload URL that is used
+  // but never finalized leaves an orphan under `public/`. Each is capped at
+  // MAX_UPLOAD_BYTES by the signed content-length and needs a valid session, so
+  // it is bounded, not unbounded. A lifecycle expiry cannot clean it up here —
+  // orphans are indistinguishable from live media at this prefix. Presigning
+  // into `staging/` and having /finalize move the object is the fix if
+  // abandoned uploads ever show up in the R2 metrics. See README.
   const extension = extensionFor(fileName, contentType);
   const objectKey = `public/${category}/${userId}/${crypto.randomUUID()}${extension}`;
-  const uploadUrl = await presignPut(env, objectKey, contentType);
+  const uploadUrl = await presignPut(env, objectKey, contentType, contentLength);
   return {
     ok: true,
     object_key: objectKey,
     upload_url: uploadUrl,
     public_url: joinPublicUrl(env.R2_PUBLIC_BASE_URL, objectKey),
-    headers: { "Content-Type": contentType },
+    // Every one of these is a signed header. The client must send all three
+    // verbatim or R2 rejects the signature — that is what makes the size limit
+    // real rather than advisory.
+    headers: {
+      "Content-Type": contentType,
+      "Content-Length": String(contentLength),
+      "Cache-Control": PUBLIC_CACHE_CONTROL,
+    },
   };
 }
 
@@ -227,9 +260,12 @@ async function purgeUserMedia(env: Env, userId: string): Promise<Record<string, 
         cursor,
         limit: 1000,
       });
-      for (const object of page.objects) {
-        await env.R2_MEDIA_BUCKET.delete(object.key);
-        deleted += 1;
+      // One batched call per page rather than one round trip per object: a
+      // contractor with a full portfolio can hold hundreds, and account
+      // deletion must finish inside the Worker's CPU budget.
+      if (page.objects.length > 0) {
+        await env.R2_MEDIA_BUCKET.delete(page.objects.map((object) => object.key));
+        deleted += page.objects.length;
       }
       cursor = page.truncated ? page.cursor : undefined;
     } while (cursor);
@@ -237,10 +273,24 @@ async function purgeUserMedia(env: Env, userId: string): Promise<Record<string, 
   return { ok: true, deleted };
 }
 
-async function presignPut(
+/**
+ * Presigns a single PUT.
+ *
+ * `content-length` is signed, not merely validated above: a presigned URL is a
+ * bearer capability, and without the size in the signature the caller may PUT
+ * up to R2's 5 GiB single-object limit no matter what they declared when they
+ * asked for the URL. Signing it makes R2 itself reject the mismatch, which is
+ * the only enforcement point that does not depend on the client coming back to
+ * call `/finalize`.
+ *
+ * `now` is injectable so the signature can be tested against a fixed vector.
+ */
+export async function presignPut(
   env: Env,
   objectKey: string,
   contentType: string,
+  contentLength: number,
+  now: Date = new Date(),
 ): Promise<string> {
   const accessKey = env.R2_ACCESS_KEY_ID;
   const secretKey = env.R2_SECRET_ACCESS_KEY;
@@ -250,7 +300,6 @@ async function presignPut(
 
   const endpoint = `https://${env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`;
   const host = new URL(endpoint).host;
-  const now = new Date();
   const amzDate = toAmzDate(now);
   const dateStamp = amzDate.slice(0, 8);
   const region = "auto";
@@ -264,22 +313,29 @@ async function presignPut(
     .split("/")
     .map(rfc3986)
     .join("/")}`;
+  // SigV4 requires canonical headers in lowercase byte order:
+  // cache-control < content-length < content-type < host.
+  const signedHeaders = "cache-control;content-length;content-type;host";
   const params: Record<string, string> = {
     "X-Amz-Algorithm": "AWS4-HMAC-SHA256",
     "X-Amz-Credential": `${accessKey}/${credentialScope}`,
     "X-Amz-Date": amzDate,
     "X-Amz-Expires": String(expires),
     "X-Amz-Content-Sha256": "UNSIGNED-PAYLOAD",
-    "X-Amz-SignedHeaders": "content-type;host",
+    "X-Amz-SignedHeaders": signedHeaders,
   };
   const canonicalQuery = canonicalQueryString(params);
-  const canonicalHeaders = `content-type:${contentType}\nhost:${host}\n`;
+  const canonicalHeaders =
+    `cache-control:${PUBLIC_CACHE_CONTROL}\n` +
+    `content-length:${contentLength}\n` +
+    `content-type:${contentType}\n` +
+    `host:${host}\n`;
   const canonicalRequest = [
     "PUT",
     canonicalUri,
     canonicalQuery,
     canonicalHeaders,
-    "content-type;host",
+    signedHeaders,
     "UNSIGNED-PAYLOAD",
   ].join("\n");
   const stringToSign = [
@@ -350,7 +406,10 @@ function extensionFor(_fileName: string, contentType: string): string {
   return contentType === "image/png" ? ".png" : contentType === "image/webp" ? ".webp" : ".jpg";
 }
 
-function numberEnv(value: string | undefined, fallback: number): number {
+export function numberEnv(value: string | undefined, fallback: number): number {
+  // `Number("")` is 0, not NaN. An unset-but-present var would otherwise make
+  // MAX_UPLOAD_BYTES zero and reject every upload, so treat blank as absent.
+  if (value === undefined || value.trim() === "") return fallback;
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : fallback;
 }
@@ -361,18 +420,25 @@ function rfc3986(value: string): string {
   );
 }
 
-function canonicalQueryString(params: Record<string, string>): string {
+export function canonicalQueryString(params: Record<string, string>): string {
+  // SigV4 sorts by code point, not by locale. `localeCompare` treats `-` as
+  // ignorable punctuation in some locales, so it can order `X-Amz-Date` and a
+  // hypothetical `X-AmzDate` differently from the way the server does — and a
+  // signature that disagrees with the server fails as an opaque
+  // SignatureDoesNotMatch. Plain `<`/`>` is the comparison the spec means.
   return Object.entries(params)
     .map(([key, value]) => [rfc3986(key), rfc3986(value)] as const)
-    .sort(([aKey, aValue], [bKey, bValue]) =>
-      aKey === bKey ? aValue.localeCompare(bValue) : aKey.localeCompare(bKey),
-    )
+    .sort(([aKey, aValue], [bKey, bValue]) => {
+      if (aKey !== bKey) return aKey < bKey ? -1 : 1;
+      if (aValue === bValue) return 0;
+      return aValue < bValue ? -1 : 1;
+    })
     .map(([key, value]) => `${key}=${value}`)
     .join("&");
 }
 
-function toAmzDate(date: Date): string {
-  return date.toISOString().replace(/[-:]|\.\d{3}/g, "").replace("Z", "Z");
+export function toAmzDate(date: Date): string {
+  return date.toISOString().replace(/[-:]|\.\d{3}/g, "");
 }
 
 async function sha256Hex(value: string): Promise<string> {

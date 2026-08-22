@@ -7,7 +7,16 @@ SUPABASE_URL = "https://replace-with-project.supabase.co"
 R2_ACCOUNT_ID = "replace-with-cloudflare-account-id"
 R2_BUCKET_NAME = "shattab-public-media"
 R2_PUBLIC_BASE_URL = "https://media.example.com"
-ALLOWED_ORIGINS = "https://app.example.com"
+
+# CORS applies only to browsers. The iOS and Android builds never send an
+# Origin header, so leaving this at the placeholder does not break them — it
+# breaks the Flutter *web* build silently, at preflight, with an error that
+# never mentions CORS. List every web origin that talks to the signer,
+# including local development.
+ALLOWED_ORIGINS = "https://app.example.com,http://localhost:6434"
+
+# Enforced twice: signed into the presigned URL so R2 rejects an oversized PUT
+# outright, and re-checked in /finalize against the stored object.
 MAX_UPLOAD_BYTES = "10485760"
 R2_PRESIGN_TTL_SECONDS = "900"
 
