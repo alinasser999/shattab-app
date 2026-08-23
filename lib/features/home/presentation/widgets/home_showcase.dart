@@ -446,11 +446,13 @@ class _SecondaryAction extends StatelessWidget {
 
 // ─── Finished work ───────────────────────────────────────────────────────────
 
-/// Real rooms, at thumbnail size.
+/// Real rooms, sized to be read as rooms.
 ///
-/// Small on purpose: this strip is the page's closing evidence, not its
-/// argument. The full-size treatment lives one tap away on the completed-work
-/// page, which is what the header link opens.
+/// The page's closing evidence: actual finished work from the catalogue,
+/// one tap from the full gallery. Tiles were originally 68dp thumbnails on
+/// the theory that the strip was a teaser; with the process story and the
+/// featured professional restored around them, a readable photo card carries
+/// the "this marketplace is alive" argument better than a postage stamp.
 class HomeProjectsRail extends ConsumerWidget {
   const HomeProjectsRail({
     super.key,
@@ -461,11 +463,10 @@ class HomeProjectsRail extends ConsumerWidget {
   final VoidCallback onViewAll;
   final void Function(String contractorId, String projectId) onOpenProject;
 
-  /// Sized so five tiles span the gutter at the 390dp reference width, which
-  /// is the count the reference shows. Wider phones reveal more of the sixth
-  /// rather than growing the tiles, so the strip keeps its rhythm.
-  static const double tileWidth = 68;
-  static const double tileHeight = 58;
+  /// ~2.6 cards visible at the 390dp reference width: enough to read the
+  /// room, enough of a third card peeking to make the rail scrollable.
+  static const double tileWidth = 132;
+  static const double tileHeight = 104;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -608,7 +609,7 @@ class _ProjectPreviewTile extends StatelessWidget {
         semanticLabel: semanticLabel,
         child: ClipRRect(
           borderRadius: BatshRadius.brMd,
-          child: MockupImage(url: url, memCacheWidth: 260),
+          child: MockupImage(url: url, memCacheWidth: 420),
         ),
       ),
     );

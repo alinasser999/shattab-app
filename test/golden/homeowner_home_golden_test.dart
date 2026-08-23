@@ -6,6 +6,7 @@ import 'package:batsh/features/discovery/domain/contractor_listing.dart';
 import 'package:batsh/features/home/presentation/widgets/home_hero.dart';
 import 'package:batsh/features/home/presentation/widgets/home_shortcuts.dart';
 import 'package:batsh/features/home/presentation/widgets/home_showcase.dart';
+import 'package:batsh/features/home/presentation/widgets/home_trust_sections.dart';
 import 'package:batsh/features/portfolio/data/portfolio_repository.dart';
 import 'package:batsh/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
@@ -38,6 +39,8 @@ const _gapAfterHero = BatshSpacing.ml;
 const _gapAfterCategories = BatshSpacing.xl;
 const _gapAfterQuickActions = BatshSpacing.xl;
 const _gapAfterFeatured = BatshSpacing.xl;
+const _gapAfterProjects = BatshSpacing.xxl;
+const _gapAfterProcess = BatshSpacing.xxl;
 
 const _professional = ContractorListing(
   id: 'featured',
@@ -136,6 +139,15 @@ Future<void> _pumpHome(
                   ),
                   const SizedBox(height: _gapAfterFeatured),
                   HomeProjectsRail(onViewAll: () {}, onOpenProject: (_, _) {}),
+                  const SizedBox(height: _gapAfterProjects),
+                  // Newly mounted with the richness pass: the process story
+                  // and the closing CTA are part of the page's composition
+                  // now, so the overflow gates must see them too.
+                  const HomeProcessSection(),
+                  const SizedBox(height: _gapAfterProcess),
+                  HomeCommunityInvite(onTap: () {}),
+                  const SizedBox(height: BatshSpacing.xxl),
+                  HomeClosingCta(onTap: () {}),
                   const SizedBox(height: BatshSpacing.ml),
                 ],
               ),
