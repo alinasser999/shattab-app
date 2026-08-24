@@ -593,8 +593,6 @@
   "discoverHeroKicker": "The right people for your home",
   "discoverHeroTitle": "Professionals",
   "discoverHeroSubtitle": "Trusted people and visible work",
-  "professionalsDirectorySubtitle": "Choose the right professional for your project",
-  "professionalsDirectoryHint": "Trusted professionals near you",
   "professionalsAvailable": "{count} professionals available",
   "@professionalsAvailable": {
     "placeholders": {

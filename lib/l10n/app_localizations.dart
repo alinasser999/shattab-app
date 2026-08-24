@@ -3080,18 +3080,6 @@ abstract class AppLocalizations {
   /// **'محترفين موثوقين وشغل واضح'**
   String get discoverHeroSubtitle;
 
-  /// No description provided for @professionalsDirectorySubtitle.
-  ///
-  /// In ar, this message translates to:
-  /// **'اختار محترف مناسب لمشروعك'**
-  String get professionalsDirectorySubtitle;
-
-  /// No description provided for @professionalsDirectoryHint.
-  ///
-  /// In ar, this message translates to:
-  /// **'محترفين موثوقين قريبين منك'**
-  String get professionalsDirectoryHint;
-
   /// No description provided for @professionalsAvailable.
   ///
   /// In ar, this message translates to:

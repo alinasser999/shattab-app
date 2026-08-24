@@ -30,12 +30,14 @@ import '../../../core/widgets/shattab_experience_state.dart';
 import '../../../core/widgets/shattab_pattern.dart';
 import '../../auth/presentation/sign_in_sheet.dart';
 import '../../notifications/presentation/providers/notifications_providers.dart';
+import '../../portfolio/data/portfolio_repository.dart';
 import '../../onboarding/domain/onboarding_models.dart';
 import '../../onboarding/presentation/providers/onboarding_provider.dart';
 import '../../saved/presentation/providers/saved_providers.dart';
 import '../domain/contractor_listing.dart';
 import 'providers/discovery_providers.dart';
 import 'widgets/mockup_assets.dart';
+import 'widgets/recent_work_rail.dart';
 
 enum _DirectorySort { recommended, newest }
 
@@ -104,6 +106,7 @@ class _ProfessionalDirectoryScreenState
 
   Future<void> _refresh() async {
     ref.invalidate(discoverContractorsProvider);
+    ref.invalidate(recentProjectsProvider);
     await ref.read(discoverContractorsProvider.future);
   }
 
@@ -363,9 +366,9 @@ class _ProfessionalDirectoryScreenState
                     onCity: () => ref
                         .read(discoveryFiltersControllerProvider.notifier)
                         .setCity(browseCity),
-                    onSpecialty: () => ref
+                    onSelectSpecialty: (id) => ref
                         .read(discoveryFiltersControllerProvider.notifier)
-                        .setSpecialty('full_reno'),
+                        .setSpecialty(filters.specialty == id ? null : id),
                   ),
                 ),
                 SliverToBoxAdapter(
@@ -405,6 +408,12 @@ class _ProfessionalDirectoryScreenState
                     ),
                   ),
                 ),
+                // A dark visual chapter between the controls and the
+                // catalogue: real finished rooms from the community, so the
+                // fold shows evidence rather than chrome. Suppressed while a
+                // search is active — results outrank inspiration.
+                if (!hasSearch)
+                  const SliverToBoxAdapter(child: RecentWorkRail()),
                 if (showSponsored)
                   SliverToBoxAdapter(
                     child: _SponsoredDirectorySection(
@@ -611,6 +620,10 @@ class _DirectoryIntro extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Controls only, no preamble: the header above already says where you
+    // are and the sections below carry the story. The old centered
+    // title-plus-hint stack pushed the first professional ~350dp down the
+    // screen, which read as an empty page wearing a search bar.
     return Padding(
       padding: const EdgeInsets.fromLTRB(
         BatshSpacing.sectionH,
@@ -623,23 +636,6 @@ class _DirectoryIntro extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(
-              context.l10n.professionalsDirectorySubtitle,
-              textAlign: TextAlign.center,
-              style: BatshTypography.titleLg.copyWith(
-                color: context.colorScheme.onSurface,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: BatshSpacing.xxs),
-            Text(
-              context.l10n.professionalsDirectoryHint,
-              textAlign: TextAlign.center,
-              style: BatshTypography.bodySm.copyWith(
-                color: context.colorScheme.onSurfaceVariant,
-              ),
-            ),
-            const SizedBox(height: BatshSpacing.md),
             search,
             const SizedBox(height: BatshSpacing.sm),
             Row(
@@ -725,7 +721,7 @@ class _QuickFilterRow extends StatelessWidget {
     required this.activeSpecialty,
     required this.onClear,
     required this.onCity,
-    required this.onSpecialty,
+    required this.onSelectSpecialty,
   });
 
   final String? browseCity;
@@ -733,7 +729,19 @@ class _QuickFilterRow extends StatelessWidget {
   final String? activeSpecialty;
   final VoidCallback onClear;
   final VoidCallback onCity;
-  final VoidCallback onSpecialty;
+  final ValueChanged<String> onSelectSpecialty;
+
+  /// The trades homeowners actually search for, mirroring the home tab's
+  /// category tiles so the two surfaces speak the same vocabulary. Tapping
+  /// the active chip clears it — a filter you cannot undo from where you
+  /// set it is a trap.
+  static const _specialtyIds = [
+    'full_reno',
+    'design',
+    'paint',
+    'electrical',
+    'plumbing',
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -745,24 +753,25 @@ class _QuickFilterRow extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: BatshSpacing.sectionH),
         children: [
           _DirectoryChip(
+            label: context.l10n.filterAll,
+            selected: activeCity == null && activeSpecialty == null,
+            onTap: onClear,
+          ),
+          const SizedBox(width: BatshSpacing.xs),
+          _DirectoryChip(
             label: context.l10n.nearYou,
             icon: Icons.location_on_outlined,
             selected: activeCity != null,
             onTap: browseCity == null ? null : onCity,
           ),
-          const SizedBox(width: BatshSpacing.xs),
-          _DirectoryChip(
-            label: localizedSpecialtyLabel(context, 'full_reno'),
-            icon: Icons.home_work_outlined,
-            selected: activeSpecialty == 'full_reno',
-            onTap: onSpecialty,
-          ),
-          const SizedBox(width: BatshSpacing.xs),
-          _DirectoryChip(
-            label: context.l10n.filterAll,
-            selected: activeCity == null && activeSpecialty == null,
-            onTap: onClear,
-          ),
+          for (final id in _specialtyIds) ...[
+            const SizedBox(width: BatshSpacing.xs),
+            _DirectoryChip(
+              label: localizedSpecialtyLabel(context, id),
+              selected: activeSpecialty == id,
+              onTap: () => onSelectSpecialty(id),
+            ),
+          ],
         ],
       ),
     );

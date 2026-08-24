@@ -597,8 +597,6 @@
   "discoverHeroKicker": "اختار الصح لبيتك",
   "discoverHeroTitle": "المحترفين",
   "discoverHeroSubtitle": "محترفين موثوقين وشغل واضح",
-  "professionalsDirectorySubtitle": "اختار محترف مناسب لمشروعك",
-  "professionalsDirectoryHint": "محترفين موثوقين قريبين منك",
   "professionalsAvailable": "{count} محترف متاح ليك",
   "@professionalsAvailable": {
     "placeholders": {

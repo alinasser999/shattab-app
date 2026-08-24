@@ -1553,12 +1553,6 @@ class AppLocalizationsAr extends AppLocalizations {
   String get discoverHeroSubtitle => 'محترفين موثوقين وشغل واضح';
 
   @override
-  String get professionalsDirectorySubtitle => 'اختار محترف مناسب لمشروعك';
-
-  @override
-  String get professionalsDirectoryHint => 'محترفين موثوقين قريبين منك';
-
-  @override
   String professionalsAvailable(int count) {
     return '$count محترف متاح ليك';
   }

@@ -1574,13 +1574,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get discoverHeroSubtitle => 'Trusted people and visible work';
 
   @override
-  String get professionalsDirectorySubtitle =>
-      'Choose the right professional for your project';
-
-  @override
-  String get professionalsDirectoryHint => 'Trusted professionals near you';
-
-  @override
   String professionalsAvailable(int count) {
     return '$count professionals available';
   }
