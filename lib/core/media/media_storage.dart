@@ -38,6 +38,22 @@ extension MediaCategoryWire on MediaCategory {
 
 enum MediaProvider { supabase, cloudflareR2 }
 
+/// Public objects written with an immutable key can be cached for a year.
+///
+/// R2 keys include a UUID. Supabase fallbacks use this value only for
+/// insert-only uploads; mutable upserts use [publicMediaMutableCacheControl]
+/// so an avatar or logo replacement is not hidden behind a year-long cache.
+const publicMediaImmutableCacheControl = 'public, max-age=31536000, immutable';
+const publicMediaMutableCacheControl = 'public, max-age=3600';
+const privateMediaCacheControl = 'private, max-age=0, no-store';
+
+String mediaCacheControlFor(MediaCategory category, {required bool upsert}) {
+  if (!category.canUsePublicR2) return privateMediaCacheControl;
+  return upsert
+      ? publicMediaMutableCacheControl
+      : publicMediaImmutableCacheControl;
+}
+
 class MediaUploadResult {
   const MediaUploadResult({
     required this.url,

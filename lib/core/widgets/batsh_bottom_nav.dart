@@ -31,26 +31,69 @@ class BatshBottomNav extends StatelessWidget {
     required this.items,
     required this.currentIndex,
     required this.onTap,
+    this.backgroundColor,
+    this.anchored = false,
+    this.fontFamily,
   });
 
   final List<BatshBottomNavItem> items;
   final int currentIndex;
   final ValueChanged<int> onTap;
+  final Color? backgroundColor;
+
+  /// Edge-to-edge reference bar for the contractor work page. Floating remains
+  /// the default used by every other shell.
+  final bool anchored;
+  final String? fontFamily;
 
   /// Extra scroll room for floating navigation bars. The Scaffold reserves the
   /// bar's layout height, but the stadium itself is transparent around its
   /// edges and can still visually sit over the last card in a scroll view.
   static double contentBottomInset(BuildContext context) =>
-      104 + MediaQuery.of(context).padding.bottom;
+      112 + MediaQuery.of(context).padding.bottom;
 
   @override
   Widget build(BuildContext context) {
+    if (anchored) {
+      return DecoratedBox(
+        decoration: BoxDecoration(
+          color: backgroundColor ?? context.colorScheme.surfaceContainerLowest,
+          border: Border(
+            top: BorderSide(
+              color: context.colorScheme.outlineVariant.withValues(alpha: .65),
+            ),
+          ),
+        ),
+        child: SafeArea(
+          top: false,
+          child: SizedBox(
+            height: 64,
+            child: Row(
+              children: [
+                for (var i = 0; i < items.length; i++)
+                  Expanded(
+                    child: _AnchoredNavItem(
+                      item: items[i],
+                      selected: currentIndex == i,
+                      fontFamily: fontFamily,
+                      onTap: () {
+                        HapticFeedback.selectionClick();
+                        onTap(i);
+                      },
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
     final isCompact = MediaQuery.sizeOf(context).width <= 340;
     final horizontalInset = isCompact ? 0.0 : BatshSpacing.ml;
 
     return SafeArea(
       top: false,
-      minimum: const EdgeInsets.only(bottom: BatshSpacing.xs),
+      minimum: const EdgeInsets.only(bottom: BatshSpacing.xxs),
       child: Padding(
         padding: EdgeInsets.fromLTRB(
           horizontalInset,
@@ -60,7 +103,8 @@ class BatshBottomNav extends StatelessWidget {
         ),
         child: DecoratedBox(
           decoration: BoxDecoration(
-            color: context.colorScheme.surfaceContainerLowest,
+            color:
+                backgroundColor ?? context.colorScheme.surfaceContainerLowest,
             borderRadius: BatshRadius.brFull,
             border: Border.all(
               color: context.colorScheme.outlineVariant.withValues(alpha: 0.4),
@@ -71,7 +115,7 @@ class BatshBottomNav extends StatelessWidget {
           child: ClipRRect(
             borderRadius: BatshRadius.brFull,
             child: SizedBox(
-              height: 66,
+              height: 64,
               child: Row(
                 children: [
                   for (var i = 0; i < items.length; i++)
@@ -93,6 +137,80 @@ class BatshBottomNav extends StatelessWidget {
       ),
     );
   }
+}
+
+class _AnchoredNavItem extends StatelessWidget {
+  const _AnchoredNavItem({
+    required this.item,
+    required this.selected,
+    required this.onTap,
+    this.fontFamily,
+  });
+
+  final BatshBottomNavItem item;
+  final bool selected;
+  final VoidCallback onTap;
+  final String? fontFamily;
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+    button: true,
+    selected: selected,
+    label: item.label,
+    onTap: onTap,
+    child: ExcludeSemantics(
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: BatshSpacing.xxs,
+            vertical: BatshSpacing.xxs,
+          ),
+          child: AnimatedContainer(
+            duration: MediaQuery.disableAnimationsOf(context)
+                ? Duration.zero
+                : BatshMotion.fast,
+            curve: BatshMotion.easeOut,
+            decoration: BoxDecoration(
+              color: selected
+                  ? context.colorScheme.primaryContainer.withValues(alpha: .78)
+                  : Colors.transparent,
+              borderRadius: BatshRadius.brMd,
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  selected ? item.selectedIcon : item.icon,
+                  size: BatshIconSize.md,
+                  color: selected
+                      ? context.colorScheme.primary
+                      : context.colorScheme.onSurface,
+                ),
+                const SizedBox(height: BatshSpacing.xxs),
+                Flexible(
+                  child: Text(
+                    item.label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                    style: BatshTypography.labelSm.copyWith(
+                      fontFamily: fontFamily,
+                      color: selected
+                          ? context.colorScheme.primary
+                          : context.colorScheme.onSurface,
+                      fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
 }
 
 class _NavItem extends StatefulWidget {
@@ -179,8 +297,8 @@ class _NavItemState extends State<_NavItem>
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 SizedBox(
-                  height: 34,
-                  width: 60,
+                  height: 38,
+                  width: 64,
                   child: Stack(
                     alignment: Alignment.center,
                     children: [
@@ -188,8 +306,8 @@ class _NavItemState extends State<_NavItem>
                       AnimatedBuilder(
                         animation: _pillAnim,
                         builder: (_, __) => Container(
-                          width: 30 + (_pillAnim.value * 26),
-                          height: 34,
+                          width: 36 + (_pillAnim.value * 24),
+                          height: 38,
                           decoration: BoxDecoration(
                             color: context.colorScheme.primaryContainer
                                 .withValues(alpha: _pillAnim.value),
@@ -213,7 +331,7 @@ class _NavItemState extends State<_NavItem>
                     ],
                   ),
                 ),
-                const SizedBox(height: BatshSpacing.xxs),
+                const SizedBox(height: BatshSpacing.xxxs),
                 // Full-width bound so a long Arabic label ellipsizes instead of
                 // overflowing the item on narrow screens.
                 Padding(
@@ -230,7 +348,7 @@ class _NavItemState extends State<_NavItem>
                       // Solid onSurfaceVariant (not alpha-dimmed) to clear the
                       // 4.5:1 body-text contrast floor on the white bar.
                       style: BatshTypography.labelSm.copyWith(
-                        fontSize: 12,
+                        fontSize: 13,
                         color: widget.isSelected
                             ? context.colorScheme.primary
                             : context.colorScheme.onSurfaceVariant,

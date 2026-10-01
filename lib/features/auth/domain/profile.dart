@@ -35,6 +35,7 @@ class Profile {
   const Profile({
     required this.id,
     required this.role,
+    this.roleSelectionLocked = true,
     required this.fullName,
     required this.phone,
     required this.onboardingComplete,
@@ -43,6 +44,10 @@ class Profile {
 
   final String id;
   final UserRole role;
+
+  /// Whether this account has made its one-time role selection.
+  /// Missing values fail closed so older responses never reopen role choice.
+  final bool roleSelectionLocked;
   final String fullName;
   final String phone;
   final bool onboardingComplete;
@@ -51,6 +56,7 @@ class Profile {
   factory Profile.fromJson(Map<String, dynamic> json) => Profile(
     id: json['id'] as String,
     role: UserRole.fromString(json['role'] as String),
+    roleSelectionLocked: (json['role_selection_locked'] as bool?) ?? true,
     fullName: (json['full_name'] as String?) ?? '',
     phone: (json['phone'] as String?) ?? '',
     onboardingComplete: (json['onboarding_complete'] as bool?) ?? false,
@@ -60,11 +66,13 @@ class Profile {
   Profile copyWith({
     String? fullName,
     UserRole? role,
+    bool? roleSelectionLocked,
     bool? onboardingComplete,
     String? avatarUrl,
   }) => Profile(
     id: id,
     role: role ?? this.role,
+    roleSelectionLocked: roleSelectionLocked ?? this.roleSelectionLocked,
     fullName: fullName ?? this.fullName,
     phone: phone,
     onboardingComplete: onboardingComplete ?? this.onboardingComplete,

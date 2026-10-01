@@ -102,21 +102,9 @@ class NotificationsScreen extends ConsumerWidget {
                 : RefreshIndicator(
                     onRefresh: () async =>
                         ref.invalidate(notificationsProvider),
-                    child: ListView.separated(
-                      padding: const EdgeInsets.fromLTRB(
-                        BatshSpacing.gutter,
-                        BatshSpacing.sm,
-                        BatshSpacing.gutter,
-                        BatshSpacing.xxl,
-                      ),
-                      itemCount: items.length,
-                      separatorBuilder: (_, _) =>
-                          const SizedBox(height: BatshSpacing.xs),
-                      itemBuilder: (context, index) => _NotificationTile(
-                        item: items[index],
-                        onTap: () =>
-                            _openNotification(context, ref, items[index]),
-                      ),
+                    child: _GroupedNotificationList(
+                      items: items,
+                      onTap: (item) => _openNotification(context, ref, item),
                     ),
                   ),
           ),
@@ -158,7 +146,70 @@ class NotificationsScreen extends ConsumerWidget {
       entityId: item.entityId,
       role: role,
     );
-    if (destination != null && context.mounted) context.push(destination);
+    if (destination != null && context.mounted) {
+      context.push(destination);
+    } else if (context.mounted) {
+      BatshSnack.info(context, context.l10n.notificationNoDestination);
+    }
+  }
+}
+
+class _GroupedNotificationList extends StatelessWidget {
+  const _GroupedNotificationList({required this.items, required this.onTap});
+
+  final List<AppNotification> items;
+  final ValueChanged<AppNotification> onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final rows = <Object>[];
+    String? previousGroup;
+    final now = DateTime.now();
+    for (final item in items) {
+      final localDate = item.createdAt.toLocal();
+      final isToday = DateUtils.isSameDay(localDate, now);
+      final group = isToday
+          ? context.l10n.notificationsToday
+          : context.l10n.notificationsEarlier;
+      if (group != previousGroup) {
+        rows.add(group);
+        previousGroup = group;
+      }
+      rows.add(item);
+    }
+    return ListView.separated(
+      padding: const EdgeInsets.fromLTRB(
+        BatshSpacing.gutter,
+        BatshSpacing.sm,
+        BatshSpacing.gutter,
+        BatshSpacing.xxl,
+      ),
+      itemCount: rows.length,
+      separatorBuilder: (_, index) => rows[index] is String
+          ? const SizedBox(height: BatshSpacing.xs)
+          : const SizedBox(height: BatshSpacing.xs),
+      itemBuilder: (context, index) {
+        final row = rows[index];
+        if (row is String) {
+          return Padding(
+            padding: const EdgeInsets.only(
+              top: BatshSpacing.sm,
+              bottom: BatshSpacing.xs,
+            ),
+            child: Text(
+              row,
+              textAlign: TextAlign.end,
+              style: BatshTypography.titleLg.copyWith(
+                color: context.colorScheme.primary,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          );
+        }
+        final item = row as AppNotification;
+        return _NotificationTile(item: item, onTap: () => onTap(item));
+      },
+    );
   }
 }
 

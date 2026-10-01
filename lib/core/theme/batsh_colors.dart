@@ -5,6 +5,19 @@ import 'package:flutter/material.dart';
 class BatshColors {
   const BatshColors._();
 
+  /// Stitch homeowner-home palette. Applied only by the `/h/home` shell.
+  static const Color homeCanvas = Color(0xFFFAF6F0);
+  static const Color homeAction = Color(0xFFB44B2A);
+  static const Color homeOnAction = Color(0xFFFFFFFF);
+  static const Color homeSelectedSurface = Color(0xFFF7EBE6);
+  static const Color homeInk = Color(0xFF2D1F18);
+  static const Color homeMuted = Color(0xFF7A6B63);
+  static const Color homeSoftSurface = Color(0xFFF5EDE4);
+  static const Color homeBorder = Color(0xFFEBDCCC);
+  static const Color homeSuccess = Color(0xFF2D7A4C);
+  static const Color homeSuccessSurface = Color(0xFFEAF4EE);
+  static const Color homeGold = Color(0xFFE69C24);
+
   // Surfaces — deepened contrast for clear hierarchy
   static const Color surface = Color(0xFFFFF8F3);
   static const Color surfaceBright = Color(0xFFFFF8F3);
@@ -156,38 +169,38 @@ class BatshColors {
   // Dark scheme (for future dark mode support)
   static ColorScheme get darkScheme => const ColorScheme(
     brightness: Brightness.dark,
-    primary: Color(0xFFFFB59D),
-    onPrimary: Color(0xFF390C00),
-    primaryContainer: Color(0xFF822803),
-    onPrimaryContainer: Color(0xFFFFDBD0),
-    secondary: Color(0xFFC4CBA8),
-    onSecondary: Color(0xFF1E2314),
-    secondaryContainer: Color(0xFF444936),
-    onSecondaryContainer: Color(0xFFE0E5CC),
-    tertiary: Color(0xFFFFD566),
-    onTertiary: Color(0xFF231A00),
-    tertiaryContainer: Color(0xFF594800),
-    onTertiaryContainer: Color(0xFFFFE088),
+    primary: Color(0xFFDF7650),
+    onPrimary: Color(0xFF2A120B),
+    primaryContainer: Color(0xFF6E2F1D),
+    onPrimaryContainer: Color(0xFFFFDCCA),
+    secondary: Color(0xFFB8C098),
+    onSecondary: Color(0xFF1B2112),
+    secondaryContainer: Color(0xFF3C452B),
+    onSecondaryContainer: Color(0xFFE1E9C6),
+    tertiary: Color(0xFFF0C45C),
+    onTertiary: Color(0xFF2B2100),
+    tertiaryContainer: Color(0xFF554300),
+    onTertiaryContainer: Color(0xFFFFE7A1),
     error: Color(0xFFFFB4AB),
     onError: Color(0xFF690005),
     errorContainer: Color(0xFF93000A),
     onErrorContainer: Color(0xFFFFDAD6),
-    surface: Color(0xFF1F1B14),
-    onSurface: Color(0xFFF9EFE4),
-    surfaceContainerLowest: Color(0xFF181510),
-    surfaceContainerLow: Color(0xFF352F27),
-    surfaceContainer: Color(0xFF3F3930),
-    surfaceContainerHigh: Color(0xFF494339),
-    surfaceContainerHighest: Color(0xFF534D43),
-    surfaceDim: Color(0xFF1F1B14),
-    surfaceBright: Color(0xFF534D43),
-    onSurfaceVariant: Color(0xFFD6C0B4),
-    outline: Color(0xFF9E857C),
-    outlineVariant: Color(0xFF53463D),
-    inverseSurface: Color(0xFFF9EFE4),
-    onInverseSurface: Color(0xFF1F1B14),
+    surface: Color(0xFF17130F),
+    onSurface: Color(0xFFF7EDE3),
+    surfaceContainerLowest: Color(0xFF1D1813),
+    surfaceContainerLow: Color(0xFF211A15),
+    surfaceContainer: Color(0xFF241C16),
+    surfaceContainerHigh: Color(0xFF292019),
+    surfaceContainerHighest: Color(0xFF30251D),
+    surfaceDim: Color(0xFF17130F),
+    surfaceBright: Color(0xFF30251D),
+    onSurfaceVariant: Color(0xFFCDB9AA),
+    outline: Color(0xFF8D7163),
+    outlineVariant: Color(0xFF4D3B30),
+    inverseSurface: Color(0xFFF7EDE3),
+    onInverseSurface: Color(0xFF211A15),
     inversePrimary: Color(0xFF9E3D18),
-    surfaceTint: Color(0xFFFFB59D),
+    surfaceTint: Color(0xFFDF7650),
     primaryFixed: primaryFixed,
     primaryFixedDim: primaryFixedDim,
     onPrimaryFixed: onPrimaryFixed,

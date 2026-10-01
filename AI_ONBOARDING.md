@@ -1,351 +1,58 @@
-# Shattab — Onboarding Brief for a New AI Agent
+# Shattab — Maintained Engineering Map
 
-Read this before touching anything. It is the current-state map of the repo as of
-**2026-08-07**, branch `feat/bottom-nav-redesign`.
+Use this guide for a repository map before implementation. The [GitHub agent handoff](docs/AGENT_HANDOFF.md) is the concise starting point for a new reader and records this snapshot's setup, CI commands, database evidence, and verification limits.
 
-> **`CLAUDE.md`, `README.md` and `PRODUCT.md` are stale.** They stop at M3 and say
-> "M4 not started". The app has since shipped reviews, monetization, verification,
-> moderation, account deletion, trust tiers, a social feed, and a separate Next.js
-> admin console. Where those files disagree with this one, this one is right —
-> but verify against code before relying on either.
+This checkout is on `feat/bottom-nav-redesign`. The source and working tree contain active changes; this guide does not certify them as released or ready to ship. No tests, builds, app runtime checks, or database migrations were run for the combined snapshot described by this handoff.
 
----
+## Product and authorization invariants
 
-## 1. What the product is
+Shattab is an Arabic-first, RTL marketplace for Egyptian home renovation. The app has two user roles: homeowner and contractor. The contractor identity catalog contains provider kinds, but those are not additional account roles. The separate operator console has its own admin authorization model.
 
-**Shattab (شطب)** — a Flutter marketplace connecting Egyptian homeowners with
-renovation/finishing professionals. Arabic-first, RTL, Android + iOS only.
+- There is no user-to-user chat. Homeowners and contractors coordinate through phone or WhatsApp handoffs.
+- Client routes and role guards provide navigation behavior, not data authorization. Supabase RLS and reviewed server-side RPCs must enforce data access and privileged transitions.
+- A newly authenticated user selects a role in the first onboarding step; the server-side role-selection RPC locks that choice. Do not describe it as necessarily chosen at account creation.
+- **Authentication policy is unresolved.** The current login source offers Egyptian phone/password sign-in and sign-up, Google, and Apple on supported Apple platforms. SMS OTP is still used for phone sign-up confirmation, password recovery, and the guest write-action gate. Older OTP-only product text does not match the current source. Do not choose a new product policy as a documentation edit.
+- Keep `.env`, admin local environment files, credentials, and signing material local. Never print or commit their values.
 
-Two roles, chosen at signup and **locked** (no switching):
+## Technology and source map
 
-- **Homeowner (طالب خدمة)** — posts renovation briefs, browses professionals,
-  receives quotes, hires, confirms completion, reviews.
-- **Contractor / professional (مقاول)** — sees briefs matched to their specialty
-  and service area, sends quotes, manages a portfolio, receives direct requests.
-
-Core product rules that shape a lot of the code:
-
-- **No in-app chat.** All contact is WhatsApp / phone deep links (`url_launcher`).
-  Do not add messaging.
-- **Phone OTP auth only** (+20 Egypt), plus Sign in with Apple for App Store
-  compliance. No email/password in the mobile app.
-- **Arabic is the source language.** Every user-facing string lives in
-  `lib/core/l10n/strings.dart` (class `S`, ~1370 lines). Never hardcode copy.
-
----
-
-## 2. Stack
-
-| Layer | Choice |
+| Area | Source |
 |---|---|
-| Client | Flutter, Dart SDK `^3.11.5` — Android + iOS (web/desktop disabled) |
-| Backend | Supabase — Postgres + RLS + Auth + Storage, project ref `ajqdutehxpbbflzdovhw`, `eu-central-1` |
-| State | Riverpod 3.x with codegen (`riverpod_annotation`, `@Riverpod`) |
-| Routing | `go_router` v17, `StatefulShellRoute.indexedStack` |
-| Motion | `flutter_animate` |
-| Crash reporting | `sentry_flutter` (PII off by default; DSN optional in `.env`) |
-| Admin console | Separate Next.js 15 app in `admin/` |
+| Flutter entry and app setup | `lib/main.dart`, `lib/app.dart` |
+| Shared app infrastructure | `lib/core/`: environment, routing and role guards, Supabase providers, localization, theme, analytics, media, cache, notifications, shared widgets, and utilities |
+| Localized copy | `lib/l10n/app_ar.arb` and `lib/l10n/app_en.arb`; generated `AppLocalizations` classes live in `lib/l10n/`. Locale state and the BuildContext extension are in `lib/core/l10n/`. Do not add new UI strings to the old `strings.dart` catalog. |
+| Flutter features | `lib/features/`: auth, onboarding, shell/home, discovery, explore, briefs, inbox, quotes, portfolio, profile, saved items, reviews, billing, verification, moderation, notifications, and assistant |
+| Supabase server code | `supabase/functions/`: shared function helpers, `assistant-chat`, and `send-push` |
+| Database source | `supabase/migrations/` and `supabase/tests/`; local SQL is source, not proof of live application |
+| Operator console | `admin/`: Next.js 16.3.1 App Router, API routes, users, contractors, moderation, payments, and activity |
+| Public-media signer | `infra/media-signer/`: Cloudflare Worker source for Supabase-token-verified R2 presigning; its README records external setup requirements |
 
-Package name is still **`batsh`** — the brand was renamed to Shattab in M2 but the
-repo was not, to avoid churn. Keep `package:batsh/...` imports.
+Feature code is generally organized into data, domain, and presentation layers. Reuse route constants from `lib/core/router/routes.dart`, shared theme tokens and widgets, and repository patterns for data access.
 
----
+The operator console is separate from the consumer roles. Its checked-in README describes an anon-key client, database-enforced `is_admin()` access, and audited privileged RPCs; do not introduce a service-role key into a client.
 
-## 3. Repo layout
+## Domain notes from checked-in source
 
-```
-lib/
-├── main.dart, app.dart, preview_pro.dart
-├── core/
-│   ├── env/          .env wrapper
-│   ├── l10n/         strings.dart (all copy) + locale_provider
-│   ├── models/       shared models (DraftPhoto, …)
-│   ├── router/       app_router.dart, routes.dart, role_guard.dart, transitions.dart
-│   ├── supabase/     client wrapper + provider
-│   ├── theme/        11 token files (see §6)
-│   ├── utils/        error_mapper, validators, time_format, image_url, extensions
-│   └── widgets/      29 shared Batsh* widgets (see §6)
-└── features/         auth, onboarding, shell, discovery, briefs, explore, inbox,
-                      quotes, portfolio, profile, reviews, saved, billing,
-                      verification, moderation
-supabase/migrations/  0001 … 0028
-admin/                Next.js operator console
-docs/                 specs, completion reports, design tokens, legal, checklists
-test/                 20 test files (~186 tests)
-```
+- Homeowners publish renovation briefs and can receive contractor quotes; contractors browse matching opportunities, respond to direct requests, manage work portfolios, and quote briefs.
+- The feed in `lib/features/explore/` is distinct from work briefs.
+- `ProviderKind` includes `specialized_provider`; its database check must be reconciled with the migration history before any live schema action.
+- The local pricing source, `lib/features/billing/pricing.dart`, describes a limit of five quotes in a rolling 30-day window for free contractors. Treat local code as the source for current implementation details and verify it before changing product claims.
+- Contact and payment flows can expose personal or financial information. Keep those decisions and authorization checks server-side.
 
-Each feature follows `{data, domain, presentation}`. `presentation/providers/`
-holds Riverpod providers; larger screens are split into `part` files.
+## Localization and design
 
----
+Arabic is the source language, RTL is the default experience, and English is also represented in ARB files. Add user-facing copy to the ARBs and regenerate through the Flutter localization workflow. Keep design changes on the shared tokens and components in `lib/core/theme/` and `lib/core/widgets/`.
 
-## 4. Navigation
+## Working tree and evidence limits
 
-Role-aware guard in `lib/core/router/role_guard.dart`. Paths in
-`lib/core/router/routes.dart` — **always use the `Routes.*` constants**, never
-string literals.
+The current branch snapshot includes in-flight work across Flutter auth/onboarding, home and discovery, brief and quote flows, navigation and shared UI, billing, media, assistant, localization, the admin console, Edge Function source, migrations, tests, docs, and assets. Treat those areas as work in progress until the relevant review, QA, runtime, and release gates have passed.
 
-**Homeowner `/h/*` — 5 tabs:** Explore (feed) · Discover (professionals) ·
-Requests (own briefs) · Saved · Profile
+The exact local migration additions and the previous read-only Supabase audit are summarized in [docs/AGENT_HANDOFF.md](docs/AGENT_HANDOFF.md). That audit is dated prior evidence; no live state was refreshed for this documentation handoff. Do not infer live schema, RLS, function, storage, or deployment state from file presence.
 
-**Contractor `/c/*` — 5 tabs:** Explore (feed) · Opportunities (`/c/dashboard`,
-matched briefs) · Inbox (direct requests) · Portfolio · Profile
+## Further reading
 
-`/pro` is a full-screen route above both shells (monetization).
-
-Note the naming trap: the contractor Opportunities tab lives at
-`Routes.contractorDashboard` = `/c/dashboard`, not `/c/opportunities`.
-
----
-
-## 5. Domain model — the concepts that actually matter
-
-- **Brief** — a job. Two flavours: a public post, or a *direct* request aimed at
-  one professional (`target_contractor_id`). `BriefStatus` (open | cancelled)
-  plus `BriefStage` for the completion loop.
-- **Quote** — one per contractor per brief (unique constraint). Status:
-  sent | accepted | declined | withdrawn. Accepting is guarded server-side
-  (`accept_quote` RPC + `tg_lock_accepted_quote`), not in the client.
-- **Post** (`features/explore`) — the social feed, distinct from briefs.
-  `PostType`: project_showcase | tip | milestone | renovation_update. Likes,
-  comments, saves. Feed is keyset-paginated (`get_for_you_feed`).
-- **ContractorTier** — bronze | silver | gold. **Earned**, never purchased,
-  derived from completed jobs + reviews + verification. Rendered by `TierBadge`,
-  which deliberately shares no visual language with the paid Pro badge. Bronze is
-  not shown publicly (`isPublic`).
-- **ProviderKind** — self-declared identity: contractor | engineer |
-  engineering_office | finishing_company | interior_designer | tradesman. The
-  enum's `wire` value must match the `provider_kind` CHECK in migration `0026`.
-- **Pro plan** — paid subscription (`contractor_profiles.plan == 'pro'`),
-  orthogonal to tier.
-
-### Monetization (`lib/features/billing/pricing.dart` is the single source of truth)
-
-- Free contractors: **3 quotes / calendar month** (`free_quote_limit`,
-  `my_quote_quota` RPCs), **5 portfolio projects**.
-- Pro: 299 EGP/mo or 2990 EGP/yr. Featured week 199 EGP, quote boost 49 EGP.
-- Payment is **manual InstaPay transfer + proof upload → admin approval**
-  (`payment_requests`, `payment-proofs` bucket). Apple Pay is a stub.
-- Change a price in `pricing.dart` and every surface follows. Do not inline numbers.
-
----
-
-## 6. Design system — the rules you will be judged on
-
-Tokens in `lib/core/theme/`: `BatshColors`, `BatshTypography`, `BatshSpacing`,
-`BatshRadius`, `BatshShadows`, `BatshMotion`, `BatshIconSize`, `BatshBorderWidth`,
-plus `theme_mode_provider` and `motion_mode_provider`.
-
-**Modern Heritage** palette: terracotta `#9E3D18` primary, olive secondary, gold
-tertiary, warm cream surface. Light + dark both fully defined.
-
-Hard rules (a recent multi-commit sweep enforced all of these — do not regress):
-
-1. **No raw hex, ever.** Use `BatshColors.*`.
-2. **No bare Material widgets** in feature code. Compose the 29 `Batsh*` atoms:
-   `BatshScaffold`, `BatshCard`, `BatshButton`, `BatshTextField`, `BatshChip`,
-   `BatshBadge`, `BatshSnack`, `BatshDialog`, `BatshSheet`, `BatshEmptyState`,
-   `BatshError`, `BatshShimmer`, `BatshSearchBar`, `BatshSectionHeader`,
-   `BatshPressable`, `BatshPhotoViewer`, `BatshStars`, `BatshBottomNav`, …
-3. **No literal icon sizes** → `BatshIconSize.*`. No `BorderRadius.circular()` →
-   `BatshRadius.*`. No `Curves.*` → `BatshMotion.*`.
-4. **Skeletons, not spinners.** Async content surfaces use `BatshShimmerBox` /
-   `BatshListSkeleton` / `BatshProfileSkeleton`.
-5. **Guard every animation** with `MediaQuery.of(context).disableAnimations` —
-   reduced motion is honoured including in page transitions.
-6. Transient feedback → `BatshSnack`. Confirmations → `BatshDialog`. Bottom
-   sheets → `BatshSheet`. Empty states → `BatshEmptyState` with a reason *and* an
-   action; errors → `BatshError`, not an empty state.
-7. Minimum touch target 44×44dp; WCAG AA contrast.
-
-Naming: `_<Feature>Skeleton` for loading, `_<Feature>Fallback` for error fallbacks.
-
-Reference docs: `docs/design-tokens.md`, `docs/design-system-audit.md`,
-`docs/design-system-completion.md`.
-
----
-
-## 7. Database
-
-Core marketplace tables: `profiles` · `homeowner_profiles` · `contractor_profiles`
-· `briefs` · `quotes` · `reviews` · `saved_contractors` · `portfolio_projects` ·
-`posts` · `post_likes` · `post_comments` · `post_saves` · `payments` ·
-`payment_requests` · `verification_requests` · `content_reports` · `user_blocks`
-· `admin_users` · `admin_audit_log` · `notifications` · `device_tokens`.
-
-Storage buckets: `avatars`, `brief-photos`, `portfolio-photos`, `post-media`,
-`payment-proofs`, `verification-docs`.
-
-`supabase/migrations/` has 40+ files. The numbering scheme drifted after `0028`
-— later migrations are timestamp-named (e.g. `20260806152000_fix_comment_edit_timestamps.sql`)
-rather than sequentially numbered. `list_migrations` via the Supabase MCP is the
-source of truth for what's actually applied; don't assume disk order = apply order.
-Highlights beyond the original `0001`–`0028`: `notifications_and_analytics_contract`
-(server-side triggers write a notification row on every quote/completion/review/
-payment/verification event), `notifications_realtime` (realtime delivery),
-`arabic_contractor_search` (`shattab_normalize_ar()` + `discover_contractors` RPC
-— search must go through this, not a raw `ilike`, or Arabic name variants silently
-fail to match), `device_tokens` (push registration, one row per device).
-
-**Six foreign tables, now locked down (2026-08-07):** `scan_misses`,
-`user_product_submissions`, `product_drafts`, `ingestion_jobs`,
-`ingestion_items`, `ocr_extractions` — created by a migration named
-`create_mokawen_tables` and belonging to a different product (OCR / product
-ingestion), not Shattab. They shipped with RLS off and default PostgREST
-grants, so `anon` could `SELECT` **and** `INSERT` on all six; since the anon
-key is inside every copy of the app, that was world-readable and -writable.
-
-`20260808001500_lock_down_mokawen_tables.sql` enables RLS with **no policies**
-(deny-all) and revokes the grants. All six were empty when it ran, and nothing
-was dropped — that call belongs to whoever owns that product. If you need them,
-add explicit policies; RLS is already on. Do not build Shattab features on them.
-
-**Security posture — do not weaken it:**
-
-- Everything is behind RLS. There is **no service-role key in any client**,
-  mobile or admin.
-- Privileged operations are `SECURITY DEFINER` RPCs that begin with
-  `admin_require()`; each writes to `admin_audit_log`, which admins cannot edit
-  or delete.
-- Triggers enforce invariants the client must not be trusted with:
-  `tg_block_selfupgrade`, `tg_block_self_suspend`, `tg_guard_quote_fields`,
-  `tg_guard_brief_edit`, `tg_lock_accepted_quote`, `tg_reject_if_suspended`,
-  `tg_reviews_rollup`.
-- Some early tables (`portfolio_projects`, parts of `0003`/`0004`) were applied
-  live before the SQL landed on disk. **Do not re-run `0003`/`0004`** blindly.
-
-Before schema work: `list_tables` first, and check `docs/go-live-checklist.md`.
-
----
-
-## 8. Admin console (`admin/`)
-
-Next.js 15 App Router on port **4321**, reading the same Supabase project with the
-**anon key only**. Six pages: overview (timeseries/funnel), users (+suspend/block),
-contractors (+verify/plan/tier), moderation queue, payments, audit log.
-
-Auth is **email + password**, not phone OTP — deliberately, so an ops tool does not
-cost an SMS per login. Admin status comes from the `admin_users` table via
-`public.is_admin()`, orthogonal to the app's homeowner/contractor roles.
-Middleware is a signpost; the database is the gate.
-
-Bootstrapping the first admin is manual and off-system by design — see
-`admin/README.md`.
-
----
-
-## 9. Code conventions
-
-- **Riverpod 3:** use `.value`, not `.valueOrNull` (removed). `@Riverpod` codegen;
-  regenerate with `dart run build_runner build --delete-conflicting-outputs`.
-  Generated `.g.dart`/`.freezed.dart` files **are gitignored, not committed** —
-  a fresh checkout will not compile until you run that command once. (An
-  earlier version of this doc said the opposite; verified against
-  `.gitignore:58` and `git ls-files`, which shows zero `.g.dart` tracked.)
-- **`riverpod_lint` / `custom_lint` must not be added** — they conflict with
-  `freezed_annotation ^3.x`.
-- **Models:** hand-written `copyWith` + `fromJson`. Only reach for freezed at 8+
-  fields or union variants.
-- **Imports:** relative paths inside the app; package imports for third-party only.
-- **Enums that cross the wire** carry an explicit `wire`/`dbValue` and a tolerant
-  `fromWire`/`fromDb` that falls back rather than throwing — an older client must
-  not crash on a value a newer migration added.
-- `dart format` **is** enforced. `.github/workflows/ci.yml` runs
-  `dart format --output=none --set-exit-if-changed lib test` *before* analyze
-  and test, so one unformatted file fails the whole pipeline at its first step.
-  Run `dart format lib test` before pushing. (An earlier version of this doc
-  claimed the opposite; the repo was reformatted 2026-08-07 to make CI pass.)
-
----
-
-## 9a. Analytics and connectivity
-
-`AppAnalytics.track(name, properties:)` (`lib/core/analytics/app_analytics.dart`)
-writes to `analytics_events`. It is **fire-and-forget and never throws** — a
-dropped event must never block a quote, a contact handoff or a payment, so call
-sites wrap it in `unawaited(...)` and it swallows its own failures.
-
-**Properties must be non-identifying.** Shape, not content: counts, booleans,
-enum values. Never the search query (people search for named individuals),
-never a brief's `work_description` (free text about someone's home), never a
-bank `reference_text`, never a phone number.
-
-Events today: `onboarding_completed` · `brief_created` · `contractor_search`
-· `professional_profile_view` · `quote_submitted` · `quote_status_changed` ·
-`review_submitted` · `contact_whatsapp` · `contact_call` ·
-`community_post_created` · `pro_cta_tapped` · `requests_paywall_viewed` ·
-`checkout_started` · `checkout_failed` · `payment_request_submitted` ·
-`notification_opened` · `notifications_marked_read`.
-
-`contractor_search` carries `zero_results` deliberately: a search returning
-nothing looks, to the user, identical to a marketplace with nobody in it. The
-Arabic-matching bug that shipped before `shattab_normalize_ar` existed went
-unnoticed for exactly that reason. Watch that rate after any search change.
-
-**Connectivity.** `connectivityProvider` (`lib/core/utils/connectivity.dart`)
-is a `keepAlive` `Stream<bool>` of "is any interface up". `BatshError` watches
-it and fires its own `onRetry` on the offline → online edge, so all 26 error
-surfaces recover by themselves when the signal returns. It answers "is there
-any point retrying", not "is the server reachable" — `ErrorMapper` still
-classifies what actually failed. Because `BatshError` is now a
-`ConsumerStatefulWidget`, any widget test rendering it needs a `ProviderScope`.
-
----
-
-## 10. Verification
-
-```bash
-flutter analyze
-```
-
-```bash
-flutter test
-```
-
-CI (`.github/workflows/ci.yml`) runs `pub get` → `analyze` → `test` on PRs and
-pushes to `main`. Both must stay green; ~186 tests currently pass. Format checks
-and build_runner freshness are deliberately not gated.
-
-Setup from scratch:
-
-```bash
-flutter pub get && cp .env.example .env && dart run build_runner build --delete-conflicting-outputs
-```
-
-`.env` needs `SUPABASE_URL`, `SUPABASE_ANON_KEY`, optionally `SENTRY_DSN` and
-`SUPABASE_IMAGE_TRANSFORMS` (leave `false` unless the Supabase plan includes image
-transformations — turning it on without one 404s every photo). **Never commit `.env`.**
-
----
-
-## 11. Known open items
-
-- **Push notifications are code-complete but not delivering.** `PushService` /
-  `PushRegistrar` (`lib/core/notifications/`) and `supabase/functions/send-push/`
-  exist and are wired into boot, but there is no Firebase project for
-  `app.batsh.batsh` yet — no `google-services.json`, no APNs key, no Gradle
-  plugin, no deployed Edge Function, no Database Webhook. `PushService.ensureInitialized()`
-  fails closed (logs and continues) so the app runs fine without any of this —
-  it just means nobody gets a push until a human finishes the Firebase console
-  steps. **Realtime delivery works today** regardless: a user with the app open
-  sees a notification the instant a trigger writes one (`notificationsProvider`
-  is a live Supabase stream, not a poll).
-- Supabase **Phone provider + an SMS gateway that delivers to +20** must be
-  enabled in the dashboard or no one can log in. Pending as of the last checklist.
-- Android release signing needs a local, gitignored `android/key.properties`
-  (see `docs/SHIPPING.md`).
-- Leaked-password protection is off in Supabase; the advisor flags it.
-- Store submission steps: `docs/store-submission.md`, `docs/go-live-checklist.md`.
-
----
-
-## 12. Do not
-
-- Add in-app chat.
-- Add `riverpod_lint` or `custom_lint`.
-- Commit `.env`, or put a service-role key in any client.
-- Use raw hex, bare Material widgets, or literal sizes/radii/curves.
-- Re-run migrations `0003` / `0004` against the live project.
-- Change homeowner-facing portfolio screens (`portfolio_gallery_screen.dart`)
-  without a reason — they are wired and stable.
-- Trust `CLAUDE.md` / `README.md` / `PRODUCT.md` on anything past M3.
+- [Canonical agent handoff](docs/AGENT_HANDOFF.md)
+- [Admin console setup and security boundaries](admin/README.md)
+- [Media signer setup and limitations](infra/media-signer/README.md)
+- [Shipping guide](docs/SHIPPING.md)
+- [Go-live checklist](docs/go-live-checklist.md) — review its scope and date before relying on operational statements

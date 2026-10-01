@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:batsh/features/billing/pricing.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -47,12 +49,28 @@ void main() {
       expect(BatshPricing.proPrice(annual: false), BatshPricing.proMonthlyEgp);
     });
 
-    test('free tier grants something but not everything', () {
+    test('free tier has five quotes in a rolling 30-day window', () {
+      expect(BatshPricing.freeRolling30DayQuota, 5);
+
+      // The database enforces the same cap and window. Keep a static contract
+      // check here because changing the SQL alone would bypass Dart unit tests.
+      final migration = File(
+        'supabase/migrations/0025_free_quote_quota.sql',
+      ).readAsStringSync();
+      expect(migration, contains('function public.free_quote_limit()'));
+      expect(migration, contains(r'as $$ select 5 $$;'));
+      expect(
+        RegExp(
+          r"q\.created_at\s*>\s*now\(\)\s*-\s*interval '30 days'",
+        ).allMatches(migration).length,
+        greaterThanOrEqualTo(2),
+      );
+
       // A quota of 0 silently bricks the free tier: a contractor could never
       // send a first quote and the paywall would be the entire product. An
       // unbounded quota gives away the thing Pro is sold on.
-      expect(BatshPricing.freeMonthlyQuota, greaterThan(0));
-      expect(BatshPricing.freeMonthlyQuota, lessThan(50));
+      expect(BatshPricing.freeRolling30DayQuota, greaterThan(0));
+      expect(BatshPricing.freeRolling30DayQuota, lessThan(50));
       expect(BatshPricing.freePortfolioCap, greaterThan(0));
       expect(BatshPricing.freePortfolioCap, lessThan(100));
     });

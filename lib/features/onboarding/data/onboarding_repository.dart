@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../core/catalog/specialty_catalog.dart';
 import '../../../core/media/media_storage.dart';
 import '../../../core/media/media_storage_provider.dart';
 import '../../../core/supabase/supabase_provider.dart';
@@ -82,7 +83,9 @@ class OnboardingRepository {
     if (coverPhotoUrl != null) payload['cover_photo_url'] = coverPhotoUrl;
     if (headline != null) payload['headline'] = headline;
     if (bio != null) payload['bio'] = bio;
-    if (specialties != null) payload['specialties'] = specialties;
+    if (specialties != null) {
+      payload['specialties'] = SpecialtyCatalog.normalizeSelection(specialties);
+    }
     if (serviceAreas != null) payload['service_areas'] = serviceAreas;
     if (yearsExperience != null) payload['years_experience'] = yearsExperience;
     await _client
@@ -100,11 +103,11 @@ class OnboardingRepository {
         .eq('id', profileId);
   }
 
-  Future<void> markOnboardingComplete(String profileId) async {
-    await _client
-        .from('profiles')
-        .update({'onboarding_complete': true})
-        .eq('id', profileId);
+  /// Returns true only when this call performs the first completion transition.
+  /// A false result is an idempotent retry after a lost response.
+  Future<bool> markOnboardingComplete() async {
+    final result = await _client.rpc('complete_onboarding');
+    return result == true;
   }
 
   Future<String> uploadContractorLogo({
@@ -133,6 +136,7 @@ class OnboardingRepository {
           fileOptions: const FileOptions(
             upsert: true,
             contentType: 'image/jpeg',
+            cacheControl: publicMediaMutableCacheControl,
           ),
         );
     return _client.storage.from('contractor-logos').getPublicUrl(path);
@@ -164,6 +168,7 @@ class OnboardingRepository {
           fileOptions: const FileOptions(
             upsert: true,
             contentType: 'image/jpeg',
+            cacheControl: publicMediaMutableCacheControl,
           ),
         );
     // Cache-bust so a re-upload to the same path refreshes in CachedNetworkImage.

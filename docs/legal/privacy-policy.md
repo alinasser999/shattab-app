@@ -116,6 +116,15 @@ Calling or messaging someone through the app opens your own phone or WhatsApp.
 Those conversations happen outside Shattab and are governed by that app's own
 policy — we neither see nor store them. **Shattab has no in-app chat.**
 
+### AI assistant
+
+The optional in-app assistant receives the recent messages needed to answer a question.
+They pass through a Supabase Edge Function to the OpenRouter free-model router. The client
+and server remove common phone numbers, email addresses, payment-card patterns, national
+IDs, UUIDs and external links before the model request. Shattab does not store assistant
+transcripts or replies; it stores only an aggregate daily usage counter. Do not enter
+information you do not want sent to an external AI provider.
+
 ---
 
 ## 4. How long we keep it

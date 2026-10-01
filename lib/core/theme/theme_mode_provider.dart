@@ -7,7 +7,7 @@ class ThemeModeNotifier extends Notifier<ThemeMode> {
   @override
   ThemeMode build() {
     unawaited(_restore());
-    return ThemeMode.system;
+    return ThemeMode.light;
   }
 
   void setThemeMode(ThemeMode mode) {
@@ -31,7 +31,8 @@ class ThemeModeNotifier extends Notifier<ThemeMode> {
     state = switch (prefs.getString('theme_mode')) {
       'light' => ThemeMode.light,
       'dark' => ThemeMode.dark,
-      _ => ThemeMode.system,
+      'system' => ThemeMode.system,
+      _ => ThemeMode.light,
     };
   }
 

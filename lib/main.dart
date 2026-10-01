@@ -4,6 +4,7 @@ import 'dart:ui';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -13,10 +14,13 @@ import 'core/debug/debug_config.dart';
 import 'core/env/env.dart';
 import 'core/logging/app_logger.dart';
 import 'core/notifications/push_service.dart';
+import 'core/router/browser_location.dart';
 import 'core/supabase/supabase_client.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  captureInitialBrowserUri();
+  usePathUrlStrategy();
 
   // Paint a real first frame before network and plugin initialization. On
   // mobile Safari, waiting here leaves a blank Flutter surface visible while

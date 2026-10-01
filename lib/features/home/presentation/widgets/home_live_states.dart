@@ -6,6 +6,7 @@ import '../../../../core/theme/batsh_radius.dart';
 import '../../../../core/theme/batsh_spacing.dart';
 import '../../../../core/theme/batsh_typography.dart';
 import '../../../../core/theme/theme_extension.dart';
+import '../../../../core/utils/connectivity.dart';
 import '../../../../core/utils/error_mapper.dart';
 import '../../../../core/utils/support_contact.dart';
 import '../../../../core/widgets/batsh_pressable.dart';
@@ -23,17 +24,96 @@ class HomeLiveStateSection extends ConsumerWidget {
     required this.onOpenRequests,
     required this.onOpenNotifications,
     required this.onStartRequest,
+    this.child,
+    this.childHorizontalInset,
   });
 
   final VoidCallback onOpenRequests;
   final VoidCallback onOpenNotifications;
   final VoidCallback onStartRequest;
+  final Widget? child;
+  final double? childHorizontalInset;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final briefs = ref.watch(myBriefsProvider);
     final notifications = ref.watch(notificationsProvider);
     final unreadCount = ref.watch(unreadNotificationsProvider);
+    ref.listen(connectivityProvider, (previous, next) {
+      if (previous?.value != false || next.value != true) return;
+      if (briefs.hasError) ref.invalidate(myBriefsProvider);
+      if (notifications.hasError) ref.invalidate(notificationsProvider);
+    });
+
+    if (child != null && briefs.isLoading) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(horizontal: BatshSpacing.gutter),
+        child: ShattabExperienceSkeleton(),
+      );
+    }
+    if (child != null && briefs.hasError) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: BatshSpacing.gutter),
+        child: ShattabExperienceState(
+          icon: Icons.cloud_off_outlined,
+          title: context.l10n.homeLiveErrorTitle,
+          message: ErrorMapper.map(briefs.error!),
+          actionLabel: context.l10n.tryAgain,
+          onAction: () => ref.invalidate(myBriefsProvider),
+          secondaryActionLabel: context.l10n.helpSupport,
+          onSecondaryAction: () => openShattabSupport(context),
+          pattern: ShattabPatternKind.contour,
+        ),
+      );
+    }
+
+    final populatedBriefs = briefs.asData?.value;
+    if (child != null &&
+        childHorizontalInset != null &&
+        populatedBriefs != null &&
+        populatedBriefs.isNotEmpty) {
+      final populatedChild = Padding(
+        padding: EdgeInsets.symmetric(horizontal: childHorizontalInset!),
+        child: child!,
+      );
+      if (notifications.hasError) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            populatedChild,
+            const SizedBox(height: BatshSpacing.xs),
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: BatshSpacing.gutter,
+              ),
+              child: ShattabExperienceState(
+                icon: Icons.cloud_off_outlined,
+                title: context.l10n.homeLiveErrorTitle,
+                message: ErrorMapper.map(notifications.error),
+                actionLabel: context.l10n.tryAgain,
+                onAction: () => ref.invalidate(notificationsProvider),
+                pattern: ShattabPatternKind.contour,
+                compact: true,
+              ),
+            ),
+          ],
+        );
+      }
+      if (notifications.isLoading) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            populatedChild,
+            const SizedBox(height: BatshSpacing.xs),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: BatshSpacing.gutter),
+              child: ShattabExperienceSkeleton(compact: true),
+            ),
+          ],
+        );
+      }
+      return populatedChild;
+    }
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: BatshSpacing.gutter),
@@ -50,6 +130,41 @@ class HomeLiveStateSection extends ConsumerWidget {
           pattern: ShattabPatternKind.contour,
         ),
         data: (items) {
+          // The reference project card is only rendered after the brief
+          // provider succeeds. With no project, keep notification loading and
+          // errors visible before showing its successful empty state.
+          if (child != null && items.isNotEmpty) {
+            if (notifications.hasError) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  child!,
+                  const SizedBox(height: BatshSpacing.xs),
+                  ShattabExperienceState(
+                    icon: Icons.cloud_off_outlined,
+                    title: context.l10n.homeLiveErrorTitle,
+                    message: ErrorMapper.map(notifications.error),
+                    actionLabel: context.l10n.tryAgain,
+                    onAction: () => ref.invalidate(notificationsProvider),
+                    pattern: ShattabPatternKind.contour,
+                    compact: true,
+                  ),
+                ],
+              );
+            }
+            if (notifications.isLoading) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  child!,
+                  const SizedBox(height: BatshSpacing.xs),
+                  const ShattabExperienceSkeleton(compact: true),
+                ],
+              );
+            }
+            return child!;
+          }
+
           final active = items
               .where(
                 (brief) => brief.isActive || brief.awaitsCompletionConfirmation,
@@ -90,6 +205,8 @@ class HomeLiveStateSection extends ConsumerWidget {
           if (notifications.isLoading) {
             return const ShattabExperienceSkeleton(compact: true);
           }
+
+          if (child != null) return child!;
 
           return ShattabExperienceState(
             icon: Icons.auto_awesome_outlined,

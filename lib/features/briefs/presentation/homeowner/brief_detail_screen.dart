@@ -28,6 +28,7 @@ import 'create_post_screen.dart';
 import '../../../../core/theme/batsh_icon_size.dart';
 import '../../../../core/widgets/batsh_snack.dart';
 import '../../../../core/widgets/batsh_dialog.dart';
+import '../../../../core/l10n/catalog_labels.dart';
 
 import 'package:batsh/core/theme/theme_extension.dart';
 
@@ -158,7 +159,7 @@ class BriefDetailScreen extends ConsumerWidget {
                       children: brief.targetSpecialties
                           .map(
                             (s) => Text(
-                              OnboardingCatalog.specialtiesCatalog[s] ?? s,
+                              localizedSpecialtyDisplayLabel(context, s),
                               style: BatshTypography.bodyMd,
                             ),
                           )

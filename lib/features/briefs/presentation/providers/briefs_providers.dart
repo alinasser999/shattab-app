@@ -164,6 +164,11 @@ class BriefsController extends _$BriefsController {
     required String workDescription,
     required List<String> targetSpecialties,
     required List<DraftPhoto> photos,
+    String? projectTitle,
+    int? estimatedArea,
+    String? budgetNote,
+    String? startTiming,
+    String? publishKey,
   }) async {
     if (_creating) throw StateError('brief_creation_in_progress');
     _creating = true;
@@ -176,6 +181,11 @@ class BriefsController extends _$BriefsController {
         workDescription: workDescription,
         photos: photos,
         targetSpecialties: targetSpecialties,
+        projectTitle: projectTitle,
+        estimatedArea: estimatedArea,
+        budgetNote: budgetNote,
+        startTiming: startTiming,
+        publishKey: publishKey,
       );
     } finally {
       _creating = false;
@@ -190,6 +200,11 @@ class BriefsController extends _$BriefsController {
     required String workDescription,
     required List<DraftPhoto> photos,
     required List<String> targetSpecialties,
+    String? projectTitle,
+    int? estimatedArea,
+    String? budgetNote,
+    String? startTiming,
+    String? publishKey,
   }) async {
     final session = ref.read(currentSessionProvider);
     if (session == null) {
@@ -207,24 +222,42 @@ class BriefsController extends _$BriefsController {
       workDescription: workDescription,
       photoUrls: const [],
       targetSpecialties: targetSpecialties,
+      projectTitle: projectTitle,
+      estimatedArea: estimatedArea,
+      budgetNote: budgetNote,
+      startTiming: startTiming,
+      publishKey: publishKey,
     );
 
     if (photos.isNotEmpty) {
+      final uploadedUrls = <String>[];
       try {
         // Upload in parallel — five sequential round-trips dominated brief
         // creation latency on mobile data.
-        final urls = await Future.wait(<Future<String>>[
+        // Keep each successful URL as it arrives. If one upload fails, the
+        // other futures still finish (`eagerError: false`) and every object
+        // we own can be removed from storage before the brief is rolled back.
+        final urls = await Future.wait<String>(<Future<String>>[
           for (var i = 0; i < photos.length; i++)
-            repo.uploadPhoto(
-              homeownerId: session.user.id,
-              draftId: brief.id,
-              seq: i,
-              file: photos[i].file,
-              bytes: photos[i].bytes,
-            ),
-        ]);
+            repo
+                .uploadPhoto(
+                  homeownerId: session.user.id,
+                  draftId: brief.id,
+                  seq: i,
+                  file: photos[i].file,
+                  bytes: photos[i].bytes,
+                )
+                .then((url) {
+                  uploadedUrls.add(url);
+                  return url;
+                }),
+        ], eagerError: false);
         await repo.setPhotoUrls(brief.id, urls);
       } catch (e) {
+        // The database row does not own storage objects, so deleting or
+        // cancelling the brief alone would leave successful partial uploads
+        // orphaned in `brief-photos`.
+        await repo.deleteUploadedPhotos(uploadedUrls);
         // Compensate: a brief left open with none of its photos reads as
         // spam to every matched contractor. This brief is seconds old and
         // quote-less, so delete-or-cancel resolves to a hard delete; if the
@@ -240,7 +273,9 @@ class BriefsController extends _$BriefsController {
     }
 
     ref.invalidate(myBriefsProvider);
-    return brief;
+    // Re-read after the photo association. The success screen must represent
+    // the persisted record, not the pre-upload placeholder row.
+    return await repo.fetchById(brief.id) ?? brief;
   }
 
   /// Homeowner: change a brief's scope. Photos are handled separately by

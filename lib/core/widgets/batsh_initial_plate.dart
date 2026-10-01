@@ -53,32 +53,30 @@ class BatshInitialPlate extends StatelessWidget {
     final (background, ink) = _tone(context, name);
     final initial = _initial(name);
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        // Scale the mark to the plate rather than fixing a size: this widget
-        // fills a 4:3 card cover, a circular avatar, and a portfolio tile.
-        final shortest = constraints.biggest.shortestSide;
-        final fontSize = (shortest.isFinite ? shortest : 96) * 0.42;
-
-        return ColoredBox(
-          color: background,
-          child: initial == null
-              ? const SizedBox.expand()
-              : Center(
-                  child: Text(
-                    initial,
-                    textAlign: TextAlign.center,
-                    style: BatshTypography.displayLg.copyWith(
-                      fontSize: fontSize,
-                      // Sits back rather than announcing itself. The mark is
-                      // there to make the plate feel authored, not to be read.
-                      color: ink.withValues(alpha: 0.32),
-                      height: 1.0,
-                    ),
+    // Keep the placeholder compatible with IntrinsicHeight. A LayoutBuilder
+    // cannot answer intrinsic dimension queries, while this card is also used
+    // inside compact rails that intentionally measure their content first.
+    // FittedBox still scales the mark down for avatars and narrow tiles.
+    return ColoredBox(
+      color: background,
+      child: initial == null
+          ? const SizedBox.shrink()
+          : Center(
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  initial,
+                  textAlign: TextAlign.center,
+                  style: BatshTypography.displayLg.copyWith(
+                    fontSize: 96,
+                    // Sits back rather than announcing itself. The mark is
+                    // there to make the plate feel authored, not to be read.
+                    color: ink.withValues(alpha: 0.32),
+                    height: 1.0,
                   ),
                 ),
-        );
-      },
+              ),
+            ),
     );
   }
 }

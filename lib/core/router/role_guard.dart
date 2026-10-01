@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../debug/debug_role_override.dart';
 import '../../features/auth/domain/profile.dart';
 import '../../features/auth/presentation/providers/auth_provider.dart';
 import '../../features/onboarding/presentation/providers/onboarding_provider.dart';
@@ -25,7 +26,7 @@ String? roleGuard(Ref ref, GoRouterState state) {
     if (path.startsWith(Routes.contractorShell)) return Routes.login;
     // Splash (first launch) or any other unmatched path: land guests in
     // Discover instead of forcing the login wall.
-    return Routes.homeownerDiscover;
+    return Routes.homeownerHome;
   }
 
   final profileAsync = ref.read(currentProfileProvider);
@@ -50,31 +51,37 @@ String? roleGuard(Ref ref, GoRouterState state) {
     return path == Routes.splash ? null : Routes.splash;
   }
 
-  final profile = profileAsync.value;
+  final profile = profileForDebugRole(
+    profileAsync.value,
+    ref.read(debugRoleOverrideProvider),
+  );
   if (profile == null) {
     return path == Routes.onboardingRoleSelect
         ? null
         : Routes.onboardingRoleSelect;
   }
 
-  // A brand-new, trigger-created profile has an empty full_name and role
-  // defaulted to homeowner. Anyone who entered through the /login flow (e.g.
-  // tapped "sign in as contractor") must pick their role first. A guest who
-  // signed in mid-browse via the sheet keeps their place — the sheet collects
-  // the name inline and never routes here.
-  if (profile.fullName.trim().isEmpty) {
-    if (path == Routes.onboardingRoleSelect) return null;
-    // /login covers direct sign-ins; /splash covers fresh sign-ups (the
-    // profile resolves while the guard is parked on splash, so without this
-    // case a new account skips role/name selection entirely). Guests signing
-    // in mid-browse stay where they are — the sheet collects the name inline.
-    if (path.startsWith('/login') || path == Routes.splash) {
-      return Routes.onboardingRoleSelect;
-    }
-  }
-
   if (!profile.onboardingComplete) {
+    // An unlocked account must make its one-time role choice first. A locked
+    // account with a legacy or edited-invalid name may repair that name in the
+    // same screen, while the role remains read-only.
+    if (!profile.roleSelectionLocked || profile.fullName.trim().length < 2) {
+      return path == Routes.onboardingRoleSelect
+          ? null
+          : Routes.onboardingRoleSelect;
+    }
+
+    // The role/name page remains available as a locked summary while the user
+    // reviews earlier required steps.
+    if (path == Routes.onboardingRoleSelect) return null;
+
     final nextStep = _nextOnboardingStep(ref, profile);
+    if (nextStep == Routes.splash) {
+      final currentRoleFlow = profile.role == UserRole.homeowner
+          ? path.startsWith('/onboarding/homeowner/')
+          : path.startsWith('/onboarding/contractor/');
+      return path == Routes.splash || currentRoleFlow ? null : Routes.splash;
+    }
     if (path == nextStep) return null;
     if (path.startsWith('/onboarding/')) {
       // Allow lateral movement within the same flow so users can revisit
@@ -91,7 +98,7 @@ String? roleGuard(Ref ref, GoRouterState state) {
 
   // Onboarded — bounce to the right portal if user lands in the wrong place.
   final homeRoot = profile.role == UserRole.homeowner
-      ? Routes.homeownerDiscover
+      ? Routes.homeownerHome
       : Routes.contractorDashboard;
 
   if (path == Routes.splash ||
@@ -111,18 +118,29 @@ String? roleGuard(Ref ref, GoRouterState state) {
 
 String _nextOnboardingStep(Ref ref, Profile profile) {
   if (profile.role == UserRole.homeowner) {
-    final ho = ref.read(homeownerProfileProvider).value;
+    final homeownerAsync = ref.read(homeownerProfileProvider);
+    if (homeownerAsync.isLoading || homeownerAsync.hasError) {
+      return Routes.splash;
+    }
+    final ho = homeownerAsync.value;
     if (ho == null || !ho.hasApartmentType || !ho.hasInterests) {
       return Routes.onboardingHomeownerDetails;
     }
     return Routes.onboardingHomeownerLocation;
   }
-  final co = ref.read(contractorProfileProvider).value;
-  if (co == null || !co.hasBusinessName) {
+  final contractorAsync = ref.read(contractorProfileProvider);
+  if (contractorAsync.isLoading || contractorAsync.hasError) {
+    return Routes.splash;
+  }
+  final co = contractorAsync.value;
+  if (co == null ||
+      !co.hasRequiredIdentity(responsibleName: profile.fullName)) {
     return Routes.onboardingContractorProfile;
   }
   if (!co.hasSpecialties || !co.hasServiceAreas) {
     return Routes.onboardingContractorServices;
   }
-  return Routes.onboardingContractorExperience;
+  // Experience, bio, and portfolio improve discovery but do not block a new
+  // contractor from reaching relevant opportunities.
+  return Routes.onboardingContractorServices;
 }

@@ -1,13 +1,19 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'dart:async';
+import 'dart:ui' as ui;
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 
-import '../../../../core/l10n/l10n_extension.dart';
 import '../../../../core/analytics/app_analytics.dart';
 import '../../../../core/analytics/marketplace_events.dart';
+import '../../../../core/l10n/catalog_labels.dart';
+import '../../../../core/l10n/l10n_extension.dart';
 import '../../../../core/router/routes.dart';
 import '../../../../core/theme/batsh_icon_size.dart';
 import '../../../../core/theme/batsh_motion.dart';
@@ -17,16 +23,14 @@ import '../../../../core/theme/batsh_spacing.dart';
 import '../../../../core/theme/batsh_typography.dart';
 import '../../../../core/theme/theme_extension.dart';
 import '../../../../core/utils/error_mapper.dart';
-import '../../../../core/utils/time_format.dart';
 import '../../../../core/widgets/avatar_with_initials.dart';
 import '../../../../core/widgets/batsh_error.dart';
 import '../../../../core/widgets/batsh_photo_viewer.dart';
-import '../../../../core/widgets/batsh_scaffold.dart';
 import '../../../../core/widgets/batsh_shimmer.dart';
 import '../../../../core/widgets/batsh_snack.dart';
+import '../../../../core/widgets/shattab_pattern.dart';
 import '../../../onboarding/domain/onboarding_models.dart';
 import '../../../onboarding/presentation/providers/onboarding_provider.dart';
-import '../../../portfolio/presentation/providers/my_portfolio_providers.dart';
 import '../../../quotes/domain/quote.dart';
 import '../../../quotes/presentation/providers/quotes_providers.dart';
 import '../../../quotes/presentation/quote_sheet.dart';
@@ -35,8 +39,6 @@ import '../../domain/homeowner_profile_preview.dart';
 import '../../domain/opportunity_experience.dart';
 import '../providers/briefs_providers.dart';
 import '../providers/opportunity_experience_provider.dart';
-import '../widgets/completion_card.dart';
-import '../widgets/brief_lifecycle_timeline.dart';
 
 class PostDetailScreen extends ConsumerStatefulWidget {
   const PostDetailScreen({super.key, required this.postId});
@@ -48,10 +50,32 @@ class PostDetailScreen extends ConsumerStatefulWidget {
 }
 
 class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
+  late final ScrollController _scrollController;
+  bool _lightStatusIcons = true;
+
   @override
   void initState() {
     super.initState();
+    _scrollController = ScrollController()..addListener(_updateStatusBarStyle);
     unawaited(AppAnalytics.track(MarketplaceEvents.opportunityOpened));
+  }
+
+  @override
+  void dispose() {
+    _scrollController
+      ..removeListener(_updateStatusBarStyle)
+      ..dispose();
+    super.dispose();
+  }
+
+  void _updateStatusBarStyle() {
+    if (!_scrollController.hasClients) return;
+    final width = MediaQuery.sizeOf(context).width.clamp(0.0, 560.0);
+    final heroBottom = width / 1.24 + 96;
+    final nextValue = _scrollController.offset < heroBottom;
+    if (nextValue != _lightStatusIcons && mounted) {
+      setState(() => _lightStatusIcons = nextValue);
+    }
   }
 
   @override
@@ -59,70 +83,70 @@ class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
     final briefAsync = ref.watch(briefByIdProvider(widget.postId));
     final quoteAsync = ref.watch(myQuoteForBriefProvider(widget.postId));
     final contractor = ref.watch(contractorProfileProvider).value;
-    final portfolio = ref.watch(myPortfolioProvider).value ?? const [];
     final interactions = ref.watch(opportunityInteractionsProvider);
     final saved = interactions.savedIds.contains(widget.postId);
+    final overlayBase = _lightStatusIcons
+        ? SystemUiOverlayStyle.light
+        : SystemUiOverlayStyle.dark;
 
-    void toggleSaved() => unawaited(_toggleSaved(widget.postId));
-
-    return BatshScaffold(
-      title: context.l10n.opportunityDetailsTitle,
-      padding: EdgeInsets.zero,
-      animateEntrance: false,
-      actions: [
-        IconButton(
-          onPressed: toggleSaved,
-          tooltip: saved
-              ? context.l10n.removeOpportunityFromSaved
-              : context.l10n.saveOpportunity,
-          icon: Icon(saved ? Icons.bookmark : Icons.bookmark_border),
-          color: saved ? context.colorScheme.primary : null,
-        ),
-      ],
-      body: briefAsync.when(
-        loading: () => const _OpportunityDetailSkeleton(),
-        error: (error, _) => BatshError(
-          message: ErrorMapper.map(error),
-          onRetry: () => ref.invalidate(briefByIdProvider(widget.postId)),
-        ),
-        data: (brief) {
-          if (brief == null) {
-            return BatshError(message: context.l10n.postNotFound);
-          }
-          final quote = quoteAsync.value;
-          final match = calculateOpportunityMatch(
-            brief: brief,
-            contractor: contractor,
-            portfolio: portfolio,
-          );
-          return Consumer(
-            builder: (context, ref, _) {
-              final homeownerAsync = ref.watch(
-                homeownerProfilePreviewProvider(brief.homeownerId),
-              );
-              return _OpportunityDetailBody(
-                brief: brief,
-                match: match,
-                quote: quote,
-                quoteLoading: quoteAsync.isLoading,
-                quoteFailed: quoteAsync.hasError,
-                contractor: contractor,
-                homeowner: homeownerAsync.value,
-                homeownerLoading: homeownerAsync.isLoading,
-                saved: saved,
-                onSave: toggleSaved,
-                onApply: () =>
-                    showQuoteSheet(context, briefId: brief.id, existing: quote),
-                onFollowQuote: () => context.push(Routes.contractorMyQuotes),
-                onCompleteProfile: () =>
-                    context.push(Routes.contractorEditProfile),
-                onViewHomeowner: () => context.push(
-                  Routes.contractorHomeownerProfilePath(brief.homeownerId),
-                ),
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: overlayBase.copyWith(
+        statusBarColor: Colors.transparent,
+        systemNavigationBarColor: Colors.transparent,
+        systemNavigationBarIconBrightness: Brightness.dark,
+      ),
+      child: Scaffold(
+        backgroundColor: context.colorScheme.surface,
+        body: SafeArea(
+          top: false,
+          bottom: false,
+          child: briefAsync.when(
+            loading: () => const _OpportunityDetailSkeleton(),
+            error: (error, _) => BatshError(
+              message: ErrorMapper.map(error),
+              onRetry: () => ref.invalidate(briefByIdProvider(widget.postId)),
+            ),
+            data: (brief) {
+              if (brief == null) {
+                return BatshError(message: context.l10n.postNotFound);
+              }
+              return Consumer(
+                builder: (context, ref, _) {
+                  final homeownerAsync = ref.watch(
+                    homeownerProfilePreviewProvider(brief.homeownerId),
+                  );
+                  return _OpportunityDetailBody(
+                    brief: brief,
+                    quote: quoteAsync.value,
+                    quoteLoading: quoteAsync.isLoading,
+                    quoteFailed: quoteAsync.hasError,
+                    contractor: contractor,
+                    homeowner: homeownerAsync.value,
+                    homeownerLoading: homeownerAsync.isLoading,
+                    saved: saved,
+                    onSave: () => unawaited(_toggleSaved(brief.id)),
+                    onApply: () => showQuoteSheet(
+                      context,
+                      briefId: brief.id,
+                      existing: quoteAsync.value,
+                    ),
+                    onFollowQuote: () =>
+                        context.push(Routes.contractorMyQuotes),
+                    onCompleteProfile: () =>
+                        context.push(Routes.contractorEditProfile),
+                    onRetryQuoteState: () =>
+                        ref.invalidate(myQuoteForBriefProvider(brief.id)),
+                    onViewHomeowner: () => context.push(
+                      Routes.contractorHomeownerProfilePath(brief.homeownerId),
+                    ),
+                    onOpenMap: () => unawaited(_openMap(brief)),
+                    scrollController: _scrollController,
+                  );
+                },
               );
             },
-          );
-        },
+          ),
+        ),
       ),
     );
   }
@@ -144,12 +168,30 @@ class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
       BatshSnack.error(context, context.l10n.somethingWentWrong);
     }
   }
+
+  Future<void> _openMap(Brief brief) async {
+    final location = _rawLocation(brief);
+    if (location.isEmpty) return;
+    final uri = Uri.https('www.google.com', '/maps/search/', {
+      'api': '1',
+      'query': location,
+    });
+    try {
+      final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!opened && mounted) {
+        BatshSnack.error(context, context.l10n.opportunityDetailMapOpenError);
+      }
+    } catch (_) {
+      if (mounted) {
+        BatshSnack.error(context, context.l10n.opportunityDetailMapOpenError);
+      }
+    }
+  }
 }
 
 class _OpportunityDetailBody extends StatelessWidget {
   const _OpportunityDetailBody({
     required this.brief,
-    required this.match,
     required this.quote,
     required this.quoteLoading,
     required this.quoteFailed,
@@ -161,11 +203,13 @@ class _OpportunityDetailBody extends StatelessWidget {
     required this.onApply,
     required this.onFollowQuote,
     required this.onCompleteProfile,
+    required this.onRetryQuoteState,
     required this.onViewHomeowner,
+    required this.onOpenMap,
+    required this.scrollController,
   });
 
   final Brief brief;
-  final OpportunityMatch match;
   final Quote? quote;
   final bool quoteLoading;
   final bool quoteFailed;
@@ -177,7 +221,10 @@ class _OpportunityDetailBody extends StatelessWidget {
   final VoidCallback onApply;
   final VoidCallback onFollowQuote;
   final VoidCallback onCompleteProfile;
+  final VoidCallback onRetryQuoteState;
   final VoidCallback onViewHomeowner;
+  final VoidCallback onOpenMap;
+  final ScrollController scrollController;
 
   bool get _profileReady =>
       contractor != null &&
@@ -186,56 +233,76 @@ class _OpportunityDetailBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final photos = brief.photoUrls
+        .where((url) => url.trim().isNotEmpty)
+        .toList(growable: false);
     return Column(
       children: [
         Expanded(
           child: ListView(
-            padding: const EdgeInsets.only(bottom: BatshSpacing.lg),
+            controller: scrollController,
+            padding: const EdgeInsets.only(bottom: 132),
             children: [
-              if (brief.photoUrls.isNotEmpty)
-                _OpportunityGallery(photoUrls: brief.photoUrls),
-              _PageWidth(child: _OpportunitySummary(brief: brief)),
               _PageWidth(
-                child: _HomeownerProfileCard(
+                child: _OpportunityGallery(
+                  photoUrls: photos,
+                  saved: saved,
+                  onBack: () => context.pop(),
+                  onSave: onSave,
+                  onShare: () => _shareOpportunity(context, brief),
+                  onCopy: () => _copyOpportunitySummary(context, brief),
+                ),
+              ),
+              _PageWidth(child: _OpportunityIdentity(brief: brief)),
+              _PageWidth(child: _OpportunityQuickInfo(brief: brief)),
+              _PageWidth(
+                child: _OpportunityActivity(
+                  brief: brief,
+                  quote: quote,
+                  quoteLoading: quoteLoading,
+                  quoteFailed: quoteFailed,
+                ),
+              ),
+              _PageWidth(child: _OpportunityDescription(brief: brief)),
+              _PageWidth(child: _OpportunityScope(brief: brief)),
+              _PageWidth(child: _ClientPhotoSection(photoUrls: photos)),
+              _PageWidth(
+                child: _OpportunityLocation(brief: brief, onOpenMap: onOpenMap),
+              ),
+              _PageWidth(child: _OpportunityTiming(brief: brief)),
+              _PageWidth(
+                child: _DetailSection(
+                  title: context.l10n.opportunityDetailAdditional,
+                  icon: Icons.description_outlined,
+                ),
+              ),
+              _PageWidth(
+                child: _DetailSection(
+                  title: context.l10n.opportunityDetailRequirements,
+                  icon: Icons.star_outline_rounded,
+                ),
+              ),
+              _PageWidth(
+                child: _OpportunityOwner(
                   profile: homeowner,
                   loading: homeownerLoading,
                   onTap: homeowner == null ? null : onViewHomeowner,
                 ),
               ),
-              _PageWidth(child: _OpportunityMatchCard(match: match)),
-              _PageWidth(
-                child: _OpportunityTrustBar(brief: brief, quote: quote),
-              ),
-              _PageWidth(
-                child: BriefLifecycleTimeline(
-                  brief: brief,
-                  audience: BriefLifecycleAudience.contractor,
-                  myQuote: quote,
-                  quoteLoading: quoteLoading,
-                  quoteFailed: quoteFailed,
-                ),
-              ),
-              _PageWidth(
-                child: CompletionCard(
-                  brief: brief,
-                  role: CompletionRole.contractor,
-                ),
-              ),
-              _PageWidth(child: _OwnerNoteCard(brief: brief)),
-              _PageWidth(child: _ProjectDetails(brief: brief)),
-              _PageWidth(child: const _BudgetUnavailableCard()),
+              _PageWidth(child: _OpportunityAdvice(onTap: onCompleteProfile)),
             ],
           ),
         ),
-        _OpportunityStickyActions(
+        _OpportunityStickyAction(
           brief: brief,
           quote: quote,
+          quoteLoading: quoteLoading,
+          quoteFailed: quoteFailed,
           profileReady: _profileReady,
-          saved: saved,
-          onSave: onSave,
           onApply: onApply,
           onFollowQuote: onFollowQuote,
           onCompleteProfile: onCompleteProfile,
+          onRetryQuoteState: onRetryQuoteState,
         ),
       ],
     );
@@ -248,20 +315,30 @@ class _PageWidth extends StatelessWidget {
   final Widget child;
 
   @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 560),
-        child: child,
-      ),
-    );
-  }
+  Widget build(BuildContext context) => Center(
+    child: ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 560),
+      child: child,
+    ),
+  );
 }
 
 class _OpportunityGallery extends StatefulWidget {
-  const _OpportunityGallery({required this.photoUrls});
+  const _OpportunityGallery({
+    required this.photoUrls,
+    required this.saved,
+    required this.onBack,
+    required this.onSave,
+    required this.onShare,
+    required this.onCopy,
+  });
 
   final List<String> photoUrls;
+  final bool saved;
+  final VoidCallback onBack;
+  final VoidCallback onSave;
+  final VoidCallback onShare;
+  final VoidCallback onCopy;
 
   @override
   State<_OpportunityGallery> createState() => _OpportunityGalleryState();
@@ -279,177 +356,773 @@ class _OpportunityGalleryState extends State<_OpportunityGallery> {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 560),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(
-            BatshSpacing.md,
-            BatshSpacing.sm,
-            BatshSpacing.md,
-            0,
-          ),
-          child: AspectRatio(
-            aspectRatio: 16 / 8.5,
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(BatshRadius.xl),
-              child: Stack(
-                children: [
-                  Positioned.fill(
-                    child: PageView.builder(
-                      controller: _controller,
-                      itemCount: widget.photoUrls.length,
-                      onPageChanged: (value) => setState(() => _index = value),
-                      itemBuilder: (_, index) => Semantics(
-                        button: true,
-                        label: context.l10n.openPhotoViewer,
-                        child: InkWell(
-                          onTap: () => BatshPhotoViewer.show(
-                            context,
-                            urls: widget.photoUrls,
-                            initialIndex: index,
-                          ),
-                          child: CachedNetworkImage(
-                            imageUrl: widget.photoUrls[index],
-                            fit: BoxFit.cover,
-                            memCacheWidth: 1000,
-                            placeholder: (_, _) => ColoredBox(
-                              color: context.colorScheme.surfaceContainerLow,
-                            ),
-                            errorWidget: (_, _, _) => ColoredBox(
-                              color: context.colorScheme.surfaceContainerLow,
-                              child: Icon(
-                                Icons.image_not_supported_outlined,
-                                color: context.colorScheme.onSurfaceVariant,
-                              ),
-                            ),
-                          ),
-                        ),
+    final count = widget.photoUrls.length;
+    final reduceMotion = MediaQuery.disableAnimationsOf(context);
+    return Column(
+      children: [
+        AspectRatio(
+          aspectRatio: 1.24,
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              if (count == 0)
+                const _UnavailablePhoto()
+              else
+                PageView.builder(
+                  controller: _controller,
+                  itemCount: count,
+                  onPageChanged: (index) => setState(() => _index = index),
+                  itemBuilder: (context, index) => Semantics(
+                    button: true,
+                    image: true,
+                    label:
+                        '${context.l10n.photoIndexOf(index + 1, count)} · ${context.l10n.openPhotoViewer}',
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () => BatshPhotoViewer.show(
+                        context,
+                        urls: widget.photoUrls,
+                        initialIndex: index,
                       ),
+                      child: _RequestPhoto(url: widget.photoUrls[index]),
                     ),
                   ),
-                  PositionedDirectional(
-                    top: BatshSpacing.sm,
-                    start: BatshSpacing.sm,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: BatshSpacing.sm,
-                        vertical: BatshSpacing.xs,
-                      ),
-                      decoration: BoxDecoration(
-                        color: context.colorScheme.scrim.withValues(
-                          alpha: 0.72,
-                        ),
-                        borderRadius: BatshRadius.brFull,
-                      ),
-                      child: Text(
-                        '${_index + 1}/${widget.photoUrls.length}',
-                        style: BatshTypography.labelSm.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                  ),
-                  if (widget.photoUrls.length > 1)
-                    Positioned(
-                      bottom: BatshSpacing.sm,
-                      left: 0,
-                      right: 0,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          for (var i = 0; i < widget.photoUrls.length; i++)
-                            AnimatedContainer(
-                              duration: BatshMotion.fast,
-                              width: i == _index ? 18 : 6,
-                              height: 6,
-                              margin: const EdgeInsets.symmetric(horizontal: 3),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withValues(
-                                  alpha: i == _index ? 0.95 : 0.55,
-                                ),
-                                borderRadius: BatshRadius.brFull,
-                              ),
-                            ),
+                ),
+              Positioned.fill(
+                child: IgnorePointer(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.center,
+                        colors: [
+                          context.colorScheme.scrim.withValues(alpha: 0.48),
+                          Colors.transparent,
                         ],
                       ),
                     ),
-                ],
+                  ),
+                ),
               ),
-            ),
+              Positioned(
+                top: MediaQuery.viewPaddingOf(context).top + BatshSpacing.xs,
+                left: BatshSpacing.xs,
+                child: _GalleryControl(
+                  tooltip: context.l10n.back,
+                  icon: Icons.chevron_left_rounded,
+                  onPressed: widget.onBack,
+                ),
+              ),
+              Positioned(
+                top: MediaQuery.viewPaddingOf(context).top + BatshSpacing.xs,
+                right: BatshSpacing.xs,
+                child: Row(
+                  textDirection: ui.TextDirection.ltr,
+                  children: [
+                    _GalleryControl(
+                      tooltip: widget.saved
+                          ? context.l10n.removeOpportunityFromSaved
+                          : context.l10n.saveOpportunity,
+                      icon: widget.saved
+                          ? Icons.bookmark_rounded
+                          : Icons.bookmark_border_rounded,
+                      toggled: widget.saved,
+                      onPressed: widget.onSave,
+                    ),
+                    const SizedBox(width: BatshSpacing.xxs),
+                    _GalleryControl(
+                      tooltip: context.l10n.share,
+                      icon: Icons.ios_share_rounded,
+                      onPressed: widget.onShare,
+                    ),
+                    const SizedBox(width: BatshSpacing.xxs),
+                    PopupMenuButton<_DetailMoreAction>(
+                      tooltip: context.l10n.opportunityDetailMoreActions,
+                      onSelected: (action) {
+                        if (action == _DetailMoreAction.copySummary) {
+                          widget.onCopy();
+                        }
+                      },
+                      color: context.colorScheme.surfaceContainerLowest,
+                      shape: const RoundedRectangleBorder(
+                        borderRadius: BatshRadius.brMd,
+                      ),
+                      itemBuilder: (context) => [
+                        PopupMenuItem(
+                          value: _DetailMoreAction.copySummary,
+                          child: Row(
+                            children: [
+                              const Icon(Icons.copy_outlined),
+                              const SizedBox(width: BatshSpacing.sm),
+                              Text(context.l10n.copyOpportunitySummary),
+                            ],
+                          ),
+                        ),
+                      ],
+                      child: Semantics(
+                        button: true,
+                        label: context.l10n.opportunityDetailMoreActions,
+                        child: const _GalleryControlSurface(
+                          child: Icon(Icons.more_horiz_rounded),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (count > 0)
+                Positioned(
+                  left: BatshSpacing.md,
+                  bottom: BatshSpacing.md,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: BatshSpacing.sm,
+                      vertical: BatshSpacing.xs,
+                    ),
+                    decoration: BoxDecoration(
+                      color: context.colorScheme.scrim.withValues(alpha: 0.68),
+                      borderRadius: BatshRadius.brFull,
+                    ),
+                    child: Text(
+                      context.l10n.photoIndexOf(_index + 1, count),
+                      style: BatshTypography.labelMd.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
           ),
         ),
-      ),
+        if (count > 0)
+          SizedBox(
+            height: 96,
+            child: Padding(
+              padding: const EdgeInsetsDirectional.fromSTEB(
+                BatshSpacing.md,
+                BatshSpacing.sm,
+                BatshSpacing.md,
+                BatshSpacing.xs,
+              ),
+              child: Directionality(
+                textDirection: ui.TextDirection.ltr,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: count > 3 ? 4 : count,
+                  separatorBuilder: (_, _) =>
+                      const SizedBox(width: BatshSpacing.xs),
+                  itemBuilder: (context, index) {
+                    if (count > 3 && index == 3) {
+                      return _MorePhotosTile(
+                        remaining: count - 3,
+                        total: count,
+                        onTap: () => BatshPhotoViewer.show(
+                          context,
+                          urls: widget.photoUrls,
+                          initialIndex: 3,
+                        ),
+                      );
+                    }
+                    return _GalleryThumbnail(
+                      url: widget.photoUrls[index],
+                      index: index,
+                      selected: index == _index,
+                      reduceMotion: reduceMotion,
+                      onTap: () {
+                        _controller.animateToPage(
+                          index,
+                          duration: BatshMotion.durationFor(
+                            reduceMotion,
+                            BatshMotion.fast,
+                          ),
+                          curve: BatshMotion.curveFor(
+                            reduceMotion,
+                            BatshMotion.easeOut,
+                          ),
+                        );
+                      },
+                    );
+                  },
+                ),
+              ),
+            ),
+          )
+        else
+          const SizedBox(height: BatshSpacing.sm),
+      ],
     );
   }
 }
 
-class _OpportunitySummary extends StatelessWidget {
-  const _OpportunitySummary({required this.brief});
+enum _DetailMoreAction { copySummary }
+
+class _GalleryControl extends StatelessWidget {
+  const _GalleryControl({
+    required this.tooltip,
+    required this.icon,
+    required this.onPressed,
+    this.toggled,
+  });
+
+  final String tooltip;
+  final IconData icon;
+  final VoidCallback onPressed;
+  final bool? toggled;
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+    button: true,
+    toggled: toggled,
+    label: tooltip,
+    child: Tooltip(
+      message: tooltip,
+      child: Material(
+        color: context.colorScheme.scrim.withValues(alpha: 0.56),
+        shape: const CircleBorder(),
+        child: IconButton(
+          onPressed: onPressed,
+          tooltip: null,
+          icon: Icon(icon, color: Colors.white, size: BatshIconSize.action),
+          constraints: const BoxConstraints.tightFor(
+            width: BatshSpacing.xxxl,
+            height: BatshSpacing.xxxl,
+          ),
+          padding: EdgeInsets.zero,
+          visualDensity: VisualDensity.standard,
+        ),
+      ),
+    ),
+  );
+}
+
+class _GalleryControlSurface extends StatelessWidget {
+  const _GalleryControlSurface({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => Material(
+    color: context.colorScheme.scrim.withValues(alpha: 0.56),
+    shape: const CircleBorder(),
+    child: SizedBox.square(
+      dimension: BatshSpacing.xxxl,
+      child: Center(
+        child: IconTheme(
+          data: const IconThemeData(
+            color: Colors.white,
+            size: BatshIconSize.action,
+          ),
+          child: child,
+        ),
+      ),
+    ),
+  );
+}
+
+class _GalleryThumbnail extends StatelessWidget {
+  const _GalleryThumbnail({
+    required this.url,
+    required this.index,
+    required this.selected,
+    required this.reduceMotion,
+    required this.onTap,
+  });
+
+  final String url;
+  final int index;
+  final bool selected;
+  final bool reduceMotion;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+    button: true,
+    selected: selected,
+    label: context.l10n.opportunityDetailSelectPhoto(index + 1),
+    child: Material(
+      color: context.colorScheme.surfaceContainerLow,
+      borderRadius: BatshRadius.brMd,
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: BatshMotion.durationFor(reduceMotion, BatshMotion.fast),
+          width: 76,
+          height: 76,
+          decoration: BoxDecoration(
+            borderRadius: BatshRadius.brMd,
+            border: Border.all(
+              color: selected
+                  ? context.colorScheme.primary
+                  : context.colorScheme.outlineVariant.withValues(alpha: 0.6),
+              width: selected ? 2 : 1,
+            ),
+          ),
+          child: ClipRRect(
+            borderRadius: BatshRadius.brMd,
+            child: _RequestPhoto(url: url),
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+class _MorePhotosTile extends StatelessWidget {
+  const _MorePhotosTile({
+    required this.remaining,
+    required this.total,
+    required this.onTap,
+  });
+
+  final int remaining;
+  final int total;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+    button: true,
+    label:
+        '${context.l10n.photosCount(total)} · ${context.l10n.openPhotoViewer}',
+    child: Material(
+      color: context.colorScheme.surfaceContainerLow,
+      borderRadius: BatshRadius.brMd,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BatshRadius.brMd,
+        child: SizedBox(
+          width: 76,
+          height: 76,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                '+$remaining',
+                style: BatshTypography.titleMd.copyWith(
+                  fontWeight: FontWeight.w800,
+                  color: context.colorScheme.onSurface,
+                ),
+              ),
+              Text(
+                context.l10n.photosCount(total),
+                textAlign: TextAlign.center,
+                style: BatshTypography.labelSm.copyWith(
+                  color: context.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+class _UnavailablePhoto extends StatelessWidget {
+  const _UnavailablePhoto();
+
+  @override
+  Widget build(BuildContext context) => ColoredBox(
+    color: context.colorScheme.surfaceContainerLow,
+    child: Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.image_not_supported_outlined,
+            size: BatshIconSize.empty,
+            color: context.colorScheme.onSurfaceVariant,
+          ),
+          const SizedBox(height: BatshSpacing.sm),
+          Text(
+            context.l10n.opportunityDetailPhotosUnavailable,
+            style: BatshTypography.bodyMd.copyWith(
+              color: context.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+class _RequestPhoto extends StatelessWidget {
+  const _RequestPhoto({required this.url});
+
+  final String url;
+
+  @override
+  Widget build(BuildContext context) => CachedNetworkImage(
+    imageUrl: url,
+    fit: BoxFit.cover,
+    memCacheWidth: 1200,
+    placeholder: (_, _) => const _PhotoFallback(),
+    errorWidget: (_, _, _) => const _PhotoFallback(),
+  );
+}
+
+class _PhotoFallback extends StatelessWidget {
+  const _PhotoFallback();
+
+  @override
+  Widget build(BuildContext context) => ColoredBox(
+    color: context.colorScheme.surfaceContainerLow,
+    child: Center(
+      child: Icon(
+        Icons.image_not_supported_outlined,
+        size: BatshIconSize.action,
+        color: context.colorScheme.onSurfaceVariant,
+      ),
+    ),
+  );
+}
+
+class _OpportunityIdentity extends StatelessWidget {
+  const _OpportunityIdentity({required this.brief});
 
   final Brief brief;
 
   @override
   Widget build(BuildContext context) {
-    final location = brief.district == null
-        ? brief.city
-        : '${brief.district}، ${brief.city}';
-    return Padding(
-      padding: const EdgeInsets.all(BatshSpacing.md),
+    final locale = Localizations.localeOf(context).toLanguageTag();
+    final date = DateFormat.yMMMMd(locale).format(brief.createdAt);
+    final title = _opportunityTitle(context, brief);
+    final location = _localizedLocation(context, brief);
+    return _DetailSection(
+      title: null,
+      icon: null,
+      padding: const EdgeInsets.fromLTRB(
+        BatshSpacing.md,
+        BatshSpacing.sm,
+        BatshSpacing.md,
+        BatshSpacing.md,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Wrap(
-            alignment: WrapAlignment.spaceBetween,
-            runSpacing: BatshSpacing.sm,
+          Row(
+            textDirection: ui.TextDirection.ltr,
             children: [
-              _StatusChip(
-                label: brief.isActive
-                    ? context.l10n.opportunityOpen
-                    : context.l10n.opportunityClosed,
-                active: brief.isActive,
+              Directionality(
+                textDirection: ui.TextDirection.rtl,
+                child: _StatusPill(active: brief.isActive),
               ),
-              _CategoryChip(label: _specialtyLabel(brief)),
+              const Spacer(),
+              Flexible(
+                child: Directionality(
+                  textDirection: ui.TextDirection.rtl,
+                  child: Text(
+                    context.l10n.requestsPublishedOn(date),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: BatshTypography.labelSm.copyWith(
+                      color: context.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: BatshSpacing.xxs),
+              Icon(
+                Icons.calendar_today_outlined,
+                size: BatshIconSize.xs,
+                color: context.colorScheme.onSurfaceVariant,
+              ),
             ],
           ),
-          const SizedBox(height: BatshSpacing.sm),
+          const SizedBox(height: BatshSpacing.md),
           Text(
-            opportunityHeadline(brief.workDescription, maxLength: 90),
-            style: BatshTypography.titleLg.copyWith(
+            title,
+            textAlign: TextAlign.start,
+            style: BatshTypography.headlineSm.copyWith(
+              color: context.colorScheme.onSurface,
               fontWeight: FontWeight.w800,
-              height: 1.3,
+              height: 1.28,
             ),
           ),
-          const SizedBox(height: BatshSpacing.sm),
-          Wrap(
-            spacing: BatshSpacing.xs,
-            runSpacing: BatshSpacing.xs,
-            crossAxisAlignment: WrapCrossAlignment.center,
+          if (location.isNotEmpty) ...[
+            const SizedBox(height: BatshSpacing.xs),
+            Row(
+              children: [
+                Icon(
+                  Icons.location_on_outlined,
+                  size: BatshIconSize.sm,
+                  color: context.colorScheme.secondary,
+                ),
+                const SizedBox(width: BatshSpacing.xxs),
+                Expanded(
+                  child: Text(
+                    location,
+                    style: BatshTypography.bodyMd.copyWith(
+                      color: context.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _StatusPill extends StatelessWidget {
+  const _StatusPill({required this.active});
+
+  final bool active;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(
+      horizontal: BatshSpacing.sm,
+      vertical: BatshSpacing.xs,
+    ),
+    decoration: BoxDecoration(
+      color: active
+          ? context.colorScheme.primaryContainer
+          : context.colorScheme.surfaceContainerHigh,
+      borderRadius: BatshRadius.brFull,
+    ),
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(
+          active ? Icons.auto_awesome_rounded : Icons.lock_outline_rounded,
+          size: BatshIconSize.xs,
+          color: active
+              ? context.colorScheme.primary
+              : context.colorScheme.onSurfaceVariant,
+        ),
+        const SizedBox(width: BatshSpacing.xxs),
+        Text(
+          active
+              ? context.l10n.opportunityOpen
+              : context.l10n.opportunityClosed,
+          style: BatshTypography.labelSm.copyWith(
+            color: active
+                ? context.colorScheme.primary
+                : context.colorScheme.onSurfaceVariant,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+class _OpportunityQuickInfo extends StatelessWidget {
+  const _OpportunityQuickInfo({required this.brief});
+
+  final Brief brief;
+
+  @override
+  Widget build(BuildContext context) {
+    final area = brief.estimatedArea;
+    final timing = _timingLabel(context, brief.startTiming);
+    final unit = _apartmentLabel(context, brief.apartmentType);
+    final location = _localizedLocation(context, brief);
+    final items = [
+      _QuickInfoItem(
+        icon: Icons.location_on_outlined,
+        label: context.l10n.opportunityDetailAreaLabel,
+        value: location.isEmpty ? context.l10n.notSpecified : location,
+      ),
+      _QuickInfoItem(
+        icon: Icons.home_work_outlined,
+        label: context.l10n.apartmentTypeLabel,
+        value: unit,
+      ),
+      _QuickInfoItem(
+        icon: Icons.schedule_outlined,
+        label: context.l10n.opportunityDetailStartLabel,
+        value: timing,
+      ),
+      _QuickInfoItem(
+        icon: Icons.crop_free_rounded,
+        label: context.l10n.areaLabel,
+        value: area == null || area <= 0
+            ? context.l10n.notSpecified
+            : context.l10n.workAreaSquareMeters(area),
+      ),
+    ];
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: BatshSpacing.md,
+        vertical: BatshSpacing.xxs,
+      ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final largeText =
+              MediaQuery.textScalerOf(context).scale(14) > 17 ||
+              constraints.maxWidth < 340;
+          if (largeText) {
+            final width = (constraints.maxWidth - BatshSpacing.xs) / 2;
+            return Wrap(
+              spacing: BatshSpacing.xs,
+              runSpacing: BatshSpacing.xs,
+              children: [
+                for (final item in items)
+                  SizedBox(
+                    width: width,
+                    child: _QuickInfoCard(item: item),
+                  ),
+              ],
+            );
+          }
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Icon(
-                Icons.location_on_outlined,
-                size: BatshIconSize.xs,
-                color: context.colorScheme.onSurfaceVariant,
-              ),
-              Text(
-                location,
-                style: BatshTypography.labelMd.copyWith(
-                  color: context.colorScheme.onSurfaceVariant,
-                ),
-              ),
-              Icon(
-                Icons.schedule_outlined,
-                size: BatshIconSize.xs,
-                color: context.colorScheme.onSurfaceVariant,
-              ),
-              Text(
-                formatRelativeTime(brief.createdAt),
-                style: BatshTypography.labelMd.copyWith(
-                  color: context.colorScheme.onSurfaceVariant,
-                ),
-              ),
+              for (var index = 0; index < items.length; index++) ...[
+                if (index > 0) const SizedBox(width: BatshSpacing.xxs),
+                Expanded(child: _QuickInfoCard(item: items[index])),
+              ],
             ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _QuickInfoItem {
+  const _QuickInfoItem({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+}
+
+class _QuickInfoCard extends StatelessWidget {
+  const _QuickInfoCard({required this.item});
+
+  final _QuickInfoItem item;
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+    container: true,
+    label: '${item.label}: ${item.value}',
+    child: Container(
+      constraints: const BoxConstraints(minHeight: 92),
+      padding: const EdgeInsets.symmetric(
+        horizontal: BatshSpacing.xxs,
+        vertical: BatshSpacing.sm,
+      ),
+      decoration: BoxDecoration(
+        color: context.colorScheme.surfaceContainerLowest.withValues(
+          alpha: 0.76,
+        ),
+        borderRadius: BatshRadius.brMd,
+        border: Border.all(
+          color: context.colorScheme.outlineVariant.withValues(alpha: 0.4),
+        ),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            item.icon,
+            size: BatshIconSize.action,
+            color: context.colorScheme.primary,
+          ),
+          const SizedBox(height: BatshSpacing.xxs),
+          Text(
+            item.label,
+            textAlign: TextAlign.center,
+            style: BatshTypography.labelSm.copyWith(
+              color: context.colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: BatshSpacing.xxxs),
+          Text(
+            item.value,
+            textAlign: TextAlign.center,
+            style: BatshTypography.labelMd.copyWith(
+              color: context.colorScheme.onSurface,
+              fontWeight: FontWeight.w700,
+              height: 1.25,
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+class _OpportunityActivity extends StatelessWidget {
+  const _OpportunityActivity({
+    required this.brief,
+    required this.quote,
+    required this.quoteLoading,
+    required this.quoteFailed,
+  });
+
+  final Brief brief;
+  final Quote? quote;
+  final bool quoteLoading;
+  final bool quoteFailed;
+
+  @override
+  Widget build(BuildContext context) {
+    final publishedActivity = _formatPublishedActivity(
+      context,
+      brief.createdAt,
+    );
+    return Container(
+      margin: const EdgeInsets.fromLTRB(
+        BatshSpacing.md,
+        BatshSpacing.xs,
+        BatshSpacing.md,
+        BatshSpacing.sm,
+      ),
+      padding: const EdgeInsets.symmetric(vertical: BatshSpacing.sm),
+      decoration: BoxDecoration(
+        color: context.colorScheme.surfaceContainerLowest.withValues(
+          alpha: 0.52,
+        ),
+        borderRadius: BatshRadius.brMd,
+        border: Border.all(
+          color: context.colorScheme.outlineVariant.withValues(alpha: 0.34),
+        ),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: _ActivityMetric(
+              icon: Icons.schedule_outlined,
+              label: context.l10n.opportunityDetailActivityPublished,
+              value: publishedActivity,
+            ),
+          ),
+          _MetricDivider(),
+          Expanded(
+            child: _ActivityMetric(
+              icon: Icons.photo_library_outlined,
+              label: context.l10n.opportunityDetailActivityPhotos,
+              value: context.l10n.photosCount(
+                brief.photoUrls.where((url) => url.trim().isNotEmpty).length,
+              ),
+            ),
+          ),
+          _MetricDivider(),
+          Expanded(
+            child: _ActivityMetric(
+              icon: quote == null
+                  ? Icons.send_outlined
+                  : Icons.check_circle_outline_rounded,
+              label: context.l10n.opportunityDetailActivityQuote,
+              value: quoteLoading
+                  ? context.l10n.opportunityDetailQuoteStateLoading
+                  : quoteFailed
+                  ? context.l10n.opportunityDetailQuoteStateUnavailable
+                  : quote == null
+                  ? context.l10n.opportunityDetailQuoteNotSent
+                  : context.l10n.quoteAlreadySent,
+            ),
           ),
         ],
       ),
@@ -457,8 +1130,432 @@ class _OpportunitySummary extends StatelessWidget {
   }
 }
 
-class _HomeownerProfileCard extends StatelessWidget {
-  const _HomeownerProfileCard({
+class _MetricDivider extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) => Container(
+    width: 1,
+    height: 46,
+    color: context.colorScheme.outlineVariant.withValues(alpha: 0.45),
+  );
+}
+
+class _ActivityMetric extends StatelessWidget {
+  const _ActivityMetric({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.symmetric(horizontal: BatshSpacing.xxs),
+    child: Column(
+      children: [
+        Icon(icon, size: BatshIconSize.sm, color: context.colorScheme.primary),
+        const SizedBox(height: BatshSpacing.xxxs),
+        Text(
+          label,
+          textAlign: TextAlign.center,
+          style: BatshTypography.labelSm.copyWith(
+            color: context.colorScheme.onSurfaceVariant,
+          ),
+        ),
+        const SizedBox(height: BatshSpacing.xxxs),
+        Text(
+          value,
+          textAlign: TextAlign.center,
+          style: BatshTypography.labelSm.copyWith(
+            color: context.colorScheme.onSurface,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+String _formatPublishedActivity(BuildContext context, DateTime publishedAt) {
+  final elapsed = DateTime.now().difference(publishedAt);
+  final l10n = context.l10n;
+  if (elapsed.inMinutes < 60) {
+    final minutes = elapsed.inMinutes;
+    return minutes == 1 ? l10n.minAgo(minutes) : l10n.minsAgo(minutes);
+  }
+  if (elapsed.inHours < 24) {
+    final hours = elapsed.inHours;
+    return hours == 1 ? l10n.hourAgo(hours) : l10n.hoursAgo(hours);
+  }
+  if (elapsed.inDays < 7) {
+    final days = elapsed.inDays;
+    return days == 1 ? l10n.dayAgo(days) : l10n.daysAgo(days);
+  }
+  final locale = Localizations.localeOf(context).toLanguageTag();
+  return DateFormat.yMMMd(locale).format(publishedAt);
+}
+
+class _OpportunityDescription extends StatelessWidget {
+  const _OpportunityDescription({required this.brief});
+
+  final Brief brief;
+
+  @override
+  Widget build(BuildContext context) => _DetailSection(
+    title: context.l10n.opportunityDetailDescription,
+    icon: Icons.description_outlined,
+    child: Text(
+      brief.workDescription,
+      textAlign: TextAlign.start,
+      style: BatshTypography.bodyMd.copyWith(
+        color: context.colorScheme.onSurfaceVariant,
+        height: 1.65,
+      ),
+    ),
+  );
+}
+
+class _OpportunityScope extends StatelessWidget {
+  const _OpportunityScope({required this.brief});
+
+  final Brief brief;
+
+  @override
+  Widget build(BuildContext context) {
+    final specialties = brief.targetSpecialties
+        .map((value) => localizedSpecialtyDisplayLabel(context, value))
+        .where((value) => value.trim().isNotEmpty)
+        .toList(growable: false);
+    return _DetailSection(
+      title: context.l10n.opportunityDetailScope,
+      icon: Icons.layers_outlined,
+      child: specialties.isEmpty
+          ? null
+          : Wrap(
+              spacing: BatshSpacing.xs,
+              runSpacing: BatshSpacing.xs,
+              children: [
+                for (final specialty in specialties)
+                  _ScopeChip(label: specialty),
+              ],
+            ),
+    );
+  }
+}
+
+class _ScopeChip extends StatelessWidget {
+  const _ScopeChip({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(
+      horizontal: BatshSpacing.sm,
+      vertical: BatshSpacing.xs,
+    ),
+    decoration: BoxDecoration(
+      color: context.colorScheme.secondaryContainer.withValues(alpha: 0.46),
+      borderRadius: BatshRadius.brFull,
+    ),
+    child: Text(
+      label,
+      style: BatshTypography.labelMd.copyWith(
+        color: context.colorScheme.onSecondaryContainer,
+        fontWeight: FontWeight.w700,
+      ),
+    ),
+  );
+}
+
+class _ClientPhotoSection extends StatelessWidget {
+  const _ClientPhotoSection({required this.photoUrls});
+
+  final List<String> photoUrls;
+
+  @override
+  Widget build(BuildContext context) => _DetailSection(
+    title: context.l10n.opportunityDetailClientPhotos,
+    icon: Icons.photo_library_outlined,
+    child: photoUrls.isEmpty
+        ? Text(
+            context.l10n.opportunityDetailPhotosUnavailable,
+            style: BatshTypography.bodyMd.copyWith(
+              color: context.colorScheme.onSurfaceVariant,
+            ),
+          )
+        : SizedBox(
+            height: 94,
+            child: Directionality(
+              textDirection: ui.TextDirection.ltr,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: photoUrls.length,
+                separatorBuilder: (_, _) =>
+                    const SizedBox(width: BatshSpacing.xs),
+                itemBuilder: (context, index) => Semantics(
+                  button: true,
+                  image: true,
+                  label:
+                      '${context.l10n.photoIndexOf(index + 1, photoUrls.length)} · ${context.l10n.openPhotoViewer}',
+                  child: Material(
+                    color: context.colorScheme.surfaceContainerLow,
+                    borderRadius: BatshRadius.brMd,
+                    clipBehavior: Clip.antiAlias,
+                    child: InkWell(
+                      onTap: () => BatshPhotoViewer.show(
+                        context,
+                        urls: photoUrls,
+                        initialIndex: index,
+                      ),
+                      child: SizedBox(
+                        width: 92,
+                        height: 92,
+                        child: _RequestPhoto(url: photoUrls[index]),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+  );
+}
+
+class _OpportunityLocation extends StatelessWidget {
+  const _OpportunityLocation({required this.brief, required this.onOpenMap});
+
+  final Brief brief;
+  final VoidCallback onOpenMap;
+
+  @override
+  Widget build(BuildContext context) {
+    final rawLocation = _rawLocation(brief);
+    final location = _localizedLocation(context, brief);
+    return _DetailSection(
+      title: context.l10n.opportunityDetailLocation,
+      icon: Icons.location_on_outlined,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          ClipRRect(
+            borderRadius: BatshRadius.brMd,
+            child: Semantics(
+              label: context.l10n.opportunityDetailMapPreview,
+              excludeSemantics: true,
+              child: CustomPaint(
+                painter: _SchematicMapPainter(
+                  roadColor: context.colorScheme.surfaceContainerHigh,
+                  landColor: context.colorScheme.surfaceContainerLow,
+                ),
+                child: const SizedBox(height: 112, width: double.infinity),
+              ),
+            ),
+          ),
+          const SizedBox(height: BatshSpacing.xs),
+          if (location.isNotEmpty)
+            Text(
+              location,
+              textAlign: TextAlign.center,
+              style: BatshTypography.labelMd.copyWith(
+                color: context.colorScheme.onSurfaceVariant,
+              ),
+            )
+          else
+            Text(
+              context.l10n.opportunityDetailNoLocation,
+              textAlign: TextAlign.center,
+              style: BatshTypography.labelMd.copyWith(
+                color: context.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          const SizedBox(height: BatshSpacing.xs),
+          OutlinedButton.icon(
+            onPressed: rawLocation.isEmpty ? null : onOpenMap,
+            icon: const Icon(Icons.map_outlined),
+            label: Text(context.l10n.opportunityDetailMapAction),
+            style: OutlinedButton.styleFrom(
+              minimumSize: const Size.fromHeight(BatshSpacing.xxxxl),
+              foregroundColor: context.colorScheme.primary,
+              side: BorderSide(
+                color: context.colorScheme.primary.withValues(alpha: 0.28),
+              ),
+              shape: const RoundedRectangleBorder(
+                borderRadius: BatshRadius.brMd,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SchematicMapPainter extends CustomPainter {
+  const _SchematicMapPainter({
+    required this.roadColor,
+    required this.landColor,
+  });
+
+  final Color roadColor;
+  final Color landColor;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    canvas.drawRect(Offset.zero & size, Paint()..color = landColor);
+    final road = Paint()
+      ..color = roadColor.withValues(alpha: 0.68)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 15
+      ..strokeCap = StrokeCap.round;
+    final fineRoad = Paint()
+      ..color = roadColor.withValues(alpha: 0.45)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 7
+      ..strokeCap = StrokeCap.round;
+    final horizontal = Path()
+      ..moveTo(-8, size.height * 0.38)
+      ..cubicTo(
+        size.width * 0.27,
+        size.height * 0.30,
+        size.width * 0.58,
+        size.height * 0.52,
+        size.width + 8,
+        size.height * 0.40,
+      );
+    final diagonal = Path()
+      ..moveTo(size.width * 0.23, size.height + 8)
+      ..cubicTo(
+        size.width * 0.38,
+        size.height * 0.70,
+        size.width * 0.29,
+        size.height * 0.30,
+        size.width * 0.54,
+        -8,
+      );
+    final side = Path()
+      ..moveTo(size.width * 0.90, size.height + 8)
+      ..cubicTo(
+        size.width * 0.81,
+        size.height * 0.70,
+        size.width * 0.73,
+        size.height * 0.36,
+        size.width * 0.84,
+        -8,
+      );
+    canvas.drawPath(horizontal, road);
+    canvas.drawPath(diagonal, road);
+    canvas.drawPath(side, fineRoad);
+    final blocks = Paint()
+      ..color = landColor.withValues(alpha: 0.94)
+      ..style = PaintingStyle.fill;
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTWH(
+          size.width * 0.62,
+          size.height * 0.12,
+          size.width * 0.12,
+          size.height * 0.16,
+        ),
+        const Radius.circular(BatshRadius.xs),
+      ),
+      blocks,
+    );
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTWH(
+          size.width * 0.08,
+          size.height * 0.62,
+          size.width * 0.16,
+          size.height * 0.2,
+        ),
+        const Radius.circular(BatshRadius.xs),
+      ),
+      blocks,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _SchematicMapPainter oldDelegate) =>
+      roadColor != oldDelegate.roadColor || landColor != oldDelegate.landColor;
+}
+
+class _OpportunityTiming extends StatelessWidget {
+  const _OpportunityTiming({required this.brief});
+
+  final Brief brief;
+
+  @override
+  Widget build(BuildContext context) {
+    final timing = brief.startTiming;
+    return _DetailSection(
+      title: context.l10n.opportunityDetailTiming,
+      icon: Icons.schedule_outlined,
+      child: _TimingTile(
+        icon: Icons.calendar_month_outlined,
+        label: context.l10n.opportunityDetailStartLabel,
+        value: _timingLabel(context, timing),
+      ),
+    );
+  }
+}
+
+class _TimingTile extends StatelessWidget {
+  const _TimingTile({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.all(BatshSpacing.sm),
+    decoration: BoxDecoration(
+      color: context.colorScheme.surfaceContainerLow.withValues(alpha: 0.72),
+      borderRadius: BatshRadius.brMd,
+    ),
+    child: Row(
+      children: [
+        Icon(
+          icon,
+          color: context.colorScheme.primary,
+          size: BatshIconSize.action,
+        ),
+        const SizedBox(width: BatshSpacing.sm),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: BatshTypography.labelSm.copyWith(
+                  color: context.colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: BatshSpacing.xxxs),
+              Text(
+                value,
+                style: BatshTypography.labelLg.copyWith(
+                  color: context.colorScheme.onSurface,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+class _OpportunityOwner extends StatelessWidget {
+  const _OpportunityOwner({
     required this.profile,
     required this.loading,
     required this.onTap,
@@ -469,627 +1566,348 @@ class _HomeownerProfileCard extends StatelessWidget {
   final VoidCallback? onTap;
 
   @override
-  Widget build(BuildContext context) {
-    final radius = BorderRadius.circular(BatshRadius.lg);
-    final details = profile?.details;
-    final location = [
-      details?.district,
-      details?.city,
-    ].whereType<String>().where((value) => value.trim().isNotEmpty).join('، ');
-    final name = profile?.profile.fullName.trim().isNotEmpty == true
-        ? profile!.profile.fullName
-        : context.l10n.opportunityPostedBy;
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        BatshSpacing.md,
-        0,
-        BatshSpacing.md,
-        BatshSpacing.sm,
-      ),
-      child: Semantics(
-        button: onTap != null,
-        label: onTap != null
-            ? context.l10n.viewHomeownerProfile
-            : context.l10n.opportunityPostedBy,
-        child: Material(
-          color: context.colorScheme.surfaceContainerLowest,
-          borderRadius: radius,
-          clipBehavior: Clip.antiAlias,
-          child: InkWell(
-            onTap: onTap,
-            borderRadius: radius,
-            child: Container(
-              padding: const EdgeInsets.all(BatshSpacing.md),
-              decoration: BoxDecoration(
-                borderRadius: radius,
-                border: Border.all(
-                  color: context.colorScheme.outlineVariant.withValues(
-                    alpha: 0.55,
-                  ),
-                ),
-              ),
-              child: loading
-                  ? const Row(
-                      children: [
-                        BatshShimmerBox(
-                          width: 48,
-                          height: 48,
-                          borderRadius: BatshRadius.brFull,
-                        ),
-                        SizedBox(width: BatshSpacing.sm),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              BatshShimmerBox(width: 92, height: 12),
-                              SizedBox(height: BatshSpacing.xs),
-                              BatshShimmerBox(width: 150, height: 16),
-                            ],
-                          ),
-                        ),
-                      ],
-                    )
-                  : Row(
-                      children: [
-                        AvatarWithInitials(
-                          imageUrl: profile?.profile.avatarUrl,
-                          name: name,
-                          radius: 24,
-                        ),
-                        const SizedBox(width: BatshSpacing.sm),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                context.l10n.opportunityPostedBy,
-                                style: BatshTypography.labelSm.copyWith(
-                                  color: context.colorScheme.primary,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                name,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: BatshTypography.titleMd.copyWith(
-                                  fontWeight: FontWeight.w800,
-                                ),
-                              ),
-                              if (location.isNotEmpty) ...[
-                                const SizedBox(height: 2),
-                                Text(
-                                  location,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: BatshTypography.labelSm.copyWith(
-                                    color: context.colorScheme.onSurfaceVariant,
-                                  ),
-                                ),
-                              ],
-                            ],
-                          ),
-                        ),
-                        if (onTap != null)
-                          Icon(
-                            Icons.chevron_left_rounded,
-                            color: context.colorScheme.onSurfaceVariant,
-                          ),
-                      ],
-                    ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _OpportunityMatchCard extends StatelessWidget {
-  const _OpportunityMatchCard({required this.match});
-
-  final OpportunityMatch match;
-
-  @override
-  Widget build(BuildContext context) {
-    final reasons = match.reasons
-        .where(
-          (reason) => reason != OpportunityRecommendationReason.projectPhotos,
-        )
-        .take(4)
-        .toList();
-    return _SectionCard(
-      margin: const EdgeInsets.fromLTRB(
-        BatshSpacing.md,
-        0,
-        BatshSpacing.md,
-        BatshSpacing.sm,
-      ),
-      tint: context.colorScheme.secondaryContainer.withValues(alpha: 0.35),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  context.l10n.whyOpportunityMatches,
-                  style: BatshTypography.titleMd.copyWith(
-                    color: context.colorScheme.secondary,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: BatshSpacing.sm,
-                  vertical: BatshSpacing.xs,
-                ),
-                decoration: BoxDecoration(
-                  color: context.colorScheme.surface,
-                  borderRadius: BatshRadius.brFull,
-                ),
-                child: Text(
-                  match.isStrong
-                      ? context.l10n.strongMatch
-                      : context.l10n.relevantOpportunity,
-                  style: BatshTypography.labelSm.copyWith(
-                    color: context.colorScheme.secondary,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: BatshSpacing.sm),
-          if (reasons.isEmpty)
-            Text(
-              context.l10n.matchDataInsufficient,
-              style: BatshTypography.bodyMd.copyWith(
-                color: context.colorScheme.onSurfaceVariant,
-              ),
-            )
-          else
-            for (final reason in reasons)
-              Padding(
-                padding: const EdgeInsets.only(bottom: BatshSpacing.xs),
-                child: Row(
+  Widget build(BuildContext context) => _DetailSection(
+    title: context.l10n.opportunityDetailOwner,
+    icon: Icons.person_outline_rounded,
+    child: Material(
+      color: context.colorScheme.surfaceContainerLow.withValues(alpha: 0.56),
+      borderRadius: BatshRadius.brMd,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BatshRadius.brMd,
+        child: Padding(
+          padding: const EdgeInsets.all(BatshSpacing.sm),
+          child: loading
+              ? const Row(
                   children: [
-                    Icon(
-                      Icons.check_circle_outline,
-                      color: context.colorScheme.secondary,
-                      size: BatshIconSize.xs,
-                    ),
-                    const SizedBox(width: BatshSpacing.xs),
-                    Expanded(
-                      child: Text(
-                        _recommendationLabel(context, reason),
-                        style: BatshTypography.bodyMd,
-                      ),
+                    Expanded(child: BatshShimmerBox(width: 120, height: 18)),
+                    SizedBox(width: BatshSpacing.sm),
+                    BatshShimmerBox(
+                      width: 52,
+                      height: 52,
+                      borderRadius: BatshRadius.brFull,
                     ),
                   ],
-                ),
-              ),
-        ],
-      ),
-    );
-  }
-}
-
-class _OpportunityTrustBar extends StatelessWidget {
-  const _OpportunityTrustBar({required this.brief, required this.quote});
-
-  final Brief brief;
-  final Quote? quote;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        BatshSpacing.md,
-        0,
-        BatshSpacing.md,
-        BatshSpacing.md,
-      ),
-      child: Container(
-        decoration: BoxDecoration(
-          color: context.colorScheme.surfaceContainerLowest,
-          borderRadius: BorderRadius.circular(BatshRadius.lg),
-          border: Border.all(
-            color: context.colorScheme.outlineVariant.withValues(alpha: 0.55),
-          ),
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: _TrustMetric(
-                icon: Icons.schedule_outlined,
-                label: formatRelativeTime(brief.createdAt),
-              ),
-            ),
-            const _MetricDivider(),
-            Expanded(
-              child: _TrustMetric(
-                icon: Icons.photo_library_outlined,
-                label: context.l10n.photosCount(brief.photoUrls.length),
-              ),
-            ),
-            const _MetricDivider(),
-            Expanded(
-              child: _TrustMetric(
-                icon: quote == null
-                    ? Icons.request_quote_outlined
-                    : Icons.check_circle_outline,
-                label: quote == null
-                    ? context.l10n.opportunityAcceptingOffers
-                    : context.l10n.quoteAlreadySent,
-                trust: quote != null,
-              ),
-            ),
-          ],
+                )
+              : _OwnerIdentity(profile: profile),
         ),
       ),
-    );
-  }
+    ),
+  );
 }
 
-class _TrustMetric extends StatelessWidget {
-  const _TrustMetric({
-    required this.icon,
-    required this.label,
-    this.trust = false,
-  });
+class _OwnerIdentity extends StatelessWidget {
+  const _OwnerIdentity({required this.profile});
 
-  final IconData icon;
-  final String label;
-  final bool trust;
+  final PublicHomeownerProfile? profile;
 
   @override
   Widget build(BuildContext context) {
-    final color = trust
-        ? context.colorScheme.secondary
-        : context.colorScheme.onSurfaceVariant;
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: BatshSpacing.xs,
-        vertical: BatshSpacing.sm,
-      ),
-      child: Column(
-        children: [
-          Icon(icon, color: color, size: BatshIconSize.sm),
-          const SizedBox(height: BatshSpacing.xs),
-          Text(
-            label,
-            textAlign: TextAlign.center,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: BatshTypography.labelSm.copyWith(color: color, height: 1.3),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _MetricDivider extends StatelessWidget {
-  const _MetricDivider();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 1,
-      height: 56,
-      color: context.colorScheme.outlineVariant.withValues(alpha: 0.5),
-    );
-  }
-}
-
-class _OwnerNoteCard extends StatelessWidget {
-  const _OwnerNoteCard({required this.brief});
-
-  final Brief brief;
-
-  @override
-  Widget build(BuildContext context) {
-    return _SectionCard(
-      margin: const EdgeInsets.fromLTRB(
-        BatshSpacing.md,
-        0,
-        BatshSpacing.md,
-        BatshSpacing.md,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
+    final profileName = profile?.profile.fullName.trim() ?? '';
+    final name = profileName.isEmpty
+        ? context.l10n.opportunityPostedBy
+        : profileName;
+    final district = profile?.details?.district?.trim();
+    final city = profile?.details?.city?.trim();
+    final locationParts = [
+      if (district != null && district.isNotEmpty)
+        localizedOnboardingDistrictLabel(context, district),
+      if (city != null && city.isNotEmpty)
+        localizedOnboardingCityLabel(context, city),
+    ];
+    final location = locationParts.join('، ');
+    return Row(
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(
-                Icons.format_quote_rounded,
-                color: context.colorScheme.primary,
-              ),
-              const SizedBox(width: BatshSpacing.sm),
               Text(
-                context.l10n.ownerNoteTitle,
-                style: BatshTypography.titleMd.copyWith(
+                context.l10n.opportunityPostedBy,
+                style: BatshTypography.labelSm.copyWith(
+                  color: context.colorScheme.primary,
                   fontWeight: FontWeight.w700,
                 ),
               ),
+              const SizedBox(height: BatshSpacing.xxxs),
+              Text(
+                name,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: BatshTypography.titleMd.copyWith(
+                  color: context.colorScheme.onSurface,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              if (location.isNotEmpty) ...[
+                const SizedBox(height: BatshSpacing.xxxs),
+                Text(
+                  location,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: BatshTypography.labelSm.copyWith(
+                    color: context.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
             ],
           ),
-          const SizedBox(height: BatshSpacing.sm),
-          Text(
-            brief.workDescription,
-            style: BatshTypography.bodyLg.copyWith(height: 1.65),
-          ),
-          const SizedBox(height: BatshSpacing.sm),
-          Text(
-            context.l10n.ownerPrivacyHint,
-            style: BatshTypography.labelSm.copyWith(
-              color: context.colorScheme.onSurfaceVariant,
-            ),
-          ),
-        ],
-      ),
+        ),
+        const SizedBox(width: BatshSpacing.sm),
+        AvatarWithInitials(
+          imageUrl: profile?.profile.avatarUrl,
+          name: name,
+          radius: 26,
+        ),
+      ],
     );
   }
 }
 
-class _ProjectDetails extends StatelessWidget {
-  const _ProjectDetails({required this.brief});
+class _OpportunityAdvice extends StatelessWidget {
+  const _OpportunityAdvice({required this.onTap});
 
-  final Brief brief;
+  final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) {
-    final specialties = brief.targetSpecialties
-        .map((key) => OnboardingCatalog.specialtiesCatalog[key] ?? key)
-        .join('، ');
-    final apartment =
-        OnboardingCatalog.apartmentLabels[brief.apartmentType] ??
-        brief.apartmentType.name;
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        BatshSpacing.md,
-        0,
-        BatshSpacing.md,
-        BatshSpacing.md,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            context.l10n.projectDetailsTitle,
-            style: BatshTypography.titleMd.copyWith(
-              fontWeight: FontWeight.w700,
+  Widget build(BuildContext context) => Container(
+    margin: const EdgeInsets.fromLTRB(
+      BatshSpacing.md,
+      BatshSpacing.xs,
+      BatshSpacing.md,
+      BatshSpacing.sm,
+    ),
+    clipBehavior: Clip.antiAlias,
+    decoration: BoxDecoration(
+      color: context.colorScheme.primaryContainer,
+      borderRadius: BatshRadius.brLg,
+    ),
+    child: Stack(
+      children: [
+        PositionedDirectional(
+          end: -BatshSpacing.xl,
+          bottom: -BatshSpacing.lg,
+          width: 164,
+          height: 126,
+          child: IgnorePointer(
+            child: Opacity(
+              opacity: 0.14,
+              child: ShattabPattern(
+                kind: ShattabPatternKind.arches,
+                color: context.colorScheme.primary,
+                strokeWidth: 1.1,
+              ),
             ),
           ),
-          const SizedBox(height: BatshSpacing.sm),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final width = (constraints.maxWidth - BatshSpacing.sm) / 2;
-              return Wrap(
-                spacing: BatshSpacing.sm,
-                runSpacing: BatshSpacing.sm,
-                children: [
-                  _DetailTile(
-                    width: width,
-                    icon: Icons.home_outlined,
-                    label: context.l10n.apartmentTypeLabel,
-                    value: apartment,
+        ),
+        Padding(
+          padding: const EdgeInsets.all(BatshSpacing.sm),
+          child: Row(
+            children: [
+              FilledButton(
+                onPressed: onTap,
+                style: FilledButton.styleFrom(
+                  minimumSize: const Size(92, BatshSpacing.xxxl),
+                  backgroundColor: context.colorScheme.primary,
+                  foregroundColor: context.colorScheme.onPrimary,
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: BatshRadius.brMd,
                   ),
-                  _DetailTile(
-                    width: width,
-                    icon: Icons.location_city_outlined,
-                    label: context.l10n.cityLabel,
-                    value: brief.city,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: BatshSpacing.xs,
                   ),
-                  if (brief.district != null)
-                    _DetailTile(
-                      width: width,
-                      icon: Icons.location_on_outlined,
-                      label: context.l10n.districtLabel,
-                      value: brief.district!,
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        context.l10n.workUpdateProfile,
+                        maxLines: 2,
+                        textAlign: TextAlign.center,
+                        style: BatshTypography.labelSm.copyWith(
+                          color: context.colorScheme.onPrimary,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
                     ),
-                  _DetailTile(
-                    width: width,
-                    icon: Icons.handyman_outlined,
-                    label: context.l10n.filterCategory,
-                    value: specialties.isEmpty
-                        ? context.l10n.notSpecified
-                        : specialties,
+                    const SizedBox(width: BatshSpacing.xxs),
+                    const Icon(Icons.chevron_left_rounded),
+                  ],
+                ),
+              ),
+              const SizedBox(width: BatshSpacing.xs),
+              Expanded(
+                child: Directionality(
+                  textDirection: ui.TextDirection.ltr,
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.lightbulb_outline_rounded,
+                        color: context.colorScheme.primary,
+                        size: BatshIconSize.xl,
+                      ),
+                      const SizedBox(width: BatshSpacing.xs),
+                      Expanded(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text(
+                              context.l10n.opportunityDetailAdviceTitle,
+                              textAlign: TextAlign.end,
+                              style: BatshTypography.titleMd.copyWith(
+                                fontSize: 16,
+                                height: 1.35,
+                                color: context.colorScheme.primary,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                            const SizedBox(height: BatshSpacing.xxxs),
+                            Text(
+                              context.l10n.opportunityDetailAdviceBody,
+                              textAlign: TextAlign.end,
+                              style: BatshTypography.labelSm.copyWith(
+                                color: context.colorScheme.onSurfaceVariant,
+                                height: 1.4,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              );
-            },
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
-    );
-  }
+        ),
+      ],
+    ),
+  );
 }
 
-class _DetailTile extends StatelessWidget {
-  const _DetailTile({
-    required this.width,
+class _DetailSection extends StatelessWidget {
+  const _DetailSection({
+    required this.title,
     required this.icon,
-    required this.label,
-    required this.value,
+    this.child,
+    this.padding = const EdgeInsets.all(BatshSpacing.md),
   });
 
-  final double width;
-  final IconData icon;
-  final String label;
-  final String value;
+  final String? title;
+  final IconData? icon;
+  final Widget? child;
+  final EdgeInsetsGeometry padding;
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: width,
-      padding: const EdgeInsets.all(BatshSpacing.sm),
-      decoration: BoxDecoration(
-        color: context.colorScheme.surfaceContainerLowest,
-        borderRadius: BorderRadius.circular(BatshRadius.md),
-        border: Border.all(
-          color: context.colorScheme.outlineVariant.withValues(alpha: 0.55),
-        ),
+  Widget build(BuildContext context) => Container(
+    margin: const EdgeInsets.symmetric(
+      horizontal: BatshSpacing.md,
+      vertical: BatshSpacing.xxs,
+    ),
+    padding: padding,
+    decoration: BoxDecoration(
+      color: context.colorScheme.surfaceContainerLowest.withValues(alpha: 0.74),
+      borderRadius: BatshRadius.brLg,
+      border: Border.all(
+        color: context.colorScheme.outlineVariant.withValues(alpha: 0.38),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+      boxShadow: BatshShadows.soft,
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (title != null && icon != null)
           Row(
             children: [
               Icon(
                 icon,
-                size: BatshIconSize.xs,
-                color: context.colorScheme.onSurfaceVariant,
+                size: BatshIconSize.action,
+                color: context.colorScheme.primary,
               ),
               const SizedBox(width: BatshSpacing.xs),
               Expanded(
                 child: Text(
-                  label,
-                  style: BatshTypography.labelSm.copyWith(
-                    color: context.colorScheme.onSurfaceVariant,
+                  title!,
+                  textAlign: TextAlign.start,
+                  style: BatshTypography.titleMd.copyWith(
+                    color: context.colorScheme.onSurface,
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: BatshSpacing.xs),
-          Text(
-            value,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: BatshTypography.labelMd.copyWith(
-              fontWeight: FontWeight.w700,
-              height: 1.35,
-            ),
-          ),
+        if (child != null) ...[
+          if (title != null) const SizedBox(height: BatshSpacing.sm),
+          child!,
         ],
-      ),
-    );
-  }
+      ],
+    ),
+  );
 }
 
-class _BudgetUnavailableCard extends StatelessWidget {
-  const _BudgetUnavailableCard();
-
-  @override
-  Widget build(BuildContext context) {
-    return _SectionCard(
-      margin: const EdgeInsets.fromLTRB(
-        BatshSpacing.md,
-        0,
-        BatshSpacing.md,
-        BatshSpacing.md,
-      ),
-      tint: context.colorScheme.surfaceContainerLow,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(
-            Icons.payments_outlined,
-            color: context.colorScheme.onSurfaceVariant,
-          ),
-          const SizedBox(width: BatshSpacing.sm),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  context.l10n.budgetAndTimingTitle,
-                  style: BatshTypography.titleMd.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: BatshSpacing.xs),
-                Text(
-                  context.l10n.budgetAndTimingUnavailable,
-                  style: BatshTypography.bodyMd.copyWith(
-                    color: context.colorScheme.onSurfaceVariant,
-                    height: 1.5,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _SectionCard extends StatelessWidget {
-  const _SectionCard({required this.child, required this.margin, this.tint});
-
-  final Widget child;
-  final EdgeInsets margin;
-  final Color? tint;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: margin,
-      padding: const EdgeInsets.all(BatshSpacing.md),
-      decoration: BoxDecoration(
-        color: tint ?? context.colorScheme.surfaceContainerLowest,
-        borderRadius: BorderRadius.circular(BatshRadius.lg),
-        border: Border.all(
-          color: context.colorScheme.outlineVariant.withValues(alpha: 0.5),
-        ),
-        boxShadow: tint == null ? BatshShadows.soft : null,
-      ),
-      child: child,
-    );
-  }
-}
-
-class _OpportunityStickyActions extends StatelessWidget {
-  const _OpportunityStickyActions({
+class _OpportunityStickyAction extends StatelessWidget {
+  const _OpportunityStickyAction({
     required this.brief,
     required this.quote,
+    required this.quoteLoading,
+    required this.quoteFailed,
     required this.profileReady,
-    required this.saved,
-    required this.onSave,
     required this.onApply,
     required this.onFollowQuote,
     required this.onCompleteProfile,
+    required this.onRetryQuoteState,
   });
 
   final Brief brief;
   final Quote? quote;
+  final bool quoteLoading;
+  final bool quoteFailed;
   final bool profileReady;
-  final bool saved;
-  final VoidCallback onSave;
   final VoidCallback onApply;
   final VoidCallback onFollowQuote;
   final VoidCallback onCompleteProfile;
+  final VoidCallback onRetryQuoteState;
 
   @override
   Widget build(BuildContext context) {
-    final enabled = brief.isActive;
-    final primaryLabel = !enabled
-        ? context.l10n.opportunityClosed
-        : quote != null
-        ? context.l10n.followQuoteAction
-        : !profileReady
-        ? context.l10n.completeProfileBeforeApplying
-        : context.l10n.submitYourQuote;
-    final primaryAction = !enabled
-        ? null
-        : quote != null
-        ? onFollowQuote
-        : !profileReady
-        ? onCompleteProfile
-        : onApply;
+    final String label;
+    final VoidCallback? action;
+    final bool loading;
+    if (!brief.isActive) {
+      label = context.l10n.opportunityClosed;
+      action = null;
+      loading = false;
+    } else if (quoteLoading) {
+      label = context.l10n.opportunityDetailQuoteStateLoading;
+      action = null;
+      loading = true;
+    } else if (quoteFailed) {
+      label = context.l10n.opportunityDetailRetryQuoteState;
+      action = onRetryQuoteState;
+      loading = false;
+    } else if (quote != null) {
+      label = context.l10n.followQuoteAction;
+      action = onFollowQuote;
+      loading = false;
+    } else if (!profileReady) {
+      label = context.l10n.completeProfileBeforeApplying;
+      action = onCompleteProfile;
+      loading = false;
+    } else {
+      label = context.l10n.opportunityDetailApplyAction;
+      action = onApply;
+      loading = false;
+    }
 
     return Container(
       decoration: BoxDecoration(
         color: context.colorScheme.surfaceContainerLowest,
         border: Border(
           top: BorderSide(
-            color: context.colorScheme.outlineVariant.withValues(alpha: 0.5),
+            color: context.colorScheme.outlineVariant.withValues(alpha: 0.48),
           ),
         ),
         boxShadow: BatshShadows.raised,
@@ -1103,108 +1921,49 @@ class _OpportunityStickyActions extends StatelessWidget {
             BatshSpacing.md,
             BatshSpacing.sm,
           ),
-          child: Row(
-            children: [
-              SizedBox(
-                width: 52,
-                height: 52,
-                child: OutlinedButton(
-                  onPressed: onSave,
-                  style: OutlinedButton.styleFrom(
-                    padding: EdgeInsets.zero,
-                    side: BorderSide(color: context.colorScheme.primary),
-                  ),
-                  child: Icon(
-                    saved ? Icons.bookmark : Icons.bookmark_border,
-                    color: context.colorScheme.primary,
-                  ),
-                ),
-              ),
-              const SizedBox(width: BatshSpacing.sm),
-              Expanded(
-                child: SizedBox(
-                  height: 52,
-                  child: FilledButton.icon(
-                    onPressed: primaryAction,
-                    icon: Icon(
-                      quote != null
-                          ? Icons.receipt_long_outlined
-                          : Icons.send_outlined,
-                    ),
-                    label: Text(
-                      primaryLabel,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: BatshTypography.labelLg.copyWith(
-                        fontWeight: FontWeight.w700,
+          child: _PageWidth(
+            child: SizedBox(
+              width: double.infinity,
+              height: 54,
+              child: FilledButton.icon(
+                onPressed: action,
+                icon: loading
+                    ? SizedBox.square(
+                        dimension: BatshIconSize.action,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: context.colorScheme.onPrimary,
+                        ),
+                      )
+                    : Icon(
+                        quote != null && !quoteFailed
+                            ? Icons.receipt_long_outlined
+                            : quoteFailed
+                            ? Icons.refresh_rounded
+                            : Icons.send_rounded,
                       ),
-                    ),
+                label: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: BatshTypography.labelLg.copyWith(
+                    color: context.colorScheme.onPrimary,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                style: FilledButton.styleFrom(
+                  backgroundColor: context.colorScheme.primary,
+                  foregroundColor: context.colorScheme.onPrimary,
+                  disabledBackgroundColor:
+                      context.colorScheme.surfaceContainerHigh,
+                  disabledForegroundColor: context.colorScheme.onSurfaceVariant,
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: BatshRadius.brMd,
                   ),
                 ),
               ),
-            ],
+            ),
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _StatusChip extends StatelessWidget {
-  const _StatusChip({required this.label, required this.active});
-
-  final String label;
-  final bool active;
-
-  @override
-  Widget build(BuildContext context) {
-    final color = active
-        ? context.colorScheme.secondary
-        : context.colorScheme.onSurfaceVariant;
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: BatshSpacing.sm,
-        vertical: BatshSpacing.xs,
-      ),
-      decoration: BoxDecoration(
-        color: active
-            ? context.colorScheme.secondaryContainer.withValues(alpha: 0.6)
-            : context.colorScheme.surfaceContainerHigh,
-        borderRadius: BatshRadius.brFull,
-      ),
-      child: Text(
-        label,
-        style: BatshTypography.labelSm.copyWith(
-          color: color,
-          fontWeight: FontWeight.w700,
-        ),
-      ),
-    );
-  }
-}
-
-class _CategoryChip extends StatelessWidget {
-  const _CategoryChip({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    if (label.isEmpty) return const SizedBox.shrink();
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: BatshSpacing.sm,
-        vertical: BatshSpacing.xs,
-      ),
-      decoration: BoxDecoration(
-        color: context.colorScheme.primaryContainer.withValues(alpha: 0.55),
-        borderRadius: BatshRadius.brFull,
-      ),
-      child: Text(
-        label,
-        style: BatshTypography.labelSm.copyWith(
-          color: context.colorScheme.primary,
-          fontWeight: FontWeight.w700,
         ),
       ),
     );
@@ -1215,57 +1974,97 @@ class _OpportunityDetailSkeleton extends StatelessWidget {
   const _OpportunityDetailSkeleton();
 
   @override
-  Widget build(BuildContext context) {
-    return ListView(
-      padding: const EdgeInsets.all(BatshSpacing.md),
-      children: const [
-        BatshShimmerBox(
+  Widget build(BuildContext context) => ListView(
+    padding: const EdgeInsets.only(bottom: BatshSpacing.xxxxl),
+    children: const [
+      BatshShimmerBox(width: double.infinity, height: 286),
+      SizedBox(height: BatshSpacing.md),
+      Padding(
+        padding: EdgeInsets.symmetric(horizontal: BatshSpacing.md),
+        child: BatshShimmerBox(width: 120, height: 24),
+      ),
+      SizedBox(height: BatshSpacing.sm),
+      Padding(
+        padding: EdgeInsets.symmetric(horizontal: BatshSpacing.md),
+        child: BatshShimmerBox(width: double.infinity, height: 28),
+      ),
+      SizedBox(height: BatshSpacing.md),
+      Padding(
+        padding: EdgeInsets.symmetric(horizontal: BatshSpacing.md),
+        child: BatshShimmerBox(
           width: double.infinity,
-          height: 210,
-          borderRadius: BatshRadius.brXl,
-        ),
-        SizedBox(height: BatshSpacing.md),
-        BatshShimmerBox(width: 120, height: 24, borderRadius: BatshRadius.brMd),
-        SizedBox(height: BatshSpacing.sm),
-        BatshShimmerBox(
-          width: double.infinity,
-          height: 28,
-          borderRadius: BatshRadius.brMd,
-        ),
-        SizedBox(height: BatshSpacing.md),
-        BatshShimmerBox(
-          width: double.infinity,
-          height: 170,
+          height: 116,
           borderRadius: BatshRadius.brLg,
         ),
-        SizedBox(height: BatshSpacing.md),
-        BatshShimmerBox(
-          width: double.infinity,
-          height: 92,
-          borderRadius: BatshRadius.brLg,
-        ),
-      ],
-    );
+      ),
+    ],
+  );
+}
+
+String _opportunityTitle(BuildContext context, Brief brief) {
+  final title = brief.projectTitle?.trim();
+  if (title != null && title.isNotEmpty) return title;
+  return opportunityHeadline(brief.workDescription, maxLength: 90);
+}
+
+String _rawLocation(Brief brief) => [brief.district, brief.city]
+    .whereType<String>()
+    .map((value) => value.trim())
+    .where((value) => value.isNotEmpty)
+    .join('، ');
+
+String _localizedLocation(BuildContext context, Brief brief) {
+  final parts = <String>[];
+  final district = brief.district?.trim();
+  final city = brief.city.trim();
+  if (district != null && district.isNotEmpty) {
+    parts.add(localizedOnboardingDistrictLabel(context, district));
+  }
+  if (city.isNotEmpty) parts.add(localizedOnboardingCityLabel(context, city));
+  return parts.join('، ');
+}
+
+String _apartmentLabel(BuildContext context, ApartmentType type) =>
+    switch (type) {
+      ApartmentType.studio => context.l10n.apartmentStudio,
+      ApartmentType.oneBedroom => context.l10n.apartmentOneBedroom,
+      ApartmentType.twoBedroom => context.l10n.apartmentTwoBedroom,
+      ApartmentType.threeBedroomPlus => context.l10n.apartmentThreeBedroomPlus,
+      ApartmentType.duplex => context.l10n.apartmentDuplex,
+      ApartmentType.villa => context.l10n.apartmentVilla,
+      ApartmentType.penthouse => context.l10n.apartmentPenthouse,
+    };
+
+String _timingLabel(BuildContext context, String? value) => switch (value) {
+  'flexible' => context.l10n.startFlexible,
+  'within_month' => context.l10n.startWithinMonth,
+  'within_3_months' => context.l10n.startWithinThreeMonths,
+  _ => context.l10n.notSpecified,
+};
+
+void _shareOpportunity(BuildContext context, Brief brief) {
+  final title = _opportunityTitle(context, brief);
+  final location = _localizedLocation(context, brief);
+  final parts = [title, if (location.isNotEmpty) location];
+  Share.share(parts.join('\n'), subject: title);
+}
+
+Future<void> _copyOpportunitySummary(BuildContext context, Brief brief) async {
+  final title = _opportunityTitle(context, brief);
+  final location = _localizedLocation(context, brief);
+  final summary = [
+    title,
+    if (location.isNotEmpty) location,
+    brief.workDescription,
+  ].join('\n');
+  try {
+    await Clipboard.setData(ClipboardData(text: summary));
+    if (context.mounted) {
+      BatshSnack.info(context, context.l10n.copiedToast);
+    }
+  } catch (_) {
+    if (context.mounted) {
+      BatshSnack.error(context, context.l10n.somethingWentWrong);
+    }
   }
 }
-
-String _specialtyLabel(Brief brief) {
-  if (brief.targetSpecialties.isEmpty) return '';
-  final key = brief.targetSpecialties.first;
-  return OnboardingCatalog.specialtiesCatalog[key] ?? key;
-}
-
-String _recommendationLabel(
-  BuildContext context,
-  OpportunityRecommendationReason reason,
-) => switch (reason) {
-  OpportunityRecommendationReason.specialtyMatch =>
-    context.l10n.matchReasonSpecialty,
-  OpportunityRecommendationReason.serviceAreaMatch =>
-    context.l10n.matchReasonServiceArea,
-  OpportunityRecommendationReason.similarPortfolio =>
-    context.l10n.matchReasonPortfolio,
-  OpportunityRecommendationReason.fresh => context.l10n.matchReasonFresh,
-  OpportunityRecommendationReason.projectPhotos =>
-    context.l10n.matchReasonPhotos,
-};

@@ -128,14 +128,25 @@ class _LoginCardState extends ConsumerState<_LoginCard> {
           password: password,
         );
         if (response.session == null) {
-          // Supabase returns no session when phone confirmation is enabled.
-          // Do not turn that valid response into the generic server error.
+          // Phone confirmation is required: Supabase has already sent the
+          // first SMS, so continue to verification without resubmitting signup.
           if (!mounted) return;
-          setState(() => _formError = context.l10n.signupNeedsConfirmation);
+          ref
+              .read(otpControllerProvider.notifier)
+              .beginSignupConfirmation(phone);
+          await context.push<void>(Routes.otp);
           return;
         }
       } else {
-        await repo.signInWithPhonePassword(phone: phone, password: password);
+        final response = await repo.signInWithPhonePassword(
+          phone: phone,
+          password: password,
+        );
+        if (response.session == null) {
+          if (!mounted) return;
+          setState(() => _formError = context.l10n.errAuthFailed);
+          return;
+        }
       }
       // The auth-state listener and role guard own navigation. Do not block a
       // successful sign-in on a second profile query; a transient RLS/network
@@ -301,7 +312,7 @@ class _LoginCardState extends ConsumerState<_LoginCard> {
                         ),
                       ),
                       inputFormatters: [
-                        FilteringTextInputFormatter.allow(RegExp(r'[\d]')),
+                        LocalizedDigitsOnlyFormatter(),
                         LengthLimitingTextInputFormatter(11),
                       ],
                     ),

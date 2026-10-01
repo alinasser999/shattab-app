@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/router/routes.dart';
 import '../../../../core/services/form_draft_store.dart';
+import '../../../../core/catalog/specialty_catalog.dart';
 
 import 'package:batsh/core/l10n/l10n_extension.dart';
 import '../../../../core/theme/batsh_motion.dart';
@@ -25,9 +26,11 @@ import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../auth/presentation/sign_in_sheet.dart';
 import '../../../onboarding/domain/onboarding_models.dart';
 import '../../../onboarding/presentation/providers/onboarding_provider.dart';
+import '../../../onboarding/presentation/widgets/specialty_picker.dart';
 import '../../domain/brief.dart';
 import '../providers/briefs_providers.dart';
 import '../../../../core/widgets/batsh_snack.dart';
+import 'project_creation_flow.dart';
 
 import 'package:batsh/core/theme/theme_extension.dart';
 
@@ -66,11 +69,8 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
     final userId = ref.read(currentSessionProvider)?.user.id ?? 'anonymous';
     _draftKey = 'brief:new:$userId';
     final editing = widget.editing;
+    if (editing == null) return;
     _descCtrl.addListener(_scheduleDraftSave);
-    if (editing == null) {
-      unawaited(_restoreDraft());
-      return;
-    }
     // Prefilling here rather than in build's hydration path: that path seeds
     // defaults from the homeowner's own profile, which would overwrite the
     // brief's actual values.
@@ -79,13 +79,14 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
     _apartmentType = editing.apartmentType;
     _city = editing.city;
     _district = editing.district;
-    _targetSpecialties.addAll(editing.targetSpecialties);
+    _targetSpecialties.addAll(
+      SpecialtyCatalog.normalizeSelection(editing.targetSpecialties),
+    );
   }
 
   @override
   void dispose() {
     _draftTimer?.cancel();
-    if (!widget.isEditing) unawaited(_persistDraft());
     _descCtrl.removeListener(_scheduleDraftSave);
     _descCtrl.dispose();
     super.dispose();
@@ -96,30 +97,6 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
     _draftTimer?.cancel();
     _draftTimer = Timer(const Duration(milliseconds: 450), () {
       unawaited(_persistDraft(showStatus: true));
-    });
-  }
-
-  Future<void> _restoreDraft() async {
-    final draft = await FormDraftStore.read(_draftKey);
-    if (!mounted || draft == null || draft.isEmpty) return;
-    final apartmentName = draft['apartment_type'] as String?;
-    ApartmentType? restoredApartment;
-    for (final value in ApartmentType.values) {
-      if (value.name == apartmentName) restoredApartment = value;
-    }
-    setState(() {
-      _descCtrl.text = (draft['description'] as String?) ?? '';
-      _apartmentType = restoredApartment;
-      _city = draft['city'] as String?;
-      _district = draft['district'] as String?;
-      _targetSpecialties
-        ..clear()
-        ..addAll(
-          ((draft['specialties'] as List?) ?? const []).whereType<String>(),
-        );
-      _hydrated = true;
-      _draftRestored = true;
-      _draftSaved = true;
     });
   }
 
@@ -139,16 +116,20 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
       'apartment_type': _apartmentType?.name,
       'city': _city,
       'district': _district,
-      'specialties': _targetSpecialties.toList(),
+      'specialties': SpecialtyCatalog.normalizeSelection(_targetSpecialties),
     });
     if (showStatus && mounted) setState(() => _draftSaved = true);
   }
 
   Future<void> _submit() async {
     if (ref.read(currentSessionProvider) == null) {
-      await showSignInSheet(context, reason: context.l10n.signInToPost);
-      if (!mounted) return;
-      if (ref.read(currentSessionProvider) == null) return;
+      final completed = await showSignInSheet(
+        context,
+        reason: context.l10n.signInToPost,
+      );
+      if (!completed || !mounted || ref.read(currentSessionProvider) == null) {
+        return;
+      }
     }
     final desc = _descCtrl.text.trim();
     if (desc.length < 10) {
@@ -163,6 +144,9 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
       setState(() => _error = context.l10n.errorSelectSpecialty);
       return;
     }
+    final targetSpecialties = SpecialtyCatalog.normalizeSelection(
+      _targetSpecialties,
+    );
     setState(() {
       _busy = true;
       _error = null;
@@ -180,7 +164,7 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
               city: _city!,
               district: _district,
               workDescription: desc,
-              targetSpecialties: _targetSpecialties.toList(),
+              targetSpecialties: targetSpecialties,
             );
       } else {
         await ref
@@ -190,7 +174,7 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
               city: _city!,
               district: _district,
               workDescription: desc,
-              targetSpecialties: _targetSpecialties.toList(),
+              targetSpecialties: targetSpecialties,
               photos: _photos,
             );
       }
@@ -218,6 +202,7 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (!widget.isEditing) return const ProjectCreationFlow();
     final ho = ref.watch(homeownerProfileProvider).value;
     if (!_hydrated && ho != null) {
       _apartmentType = ho.apartmentType;
@@ -258,25 +243,17 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
         ),
       ),
       const SizedBox(height: BatshSpacing.sm),
-      Wrap(
-        spacing: BatshSpacing.sm,
-        runSpacing: BatshSpacing.sm,
-        children: [
-          for (final e in OnboardingCatalog.specialtiesCatalog.entries)
-            BatshChip(
-              label: e.value,
-              selected: _targetSpecialties.contains(e.key),
-              onTap: () => setState(() {
-                if (_targetSpecialties.contains(e.key)) {
-                  _targetSpecialties.remove(e.key);
-                } else {
-                  _targetSpecialties.add(e.key);
-                }
-                _draftRestored = false;
-                _scheduleDraftSave();
-              }),
-            ),
-        ],
+      SpecialtyPicker(
+        initialSelection: _targetSpecialties.toList(),
+        requirePrimary: false,
+        showChildren: true,
+        onChanged: (value) => setState(() {
+          _targetSpecialties
+            ..clear()
+            ..addAll(value);
+          _draftRestored = false;
+          _scheduleDraftSave();
+        }),
       ),
       const SizedBox(height: BatshSpacing.gutter),
       Text(

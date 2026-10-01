@@ -116,6 +116,8 @@ class _AccountRoleSwitcher extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final override = ref.watch(debugRoleOverrideProvider);
+    final effectiveRole = override ?? role;
     return Container(
       margin: const EdgeInsetsDirectional.only(end: BatshSpacing.xs),
       padding: const EdgeInsets.all(3),
@@ -132,15 +134,15 @@ class _AccountRoleSwitcher extends ConsumerWidget {
         children: [
           _RoleChoice(
             label: context.l10n.roleSwitcherOwner,
-            active: role == UserRole.homeowner,
-            onTap: kDebugAuth
+            active: effectiveRole == UserRole.homeowner,
+            onTap: DebugFlags.roleSwitcher
                 ? () => _switchRole(context, ref, UserRole.homeowner)
                 : null,
           ),
           _RoleChoice(
             label: context.l10n.roleSwitcherContractor,
-            active: role == UserRole.contractor,
-            onTap: kDebugAuth
+            active: effectiveRole == UserRole.contractor,
+            onTap: DebugFlags.roleSwitcher
                 ? () => _switchRole(context, ref, UserRole.contractor)
                 : null,
           ),
@@ -149,14 +151,15 @@ class _AccountRoleSwitcher extends ConsumerWidget {
     );
   }
 
-  Future<void> _switchRole(
-    BuildContext context,
-    WidgetRef ref,
-    UserRole nextRole,
-  ) async {
-    if (nextRole == role) return;
-    await debugSwitchRole(ref.read(supabaseClientProvider), nextRole);
-    await ref.read(currentProfileProvider.notifier).refresh();
+  void _switchRole(BuildContext context, WidgetRef ref, UserRole nextRole) {
+    final effectiveRole = ref.read(debugRoleOverrideProvider) ?? role;
+    if (nextRole == effectiveRole) return;
+    ref.read(debugRoleOverrideProvider.notifier).set(nextRole);
+    context.go(
+      nextRole == UserRole.contractor
+          ? Routes.contractorDashboard
+          : Routes.homeownerHome,
+    );
   }
 }
 

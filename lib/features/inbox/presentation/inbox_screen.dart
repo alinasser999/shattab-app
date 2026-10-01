@@ -22,7 +22,6 @@ import '../../../core/widgets/batsh_scaffold.dart';
 import '../../../core/widgets/batsh_shimmer.dart';
 import '../../../core/widgets/batsh_snack.dart';
 import '../../billing/presentation/payment_flow.dart';
-import '../../briefs/domain/brief.dart';
 import '../../quotes/presentation/widgets/quote_status_badge.dart';
 import '../domain/received_request.dart';
 import 'providers/inbox_providers.dart';
@@ -47,7 +46,7 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
   bool _checkoutLoading = false;
   bool _paywallTracked = false;
 
-  Future<void> _startCheckout({required Brief request}) async {
+  Future<void> _startCheckout() async {
     if (_checkoutLoading) return;
 
     setState(() => _checkoutLoading = true);
@@ -56,8 +55,6 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
         'pro_cta_tapped',
         properties: {
           'selected_plan': _annual ? 'annual' : 'monthly',
-          'request_id': request.id,
-          'request_city': request.city,
           'source_screen': 'contractor_requests',
         },
       ),
@@ -67,7 +64,6 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
         'checkout_started',
         properties: {
           'selected_plan': _annual ? 'annual' : 'monthly',
-          'request_id': request.id,
           'source_screen': 'contractor_requests',
         },
       ),
@@ -88,7 +84,6 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
           'checkout_failed',
           properties: {
             'selected_plan': _annual ? 'annual' : 'monthly',
-            'request_id': request.id,
             'source_screen': 'contractor_requests',
           },
         ),
@@ -98,10 +93,7 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
     }
   }
 
-  void _trackPaywallView(
-    Brief request,
-    ({bool isPro, int used, int quota})? quota,
-  ) {
+  void _trackPaywallView(({bool isPro, int used, int quota})? quota) {
     if (_paywallTracked || quota?.isPro == true) return;
     _paywallTracked = true;
     unawaited(
@@ -111,9 +103,6 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
           'subscription_state': 'free',
           'offers_used': quota?.used,
           'free_offer_limit': quota?.quota,
-          'trial_eligible': quota != null,
-          'request_id': request.id,
-          'request_city': request.city,
           'source_screen': 'contractor_requests',
         },
       ),
@@ -144,7 +133,7 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
           data: (requests) {
             final quota = quotaAsync.value;
             if (requests.isNotEmpty) {
-              _trackPaywallView(requests.first.brief, quota);
+              _trackPaywallView(quota);
             }
             return _RequestsContent(
               requests: requests,
@@ -154,9 +143,7 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
               annual: _annual,
               checkoutLoading: _checkoutLoading,
               onAnnualChanged: (value) => setState(() => _annual = value),
-              onCheckout: requests.isEmpty
-                  ? null
-                  : () => _startCheckout(request: requests.first.brief),
+              onCheckout: requests.isEmpty ? null : _startCheckout,
               onRetryQuota: () => ref.invalidate(myQuoteQuotaProvider),
               onRefresh: () async {
                 ref.invalidate(inboxRequestsProvider);
@@ -229,10 +216,6 @@ class _RequestsContent extends StatelessWidget {
 
     final featured = requests.first;
     final isPro = quota?.isPro == true;
-    // The current schema exposes plan/expiry and quote quota, but not a
-    // trial-consumed flag. Keep the existing configured Pro entry copy for
-    // free professionals until that entitlement field exists server-side.
-    final trialAvailable = quota != null && !isPro;
 
     return RefreshIndicator(
       onRefresh: onRefresh,
@@ -278,7 +261,6 @@ class _RequestsContent extends StatelessWidget {
               onAnnualChanged: onAnnualChanged,
               onSubscribe: onCheckout,
               isLoading: checkoutLoading,
-              trialAvailable: trialAvailable,
             ),
         ],
       ),

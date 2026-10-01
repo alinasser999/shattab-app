@@ -57,8 +57,8 @@ class AppLocalizationsEn extends AppLocalizations {
       'Levels are earned through completed work — never bought, not part of Pro.';
 
   @override
-  String quotesLeftThisMonth(int remaining) {
-    return '$remaining free quotes left this month';
+  String quotesLeftInRolling30Days(int remaining) {
+    return '$remaining free quotes left in the last 30 days';
   }
 
   @override
@@ -145,6 +145,11 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get signupNeedsConfirmation =>
       'Your account was created. Confirm your phone, then sign in.';
+
+  @override
+  String signupOtpSentTo(String phone) {
+    return 'We sent a confirmation code to $phone. Enter it here to verify your account.';
+  }
 
   @override
   String get signInAction => 'Sign in';
@@ -432,6 +437,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get businessNameHint => 'Example: Al-Fannan Contracting';
 
   @override
+  String get businessNameOptionalHint =>
+      'Optional if you work under your own name';
+
+  @override
   String get displayNameLabel => 'Responsible name';
 
   @override
@@ -495,13 +504,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tabDiscover => 'Professionals';
 
   @override
-  String get tabRequests => 'My Requests';
+  String get tabRequests => 'My projects';
 
   @override
   String get tabSaved => 'Saved';
 
   @override
-  String get tabProfile => 'Profile';
+  String get tabProfile => 'Your account';
 
   @override
   String get tabDashboard => 'Dashboard';
@@ -1410,6 +1419,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get contactClient => 'Contact Client';
 
   @override
+  String get contactAccessHint =>
+      'Contact details are available to Pro contractors for relevant open requests, and to the contractor whose offer is accepted.';
+
+  @override
+  String get contactLoading => 'Loading contact details…';
+
+  @override
+  String get contactLoadFailed => 'Could not load contact details. Try again.';
+
+  @override
   String get requestsPageTitle => 'Requests';
 
   @override
@@ -1480,15 +1499,8 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get requestsTrialBilling =>
-      'Start with a free month, then billing follows your plan';
-
-  @override
   String get requestsPaidBilling =>
       'Paid subscription — activation follows transfer confirmation';
-
-  @override
-  String get requestsCtaTrial => 'Open the request and start a free month';
 
   @override
   String get requestsCtaPaid => 'Open the request and subscribe to Pro';
@@ -1643,6 +1655,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get browseByCategory => 'Browse by category';
 
   @override
+  String get homeReferenceServicesTitle => 'Browse by need';
+
+  @override
   String get homeServicesTitle => 'Services';
 
   @override
@@ -1674,6 +1689,47 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get specialtyFullRenovation => 'Full renovation';
+
+  @override
+  String get specialtyPlastering => 'Plastering and skim coat';
+
+  @override
+  String get specialtyGypsumBoard => 'Gypsum board and ceilings';
+
+  @override
+  String get specialtyMarbleGranite => 'Marble and granite';
+
+  @override
+  String get specialtyAluminumUpvc => 'Aluminum and UPVC';
+
+  @override
+  String get specialtyHvac => 'Air conditioning and ventilation';
+
+  @override
+  String get specialtyFlooringCeramic => 'Ceramic';
+
+  @override
+  String get specialtyFlooringPorcelain => 'Porcelain';
+
+  @override
+  String get specialtyUnknown => 'Other specialty';
+
+  @override
+  String get specialtyPickerHint =>
+      'Choose your main specialty first, then add any other services you offer.';
+
+  @override
+  String get specialtyRequestHint =>
+      'Choose the work you need, then add flooring details if helpful.';
+
+  @override
+  String get primarySpecialtyLabel => 'Primary specialty';
+
+  @override
+  String get makePrimarySpecialty => 'Make primary';
+
+  @override
+  String get specialtyDetailsLabel => 'Flooring details';
 
   @override
   String get shattabVerifiedProfessional => 'Verified by Shattab';
@@ -2358,6 +2414,25 @@ class AppLocalizationsEn extends AppLocalizations {
   String get demoLoginContractor => 'Login as Professional';
 
   @override
+  String get debugRoleSwitcher => 'Switch role';
+
+  @override
+  String get debugRoleSwitcherTitle => 'View the app as another role';
+
+  @override
+  String get debugRoleSwitcherBody =>
+      'View-only preview. Your account data and permissions stay tied to your real role.';
+
+  @override
+  String get debugRoleHomeowner => 'View as homeowner';
+
+  @override
+  String get debugRoleContractor => 'View as contractor';
+
+  @override
+  String get debugRoleReal => 'Use my real account role';
+
+  @override
   String get networkError => 'No internet connection';
 
   @override
@@ -2723,6 +2798,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get providerKindInteriorDesigner => 'Interior designer';
 
   @override
+  String get providerKindSpecializedProvider => 'Specialized office/company';
+
+  @override
   String get providerKindTradesman => 'Specialist tradesman';
 
   @override
@@ -3017,6 +3095,22 @@ class AppLocalizationsEn extends AppLocalizations {
       'This appears on your profile. You can change it any time.';
 
   @override
+  String get professionalNameLabel => 'Your name';
+
+  @override
+  String get professionalNameHint => 'Example: Ahmed Hassan';
+
+  @override
+  String get identityNameRequired => 'Enter your name';
+
+  @override
+  String get identityBusinessRequired => 'Enter your business name';
+
+  @override
+  String get identityResponsibleRequired =>
+      'Enter the responsible person\'s name';
+
+  @override
   String get quoteNoteHint =>
       'Write the quote details and any notes for the client';
 
@@ -3160,10 +3254,73 @@ class AppLocalizationsEn extends AppLocalizations {
   String get opportunityFreshCount => 'new';
 
   @override
+  String get opportunitySuitableLabel => 'Good fit';
+
+  @override
+  String get opportunityAvailableLabel => 'Available';
+
+  @override
   String get opportunityAreaCount => 'in your areas';
 
   @override
   String get opportunityWeekCount => 'This week';
+
+  @override
+  String get workNewToday => 'New today';
+
+  @override
+  String get workRecentQuotes => 'Your latest offers';
+
+  @override
+  String get workFeaturedOpportunity => 'Featured opportunity for you';
+
+  @override
+  String get workSuitableForYou => 'Opportunities for your work';
+
+  @override
+  String get workInYourAreas => 'In your work areas';
+
+  @override
+  String get workAllOpportunities => 'All opportunities';
+
+  @override
+  String get workAdviceTitle => 'A tip from Shattab';
+
+  @override
+  String get workAdviceBody =>
+      'Update your profile to help suitable opportunities find you.';
+
+  @override
+  String get workUpdateProfile => 'Update profile';
+
+  @override
+  String get workSpecialtyFilter => 'Trade type';
+
+  @override
+  String get workTabHome => 'Home';
+
+  @override
+  String get workTabJobs => 'Jobs';
+
+  @override
+  String get workTabMessages => 'Messages';
+
+  @override
+  String get workTabNotifications => 'Notifications';
+
+  @override
+  String get workTabAccount => 'Account';
+
+  @override
+  String get workNoRecentQuotes => 'The offers you send will appear here';
+
+  @override
+  String get workAllAvailableSubtitle => 'All open work opportunities';
+
+  @override
+  String workAreaSquareMeters(int area) {
+    return '$area m²';
+  }
 
   @override
   String get searchForMatchingOpportunities =>
@@ -3260,7 +3417,95 @@ class AppLocalizationsEn extends AppLocalizations {
   String get opportunityAcceptingOffers => 'Accepting quotes';
 
   @override
+  String get opportunityDetailActivityPhotos => 'Request photos';
+
+  @override
+  String get opportunityDetailActivityPublished => 'Posted';
+
+  @override
+  String get opportunityDetailActivityQuote => 'Your offer';
+
+  @override
+  String get opportunityDetailAdditional => 'Additional details';
+
+  @override
+  String get opportunityDetailAdviceBody =>
+      'Complete your profile and add photos of past work to help your offer stand out.';
+
+  @override
+  String get opportunityDetailAdviceTitle => 'A tip from Shattab';
+
+  @override
+  String get opportunityDetailApplyAction => 'Submit your offer now';
+
+  @override
+  String get opportunityDetailAreaLabel => 'Area';
+
+  @override
+  String get opportunityDetailClientPhotos => 'Photos from the client';
+
+  @override
   String get opportunityClosed => 'Opportunity closed';
+
+  @override
+  String get opportunityDetailDescription => 'Opportunity description';
+
+  @override
+  String get opportunityDetailLocation => 'Location';
+
+  @override
+  String get opportunityDetailMapAction => 'Show on map';
+
+  @override
+  String get opportunityDetailMapOpenError => 'Could not open the maps app';
+
+  @override
+  String get opportunityDetailMapPreview =>
+      'Illustrative map without precise location';
+
+  @override
+  String get opportunityDetailMoreActions => 'More actions';
+
+  @override
+  String get opportunityDetailNoLocation => 'Location not specified';
+
+  @override
+  String get opportunityDetailPhotosUnavailable =>
+      'No photos are attached to this request';
+
+  @override
+  String get opportunityDetailQuoteNotSent => 'You have not sent an offer';
+
+  @override
+  String get opportunityDetailQuoteStateLoading => 'Checking your offer status';
+
+  @override
+  String get opportunityDetailQuoteStateUnavailable =>
+      'Your offer status is unavailable';
+
+  @override
+  String get opportunityDetailRequirements => 'Special requirements';
+
+  @override
+  String get opportunityDetailRetryQuoteState =>
+      'Could not load your offer status. Try again.';
+
+  @override
+  String get opportunityDetailScope => 'Scope of work';
+
+  @override
+  String get opportunityDetailStartLabel => 'Preferred start';
+
+  @override
+  String opportunityDetailSelectPhoto(int index) {
+    return 'Select photo $index';
+  }
+
+  @override
+  String get opportunityDetailTiming => 'Execution timing';
+
+  @override
+  String get opportunityDetailOwner => 'Request owner';
 
   @override
   String get opportunityDetailsTitle => 'Opportunity details';
@@ -3270,6 +3515,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get opportunityOpen => 'Opportunity open';
+
+  @override
+  String get copyOpportunitySummary => 'Copy opportunity details';
 
   @override
   String get opportunityQuality => 'Opportunity quality';
@@ -3701,6 +3949,206 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeHeroSubtitle => 'Trusted professionals, close to home';
 
   @override
+  String get homeReferenceCity => 'Cairo';
+
+  @override
+  String get homeReferenceHeroKicker => 'Your project starts here';
+
+  @override
+  String get homeReferenceHeroTitle => 'Finish your home with confidence';
+
+  @override
+  String get homeReferenceHeroBody =>
+      'Tell us what you need and we’ll help you start right';
+
+  @override
+  String get homeReferenceHeroPrimary => 'Start your project';
+
+  @override
+  String get homeReferenceHeroSecondary => 'Explore professionals';
+
+  @override
+  String get homeReferenceGreetingTagline =>
+      'Every home has a story — and we’re with you in it';
+
+  @override
+  String get homeReferenceHeroTitleLineOne => 'From the first idea';
+
+  @override
+  String get homeReferenceHeroTitleLineTwo => 'to the home you love';
+
+  @override
+  String get homeReferenceHeroSupportBody =>
+      'Trusted professionals to help with every step, from planning and design to delivery';
+
+  @override
+  String get homeReferenceServiceFullRenovationLabel => 'Full renovation';
+
+  @override
+  String get homeReferenceHeroTagline => 'Every home\nhas a story';
+
+  @override
+  String get homeReferenceProjectStatus => 'My current project';
+
+  @override
+  String get homeReferenceProjectTitle => 'Renovating an apartment in Maadi';
+
+  @override
+  String get homeReferenceProjectLocation => 'Maadi, Cairo';
+
+  @override
+  String get homeReferenceProjectStage => 'Current step: carpentry';
+
+  @override
+  String homeReferenceProjectProgress(Object percent) {
+    return 'Project progress $percent%';
+  }
+
+  @override
+  String homeReferenceNewOffers(Object count) {
+    return '$count new offers';
+  }
+
+  @override
+  String get homeReferenceProjectFollow => 'Track project';
+
+  @override
+  String get homeReferenceProjectDetails => 'View details';
+
+  @override
+  String get homeReferenceFeaturedTitle => 'Professionals picked for you';
+
+  @override
+  String get homeReferenceTopRatedSubtitle =>
+      'Professionals with the highest customer ratings';
+
+  @override
+  String get homeReferenceRealWorkSubtitle =>
+      'See the difference before and after';
+
+  @override
+  String get homeReferenceCaseDetails => 'View details';
+
+  @override
+  String get homeReferenceCaseQuote =>
+      'The result was amazing and beyond my expectations';
+
+  @override
+  String get homeReferenceCommunityTitle => 'From the Shattab community';
+
+  @override
+  String get homeReferenceCommunityTip => 'Advice from experience';
+
+  @override
+  String get homeReferenceCommunityExperience => 'My experience';
+
+  @override
+  String get homeReferenceCommunityInviteTitle =>
+      'Share your Shattab experience';
+
+  @override
+  String get homeReferenceCommunityInviteBody =>
+      'Help others and be part of our community';
+
+  @override
+  String get homeReferenceWritePost => 'Write a post';
+
+  @override
+  String get homeReferenceClosingTitle => 'Ready to start your project?';
+
+  @override
+  String get homeReferenceClosingBody =>
+      'Tell us what you need and take the first step to a better home';
+
+  @override
+  String get homeReferenceClosingQuote => 'Every home\nbegins beautifully ♡';
+
+  @override
+  String get homeReferenceClosingAction => 'Start a new request';
+
+  @override
+  String get homeReferenceRequestQuote => 'Request a quote';
+
+  @override
+  String get homeReferenceViewProfile => 'View profile';
+
+  @override
+  String get homeReferenceSponsored => 'Ad';
+
+  @override
+  String get homeReferenceRankOne => 'First place';
+
+  @override
+  String get homeReferenceRankTwo => 'Second place';
+
+  @override
+  String get homeReferenceRankThree => 'Third place';
+
+  @override
+  String get homeReferenceLocationUnset => 'Choose your location';
+
+  @override
+  String get homeReferenceStageOpen => 'Current step: receiving offers';
+
+  @override
+  String get homeReferenceStageHired => 'Current step: execution';
+
+  @override
+  String get homeReferenceStageReview => 'Current step: review and confirm';
+
+  @override
+  String get homeReferenceStageCompleted => 'Current step: project completed';
+
+  @override
+  String get homeReferenceRequestTitle => 'Need a full apartment paint';
+
+  @override
+  String get homeReferenceRequestLocation => 'Zamalek, Cairo';
+
+  @override
+  String get homeReferenceRequestDetails => 'Details added';
+
+  @override
+  String get homeReferenceRequestOffers => '2 offers';
+
+  @override
+  String get homeReferenceRequestMatches =>
+      'Professionals who fit your project';
+
+  @override
+  String get homeReferenceRequestMore => '+7';
+
+  @override
+  String get homeReferenceDiscoverTitle => 'Discover professionals';
+
+  @override
+  String get homeReferenceDiscoverMatch => 'Good match';
+
+  @override
+  String get homeReferenceDiscoverRated => 'Top rated';
+
+  @override
+  String get homeReferenceDiscoverNearby => 'Near you';
+
+  @override
+  String get homeReferenceMatchBadge => 'Good match for your project';
+
+  @override
+  String get homeReferenceExpertTitle => 'Ask the experts';
+
+  @override
+  String get homeReferenceExpertName => 'Mohamed Reda';
+
+  @override
+  String get homeReferenceExpertRole => 'Finishing engineer';
+
+  @override
+  String get homeReferenceExpertBody => 'Over 120 projects completed in Maadi';
+
+  @override
+  String get homeReferenceExpertAction => 'See the story';
+
+  @override
   String get homeSearchHint => 'Search for a service or a professional...';
 
   @override
@@ -3954,4 +4402,390 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get homeProjectsEmptyMessage =>
       'Explore professional portfolios and see the details before you choose.';
+
+  @override
+  String get addProject => 'Add your project';
+
+  @override
+  String get createProjectCtaBody =>
+      'Let professionals see what you need and send their offers.';
+
+  @override
+  String get sponsoredInfoTitle => 'About sponsored placement';
+
+  @override
+  String get sponsoredInfoBody =>
+      'Sponsored placement is paid additional visibility in this section. Promotion never changes customer ratings or improves rating order.';
+
+  @override
+  String get understood => 'Understood';
+
+  @override
+  String get mostCompletedProfessionals => 'Most completed projects';
+
+  @override
+  String get ratingFourPlus => 'Rated 4+';
+
+  @override
+  String get ratingFourHalfPlus => 'Rated 4.5+';
+
+  @override
+  String get regionSearchHint => 'Search for a region ...';
+
+  @override
+  String get confirmLocation => 'Confirm location';
+
+  @override
+  String projectFlowStep(Object current) {
+    return 'Step $current of 3';
+  }
+
+  @override
+  String get projectFlowTitleStepOne => 'What do you need done?';
+
+  @override
+  String get projectFlowTitleStepTwo => 'Tell us the details';
+
+  @override
+  String get projectFlowTitleStepThree => 'Review your request';
+
+  @override
+  String get projectTitleLabel => 'Project title';
+
+  @override
+  String get projectTitleHint => 'Example: Apartment finishing in New Cairo';
+
+  @override
+  String get areaLabel => 'Approximate area';
+
+  @override
+  String get areaHint => 'Example: 120';
+
+  @override
+  String get startTimingLabel => 'When would you like to start?';
+
+  @override
+  String get startFlexible => 'Flexible';
+
+  @override
+  String get startWithinThreeMonths => 'Within 3 months';
+
+  @override
+  String get startWithinMonth => 'Within a month';
+
+  @override
+  String get budgetUndecided => 'Still deciding';
+
+  @override
+  String get addProjectPhotos => 'Add photos of the space';
+
+  @override
+  String get reviewProjectDetails => 'Project details';
+
+  @override
+  String get reviewUploadedPhotos => 'Space photos';
+
+  @override
+  String get publishProject => 'Publish project';
+
+  @override
+  String get projectPublishedTitle => 'Your project was published';
+
+  @override
+  String get projectPublishedBody =>
+      'We will let you know when a new offer arrives.';
+
+  @override
+  String get trackProject => 'Track project';
+
+  @override
+  String get returnToProfessionals => 'Back to professionals';
+
+  @override
+  String get titleTooShort => 'Write a clearer title';
+
+  @override
+  String get areaInvalid => 'Enter a valid area';
+
+  @override
+  String get descriptionTooShort => 'Add more detail so we can help';
+
+  @override
+  String get chooseService => 'Choose the service for your project';
+
+  @override
+  String get noPortfolioProjects => 'This professional has not added work yet';
+
+  @override
+  String portfolioPhotosCount(Object count) {
+    return '$count photos';
+  }
+
+  @override
+  String profileWorkHeading(Object name) {
+    return '$name\'s work';
+  }
+
+  @override
+  String profileAboutHeading(Object name) {
+    return 'About $name';
+  }
+
+  @override
+  String get exploreWork => 'Explore work';
+
+  @override
+  String get workArea => 'Work area';
+
+  @override
+  String get services => 'Services';
+
+  @override
+  String get designStyle => 'Design style';
+
+  @override
+  String get notificationsToday => 'Today';
+
+  @override
+  String get notificationsEarlier => 'Earlier';
+
+  @override
+  String get notificationNoDestination => 'Details are not available right now';
+
+  @override
+  String get reviewsLoadFailed => 'Reviews could not be loaded';
+
+  @override
+  String get previousPhoto => 'Previous photo';
+
+  @override
+  String get nextPhoto => 'Next photo';
+
+  @override
+  String get assistantTitle => 'Shattab Assistant';
+
+  @override
+  String get assistantSubtitle =>
+      'Your guide for renovation and finding professionals';
+
+  @override
+  String get assistantEmptyTitle => 'How can I help with your renovation?';
+
+  @override
+  String get assistantEmptySubtitle =>
+      'Ask about professionals, finishing steps, or the right service for your project';
+
+  @override
+  String get assistantInputHint =>
+      'Type your question... (e.g. Carpenter in Cairo)';
+
+  @override
+  String get assistantSend => 'Send';
+
+  @override
+  String get assistantClear => 'New conversation';
+
+  @override
+  String get assistantPrivacyNotice =>
+      'Your chat is temporary. Transcript text is not saved.';
+
+  @override
+  String get assistantThinking => 'Preparing your answer...';
+
+  @override
+  String get assistantErrorFallback =>
+      'Service temporarily unavailable. You can browse professionals directly.';
+
+  @override
+  String get assistantRetry => 'Retry';
+
+  @override
+  String get assistantStarterHeading => 'Start with a simple question:';
+
+  @override
+  String get assistantQuickPromptPlumber => 'Need a skilled plumber in Giza';
+
+  @override
+  String get assistantQuickPromptFinishing =>
+      'What is the first step in finishing an apartment?';
+
+  @override
+  String get assistantQuickPromptPaint => 'Need a painter in Cairo';
+
+  @override
+  String get assistantQuickPromptKitchen => 'Custom wood kitchen in New Cairo';
+
+  @override
+  String get assistantShowResults => 'View all results in Discover';
+
+  @override
+  String get assistantFoundContractors => 'We found matching professionals:';
+
+  @override
+  String get assistantActionPostBrief => 'Post your request now';
+
+  @override
+  String get assistantActionBrowse => 'Browse all professionals';
+
+  @override
+  String get assistantActionViewPortfolio => 'View portfolio gallery';
+
+  @override
+  String get assistantActionPricing => 'Pro plans and pricing';
+
+  @override
+  String get assistantActionSupport => 'Contact support';
+
+  @override
+  String get assistantSignInRequired => 'Sign in to use the AI assistant';
+
+  @override
+  String onboardingStepLabel(int step, int total) {
+    return 'Step $step of $total';
+  }
+
+  @override
+  String get onboardingStepRole => 'Your account type and name';
+
+  @override
+  String get onboardingStepHomeownerDetails => 'Your home';
+
+  @override
+  String get onboardingStepHomeownerLocation => 'Your location';
+
+  @override
+  String get onboardingStepContractorIdentity => 'Your professional profile';
+
+  @override
+  String get onboardingStepContractorServices => 'Your services and work area';
+
+  @override
+  String get onboardingRoleLocked =>
+      'Your account type is selected and cannot be changed.';
+
+  @override
+  String get onboardingRoleRequired =>
+      'Choose whether you are looking for a professional or offering services.';
+
+  @override
+  String get onboardingNameRequired =>
+      'Enter a name with at least two characters.';
+
+  @override
+  String get onboardingApartmentRequired =>
+      'Choose your apartment type to continue.';
+
+  @override
+  String get onboardingInterestRequired =>
+      'Choose at least one area of work you need.';
+
+  @override
+  String get onboardingCityRequired => 'Choose a city.';
+
+  @override
+  String get onboardingDistrictRequired => 'Choose an area within that city.';
+
+  @override
+  String get onboardingSpecialtyRequired =>
+      'Choose at least one specialty and set a primary specialty.';
+
+  @override
+  String get onboardingServiceAreaRequired =>
+      'Choose at least one city where you work.';
+
+  @override
+  String get onboardingSaving => 'Saving your progress…';
+
+  @override
+  String get onboardingSaveFailed =>
+      'We couldn\'t save this step. Your answers are still here; try again.';
+
+  @override
+  String get onboardingRetrySave => 'Retry saving';
+
+  @override
+  String get onboardingContractorLogoTitle => 'Business logo';
+
+  @override
+  String get onboardingContractorLogoHint =>
+      'Optional. You can add this later from your profile.';
+
+  @override
+  String get onboardingLogoUploadFailed =>
+      'Your professional details were saved, but the logo could not be uploaded.';
+
+  @override
+  String get onboardingRetryLogo => 'Retry logo upload';
+
+  @override
+  String get onboardingContinueWithoutLogo => 'Continue without a logo';
+
+  @override
+  String get onboardingDistrictNasrCity => 'Nasr City';
+
+  @override
+  String get onboardingDistrictHeliopolis => 'Heliopolis';
+
+  @override
+  String get onboardingDistrictMaadi => 'Maadi';
+
+  @override
+  String get onboardingDistrictZamalek => 'Zamalek';
+
+  @override
+  String get onboardingDistrictDowntown => 'Downtown';
+
+  @override
+  String get onboardingDistrictMohandessin => 'Mohandessin';
+
+  @override
+  String get onboardingDistrictDokki => 'Dokki';
+
+  @override
+  String get onboardingDistrictFaisal => 'Faisal';
+
+  @override
+  String get onboardingDistrictHaram => 'Haram';
+
+  @override
+  String get onboardingDistrictAgouza => 'Agouza';
+
+  @override
+  String get onboardingDistrictFirstSettlement => 'First Settlement';
+
+  @override
+  String get onboardingDistrictFifthSettlement => 'Fifth Settlement';
+
+  @override
+  String get onboardingDistrictRehab => 'Al Rehab';
+
+  @override
+  String get onboardingDistrictMadinaty => 'Madinaty';
+
+  @override
+  String get onboardingDistrictFirstDistrict => 'First District';
+
+  @override
+  String get onboardingDistrictSeventhDistrict => 'Seventh District';
+
+  @override
+  String get onboardingDistrictOctoberGardens => 'October Gardens';
+
+  @override
+  String get onboardingDistrictSheikhZayed => 'Sheikh Zayed';
+
+  @override
+  String get onboardingDistrictSmouha => 'Smouha';
+
+  @override
+  String get onboardingDistrictSidiGaber => 'Sidi Gaber';
+
+  @override
+  String get onboardingDistrictAgami => 'Agami';
+
+  @override
+  String get onboardingDistrictMoharramBek => 'Moharram Bek';
+
+  @override
+  String get onboardingDistrictMiami => 'Miami';
 }

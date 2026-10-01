@@ -18,6 +18,16 @@ provider for explicitly approved public media only.
 
 No existing Supabase objects are migrated or deleted by this change.
 
+## Cache policy
+
+R2 public object keys include a UUID, so the Worker signs
+`Cache-Control: public, max-age=31536000, immutable` for insert-only uploads.
+Supabase fallbacks use the same immutable policy for those public uploads and
+one hour for mutable upserts (avatars and logos). Brief photos, verification
+documents, and payment proofs remain on Supabase with
+`private, max-age=0, no-store`; they are never sent to a shared edge cache.
+`CachedNetworkImage` keeps its existing disk cache for public media.
+
 ## Flutter flow
 
 The feature repositories continue returning URL strings. They now depend on

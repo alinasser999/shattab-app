@@ -1,19 +1,25 @@
 name = "shattab-media-signer"
 main = "src/index.ts"
 compatibility_date = "2025-04-01"
+# Keep the signer unreachable until a workers.dev subdomain or production
+# Worker route is registered. Public object delivery still uses the R2 custom
+# media domain configured below.
+workers_dev = false
 
 [vars]
-SUPABASE_URL = "https://replace-with-project.supabase.co"
-R2_ACCOUNT_ID = "replace-with-cloudflare-account-id"
+SUPABASE_URL = "https://ajqdutehxpbbflzdovhw.supabase.co"
+R2_ACCOUNT_ID = "2f498678fcfffbc5a8c4236f79493b20"
 R2_BUCKET_NAME = "shattab-public-media"
-R2_PUBLIC_BASE_URL = "https://media.example.com"
+# The shattab.app zone must be attached to this Cloudflare account before
+# deploying the Worker and enabling public uploads.
+R2_PUBLIC_BASE_URL = "https://media.shattab.app"
 
 # CORS applies only to browsers. The iOS and Android builds never send an
 # Origin header, so leaving this at the placeholder does not break them — it
 # breaks the Flutter *web* build silently, at preflight, with an error that
 # never mentions CORS. List every web origin that talks to the signer,
 # including local development.
-ALLOWED_ORIGINS = "https://app.example.com,http://localhost:6434"
+ALLOWED_ORIGINS = "https://shattab.vercel.app,https://shattab.app,https://www.shattab.app,http://localhost:6434"
 
 # Enforced twice: signed into the presigned URL so R2 rejects an oversized PUT
 # outright, and re-checked in /finalize against the stored object.

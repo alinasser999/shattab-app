@@ -6,12 +6,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../../core/analytics/app_analytics.dart';
+import '../../../../core/catalog/specialty_catalog.dart';
 import '../../../auth/data/auth_repository.dart';
 import '../../../auth/domain/profile.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../discovery/domain/contractor_listing.dart';
 import '../../data/onboarding_repository.dart';
 import '../../domain/onboarding_models.dart';
+import 'onboarding_draft_provider.dart';
 
 part 'onboarding_provider.g.dart';
 
@@ -50,10 +52,17 @@ class OnboardingController extends _$OnboardingController {
   }
 
   Future<void> selectRole(UserRole role, String fullName) async {
-    final userId = _requireUserId();
     await ref
         .read(authRepositoryProvider)
-        .updateRole(userId: userId, role: role, fullName: fullName);
+        .selectOnboardingRole(role: role, fullName: fullName.trim());
+    await ref.read(currentProfileProvider.notifier).refresh();
+  }
+
+  Future<void> updateFullName(String fullName) async {
+    await ref
+        .read(onboardingRepositoryProvider)
+        .updateFullName(profileId: _requireUserId(), fullName: fullName.trim());
+    ref.read(onboardingDraftProvider.notifier).updateFullName(fullName.trim());
     await ref.read(currentProfileProvider.notifier).refresh();
   }
 
@@ -89,14 +98,17 @@ class OnboardingController extends _$OnboardingController {
 
   Future<void> setBusinessName({
     required String businessName,
-    required String displayName,
+    ProviderKind providerKind = ProviderKind.contractor,
   }) async {
     final userId = _requireUserId();
-    final repo = ref.read(onboardingRepositoryProvider);
-    await repo.upsertContractor(profileId: userId, businessName: businessName);
-    await repo.updateFullName(profileId: userId, fullName: displayName);
+    await ref
+        .read(onboardingRepositoryProvider)
+        .upsertContractor(
+          profileId: userId,
+          businessName: businessName.trim(),
+          providerKind: providerKind,
+        );
     ref.invalidate(contractorProfileProvider);
-    await ref.read(currentProfileProvider.notifier).refresh();
   }
 
   /// Saves specialties + service areas in one upsert: single failure point,
@@ -109,7 +121,7 @@ class OnboardingController extends _$OnboardingController {
         .read(onboardingRepositoryProvider)
         .upsertContractor(
           profileId: _requireUserId(),
-          specialties: specialties,
+          specialties: SpecialtyCatalog.normalizeSelection(specialties),
           serviceAreas: serviceAreas,
         );
     ref.invalidate(contractorProfileProvider);
@@ -143,8 +155,11 @@ class OnboardingController extends _$OnboardingController {
   /// Pass only the fields being changed; nulls are skipped by the repo.
   Future<void> saveShowcase({
     String? businessName,
+    String? responsibleName,
     String? headline,
     String? bio,
+    List<String>? specialties,
+    List<String>? serviceAreas,
     int? yearsExperience,
     ProviderKind? providerKind,
   }) async {
@@ -153,11 +168,24 @@ class OnboardingController extends _$OnboardingController {
         .upsertContractor(
           profileId: _requireUserId(),
           businessName: businessName,
+          specialties: specialties == null
+              ? null
+              : SpecialtyCatalog.normalizeSelection(specialties),
+          serviceAreas: serviceAreas,
           headline: headline,
           bio: bio,
           yearsExperience: yearsExperience,
           providerKind: providerKind,
         );
+    if (responsibleName != null && responsibleName.trim().isNotEmpty) {
+      await ref
+          .read(onboardingRepositoryProvider)
+          .updateFullName(
+            profileId: _requireUserId(),
+            fullName: responsibleName.trim(),
+          );
+      await ref.read(currentProfileProvider.notifier).refresh();
+    }
     ref.invalidate(contractorProfileProvider);
   }
 
@@ -171,19 +199,25 @@ class OnboardingController extends _$OnboardingController {
     return url;
   }
 
-  Future<void> markComplete() async {
-    final userId = _requireUserId();
+  Future<bool> markComplete() async {
+    _requireUserId();
     final role = ref.read(currentProfileProvider).value?.role.name ?? 'unknown';
-    await ref.read(onboardingRepositoryProvider).markOnboardingComplete(userId);
+    final didComplete = await ref
+        .read(onboardingRepositoryProvider)
+        .markOnboardingComplete();
 
     // The end of the one funnel every user walks through. Without it there is
     // no way to tell a signup that never finished from one that finished and
     // then went quiet — opposite problems with opposite fixes. Tracked after
     // the write, so this counts completions rather than attempts.
-    unawaited(
-      AppAnalytics.track('onboarding_completed', properties: {'role': role}),
-    );
+    if (didComplete) {
+      unawaited(
+        AppAnalytics.track('onboarding_completed', properties: {'role': role}),
+      );
+    }
 
     await ref.read(currentProfileProvider.notifier).refresh();
+    ref.read(onboardingDraftProvider.notifier).clearAfterCompletion();
+    return didComplete;
   }
 }

@@ -25,7 +25,7 @@ Future<Quote?> myQuoteForBrief(Ref ref, String briefId) =>
 Future<List<Quote>> myQuotes(Ref ref) =>
     ref.watch(quotesRepositoryProvider).fetchMine();
 
-/// Contractor — free-quote allowance for this month.
+/// Contractor — free-quote allowance in a rolling 30-day window.
 ///
 /// Drives the send-quote CTA: Pro sends without limit, a free contractor sends
 /// until the quota is spent and only then sees the paywall.

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/catalog/specialty_catalog.dart';
 import '../../../../core/l10n/catalog_labels.dart';
 import '../../../../core/l10n/l10n_extension.dart';
 import '../../../../core/theme/batsh_colors.dart';
@@ -15,10 +16,9 @@ import 'home_hero.dart';
 
 /// The five trades a homeowner reaches for first, as one fixed row.
 ///
-/// Deliberately not a scrolling strip. Five is the whole set, so scrolling
-/// would hide part of a complete list behind a gesture; the "everything else"
-/// affordance is spelled out above instead of riding along as a sixth tile
-/// that looks like a trade and is not one.
+/// The full catalogue stays one tap away through the "view all" affordance;
+/// this compact rail keeps the first decision calm instead of making a new
+/// homeowner scan fourteen equal-weight tiles before they can start.
 class HomeServiceCategories extends StatelessWidget {
   const HomeServiceCategories({
     super.key,
@@ -34,13 +34,7 @@ class HomeServiceCategories extends StatelessWidget {
   /// whole-home renovation furthest from it — the order the discover strip
   /// already uses, so the two do not reshuffle under a homeowner moving
   /// between tabs.
-  static const _keys = <String>[
-    'full_reno',
-    'design',
-    'paint',
-    'electrical',
-    'plumbing',
-  ];
+  static const _keys = SpecialtyCatalog.popularRootKeys;
 
   @override
   Widget build(BuildContext context) {

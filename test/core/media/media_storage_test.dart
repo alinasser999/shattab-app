@@ -91,4 +91,22 @@ void main() {
     );
     expect(MediaCategory.paymentProof.supabaseBucket, 'payment-proofs');
   });
+
+  test(
+    'cache policy separates immutable public media from private evidence',
+    () {
+      expect(
+        mediaCacheControlFor(MediaCategory.postMedia, upsert: false),
+        publicMediaImmutableCacheControl,
+      );
+      expect(
+        mediaCacheControlFor(MediaCategory.avatar, upsert: true),
+        publicMediaMutableCacheControl,
+      );
+      expect(
+        mediaCacheControlFor(MediaCategory.paymentProof, upsert: false),
+        privateMediaCacheControl,
+      );
+    },
+  );
 }

@@ -1,6 +1,8 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../core/l10n/catalog_labels.dart';
+import '../../../../core/cache/media_cache.dart';
 import '../../../../core/l10n/l10n_extension.dart';
 import '../../../../core/theme/batsh_colors.dart';
 import '../../../../core/theme/batsh_icon_size.dart';
@@ -10,9 +12,9 @@ import '../../../../core/theme/batsh_typography.dart';
 import '../../../../core/theme/theme_extension.dart';
 import '../../../../core/utils/image_url.dart';
 import '../../../../core/widgets/batsh_shimmer.dart';
+import '../../../../core/widgets/batsh_initial_plate.dart';
 import '../../../../core/widgets/batsh_stars.dart';
 import '../../domain/contractor_listing.dart';
-import 'mockup_assets.dart';
 
 /// The featured professional, drawn into the Shattab card template.
 ///
@@ -139,23 +141,30 @@ class _TemplatePhoto extends StatelessWidget {
       child: Stack(
         fit: StackFit.expand,
         children: [
-          // Unchanged behaviour: an account with no cover of its own borrows a
-          // curated interior, and says so on the photograph.
           Hero(
             tag: 'professional-gallery-${listing.id}',
-            child: MockupImage(
-              url: listing.coverPhotoUrl ?? mockupPortfolioImages.first,
-              memCacheWidth: 900,
-            ),
+            child: isPlaceholder
+                ? BatshInitialPlate(name: listing.businessName)
+                : CachedNetworkImage(
+                    imageUrl: sizedImageUrl(listing.coverPhotoUrl!, width: 900),
+                    cacheManager: mediaCacheManager,
+                    fit: BoxFit.cover,
+                    memCacheWidth: 900,
+                    errorWidget: (_, _, _) =>
+                        BatshInitialPlate(name: listing.businessName),
+                  ),
           ),
           // Only as deep as the pill needs.
-          const IgnorePointer(
+          IgnorePointer(
             child: DecoratedBox(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.center,
-                  colors: [Color(0x59000000), Color(0x00000000)],
+                  colors: [
+                    BatshColors.scrim.withValues(alpha: 0.35),
+                    BatshColors.scrim.withValues(alpha: 0),
+                  ],
                 ),
               ),
             ),
@@ -169,7 +178,6 @@ class _TemplatePhoto extends StatelessWidget {
               runSpacing: BatshSpacing.xs,
               children: [
                 if (listing.tier.isPublic) _LevelBadge(tier: listing.tier),
-                if (isPlaceholder) const MockupSampleBadge(),
               ],
             ),
           ),
@@ -228,16 +236,19 @@ class _CrestLogo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final hasLogo = logoUrl != null && logoUrl!.isNotEmpty;
+    final hasLogo = isDisplayableImageUrl(logoUrl);
     return ExcludeSemantics(
       child: ClipPath(
         clipper: const _HexClipper(),
         child: ColoredBox(
           color: hasLogo ? BatshColors.primary : BatshColors.primaryContainer,
           child: hasLogo
-              ? MockupImage(
-                  url: sizedImageUrl(logoUrl!, width: 240),
+              ? CachedNetworkImage(
+                  imageUrl: sizedImageUrl(logoUrl!, width: 240),
+                  cacheManager: mediaCacheManager,
+                  fit: BoxFit.cover,
                   memCacheWidth: 240,
+                  errorWidget: (_, _, _) => BatshInitialPlate(name: name),
                 )
               : Center(
                   child: FittedBox(
@@ -312,7 +323,7 @@ class _LevelBadge extends StatelessWidget {
               child: Icon(
                 Icons.emoji_events_rounded,
                 size: BatshIconSize.inline,
-                color: Colors.white,
+                color: BatshColors.onPrimary,
               ),
             ),
             const SizedBox(width: BatshSpacing.xxs),
@@ -320,7 +331,7 @@ class _LevelBadge extends StatelessWidget {
               child: Text(
                 label,
                 style: BatshTypography.labelMd.copyWith(
-                  color: Colors.white,
+                  color: BatshColors.onPrimary,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -330,7 +341,7 @@ class _LevelBadge extends StatelessWidget {
               child: Icon(
                 Icons.verified_user_rounded,
                 size: BatshIconSize.inline,
-                color: Colors.white,
+                color: BatshColors.onPrimary,
               ),
             ),
           ],
@@ -623,7 +634,7 @@ class _CtaLabel extends StatelessWidget {
             child: Text(
               context.l10n.viewContractorProfile,
               style: BatshTypography.titleMd.copyWith(
-                color: Colors.white,
+                color: BatshColors.onPrimary,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -634,7 +645,7 @@ class _CtaLabel extends StatelessWidget {
               // "Onward" points left in Arabic, right in English.
               child: Icon(
                 rtl ? Icons.arrow_back_rounded : Icons.arrow_forward_rounded,
-                color: Colors.white,
+                color: BatshColors.onPrimary,
                 size: BatshIconSize.action,
               ),
             ),

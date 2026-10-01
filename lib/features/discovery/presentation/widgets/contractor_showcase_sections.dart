@@ -48,18 +48,6 @@ class _ServicesSection extends StatelessWidget {
   /// Specialty key → glyph. Same icon vocabulary as the opportunities filter
   /// sheet, so a contractor sees one consistent language for "كهرباء" whether
   /// they are filtering jobs or reading a profile.
-  static const _icons = <String, IconData>{
-    'paint': Icons.format_paint_outlined,
-    'flooring': Icons.grid_on_outlined,
-    'kitchen': Icons.countertops_outlined,
-    'bathroom': Icons.bathtub_outlined,
-    'electrical': Icons.electrical_services_outlined,
-    'plumbing': Icons.plumbing_outlined,
-    'carpentry': Icons.carpenter_outlined,
-    'design': Icons.architecture_outlined,
-    'full_reno': Icons.home_work_outlined,
-  };
-
   @override
   Widget build(BuildContext context) {
     if (specialtyKeys.isEmpty) return const SizedBox.shrink();
@@ -92,8 +80,8 @@ class _ServicesSection extends StatelessWidget {
             itemBuilder: (_, i) {
               final key = specialtyKeys[i];
               return _ServiceTile(
-                icon: _icons[key] ?? Icons.handyman_outlined,
-                label: OnboardingCatalog.specialtiesCatalog[key] ?? key,
+                icon: specialtyIcon(key),
+                label: localizedSpecialtyDisplayLabel(context, key),
               );
             },
           ),

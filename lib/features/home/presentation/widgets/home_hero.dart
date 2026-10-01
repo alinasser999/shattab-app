@@ -9,7 +9,6 @@ import '../../../../core/theme/batsh_spacing.dart';
 import '../../../../core/theme/batsh_typography.dart';
 import '../../../../core/theme/theme_extension.dart';
 import '../../../../core/widgets/shattab_pattern.dart';
-import '../../../discovery/presentation/widgets/mockup_assets.dart';
 
 const double homeGutter = BatshSpacing.marginMobile;
 
@@ -230,15 +229,6 @@ class HomeHero extends StatelessWidget {
                     ),
                   ),
                 ),
-                Positioned.fill(
-                  child: ClipPath(
-                    clipper: const _HomeHeroPhotoClipper(),
-                    child: MockupImage(
-                      url: mockupHeroImage,
-                      memCacheWidth: 1440,
-                    ),
-                  ),
-                ),
                 const Positioned.fill(
                   child: IgnorePointer(
                     child: CustomPaint(painter: _HomeHeroRooflinePainter()),
@@ -429,16 +419,6 @@ class _HeroCircleButton extends StatelessWidget {
       ),
     );
   }
-}
-
-class _HomeHeroPhotoClipper extends CustomClipper<Path> {
-  const _HomeHeroPhotoClipper();
-
-  @override
-  Path getClip(Size size) => _homeHeroPhotoPath(size);
-
-  @override
-  bool shouldReclip(covariant _HomeHeroPhotoClipper oldClipper) => false;
 }
 
 class _HomeHeroRooflinePainter extends CustomPainter {

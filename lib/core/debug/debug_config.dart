@@ -1,7 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../../features/auth/domain/profile.dart';
 import '../env/env.dart';
 import '../logging/app_logger.dart';
 
@@ -30,12 +29,4 @@ Future<void> debugSignIn(SupabaseClient client) async {
       stackTrace: stackTrace,
     );
   }
-}
-
-/// Flip the debug user's role in the DB. The caller refreshes current profile
-/// so the router redirects to the new shell.
-Future<void> debugSwitchRole(SupabaseClient client, UserRole role) async {
-  final id = client.auth.currentUser?.id;
-  if (id == null) return;
-  await client.from('profiles').update({'role': role.name}).eq('id', id);
 }

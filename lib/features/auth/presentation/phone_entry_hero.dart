@@ -241,9 +241,5 @@ class _HeroSubtitle extends StatelessWidget {
 
 /// Normalises an Egyptian phone entry to E.164 (`+20xxxxxxxxxx`).
 String normalizeEgyptPhoneToE164(String raw) {
-  var digits = raw.replaceAll(RegExp(r'\D'), '');
-  if (digits.startsWith('0020')) digits = digits.substring(4);
-  if (digits.startsWith('20')) digits = digits.substring(2);
-  if (digits.startsWith('0')) digits = digits.substring(1);
-  return '+20$digits';
+  return normalizeEgyptPhone(raw);
 }

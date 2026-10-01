@@ -84,7 +84,8 @@ class QuotesRepository {
     }).toList();
   }
 
-  /// How many free quotes this contractor has left this month.
+  /// How many free quotes this contractor has left in the rolling 30-day
+  /// window enforced by the database.
   ///
   /// Comes from the `my_quote_quota` RPC (0025) rather than being counted
   /// client-side, so the number shown in the UI and the number the RLS policy

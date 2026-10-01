@@ -1,6 +1,8 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../core/l10n/l10n_extension.dart';
+import '../../../../core/cache/media_cache.dart';
 import '../../../../core/theme/batsh_icon_size.dart';
 import '../../../../core/theme/batsh_radius.dart';
 import '../../../../core/theme/batsh_shadows.dart';
@@ -8,11 +10,12 @@ import '../../../../core/theme/batsh_spacing.dart';
 import '../../../../core/theme/batsh_typography.dart';
 import '../../../../core/theme/theme_extension.dart';
 import '../../../../core/widgets/avatar_with_initials.dart';
+import '../../../../core/widgets/batsh_initial_plate.dart';
 import '../../../../core/widgets/batsh_pressable.dart';
 import '../../../../core/widgets/batsh_section_header.dart';
 import '../../../../core/widgets/shattab_pattern.dart';
 import '../../domain/contractor_listing.dart';
-import 'mockup_assets.dart';
+import '../../../../core/utils/image_url.dart';
 
 /// A separate, clearly disclosed paid-placement shelf.
 ///
@@ -137,11 +140,6 @@ class _SponsoredProfessionalCard extends StatelessWidget {
       ? listing.businessName.trim()
       : listing.fullName.trim();
 
-  String get _coverFallback {
-    final index = listing.id.hashCode.abs() % mockupPortfolioImages.length;
-    return mockupPortfolioImages[index];
-  }
-
   @override
   Widget build(BuildContext context) {
     final area = listing.serviceAreas.isEmpty
@@ -170,9 +168,19 @@ class _SponsoredProfessionalCard extends StatelessWidget {
                   children: [
                     SizedBox(
                       height: 94,
-                      child: MockupImage(
-                        url: listing.coverPhotoUrl ?? _coverFallback,
-                      ),
+                      child: isDisplayableImageUrl(listing.coverPhotoUrl)
+                          ? CachedNetworkImage(
+                              imageUrl: sizedImageUrl(
+                                listing.coverPhotoUrl!,
+                                width: 420,
+                              ),
+                              cacheManager: mediaCacheManager,
+                              fit: BoxFit.cover,
+                              memCacheWidth: 420,
+                              errorWidget: (_, _, _) =>
+                                  BatshInitialPlate(name: _name),
+                            )
+                          : BatshInitialPlate(name: _name),
                     ),
                     Expanded(
                       child: Stack(

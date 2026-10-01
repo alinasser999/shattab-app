@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
 import 'package:batsh/core/l10n/l10n_extension.dart';
+import '../../../../core/widgets/batsh_chip.dart';
 import '../../../../core/theme/batsh_radius.dart';
 import '../../../../core/theme/batsh_spacing.dart';
 import '../../../../core/theme/batsh_typography.dart';
@@ -17,7 +18,9 @@ import '../../../../core/widgets/batsh_text_field.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../discovery/domain/contractor_listing.dart';
 import '../../../discovery/presentation/providers/discovery_providers.dart';
+import '../../domain/onboarding_models.dart';
 import '../providers/onboarding_provider.dart';
+import '../widgets/specialty_picker.dart';
 import '../../../../core/theme/batsh_icon_size.dart';
 
 import 'package:batsh/core/theme/theme_extension.dart';
@@ -34,11 +37,14 @@ class EditProfileScreen extends ConsumerStatefulWidget {
 
 class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   final _bizCtrl = TextEditingController();
+  final _nameCtrl = TextEditingController();
   final _headlineCtrl = TextEditingController();
 
   /// Selected professional identity. Defaults to `contractor` to match the
   /// column default, and is replaced by the stored value once it loads.
   ProviderKind _kind = ProviderKind.contractor;
+  List<String> _specialties = const [];
+  Set<String> _areas = {};
   final _bioCtrl = TextEditingController();
   final _yearsCtrl = TextEditingController();
 
@@ -47,10 +53,13 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   bool _hydrated = false;
   bool _busy = false;
   String? _error;
+  String? _businessError;
+  String? _nameError;
 
   @override
   void dispose() {
     _bizCtrl.dispose();
+    _nameCtrl.dispose();
     _headlineCtrl.dispose();
     _bioCtrl.dispose();
     _yearsCtrl.dispose();
@@ -71,22 +80,48 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   Future<void> _save() async {
     final myId = _myId;
     if (myId == null) return;
+    final businessName = _bizCtrl.text.trim();
+    final responsibleName = _nameCtrl.text.trim();
+    if (responsibleName.length < 2) {
+      setState(() {
+        _nameError = _kind == ProviderKind.tradesman
+            ? context.l10n.identityNameRequired
+            : context.l10n.identityResponsibleRequired;
+        _businessError = null;
+      });
+      return;
+    }
+    if (_kind != ProviderKind.tradesman && businessName.length < 2) {
+      setState(() {
+        _businessError = context.l10n.identityBusinessRequired;
+        _nameError = null;
+      });
+      return;
+    }
+    if (_specialties.isEmpty || _areas.isEmpty) {
+      setState(() => _error = context.l10n.errorSelectSpecialty);
+      return;
+    }
     setState(() {
       _busy = true;
       _error = null;
+      _businessError = null;
+      _nameError = null;
     });
     try {
       final ctrl = ref.read(onboardingControllerProvider.notifier);
       if (_logo != null) await ctrl.uploadLogo(_logo!);
       if (_cover != null) await ctrl.uploadCover(_cover!);
-      final biz = _bizCtrl.text.trim();
       final years = int.tryParse(_yearsCtrl.text.trim());
       await ctrl.saveShowcase(
-        businessName: biz.isEmpty ? null : biz,
+        businessName: businessName,
+        responsibleName: responsibleName,
         headline: _headlineCtrl.text.trim(),
         bio: _bioCtrl.text.trim(),
         yearsExperience: years,
         providerKind: _kind,
+        specialties: _specialties,
+        serviceAreas: _areas.toList(),
       );
       // Refresh the showcase + discover list so edits show immediately.
       ref.invalidate(contractorByIdProvider(myId));
@@ -108,12 +143,17 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         : ref.watch(contractorByIdProvider(myId)).value;
     if (!_hydrated && existing != null) {
       _bizCtrl.text = existing.businessName;
+      _nameCtrl.text = existing.fullName;
       _headlineCtrl.text = existing.headline ?? '';
       _bioCtrl.text = existing.bio ?? '';
       if (existing.yearsExperience != null) {
         _yearsCtrl.text = '${existing.yearsExperience}';
       }
       _kind = existing.providerKind;
+      _specialties = existing.specialties.isEmpty
+          ? const []
+          : existing.specialties;
+      _areas = existing.serviceAreas.toSet();
       _hydrated = true;
     }
 
@@ -186,19 +226,66 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
               runSpacing: BatshSpacing.sm,
               children: [
                 for (final kind in ProviderKind.values)
-                  ChoiceChip(
-                    avatar: Icon(kind.icon, size: BatshIconSize.sm),
-                    label: Text(kind.label(context)),
+                  BatshChip(
+                    icon: kind.icon,
+                    label: kind.label(context),
                     selected: _kind == kind,
-                    onSelected: (_) => setState(() => _kind = kind),
+                    onTap: () => setState(() {
+                      _kind = kind;
+                      _error = null;
+                      _businessError = null;
+                      _nameError = null;
+                    }),
                   ),
               ],
             ),
             const SizedBox(height: BatshSpacing.gutter),
             BatshTextField(
+              controller: _nameCtrl,
+              label: _kind == ProviderKind.tradesman
+                  ? context.l10n.professionalNameLabel
+                  : context.l10n.displayNameLabel,
+              hint: _kind == ProviderKind.tradesman
+                  ? context.l10n.professionalNameHint
+                  : null,
+              errorText: _nameError ?? _error,
+            ),
+            const SizedBox(height: BatshSpacing.gutter),
+            BatshTextField(
               controller: _bizCtrl,
               label: context.l10n.businessNameTitle,
+              hint: _kind == ProviderKind.tradesman
+                  ? context.l10n.businessNameOptionalHint
+                  : context.l10n.businessNameHint,
+              errorText: _businessError,
               maxLength: 60,
+            ),
+            const SizedBox(height: BatshSpacing.gutter),
+            Text(context.l10n.specialtiesTitle, style: BatshTypography.labelLg),
+            const SizedBox(height: BatshSpacing.xs),
+            SpecialtyPicker(
+              initialSelection: _specialties,
+              onChanged: (value) => setState(() => _specialties = value),
+            ),
+            const SizedBox(height: BatshSpacing.gutter),
+            Text(
+              context.l10n.serviceAreasTitle,
+              style: BatshTypography.labelLg,
+            ),
+            const SizedBox(height: BatshSpacing.sm),
+            Wrap(
+              spacing: BatshSpacing.xs,
+              runSpacing: BatshSpacing.xs,
+              children: [
+                for (final entry in OnboardingCatalog.citiesAndDistricts)
+                  BatshChip(
+                    label: entry.city,
+                    selected: _areas.contains(entry.city),
+                    onTap: () => setState(() {
+                      if (!_areas.add(entry.city)) _areas.remove(entry.city);
+                    }),
+                  ),
+              ],
             ),
             const SizedBox(height: BatshSpacing.gutter),
             BatshTextField(
@@ -224,7 +311,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                 FilteringTextInputFormatter.digitsOnly,
                 LengthLimitingTextInputFormatter(2),
               ],
-              errorText: _error,
             ),
             const SizedBox(height: BatshSpacing.xl),
             BatshButton(

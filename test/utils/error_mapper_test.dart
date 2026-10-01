@@ -10,15 +10,11 @@ void main() {
       expect(ErrorMapper.map('Email not confirmed'), S.errAuthFailed);
     });
 
-    test('maps OTP expired to S.errOtpExpired', () {
-      expect(ErrorMapper.map('OTP token expired'), S.errOtpExpired);
-      expect(ErrorMapper.map('otp has expired'), S.errOtpExpired);
-    });
-
-    test('maps OTP/SMS errors to S.errOtpFailed', () {
-      expect(ErrorMapper.map('OTP error occurred'), S.errOtpFailed);
-      expect(ErrorMapper.map('sms sending failed'), S.errOtpFailed);
-      expect(ErrorMapper.map('invalid token'), S.errOtpFailed);
+    test('does not infer an OTP outcome without operation context', () {
+      expect(ErrorMapper.map('OTP token expired'), S.errServerError);
+      expect(ErrorMapper.map('OTP error occurred'), S.errServerError);
+      expect(ErrorMapper.map('sms sending failed'), S.errServerError);
+      expect(ErrorMapper.map('invalid token'), S.errInvalidData);
     });
 
     test('maps session errors to S.errSessionExpired', () {
@@ -65,6 +61,62 @@ void main() {
       );
       expect(ErrorMapper.map(''), S.errServerError);
       expect(ErrorMapper.map(Object()), S.errServerError);
+    });
+  });
+
+  group('ErrorMapper.mapOtp', () {
+    test(
+      'keeps send and resend failures generic unless they are network errors',
+      () {
+        for (final operation in [OtpOperation.send, OtpOperation.resend]) {
+          expect(
+            ErrorMapper.mapOtp('sms_send_failed', operation: operation),
+            S.unknownErrorRetry,
+          );
+          expect(
+            ErrorMapper.mapOtp('SMS delivery failed', operation: operation),
+            S.unknownErrorRetry,
+          );
+          expect(
+            ErrorMapper.mapOtp('invalid token', operation: operation),
+            S.unknownErrorRetry,
+          );
+          expect(
+            ErrorMapper.mapOtp('network timeout', operation: operation),
+            S.errNetwork,
+          );
+        }
+      },
+    );
+
+    test('uses code-specific copy only for explicit verify outcomes', () {
+      expect(
+        ErrorMapper.mapOtp('Invalid token', operation: OtpOperation.verify),
+        S.errOtpFailed,
+      );
+      expect(
+        ErrorMapper.mapOtp('token is invalid', operation: OtpOperation.verify),
+        S.errOtpFailed,
+      );
+      expect(
+        ErrorMapper.mapOtp('invalid_token', operation: OtpOperation.verify),
+        S.errOtpFailed,
+      );
+      expect(
+        ErrorMapper.mapOtp(
+          'Token has expired or is invalid',
+          operation: OtpOperation.verify,
+        ),
+        S.errOtpExpired,
+      );
+      expect(
+        ErrorMapper.mapOtp('token', operation: OtpOperation.verify),
+        S.unknownErrorRetry,
+      );
+      expect(
+        ErrorMapper.mapOtp('invalid code', operation: OtpOperation.verify),
+        S.errOtpFailed,
+      );
     });
   });
 }

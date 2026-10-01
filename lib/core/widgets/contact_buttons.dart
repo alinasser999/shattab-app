@@ -41,6 +41,12 @@ String whatsappPhoneDigits(String phone) {
   return digits;
 }
 
+/// Contact actions are only exposed for a complete Egyptian mobile number.
+/// Detail lookups may legitimately return an empty value, and malformed data
+/// must never become an enabled deep-link control.
+bool isValidContactPhone(String phone) =>
+    RegExp(r'^20(?:10|11|12|15)\d{8}$').hasMatch(whatsappPhoneDigits(phone));
+
 class WhatsAppButton extends StatelessWidget {
   const WhatsAppButton({
     super.key,
@@ -73,12 +79,6 @@ class WhatsAppButton extends StatelessWidget {
   Future<void> _open(BuildContext context) async {
     HapticFeedback.lightImpact();
     final cleaned = whatsappPhoneDigits(phone);
-    if (cleaned.isEmpty) {
-      if (context.mounted) {
-        BatshSnack.error(context, context.l10n.couldNotOpenApp);
-      }
-      return;
-    }
     final uri = Uri.parse(
       'https://wa.me/$cleaned${message != null ? '?text=${Uri.encodeComponent(message!)}' : ''}',
     );
@@ -126,7 +126,7 @@ class WhatsAppButton extends StatelessWidget {
   /// handing a third party the loudest surface on the screen.
   Widget _subdued(BuildContext context) {
     return OutlinedButton.icon(
-      onPressed: () => _open(context),
+      onPressed: isValidContactPhone(phone) ? () => _open(context) : null,
       icon: const Icon(
         Icons.chat_bubble_outline,
         size: BatshIconSize.md,
@@ -155,7 +155,7 @@ class WhatsAppButton extends StatelessWidget {
       borderRadius: BatshRadius.brFull,
       child: InkWell(
         borderRadius: BatshRadius.brFull,
-        onTap: () => _open(context),
+        onTap: isValidContactPhone(phone) ? () => _open(context) : null,
         child: Container(
           height: BatshSpacing.minHitArea,
           alignment: Alignment.center,
@@ -199,8 +199,9 @@ class CallButton extends StatelessWidget {
   final String phone;
 
   Future<void> _open(BuildContext context) async {
+    if (!isValidContactPhone(phone)) return;
     HapticFeedback.lightImpact();
-    final cleaned = phone.replaceAll(RegExp(r'[^\d+]'), '');
+    final cleaned = whatsappPhoneDigits(phone);
     final uri = Uri.parse('tel:$cleaned');
     var ok = false;
     try {
@@ -227,7 +228,7 @@ class CallButton extends StatelessWidget {
       button: true,
       label: context.l10n.call,
       child: OutlinedButton.icon(
-        onPressed: () => _open(context),
+        onPressed: isValidContactPhone(phone) ? () => _open(context) : null,
         icon: const Icon(Icons.call_outlined, size: BatshIconSize.md),
         label: Text(context.l10n.call),
         style: OutlinedButton.styleFrom(

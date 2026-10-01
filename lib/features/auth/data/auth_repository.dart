@@ -29,8 +29,8 @@ class AuthRepository {
     required String password,
   }) => _client.auth.signInWithPassword(email: email, password: password);
 
-  /// Primary (free) auth: phone + password. Requires Supabase "Confirm phone"
-  /// to be OFF so no SMS is sent on sign-up.
+  /// Primary auth: phone + password. New signups may need to confirm the
+  /// phone by SMS before Supabase returns an authenticated session.
   Future<AuthResponse> signInWithPhonePassword({
     required String phone,
     required String password,
@@ -40,6 +40,11 @@ class AuthRepository {
     required String phone,
     required String password,
   }) => _client.auth.signUp(phone: phone, password: password);
+
+  /// Resends the confirmation SMS for a phone signup that is still pending.
+  Future<void> resendPhoneSignupConfirmation(String phone) async {
+    await _client.auth.resend(type: OtpType.sms, phone: phone);
+  }
 
   /// Sets a new password for the signed-in user (used after a forgot-password
   /// SMS OTP restores the session).
@@ -119,15 +124,14 @@ class AuthRepository {
     );
   }
 
-  Future<void> updateRole({
-    required String userId,
+  Future<void> selectOnboardingRole({
     required UserRole role,
     required String fullName,
   }) async {
-    await _client
-        .from('profiles')
-        .update({'role': role.name, 'full_name': fullName})
-        .eq('id', userId);
+    await _client.rpc(
+      'select_onboarding_role',
+      params: {'p_role': role.name, 'p_full_name': fullName.trim()},
+    );
   }
 }
 

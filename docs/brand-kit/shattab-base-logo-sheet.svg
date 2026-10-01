@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000" role="img" aria-labelledby="title desc">
+  <title id="title">Shattab base logo reference sheet</title>
+  <desc id="desc">The supplied Shattab Arabic roof-line base logo, clear space, app icon, and core palette.</desc>
+
+  <rect width="1600" height="1000" fill="#1F1B14"/>
+
+  <rect x="48" y="48" width="720" height="904" rx="28" fill="#FFF8F3"/>
+  <text x="96" y="112" fill="#5C614D" font-family="IBM Plex Sans Arabic, Arial, sans-serif" font-size="18" font-weight="600" letter-spacing="2">SHATTAB / BASE LOGO</text>
+  <text x="96" y="146" fill="#8A726A" font-family="IBM Plex Sans Arabic, Arial, sans-serif" font-size="14">APPROVED ARTWORK REFERENCE</text>
+
+  <rect x="112" y="208" width="592" height="592" rx="20" fill="none" stroke="#DEC0B7" stroke-width="2" stroke-dasharray="10 10"/>
+  <image x="160" y="256" width="496" height="496" href="../../assets/images/logo_wordmark.png" preserveAspectRatio="xMidYMid meet"/>
+  <text x="96" y="860" fill="#1F1B14" font-family="IBM Plex Sans Arabic, Arial, sans-serif" font-size="34" font-weight="700">شطّب</text>
+  <text x="96" y="896" fill="#4A3630" font-family="IBM Plex Sans Arabic, Arial, sans-serif" font-size="18">The base roof-line Arabic lockup.</text>
+
+  <rect x="824" y="48" width="728" height="904" rx="28" fill="#F5EDE3"/>
+  <text x="872" y="112" fill="#5C614D" font-family="IBM Plex Sans Arabic, Arial, sans-serif" font-size="18" font-weight="600" letter-spacing="2">HOW IT APPEARS</text>
+
+  <rect x="872" y="160" width="192" height="192" rx="32" fill="#FFF8F3"/>
+  <image x="896" y="184" width="144" height="144" href="../../assets/icon/app_icon.png" preserveAspectRatio="xMidYMid meet"/>
+  <text x="1096" y="206" fill="#1F1B14" font-family="IBM Plex Sans Arabic, Arial, sans-serif" font-size="24" font-weight="700">01 / APP ICON</text>
+  <text x="1096" y="242" fill="#4A3630" font-family="IBM Plex Sans Arabic, Arial, sans-serif" font-size="17">Cream field, terracotta mark.</text>
+  <text x="1096" y="270" fill="#4A3630" font-family="IBM Plex Sans Arabic, Arial, sans-serif" font-size="17">Use the supplied icon artwork.</text>
+
+  <rect x="872" y="392" width="192" height="192" rx="32" fill="#FFF8F3"/>
+  <image x="896" y="416" width="144" height="144" href="../../assets/images/logo_wordmark.png" preserveAspectRatio="xMidYMid meet"/>
+  <text x="1096" y="438" fill="#1F1B14" font-family="IBM Plex Sans Arabic, Arial, sans-serif" font-size="24" font-weight="700">02 / PRODUCT</text>
+  <text x="1096" y="474" fill="#4A3630" font-family="IBM Plex Sans Arabic, Arial, sans-serif" font-size="17">Transparent base mark.</text>
+  <text x="1096" y="502" fill="#4A3630" font-family="IBM Plex Sans Arabic, Arial, sans-serif" font-size="17">Never recreate it as typed text.</text>
+
+  <line x1="872" y1="640" x2="1504" y2="640" stroke="#DEC0B7" stroke-width="2"/>
+  <text x="872" y="692" fill="#1F1B14" font-family="IBM Plex Sans Arabic, Arial, sans-serif" font-size="20" font-weight="700">CORE PALETTE</text>
+
+  <rect x="872" y="724" width="92" height="92" rx="12" fill="#9E3D18"/>
+  <rect x="980" y="724" width="92" height="92" rx="12" fill="#FFF8F3" stroke="#DEC0B7" stroke-width="2"/>
+  <rect x="1088" y="724" width="92" height="92" rx="12" fill="#1F1B14"/>
+  <rect x="1196" y="724" width="92" height="92" rx="12" fill="#5C614D"/>
+  <rect x="1304" y="724" width="92" height="92" rx="12" fill="#E4DCCC"/>
+  <text x="872" y="852" fill="#4A3630" font-family="IBM Plex Sans Arabic, Arial, sans-serif" font-size="14">#9E3D18</text>
+  <text x="980" y="852" fill="#4A3630" font-family="IBM Plex Sans Arabic, Arial, sans-serif" font-size="14">#FFF8F3</text>
+  <text x="1088" y="852" fill="#4A3630" font-family="IBM Plex Sans Arabic, Arial, sans-serif" font-size="14">#1F1B14</text>
+  <text x="1196" y="852" fill="#4A3630" font-family="IBM Plex Sans Arabic, Arial, sans-serif" font-size="14">#5C614D</text>
+  <text x="1304" y="852" fill="#4A3630" font-family="IBM Plex Sans Arabic, Arial, sans-serif" font-size="14">#E4DCCC</text>
+
+  <text x="872" y="906" fill="#8A726A" font-family="IBM Plex Sans Arabic, Arial, sans-serif" font-size="14">Base logo stays unchanged. The system controls context, not the artwork.</text>
+</svg>

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/l10n/catalog_labels.dart';
+import '../../../../core/cache/media_cache.dart';
 import '../../../../core/l10n/l10n_extension.dart';
 import '../../../../core/theme/batsh_colors.dart';
 import '../../../../core/theme/batsh_icon_size.dart';
@@ -12,13 +14,13 @@ import '../../../../core/theme/batsh_typography.dart';
 import '../../../../core/theme/theme_extension.dart';
 import '../../../../core/utils/image_url.dart';
 import '../../../../core/widgets/avatar_with_initials.dart';
+import '../../../../core/widgets/batsh_initial_plate.dart';
 import '../../../../core/widgets/batsh_pressable.dart';
 import '../../../../core/widgets/batsh_shimmer.dart';
 import '../../../../core/widgets/shattab_experience_state.dart';
 import '../../../../core/widgets/shattab_pattern.dart';
 import '../../../../core/widgets/contact_buttons.dart';
 import '../../../discovery/domain/contractor_listing.dart';
-import '../../../discovery/presentation/widgets/mockup_assets.dart';
 import '../../../portfolio/data/portfolio_repository.dart';
 import '../../../portfolio/domain/portfolio_project.dart';
 import 'home_hero.dart';
@@ -115,8 +117,6 @@ class _FeaturedMedia extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final borrowedCover = listing.coverPhotoUrl?.trim().isNotEmpty != true;
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -126,10 +126,26 @@ class _FeaturedMedia extends StatelessWidget {
             child: Stack(
               fit: StackFit.expand,
               children: [
-                MockupImage(
-                  url: listing.coverPhotoUrl ?? mockupPortfolioImages.first,
-                  memCacheWidth: 640,
-                ),
+                isDisplayableImageUrl(listing.coverPhotoUrl)
+                    ? CachedNetworkImage(
+                        imageUrl: sizedImageUrl(
+                          listing.coverPhotoUrl!,
+                          width: 640,
+                        ),
+                        cacheManager: mediaCacheManager,
+                        fit: BoxFit.cover,
+                        memCacheWidth: 640,
+                        errorWidget: (_, _, _) => BatshInitialPlate(
+                          name: listing.businessName.isNotEmpty
+                              ? listing.businessName
+                              : listing.fullName,
+                        ),
+                      )
+                    : BatshInitialPlate(
+                        name: listing.businessName.isNotEmpty
+                            ? listing.businessName
+                            : listing.fullName,
+                      ),
                 PositionedDirectional(
                   top: BatshSpacing.xs,
                   start: BatshSpacing.xs,
@@ -141,7 +157,6 @@ class _FeaturedMedia extends StatelessWidget {
                       // Only when the record says so. A trust mark that is
                       // decoration is worse than no trust mark at all.
                       if (listing.verified) const _VerifiedPill(),
-                      if (borrowedCover) const MockupSampleBadge(),
                     ],
                   ),
                 ),
@@ -609,7 +624,15 @@ class _ProjectPreviewTile extends StatelessWidget {
         semanticLabel: semanticLabel,
         child: ClipRRect(
           borderRadius: BatshRadius.brMd,
-          child: MockupImage(url: url, memCacheWidth: 420),
+          child: isDisplayableImageUrl(url)
+              ? CachedNetworkImage(
+                  imageUrl: sizedImageUrl(url!, width: 420),
+                  cacheManager: mediaCacheManager,
+                  fit: BoxFit.cover,
+                  memCacheWidth: 420,
+                  errorWidget: (_, _, _) => const BatshInitialPlate(),
+                )
+              : const BatshInitialPlate(),
         ),
       ),
     );

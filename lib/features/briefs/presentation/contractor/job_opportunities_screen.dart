@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -14,13 +15,14 @@ import '../../../../core/theme/batsh_spacing.dart';
 import '../../../../core/theme/batsh_typography.dart';
 import '../../../../core/theme/theme_extension.dart';
 import '../../../../core/utils/error_mapper.dart';
-import '../../../../core/utils/time_format.dart';
 import '../../../../core/widgets/avatar_with_initials.dart';
+import '../../../../core/widgets/batsh_empty_state.dart';
 import '../../../../core/widgets/batsh_error.dart';
 import '../../../../core/widgets/batsh_pattern_background.dart';
 import '../../../../core/widgets/batsh_search_bar.dart';
 import '../../../../core/widgets/batsh_shimmer.dart';
 import '../../../../core/widgets/batsh_snack.dart';
+import '../../../../core/widgets/batsh_chip.dart';
 import '../../../../core/widgets/shattab_pattern.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../onboarding/domain/onboarding_models.dart';
@@ -31,15 +33,15 @@ import '../../domain/brief.dart';
 import '../../domain/opportunity_experience.dart';
 import '../providers/briefs_providers.dart';
 import '../providers/opportunity_experience_provider.dart';
-import 'widgets/job_card.dart';
 import 'widgets/job_card_skeleton.dart';
 import 'widgets/opportunity_filters_sheet.dart';
 import 'widgets/opportunity_summary.dart';
+import 'widgets/opportunity_reference_cards.dart';
 
 const _opportunitiesBackgroundAsset =
-    'assets/images/opportunities_page_background.jpg';
-const _opportunitiesBackgroundAspectRatio = 592 / 476;
-const _opportunitiesBackgroundMaxHeight = 476.0;
+    'assets/images/work_opportunities_hero_cairo.jpg';
+const _opportunitiesBackgroundAspectRatio = 1280 / 426;
+const _opportunitiesBackgroundMaxHeight = 426.0;
 
 class JobOpportunitiesScreen extends ConsumerStatefulWidget {
   const JobOpportunitiesScreen({super.key});
@@ -53,6 +55,7 @@ class _JobOpportunitiesScreenState
     extends ConsumerState<JobOpportunitiesScreen> {
   final _scrollController = ScrollController();
   final _searchController = TextEditingController();
+  final _allOpportunitiesKey = GlobalKey();
   Timer? _debounce;
 
   @override
@@ -97,11 +100,15 @@ class _JobOpportunitiesScreenState
   Future<void> _refresh() async {
     ref.read(opportunityPaginationProvider.notifier).complete();
     ref.invalidate(contractorOpportunitiesProvider);
-    ref.invalidate(myQuotesProvider);
+    ref.invalidate(myQuotesWithBriefsProvider);
     await ref.read(contractorOpportunitiesProvider.future);
   }
 
   void _setFocus(OpportunityFocus focus) {
+    if (focus == OpportunityFocus.all) {
+      ref.read(opportunityFiltersProvider.notifier).reset();
+      return;
+    }
     ref.read(opportunityFiltersProvider.notifier).setFocus(focus);
   }
 
@@ -126,13 +133,33 @@ class _JobOpportunitiesScreenState
     ref.read(opportunityFiltersProvider.notifier).reset();
   }
 
+  void _scrollToAll() {
+    final target = _allOpportunitiesKey.currentContext;
+    if (target == null) return;
+    unawaited(
+      Scrollable.ensureVisible(
+        target,
+        duration: MediaQuery.disableAnimationsOf(context)
+            ? Duration.zero
+            : BatshMotion.normal,
+        curve: BatshMotion.easeOut,
+        alignment: 0.02,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final opportunities = ref.watch(contractorOpportunitiesProvider);
     final profile = ref.watch(currentProfileProvider).value;
     final contractor = ref.watch(contractorProfileProvider).value;
     final portfolio = ref.watch(myPortfolioProvider).value ?? const [];
-    final quotes = ref.watch(myQuotesProvider).value ?? const [];
+    final quoteRowsAsync = ref.watch(myQuotesWithBriefsProvider);
+    final quotes =
+        quoteRowsAsync.asData?.value
+            ?.map((row) => row.quote)
+            .toList(growable: false) ??
+        const [];
     final filters = ref.watch(opportunityFiltersProvider);
     final interactions = ref.watch(opportunityInteractionsProvider);
     final pagination = ref.watch(opportunityPaginationProvider);
@@ -141,255 +168,378 @@ class _JobOpportunitiesScreenState
     final appliedIds = {for (final quote in quotes) quote.briefId};
     final query = ref.watch(opportunitySearchProvider);
 
-    return Scaffold(
-      backgroundColor: context.colorScheme.surface,
-      body: SafeArea(
-        bottom: false,
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            const Positioned.fill(
-              child: BatshPatternBackground(child: SizedBox.expand()),
-            ),
-            const _OpportunitiesHeroBackground(),
-            opportunities.when(
-              loading: () => const _OpportunityFeedSkeleton(),
-              error: (error, _) => BatshError(
-                message: ErrorMapper.map(error),
-                onRetry: () => ref.invalidate(contractorOpportunitiesProvider),
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.light,
+        statusBarBrightness: Brightness.dark,
+      ),
+      child: Scaffold(
+        backgroundColor: context.colorScheme.surface,
+        body: SafeArea(
+          top: false,
+          bottom: false,
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              const Positioned.fill(
+                child: BatshPatternBackground(child: SizedBox.expand()),
               ),
-              data: (items) {
-                final visible = items
-                    .where(
-                      (brief) => opportunityMatchesFilters(
-                        brief: brief,
-                        filters: filters,
-                        contractor: contractor,
-                        appliedBriefIds: appliedIds,
-                      ),
-                    )
-                    .toList();
-                final ordered = sortOpportunities(
-                  opportunities: visible,
-                  sort: filters.sort,
-                  contractor: contractor,
-                  portfolio: portfolio,
-                );
-                final metrics = calculateOpportunityFeedMetrics(
-                  opportunities: ordered,
-                  contractor: contractor,
-                );
-                final summaryMetrics = calculateOpportunityRadarMetrics(
-                  opportunities: ordered,
-                  contractor: contractor,
-                );
-                final latest = _latestDate(ordered);
-                final hasFilters =
-                    filters.hasAdvancedFilters ||
-                    filters.focus != OpportunityFocus.all;
+              const _OpportunitiesHeroBackground(),
+              SafeArea(
+                bottom: false,
+                child: opportunities.when(
+                  loading: () => const _OpportunityFeedSkeleton(),
+                  error: (error, _) => BatshError(
+                    message: ErrorMapper.map(error),
+                    onRetry: () =>
+                        ref.invalidate(contractorOpportunitiesProvider),
+                  ),
+                  data: (items) {
+                    final visible = items
+                        .where(
+                          (brief) => opportunityMatchesFilters(
+                            brief: brief,
+                            filters: filters,
+                            contractor: contractor,
+                            appliedBriefIds: appliedIds,
+                          ),
+                        )
+                        .toList();
+                    final ordered = sortOpportunities(
+                      opportunities: visible,
+                      sort: filters.sort,
+                      contractor: contractor,
+                      portfolio: portfolio,
+                    );
+                    final recommended = sortOpportunities(
+                      opportunities: visible,
+                      sort: OpportunitySort.recommended,
+                      contractor: contractor,
+                      portfolio: portfolio,
+                    );
+                    final fresh = ordered.where(_isFreshOpportunity).toList();
+                    final inAreas = ordered
+                        .where(
+                          (brief) =>
+                              contractor?.serviceAreas.contains(brief.city) ??
+                              false,
+                        )
+                        .toList();
+                    final summaryMetrics = calculateOpportunityRadarMetrics(
+                      opportunities: ordered,
+                      contractor: contractor,
+                    );
+                    final hasFilters =
+                        filters.hasAdvancedFilters ||
+                        filters.focus != OpportunityFocus.all;
+                    final quoteRows = [...?quoteRowsAsync.asData?.value]
+                      ..sort(
+                        (a, b) =>
+                            b.quote.createdAt.compareTo(a.quote.createdAt),
+                      );
 
-                return RefreshIndicator(
-                  onRefresh: _refresh,
-                  child: NotificationListener<ScrollNotification>(
-                    onNotification: (notification) {
-                      _maybeLoadMore(notification, loadMoreError);
-                      return false;
-                    },
-                    child: CustomScrollView(
-                      controller: _scrollController,
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      slivers: [
-                        SliverToBoxAdapter(
-                          child: _PageWidth(
-                            child: _OpportunitiesHeader(
-                              greeting: _greeting(context),
-                              firstName: _firstName(profile?.fullName),
-                              avatarName:
-                                  profile?.fullName ?? context.l10n.appName,
-                              avatarUrl: profile?.avatarUrl,
-                              matchingCount: metrics.matchingCount,
-                              latest: latest,
-                              onAvatarTap: () =>
-                                  context.go(Routes.contractorProfile),
-                              onNotificationsTap: () =>
-                                  context.push(Routes.notifications),
-                            ),
-                          ),
-                        ),
-                        SliverToBoxAdapter(
-                          child: _PageWidth(
-                            child: Padding(
-                              padding: const EdgeInsets.fromLTRB(
-                                BatshSpacing.md,
-                                BatshSpacing.sm,
-                                BatshSpacing.md,
-                                0,
-                              ),
-                              child: OpportunitySummary(
-                                metrics: summaryMetrics,
-                                preferencesCompletion:
-                                    opportunityPreferenceCompletion(contractor),
-                                animationKey: Object.hash(filters, query),
-                                onPreferencesTap: () =>
-                                    context.push(Routes.contractorEditProfile),
-                                onMetricTap: _setFocus,
-                              ),
-                            ),
-                          ),
-                        ),
-                        if (ordered.isNotEmpty) ...[
-                          SliverToBoxAdapter(
-                            child: _PageWidth(
-                              child: _SectionHeading(
-                                title: context.l10n.recommendedForYou,
-                                motif: ShattabMotif.finish,
-                              ),
-                            ),
-                          ),
-                          SliverToBoxAdapter(
-                            child: _PageWidth(
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: BatshSpacing.md,
-                                ),
-                                child: OpportunityCard(
-                                  brief: ordered.first,
-                                  match: calculateOpportunityMatch(
-                                    brief: ordered.first,
-                                    contractor: contractor,
-                                    portfolio: portfolio,
-                                  ),
-                                  recommended: true,
-                                  applied: appliedIds.contains(
-                                    ordered.first.id,
-                                  ),
-                                  saved: interactions.savedIds.contains(
-                                    ordered.first.id,
-                                  ),
-                                  viewed: interactions.viewedIds.contains(
-                                    ordered.first.id,
-                                  ),
-                                  onTap: () => _openDetails(ordered.first.id),
-                                  onSave: () =>
-                                      unawaited(_toggleSaved(ordered.first.id)),
+                    return RefreshIndicator(
+                      onRefresh: _refresh,
+                      child: NotificationListener<ScrollNotification>(
+                        onNotification: (notification) {
+                          _maybeLoadMore(notification, loadMoreError);
+                          return false;
+                        },
+                        child: CustomScrollView(
+                          controller: _scrollController,
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          slivers: [
+                            SliverToBoxAdapter(
+                              child: _PageWidth(
+                                child: _OpportunitiesHeader(
+                                  greeting: _greeting(context),
+                                  firstName: _firstName(profile?.fullName),
+                                  avatarName:
+                                      profile?.fullName ?? context.l10n.appName,
+                                  avatarUrl: profile?.avatarUrl,
+                                  matchingCount: ordered.length,
+                                  onAvatarTap: () =>
+                                      context.go(Routes.contractorProfile),
+                                  onNotificationsTap: () =>
+                                      context.push(Routes.notifications),
                                 ),
                               ),
                             ),
-                          ),
-                        ],
-                        SliverToBoxAdapter(
-                          child: _PageWidth(
-                            child: Padding(
-                              padding: EdgeInsets.only(
-                                top: ordered.isEmpty ? 0 : BatshSpacing.gutter,
+                            SliverToBoxAdapter(
+                              child: _PageWidth(
+                                child: Transform.translate(
+                                  offset: const Offset(0, -18),
+                                  child: _OpportunityToolbar(
+                                    controller: _searchController,
+                                    filters: filters,
+                                    onChanged: _onQueryChanged,
+                                    onClearSearch: _clearQuery,
+                                    onOpenFilters: () => _openFilters(
+                                      items,
+                                      contractor,
+                                      appliedIds,
+                                      filters,
+                                    ),
+                                    onSortChanged: _setSort,
+                                  ),
+                                ),
                               ),
-                              child: _OpportunityToolbar(
-                                controller: _searchController,
+                            ),
+                            SliverToBoxAdapter(
+                              child: _QuickFilterRow(
                                 filters: filters,
-                                onChanged: _onQueryChanged,
-                                onClearSearch: _clearQuery,
-                                onOpenFilters: () => _openFilters(
+                                onFocus: _setFocus,
+                                onSpecialty: () => _openFilters(
                                   items,
                                   contractor,
                                   appliedIds,
                                   filters,
                                 ),
-                                onSortChanged: _setSort,
                               ),
                             ),
-                          ),
-                        ),
-                        if (ordered.isEmpty)
-                          SliverFillRemaining(
-                            hasScrollBody: false,
-                            child: _EmptyOpportunities(
-                              hasQuery: query.isNotEmpty,
-                              hasFilters: hasFilters,
-                              onClear: _clearAllFilters,
-                              onEditPreferences: () =>
-                                  context.push(Routes.contractorEditProfile),
-                            ),
-                          )
-                        else ...[
-                          if (ordered.length > 1)
                             SliverToBoxAdapter(
                               child: _PageWidth(
-                                child: _SectionHeading(
-                                  title: context.l10n.moreMatchingOpportunities,
-                                  motif: ShattabMotif.arch,
+                                child: Padding(
+                                  padding: const EdgeInsets.fromLTRB(
+                                    BatshSpacing.md,
+                                    BatshSpacing.xs,
+                                    BatshSpacing.md,
+                                    0,
+                                  ),
+                                  child: OpportunitySummary(
+                                    metrics: summaryMetrics,
+                                    preferencesCompletion:
+                                        opportunityPreferenceCompletion(
+                                          contractor,
+                                        ),
+                                    animationKey: Object.hash(filters, query),
+                                    onPreferencesTap: () => context.push(
+                                      Routes.contractorEditProfile,
+                                    ),
+                                    onMetricTap: _setFocus,
+                                  ),
                                 ),
                               ),
                             ),
-                          if (ordered.length > 1)
-                            SliverList.builder(
-                              itemCount: ordered.length - 1,
-                              itemBuilder: (context, index) {
-                                final brief = ordered[index + 1];
-                                final card = OpportunityCard(
-                                  brief: brief,
-                                  match: calculateOpportunityMatch(
-                                    brief: brief,
-                                    contractor: contractor,
-                                    portfolio: portfolio,
-                                  ),
-                                  applied: appliedIds.contains(brief.id),
-                                  saved: interactions.savedIds.contains(
-                                    brief.id,
-                                  ),
-                                  viewed: interactions.viewedIds.contains(
-                                    brief.id,
-                                  ),
-                                  onTap: () => _openDetails(brief.id),
-                                  onSave: () =>
-                                      unawaited(_toggleSaved(brief.id)),
-                                );
-                                final padded = _PageWidth(
-                                  child: Padding(
-                                    padding: const EdgeInsets.fromLTRB(
-                                      BatshSpacing.md,
-                                      0,
-                                      BatshSpacing.md,
-                                      BatshSpacing.sm,
-                                    ),
-                                    child: card,
-                                  ),
-                                );
-                                return MediaQuery.disableAnimationsOf(context)
-                                    ? padded
-                                    : padded
-                                          .animate()
-                                          .fadeIn(
-                                            duration: BatshMotion.normal,
-                                            delay: BatshMotion.staggerClamped(
-                                              index,
-                                            ),
-                                          )
-                                          .slideY(begin: 0.04, end: 0);
-                              },
-                            ),
-                          if (isLoadingMore)
-                            const SliverToBoxAdapter(
-                              child: _LoadMoreProgress(),
-                            ),
-                          if (loadMoreError != null)
                             SliverToBoxAdapter(
-                              child: _LoadMoreError(
-                                onRetry: () => ref
-                                    .read(
-                                      contractorOpportunitiesProvider.notifier,
-                                    )
-                                    .loadMore(),
+                              child: OpportunityReferenceSectionHeading(
+                                title: context.l10n.workFeaturedOpportunity,
+                                subtitle: context.l10n.recommendedForYou,
+                                icon: Icons.workspace_premium_outlined,
+                                onSeeAll: _scrollToAll,
                               ),
                             ),
-                        ],
-                        const SliverToBoxAdapter(child: SizedBox(height: 128)),
-                      ],
-                    ),
-                  ),
-                );
-              },
-            ),
-          ],
+                            if (recommended.isNotEmpty)
+                              SliverToBoxAdapter(
+                                child: OpportunityReferenceFeaturedCard(
+                                  brief: recommended.first,
+                                  saved: interactions.savedIds.contains(
+                                    recommended.first.id,
+                                  ),
+                                  onTap: () =>
+                                      _openDetails(recommended.first.id),
+                                  onSave: () => unawaited(
+                                    _toggleSaved(recommended.first.id),
+                                  ),
+                                ),
+                              )
+                            else
+                              SliverToBoxAdapter(
+                                child: OpportunityReferenceEmptyRail(
+                                  label: context.l10n.noOpportunityMatches,
+                                ),
+                              ),
+                            SliverToBoxAdapter(
+                              child: OpportunityReferenceSectionHeading(
+                                title: context.l10n.workNewToday,
+                                subtitle: context.l10n.radarFresh,
+                                icon: Icons.schedule_rounded,
+                                onSeeAll: _scrollToAll,
+                              ),
+                            ),
+                            if (fresh.isNotEmpty)
+                              _OpportunityHorizontalRail(
+                                opportunities: fresh,
+                                savedIds: interactions.savedIds,
+                                onTap: _openDetails,
+                                onSave: (id) => unawaited(_toggleSaved(id)),
+                                freshLayout: true,
+                              )
+                            else
+                              SliverToBoxAdapter(
+                                child: OpportunityReferenceEmptyRail(
+                                  label: context.l10n.workNewToday,
+                                ),
+                              ),
+                            SliverToBoxAdapter(
+                              child: OpportunityReferenceSectionHeading(
+                                title: context.l10n.workRecentQuotes,
+                                subtitle: context.l10n.myQuotesTitle,
+                                icon: Icons.receipt_long_outlined,
+                                onSeeAll: () =>
+                                    context.push(Routes.contractorMyQuotes),
+                              ),
+                            ),
+                            SliverToBoxAdapter(
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: BatshSpacing.md,
+                                ),
+                                child: quoteRowsAsync.hasError
+                                    ? BatshError(
+                                        message: ErrorMapper.map(
+                                          quoteRowsAsync.error!,
+                                        ),
+                                        onRetry: () => ref.invalidate(
+                                          myQuotesWithBriefsProvider,
+                                        ),
+                                      )
+                                    : quoteRows.isEmpty
+                                    ? _RecentQuotesEmpty(
+                                        loading: quoteRowsAsync.isLoading,
+                                        onTap: () => context.push(
+                                          Routes.contractorMyQuotes,
+                                        ),
+                                      )
+                                    : Column(
+                                        children: [
+                                          for (final row in quoteRows.take(3))
+                                            OpportunityReferenceQuoteRow(
+                                              quote: row.quote,
+                                              brief: row.brief,
+                                              onTap: () => context.push(
+                                                Routes.contractorPostDetailPath(
+                                                  row.quote.briefId,
+                                                ),
+                                              ),
+                                            ),
+                                        ],
+                                      ),
+                              ),
+                            ),
+                            SliverToBoxAdapter(
+                              child: OpportunityReferenceSectionHeading(
+                                title: context.l10n.workSuitableForYou,
+                                subtitle: context.l10n.newOpportunitiesForYou,
+                                icon: Icons.track_changes_rounded,
+                                onSeeAll: _scrollToAll,
+                              ),
+                            ),
+                            if (recommended.isNotEmpty)
+                              _OpportunityHorizontalRail(
+                                opportunities: recommended,
+                                savedIds: interactions.savedIds,
+                                onTap: _openDetails,
+                                onSave: (id) => unawaited(_toggleSaved(id)),
+                              )
+                            else
+                              SliverToBoxAdapter(
+                                child: OpportunityReferenceEmptyRail(
+                                  label: context.l10n.workSuitableForYou,
+                                ),
+                              ),
+                            SliverToBoxAdapter(
+                              child: OpportunityReferenceSectionHeading(
+                                title: context.l10n.workInYourAreas,
+                                subtitle: context.l10n.radarInYourAreas,
+                                icon: Icons.location_on_outlined,
+                                onSeeAll: _scrollToAll,
+                              ),
+                            ),
+                            if (inAreas.isNotEmpty)
+                              _OpportunityHorizontalRail(
+                                opportunities: inAreas,
+                                savedIds: interactions.savedIds,
+                                onTap: _openDetails,
+                                onSave: (id) => unawaited(_toggleSaved(id)),
+                              )
+                            else
+                              SliverToBoxAdapter(
+                                child: OpportunityReferenceEmptyRail(
+                                  label: context.l10n.workInYourAreas,
+                                ),
+                              ),
+                            SliverToBoxAdapter(
+                              child: KeyedSubtree(
+                                key: _allOpportunitiesKey,
+                                child: OpportunityReferenceSectionHeading(
+                                  title: context.l10n.workAllOpportunities,
+                                  subtitle:
+                                      context.l10n.workAllAvailableSubtitle,
+                                  icon: Icons.article_outlined,
+                                  onSeeAll: _scrollToAll,
+                                  showSeeAll: false,
+                                ),
+                              ),
+                            ),
+                            if (ordered.isEmpty)
+                              SliverToBoxAdapter(
+                                child: _EmptyOpportunities(
+                                  hasQuery: query.isNotEmpty,
+                                  hasFilters: hasFilters,
+                                  onClear: _clearAllFilters,
+                                  onEditPreferences: () => context.push(
+                                    Routes.contractorEditProfile,
+                                  ),
+                                ),
+                              )
+                            else
+                              SliverList.builder(
+                                itemCount: ordered.length,
+                                itemBuilder: (context, index) {
+                                  final brief = ordered[index];
+                                  return _PageWidth(
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: BatshSpacing.md,
+                                      ),
+                                      child: OpportunityReferenceListRow(
+                                        brief: brief,
+                                        match: calculateOpportunityMatch(
+                                          brief: brief,
+                                          contractor: contractor,
+                                          portfolio: portfolio,
+                                        ),
+                                        onTap: () => _openDetails(brief.id),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            if (isLoadingMore)
+                              const SliverToBoxAdapter(
+                                child: _LoadMoreProgress(),
+                              ),
+                            if (loadMoreError != null)
+                              SliverToBoxAdapter(
+                                child: _LoadMoreError(
+                                  onRetry: () => ref
+                                      .read(
+                                        contractorOpportunitiesProvider
+                                            .notifier,
+                                      )
+                                      .loadMore(),
+                                ),
+                              ),
+                            SliverToBoxAdapter(
+                              child: OpportunityAdviceBanner(
+                                onTap: () =>
+                                    context.push(Routes.contractorEditProfile),
+                              ),
+                            ),
+                            SliverToBoxAdapter(
+                              child: const SizedBox(height: BatshSpacing.md),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -486,14 +636,32 @@ class _OpportunitiesHeroBackground extends StatelessWidget {
       end: 0,
       height: height,
       child: IgnorePointer(
-        child: Image.asset(
-          _opportunitiesBackgroundAsset,
-          // The source artwork is 592 x 476. Keeping its native ratio on
-          // phone widths prevents the arch and palm from being cropped.
-          fit: isCapped ? BoxFit.cover : BoxFit.fill,
-          alignment: Alignment.topCenter,
-          filterQuality: FilterQuality.medium,
-          excludeFromSemantics: true,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            Image.asset(
+              _opportunitiesBackgroundAsset,
+              // Photo 3 is 1280 × 426; its native ratio keeps the skyline intact.
+              fit: BoxFit.cover,
+              alignment: Alignment.topCenter,
+              filterQuality: FilterQuality.medium,
+              excludeFromSemantics: true,
+            ),
+            const DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Color(0x3D32140E),
+                    Color(0x292F140D),
+                    Color(0x0A2F140D),
+                  ],
+                  stops: [0, .62, 1],
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -507,7 +675,6 @@ class _OpportunitiesHeader extends StatelessWidget {
     required this.avatarName,
     required this.avatarUrl,
     required this.matchingCount,
-    required this.latest,
     required this.onAvatarTap,
     required this.onNotificationsTap,
   });
@@ -517,7 +684,6 @@ class _OpportunitiesHeader extends StatelessWidget {
   final String avatarName;
   final String? avatarUrl;
   final int matchingCount;
-  final DateTime? latest;
   final VoidCallback onAvatarTap;
   final VoidCallback onNotificationsTap;
 
@@ -531,7 +697,7 @@ class _OpportunitiesHeader extends StatelessWidget {
         bottom: Radius.circular(BatshRadius.xxl),
       ),
       child: SizedBox(
-        height: 148,
+        height: 100,
         child: DecoratedBox(
           decoration: BoxDecoration(
             border: Border(
@@ -565,7 +731,7 @@ class _OpportunitiesHeader extends StatelessWidget {
                       child: AvatarWithInitials(
                         imageUrl: avatarUrl,
                         name: avatarName,
-                        radius: 20,
+                        radius: 22,
                       ),
                     ),
                   ),
@@ -578,8 +744,8 @@ class _OpportunitiesHeader extends StatelessWidget {
                   onPressed: onNotificationsTap,
                   tooltip: context.l10n.notificationsTitle,
                   constraints: const BoxConstraints(
-                    minWidth: 44,
-                    minHeight: 44,
+                    minWidth: 48,
+                    minHeight: 48,
                   ),
                   icon: const Icon(Icons.notifications_none_rounded),
                 ),
@@ -588,7 +754,7 @@ class _OpportunitiesHeader extends StatelessWidget {
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(
                     64,
-                    36,
+                    28,
                     64,
                     BatshSpacing.sm,
                   ),
@@ -618,33 +784,6 @@ class _OpportunitiesHeader extends StatelessWidget {
                           fontWeight: FontWeight.w600,
                         ),
                       ),
-                      if (latest != null) ...[
-                        const SizedBox(height: BatshSpacing.xs),
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.bolt_rounded,
-                              size: BatshIconSize.xs,
-                              color: context.colorScheme.secondary,
-                            ),
-                            const SizedBox(width: 4),
-                            Flexible(
-                              child: Text(
-                                context.l10n.latestOpportunityTime(
-                                  formatRelativeTime(latest!),
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                textAlign: TextAlign.center,
-                                style: BatshTypography.labelSm.copyWith(
-                                  color: context.colorScheme.onSurfaceVariant,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
                     ],
                   ),
                 ),
@@ -655,6 +794,160 @@ class _OpportunitiesHeader extends StatelessWidget {
       ),
     );
   }
+}
+
+class _QuickFilterRow extends StatelessWidget {
+  const _QuickFilterRow({
+    required this.filters,
+    required this.onFocus,
+    required this.onSpecialty,
+  });
+
+  final OpportunityFilters filters;
+  final ValueChanged<OpportunityFocus> onFocus;
+  final VoidCallback onSpecialty;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsetsDirectional.only(
+      start: BatshSpacing.md,
+      end: BatshSpacing.md,
+      bottom: BatshSpacing.xs,
+    ),
+    child: SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: [
+          BatshChip(
+            label: context.l10n.filterAll,
+            icon: Icons.expand_more_rounded,
+            selected:
+                filters.focus == OpportunityFocus.all &&
+                !filters.hasAdvancedFilters,
+            compact: true,
+            minimumHitHeight: true,
+            singleSelection: true,
+            onTap: () => onFocus(OpportunityFocus.all),
+          ),
+          const SizedBox(width: BatshSpacing.xs),
+          BatshChip(
+            label: context.l10n.filterNearYou,
+            icon: Icons.location_on_outlined,
+            selected: filters.focus == OpportunityFocus.nearby,
+            compact: true,
+            minimumHitHeight: true,
+            singleSelection: true,
+            onTap: () => onFocus(OpportunityFocus.nearby),
+          ),
+          const SizedBox(width: BatshSpacing.xs),
+          BatshChip(
+            label: context.l10n.filterFresh,
+            icon: Icons.bolt_rounded,
+            selected: filters.focus == OpportunityFocus.fresh,
+            compact: true,
+            minimumHitHeight: true,
+            singleSelection: true,
+            onTap: () => onFocus(OpportunityFocus.fresh),
+          ),
+          const SizedBox(width: BatshSpacing.xs),
+          BatshChip(
+            label: context.l10n.workSpecialtyFilter,
+            icon: Icons.handyman_outlined,
+            selected: filters.specialties.isNotEmpty,
+            compact: true,
+            minimumHitHeight: true,
+            onTap: onSpecialty,
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+class _OpportunityHorizontalRail extends StatelessWidget {
+  const _OpportunityHorizontalRail({
+    required this.opportunities,
+    required this.savedIds,
+    required this.onTap,
+    required this.onSave,
+    this.freshLayout = false,
+  });
+
+  final List<Brief> opportunities;
+  final Set<String> savedIds;
+  final ValueChanged<String> onTap;
+  final ValueChanged<String> onSave;
+  final bool freshLayout;
+
+  @override
+  Widget build(BuildContext context) => SliverToBoxAdapter(
+    child: SizedBox(
+      height: freshLayout ? 82 : 194,
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: BatshSpacing.md),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            for (final brief in opportunities) ...[
+              if (freshLayout)
+                OpportunityReferenceFreshCard(
+                  brief: brief,
+                  saved: savedIds.contains(brief.id),
+                  onTap: () => onTap(brief.id),
+                  onSave: () => onSave(brief.id),
+                )
+              else
+                OpportunityReferenceRailCard(
+                  brief: brief,
+                  saved: savedIds.contains(brief.id),
+                  onTap: () => onTap(brief.id),
+                  onSave: () => onSave(brief.id),
+                ),
+              const SizedBox(width: BatshSpacing.xs),
+            ],
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+class _RecentQuotesEmpty extends StatelessWidget {
+  const _RecentQuotesEmpty({required this.loading, required this.onTap});
+
+  final bool loading;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => loading
+      ? const BatshShimmerBox(
+          width: double.infinity,
+          height: 62,
+          borderRadius: BatshRadius.brMd,
+        )
+      : Container(
+          padding: const EdgeInsets.symmetric(horizontal: BatshSpacing.md),
+          constraints: const BoxConstraints(minHeight: 62),
+          decoration: BoxDecoration(
+            color: context.colorScheme.surfaceContainerLowest,
+            borderRadius: BatshRadius.brMd,
+            border: Border.all(color: context.colorScheme.outlineVariant),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  context.l10n.workNoRecentQuotes,
+                  style: BatshTypography.bodySm.copyWith(
+                    color: context.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
+              TextButton(onPressed: onTap, child: Text(context.l10n.viewAll)),
+            ],
+          ),
+        );
 }
 
 class _OpportunityToolbar extends StatelessWidget {
@@ -967,7 +1260,7 @@ class _EmptyOpportunities extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final narrowed = hasQuery || hasFilters;
-    return _EmptyContent(
+    return BatshEmptyState(
       title: narrowed
           ? context.l10n.noOpportunityMatches
           : context.l10n.noJobsTitle,
@@ -975,73 +1268,21 @@ class _EmptyOpportunities extends StatelessWidget {
           ? context.l10n.noOpportunityMatchesHint
           : context.l10n.noJobsMessage,
       icon: narrowed ? Icons.filter_alt_off_rounded : Icons.work_outline,
-      actionLabel: narrowed
-          ? context.l10n.clearAllFilters
-          : context.l10n.adjustOpportunityPreferences,
-      onPressed: narrowed ? onClear : onEditPreferences,
-    );
-  }
-}
-
-class _EmptyContent extends StatelessWidget {
-  const _EmptyContent({
-    required this.title,
-    required this.message,
-    required this.icon,
-    required this.actionLabel,
-    required this.onPressed,
-  });
-
-  final String title;
-  final String message;
-  final IconData icon;
-  final String actionLabel;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(BatshSpacing.xxl),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              size: BatshIconSize.xxl,
-              color: context.colorScheme.primary,
-            ),
-            const SizedBox(height: BatshSpacing.md),
-            Semantics(
-              label: '$title $message',
-              child: Column(
-                children: [
-                  Text(
-                    title,
-                    textAlign: TextAlign.center,
-                    style: BatshTypography.titleLg.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: BatshSpacing.xs),
-                  Text(
-                    message,
-                    textAlign: TextAlign.center,
-                    style: BatshTypography.bodyMd.copyWith(
-                      color: context.colorScheme.onSurfaceVariant,
-                      height: 1.45,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: BatshSpacing.lg),
-            OutlinedButton.icon(
-              onPressed: onPressed,
-              icon: const Icon(Icons.tune_rounded),
-              label: Text(actionLabel),
-            ),
-          ],
+      kind: narrowed
+          ? BatshEmptyStateKind.noResults
+          : BatshEmptyStateKind.nothingYet,
+      action: OutlinedButton.icon(
+        onPressed: narrowed ? onClear : onEditPreferences,
+        icon: Icon(
+          narrowed ? Icons.filter_alt_off_rounded : Icons.tune_rounded,
+        ),
+        label: Text(
+          narrowed
+              ? context.l10n.clearAllFilters
+              : context.l10n.adjustOpportunityPreferences,
+        ),
+        style: OutlinedButton.styleFrom(
+          minimumSize: const Size.fromHeight(BatshSpacing.minHitArea),
         ),
       ),
     );
@@ -1153,9 +1394,7 @@ class _OpportunityFeedSkeleton extends StatelessWidget {
   }
 }
 
-DateTime? _latestDate(List<Brief> opportunities) {
-  if (opportunities.isEmpty) return null;
-  return opportunities
-      .map((brief) => brief.createdAt)
-      .reduce((a, b) => a.isAfter(b) ? a : b);
+bool _isFreshOpportunity(Brief brief) {
+  final age = DateTime.now().difference(brief.createdAt);
+  return !age.isNegative && age <= const Duration(hours: 24);
 }

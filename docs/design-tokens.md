@@ -6,7 +6,7 @@ brand: "شطّب / Shattab"
 
 # Shattab Product Design Tokens
 
-These tokens implement the Shattab Brand Identity v1.0 in Flutter. They are
+These tokens implement the Shattab Brand Identity v2.0 in Flutter. They are
 the product layer of the brand, not a replacement for the marketing identity.
 
 ## Aesthetic

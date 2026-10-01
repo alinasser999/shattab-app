@@ -569,14 +569,12 @@ class RequestsProConversionCard extends StatelessWidget {
     required this.onAnnualChanged,
     required this.onSubscribe,
     required this.isLoading,
-    required this.trialAvailable,
   });
 
   final bool annual;
   final ValueChanged<bool> onAnnualChanged;
   final VoidCallback? onSubscribe;
   final bool isLoading;
-  final bool trialAvailable;
 
   @override
   Widget build(BuildContext context) {
@@ -649,8 +647,6 @@ class RequestsProConversionCard extends StatelessWidget {
                             BatshPricing.proAnnualEgp,
                       ),
                     )
-                  : trialAvailable
-                  ? context.l10n.requestsTrialBilling
                   : context.l10n.requestsPaidBilling,
               textAlign: TextAlign.center,
               style: BatshTypography.bodySm.copyWith(
@@ -659,9 +655,7 @@ class RequestsProConversionCard extends StatelessWidget {
             ),
             const SizedBox(height: BatshSpacing.lg),
             BatshButton(
-              label: trialAvailable
-                  ? context.l10n.requestsCtaTrial
-                  : context.l10n.requestsCtaPaid,
+              label: context.l10n.requestsCtaPaid,
               icon: Icons.lock_open_rounded,
               isLoading: isLoading,
               onPressed: onSubscribe,

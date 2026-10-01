@@ -24,6 +24,7 @@ class Routes {
   static const String homeownerShell = '/h';
   static const String homeownerHome = '/h/home';
   static const String homeownerExplore = '/h/explore';
+  static const String homeownerExploreCreatePost = '/h/explore/new';
   static const String homeownerDiscover = '/h/discover';
   static const String homeownerTopRatedProfessionals = '/h/discover/top-rated';
   static const String homeownerAllProfessionals =
@@ -42,6 +43,7 @@ class Routes {
   static const String homeownerLanguage = '/h/profile/settings/language';
   static const String homeownerPrivacy = '/h/profile/privacy';
   static const String homeownerTerms = '/h/profile/terms';
+  static const String homeownerAssistant = '/h/assistant';
 
   static const String contractorShell = '/c';
   static const String contractorExplore = '/c/explore';
@@ -55,6 +57,7 @@ class Routes {
   static const String contractorEditProfile = '/c/profile/edit';
   static const String contractorPrivacy = '/c/profile/privacy';
   static const String contractorTerms = '/c/profile/terms';
+  static const String contractorAssistant = '/c/assistant';
 
   // Monetization (full-screen, above the shell)
   static const String pro = '/pro';

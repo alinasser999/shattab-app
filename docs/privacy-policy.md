@@ -40,6 +40,14 @@ Data is stored with our infrastructure provider (Supabase) on secured servers.
 Access is protected by row-level security so users can only read and change what they are
 permitted to. Uploaded photos are served from a storage bucket via public URLs.
 
+### 4a. AI assistant
+If you use the in-app assistant, the recent messages needed to answer your question are
+sent through a Supabase Edge Function to an OpenRouter free model router. We automatically
+remove common phone numbers, email addresses, payment-card patterns, national IDs, UUIDs,
+and links before the model request. Shattab does not save assistant transcripts or model
+replies; it stores only an aggregate daily usage counter to prevent abuse. Do not enter
+anything you would not want sent to an external AI provider.
+
 ### 5. Sharing
 We do **not** sell your personal data. Contractor profile information (name, business,
 specialties, service areas, photos, ratings) is shown publicly inside the app so
@@ -91,6 +99,13 @@ Questions or requests: **alin45962@gmail.com**
 تُخزَّن البيانات لدى مزوّد البنية التحتية (Supabase) على خوادم مؤمَّنة. الوصول محمي بسياسات
 أمان على مستوى الصفوف بحيث لا يستطيع المستخدم قراءة أو تعديل إلا ما هو مصرَّح له به. تُعرض الصور
 المرفوعة من مخزن عبر روابط عامة.
+
+### 4أ. المساعد الذكي
+عند استخدام المساعد داخل التطبيق، تُرسل الرسائل الأخيرة اللازمة للإجابة عبر وظيفة آمنة في
+Supabase إلى موجّه نماذج OpenRouter المجانية. نحاول تلقائياً إزالة أرقام الهواتف والبريد
+الإلكتروني وأنماط بطاقات الدفع والأرقام القومية والمعرّفات والروابط قبل إرسال الطلب للنموذج.
+لا يحفظ تطبيق شطب نصوص المحادثات أو الردود، ويحتفظ فقط بعدّاد استخدام يومي إجمالي لمنع إساءة
+الاستخدام. لا تكتب في المساعد أي معلومات لا ترغب في إرسالها إلى مزوّد ذكاء اصطناعي خارجي.
 
 ### 5. المشاركة
 نحن **لا نبيع** بياناتك الشخصية. تُعرض معلومات ملف المقاول (الاسم، النشاط، التخصصات، مناطق الخدمة،

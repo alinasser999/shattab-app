@@ -7,7 +7,7 @@ import '../../../core/widgets/batsh_empty_state.dart';
 import '../../../core/widgets/batsh_error.dart';
 import '../../../core/widgets/batsh_shimmer.dart';
 import 'providers/discovery_providers.dart';
-import 'widgets/public_professional_profile.dart';
+import 'widgets/reference_professional_profile.dart';
 
 import 'package:batsh/core/theme/theme_extension.dart';
 
@@ -56,7 +56,7 @@ class ContractorProfileScreen extends ConsumerWidget {
           body: RefreshIndicator(
             onRefresh: () async =>
                 ref.invalidate(contractorByIdProvider(contractorId)),
-            child: PublicProfessionalProfile(listing: c),
+            child: ReferenceProfessionalProfile(listing: c),
           ),
         );
       },

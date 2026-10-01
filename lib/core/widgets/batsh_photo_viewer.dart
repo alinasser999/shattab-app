@@ -151,7 +151,130 @@ class _BatshPhotoViewerState extends State<BatshPhotoViewer> {
               ),
             ),
           ),
+          if (widget.urls.length > 1) ...[
+            PositionedDirectional(
+              start: BatshSpacing.sm,
+              top: MediaQuery.paddingOf(context).top + 170,
+              child: _ViewerArrow(
+                tooltip: context.l10n.previousPhoto,
+                icon: Icons.chevron_left_rounded,
+                onPressed: _index == 0
+                    ? null
+                    : () => _controller.previousPage(
+                        duration: const Duration(milliseconds: 180),
+                        curve: Curves.easeOut,
+                      ),
+              ),
+            ),
+            PositionedDirectional(
+              end: BatshSpacing.sm,
+              top: MediaQuery.paddingOf(context).top + 170,
+              child: _ViewerArrow(
+                tooltip: context.l10n.nextPhoto,
+                icon: Icons.chevron_right_rounded,
+                onPressed: _index == widget.urls.length - 1
+                    ? null
+                    : () => _controller.nextPage(
+                        duration: const Duration(milliseconds: 180),
+                        curve: Curves.easeOut,
+                      ),
+              ),
+            ),
+            PositionedDirectional(
+              start: 0,
+              end: 0,
+              bottom: 0,
+              child: SafeArea(
+                top: false,
+                child: SizedBox(
+                  height: 78,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: BatshSpacing.md,
+                      vertical: BatshSpacing.sm,
+                    ),
+                    itemCount: widget.urls.length,
+                    separatorBuilder: (_, _) =>
+                        const SizedBox(width: BatshSpacing.xs),
+                    itemBuilder: (_, i) => Semantics(
+                      button: true,
+                      selected: i == _index,
+                      label: context.l10n.photoIndexOf(
+                        i + 1,
+                        widget.urls.length,
+                      ),
+                      child: GestureDetector(
+                        onTap: () => _controller.animateToPage(
+                          i,
+                          duration: const Duration(milliseconds: 180),
+                          curve: Curves.easeOut,
+                        ),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 150),
+                          width: 64,
+                          decoration: BoxDecoration(
+                            borderRadius: BatshRadius.brSm,
+                            border: Border.all(
+                              color: i == _index
+                                  ? Colors.white
+                                  : Colors.white54,
+                              width: i == _index ? 2 : 1,
+                            ),
+                          ),
+                          clipBehavior: Clip.antiAlias,
+                          child: CachedNetworkImage(
+                            imageUrl: widget.urls[i],
+                            fit: BoxFit.cover,
+                            errorWidget: (_, _, _) => const ColoredBox(
+                              color: Colors.black54,
+                              child: Icon(
+                                Icons.broken_image_outlined,
+                                color: Colors.white70,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ],
+      ),
+    );
+  }
+}
+
+class _ViewerArrow extends StatelessWidget {
+  const _ViewerArrow({
+    required this.tooltip,
+    required this.icon,
+    required this.onPressed,
+  });
+
+  final String tooltip;
+  final IconData icon;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      enabled: onPressed != null,
+      label: tooltip,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: Colors.black.withValues(alpha: .58),
+          shape: BoxShape.circle,
+        ),
+        child: IconButton(
+          tooltip: tooltip,
+          onPressed: onPressed,
+          icon: Icon(icon, color: Colors.white, size: BatshIconSize.lg),
+        ),
       ),
     );
   }

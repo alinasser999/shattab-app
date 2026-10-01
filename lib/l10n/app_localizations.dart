@@ -182,11 +182,11 @@ abstract class AppLocalizations {
   /// **'المستوى بيتكسب بالشغل المنجز — مش بيتباع ومش جزء من اشتراك برو.'**
   String get tierNotForSale;
 
-  /// No description provided for @quotesLeftThisMonth.
+  /// No description provided for @quotesLeftInRolling30Days.
   ///
   /// In ar, this message translates to:
-  /// **'باقي لك {remaining} عروض مجانية الشهر ده'**
-  String quotesLeftThisMonth(int remaining);
+  /// **'فاضلك {remaining} عروض مجانية خلال آخر ٣٠ يوم'**
+  String quotesLeftInRolling30Days(int remaining);
 
   /// No description provided for @appName.
   ///
@@ -355,6 +355,12 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'اتعمل الحساب. أكّد رقمك من الرسالة وبعدين سجّل دخولك.'**
   String get signupNeedsConfirmation;
+
+  /// No description provided for @signupOtpSentTo.
+  ///
+  /// In ar, this message translates to:
+  /// **'بعتنا كود تأكيد على الرقم {phone}. اكتبه هنا لتأكيد حسابك.'**
+  String signupOtpSentTo(String phone);
 
   /// No description provided for @signInAction.
   ///
@@ -908,6 +914,12 @@ abstract class AppLocalizations {
   /// **'مثال: مقاولات الفنّان'**
   String get businessNameHint;
 
+  /// No description provided for @businessNameOptionalHint.
+  ///
+  /// In ar, this message translates to:
+  /// **'اختياري لو بتشتغل باسمك'**
+  String get businessNameOptionalHint;
+
   /// No description provided for @displayNameLabel.
   ///
   /// In ar, this message translates to:
@@ -1037,7 +1049,7 @@ abstract class AppLocalizations {
   /// No description provided for @tabRequests.
   ///
   /// In ar, this message translates to:
-  /// **'الطلبات'**
+  /// **'مشاريعي'**
   String get tabRequests;
 
   /// No description provided for @tabSaved.
@@ -1049,7 +1061,7 @@ abstract class AppLocalizations {
   /// No description provided for @tabProfile.
   ///
   /// In ar, this message translates to:
-  /// **'حسابي'**
+  /// **'حسابك'**
   String get tabProfile;
 
   /// No description provided for @tabDashboard.
@@ -2780,6 +2792,24 @@ abstract class AppLocalizations {
   /// **'تواصل مع العميل'**
   String get contactClient;
 
+  /// No description provided for @contactAccessHint.
+  ///
+  /// In ar, this message translates to:
+  /// **'بيانات التواصل بتظهر لمشتركي برو على الطلبات المفتوحة المناسبة لهم، ولصاحب العرض المقبول بعد قبول العرض.'**
+  String get contactAccessHint;
+
+  /// No description provided for @contactLoading.
+  ///
+  /// In ar, this message translates to:
+  /// **'جارٍ تحميل بيانات التواصل…'**
+  String get contactLoading;
+
+  /// No description provided for @contactLoadFailed.
+  ///
+  /// In ar, this message translates to:
+  /// **'تعذر تحميل بيانات التواصل. حاول تاني.'**
+  String get contactLoadFailed;
+
   /// No description provided for @requestsPageTitle.
   ///
   /// In ar, this message translates to:
@@ -2900,23 +2930,11 @@ abstract class AppLocalizations {
   /// **'وفّرت {amount} ج.م مع الخطة السنوية'**
   String requestsAnnualSaving(String amount);
 
-  /// No description provided for @requestsTrialBilling.
-  ///
-  /// In ar, this message translates to:
-  /// **'ابدأ شهر مجاني، وبعده أول خصم حسب الخطة'**
-  String get requestsTrialBilling;
-
   /// No description provided for @requestsPaidBilling.
   ///
   /// In ar, this message translates to:
   /// **'اشتراك مدفوع — التفعيل بعد تأكيد التحويل'**
   String get requestsPaidBilling;
-
-  /// No description provided for @requestsCtaTrial.
-  ///
-  /// In ar, this message translates to:
-  /// **'افتح الطلب وابدأ شهر مجاني'**
-  String get requestsCtaTrial;
 
   /// No description provided for @requestsCtaPaid.
   ///
@@ -3200,6 +3218,12 @@ abstract class AppLocalizations {
   /// **'تصفّح بالتخصص'**
   String get browseByCategory;
 
+  /// No description provided for @homeReferenceServicesTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'تصفح حسب احتياجك'**
+  String get homeReferenceServicesTitle;
+
   /// No description provided for @homeServicesTitle.
   ///
   /// In ar, this message translates to:
@@ -3265,6 +3289,84 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'تشطيبات كاملة'**
   String get specialtyFullRenovation;
+
+  /// No description provided for @specialtyPlastering.
+  ///
+  /// In ar, this message translates to:
+  /// **'محارة ولياسة'**
+  String get specialtyPlastering;
+
+  /// No description provided for @specialtyGypsumBoard.
+  ///
+  /// In ar, this message translates to:
+  /// **'جبس بورد وأسقف'**
+  String get specialtyGypsumBoard;
+
+  /// No description provided for @specialtyMarbleGranite.
+  ///
+  /// In ar, this message translates to:
+  /// **'رخام وجرانيت'**
+  String get specialtyMarbleGranite;
+
+  /// No description provided for @specialtyAluminumUpvc.
+  ///
+  /// In ar, this message translates to:
+  /// **'ألوميتال وUPVC'**
+  String get specialtyAluminumUpvc;
+
+  /// No description provided for @specialtyHvac.
+  ///
+  /// In ar, this message translates to:
+  /// **'تكييف وتهوية'**
+  String get specialtyHvac;
+
+  /// No description provided for @specialtyFlooringCeramic.
+  ///
+  /// In ar, this message translates to:
+  /// **'سيراميك'**
+  String get specialtyFlooringCeramic;
+
+  /// No description provided for @specialtyFlooringPorcelain.
+  ///
+  /// In ar, this message translates to:
+  /// **'بورسلين'**
+  String get specialtyFlooringPorcelain;
+
+  /// No description provided for @specialtyUnknown.
+  ///
+  /// In ar, this message translates to:
+  /// **'تخصص آخر'**
+  String get specialtyUnknown;
+
+  /// No description provided for @specialtyPickerHint.
+  ///
+  /// In ar, this message translates to:
+  /// **'اختار تخصصك الأساسي الأول، وبعده ضيف أي خدمات تانية بتقدمها.'**
+  String get specialtyPickerHint;
+
+  /// No description provided for @specialtyRequestHint.
+  ///
+  /// In ar, this message translates to:
+  /// **'اختار نوع الشغل اللي محتاجه، وممكن تحدد تفاصيل الأرضيات.'**
+  String get specialtyRequestHint;
+
+  /// No description provided for @primarySpecialtyLabel.
+  ///
+  /// In ar, this message translates to:
+  /// **'التخصص الأساسي'**
+  String get primarySpecialtyLabel;
+
+  /// No description provided for @makePrimarySpecialty.
+  ///
+  /// In ar, this message translates to:
+  /// **'خليه الأساسي'**
+  String get makePrimarySpecialty;
+
+  /// No description provided for @specialtyDetailsLabel.
+  ///
+  /// In ar, this message translates to:
+  /// **'تفاصيل الأرضيات'**
+  String get specialtyDetailsLabel;
 
   /// No description provided for @shattabVerifiedProfessional.
   ///
@@ -4598,6 +4700,42 @@ abstract class AppLocalizations {
   /// **'دخول كمحترف'**
   String get demoLoginContractor;
 
+  /// No description provided for @debugRoleSwitcher.
+  ///
+  /// In ar, this message translates to:
+  /// **'تبديل الدور'**
+  String get debugRoleSwitcher;
+
+  /// No description provided for @debugRoleSwitcherTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'اعرض التطبيق بدور مختلف'**
+  String get debugRoleSwitcherTitle;
+
+  /// No description provided for @debugRoleSwitcherBody.
+  ///
+  /// In ar, this message translates to:
+  /// **'التبديل للعرض فقط. بيانات حسابك وصلاحياتك تفضل مرتبطة بدورك الحقيقي.'**
+  String get debugRoleSwitcherBody;
+
+  /// No description provided for @debugRoleHomeowner.
+  ///
+  /// In ar, this message translates to:
+  /// **'عرض كصاحب بيت'**
+  String get debugRoleHomeowner;
+
+  /// No description provided for @debugRoleContractor.
+  ///
+  /// In ar, this message translates to:
+  /// **'عرض كمقاول'**
+  String get debugRoleContractor;
+
+  /// No description provided for @debugRoleReal.
+  ///
+  /// In ar, this message translates to:
+  /// **'استخدم دور حسابي الحقيقي'**
+  String get debugRoleReal;
+
   /// No description provided for @networkError.
   ///
   /// In ar, this message translates to:
@@ -5324,6 +5462,12 @@ abstract class AppLocalizations {
   /// **'مصمم داخلي'**
   String get providerKindInteriorDesigner;
 
+  /// No description provided for @providerKindSpecializedProvider.
+  ///
+  /// In ar, this message translates to:
+  /// **'مكتب/شركة متخصصة'**
+  String get providerKindSpecializedProvider;
+
   /// No description provided for @providerKindTradesman.
   ///
   /// In ar, this message translates to:
@@ -5828,6 +5972,36 @@ abstract class AppLocalizations {
   /// **'ده اللي هيظهر على ملفك. تقدر تغيّره في أي وقت.'**
   String get providerKindHelp;
 
+  /// No description provided for @professionalNameLabel.
+  ///
+  /// In ar, this message translates to:
+  /// **'اسمك'**
+  String get professionalNameLabel;
+
+  /// No description provided for @professionalNameHint.
+  ///
+  /// In ar, this message translates to:
+  /// **'مثال: أحمد حسن'**
+  String get professionalNameHint;
+
+  /// No description provided for @identityNameRequired.
+  ///
+  /// In ar, this message translates to:
+  /// **'اكتب اسمك'**
+  String get identityNameRequired;
+
+  /// No description provided for @identityBusinessRequired.
+  ///
+  /// In ar, this message translates to:
+  /// **'اكتب اسم النشاط أو الشركة'**
+  String get identityBusinessRequired;
+
+  /// No description provided for @identityResponsibleRequired.
+  ///
+  /// In ar, this message translates to:
+  /// **'اكتب اسم المسؤول'**
+  String get identityResponsibleRequired;
+
   /// No description provided for @quoteNoteHint.
   ///
   /// In ar, this message translates to:
@@ -6080,6 +6254,18 @@ abstract class AppLocalizations {
   /// **'جديدة'**
   String get opportunityFreshCount;
 
+  /// No description provided for @opportunitySuitableLabel.
+  ///
+  /// In ar, this message translates to:
+  /// **'مناسبة لك'**
+  String get opportunitySuitableLabel;
+
+  /// No description provided for @opportunityAvailableLabel.
+  ///
+  /// In ar, this message translates to:
+  /// **'متاحة'**
+  String get opportunityAvailableLabel;
+
   /// No description provided for @opportunityAreaCount.
   ///
   /// In ar, this message translates to:
@@ -6091,6 +6277,114 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'هذا الأسبوع'**
   String get opportunityWeekCount;
+
+  /// No description provided for @workNewToday.
+  ///
+  /// In ar, this message translates to:
+  /// **'جديدة اليوم'**
+  String get workNewToday;
+
+  /// No description provided for @workRecentQuotes.
+  ///
+  /// In ar, this message translates to:
+  /// **'آخر العروض اللي قدمتها'**
+  String get workRecentQuotes;
+
+  /// No description provided for @workFeaturedOpportunity.
+  ///
+  /// In ar, this message translates to:
+  /// **'فرصة مميزة ليك'**
+  String get workFeaturedOpportunity;
+
+  /// No description provided for @workSuitableForYou.
+  ///
+  /// In ar, this message translates to:
+  /// **'فرص مناسبة لشغلك'**
+  String get workSuitableForYou;
+
+  /// No description provided for @workInYourAreas.
+  ///
+  /// In ar, this message translates to:
+  /// **'في مناطق شغلك'**
+  String get workInYourAreas;
+
+  /// No description provided for @workAllOpportunities.
+  ///
+  /// In ar, this message translates to:
+  /// **'كل الفرص'**
+  String get workAllOpportunities;
+
+  /// No description provided for @workAdviceTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'نصيحة من شطبك'**
+  String get workAdviceTitle;
+
+  /// No description provided for @workAdviceBody.
+  ///
+  /// In ar, this message translates to:
+  /// **'حدّث ملفك الشخصي عشان تزود فرص ظهورك في الفرص المناسبة ليك.'**
+  String get workAdviceBody;
+
+  /// No description provided for @workUpdateProfile.
+  ///
+  /// In ar, this message translates to:
+  /// **'تحديث الملف'**
+  String get workUpdateProfile;
+
+  /// No description provided for @workSpecialtyFilter.
+  ///
+  /// In ar, this message translates to:
+  /// **'نوع التشطيب'**
+  String get workSpecialtyFilter;
+
+  /// No description provided for @workTabHome.
+  ///
+  /// In ar, this message translates to:
+  /// **'الرئيسية'**
+  String get workTabHome;
+
+  /// No description provided for @workTabJobs.
+  ///
+  /// In ar, this message translates to:
+  /// **'فرص العمل'**
+  String get workTabJobs;
+
+  /// No description provided for @workTabMessages.
+  ///
+  /// In ar, this message translates to:
+  /// **'الرسائل'**
+  String get workTabMessages;
+
+  /// No description provided for @workTabNotifications.
+  ///
+  /// In ar, this message translates to:
+  /// **'الإشعارات'**
+  String get workTabNotifications;
+
+  /// No description provided for @workTabAccount.
+  ///
+  /// In ar, this message translates to:
+  /// **'حسابي'**
+  String get workTabAccount;
+
+  /// No description provided for @workNoRecentQuotes.
+  ///
+  /// In ar, this message translates to:
+  /// **'العروض اللي قدمتها هتظهر هنا'**
+  String get workNoRecentQuotes;
+
+  /// No description provided for @workAllAvailableSubtitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'جميع فرص الشغل المتاحة'**
+  String get workAllAvailableSubtitle;
+
+  /// No description provided for @workAreaSquareMeters.
+  ///
+  /// In ar, this message translates to:
+  /// **'{area} متر'**
+  String workAreaSquareMeters(int area);
 
   /// No description provided for @searchForMatchingOpportunities.
   ///
@@ -6254,11 +6548,173 @@ abstract class AppLocalizations {
   /// **'تستقبل عروض'**
   String get opportunityAcceptingOffers;
 
+  /// No description provided for @opportunityDetailActivityPhotos.
+  ///
+  /// In ar, this message translates to:
+  /// **'صور الطلب'**
+  String get opportunityDetailActivityPhotos;
+
+  /// No description provided for @opportunityDetailActivityPublished.
+  ///
+  /// In ar, this message translates to:
+  /// **'نُشرت'**
+  String get opportunityDetailActivityPublished;
+
+  /// No description provided for @opportunityDetailActivityQuote.
+  ///
+  /// In ar, this message translates to:
+  /// **'حالة عرضك'**
+  String get opportunityDetailActivityQuote;
+
+  /// No description provided for @opportunityDetailAdditional.
+  ///
+  /// In ar, this message translates to:
+  /// **'تفاصيل إضافية'**
+  String get opportunityDetailAdditional;
+
+  /// No description provided for @opportunityDetailAdviceBody.
+  ///
+  /// In ar, this message translates to:
+  /// **'أكمل ملفك الشخصي وأضف صورًا لأعمالك السابقة لزيادة فرص قبول عرضك.'**
+  String get opportunityDetailAdviceBody;
+
+  /// No description provided for @opportunityDetailAdviceTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'نصيحة من شطّاب'**
+  String get opportunityDetailAdviceTitle;
+
+  /// No description provided for @opportunityDetailApplyAction.
+  ///
+  /// In ar, this message translates to:
+  /// **'قدّم عرضك الآن'**
+  String get opportunityDetailApplyAction;
+
+  /// No description provided for @opportunityDetailAreaLabel.
+  ///
+  /// In ar, this message translates to:
+  /// **'المنطقة'**
+  String get opportunityDetailAreaLabel;
+
+  /// No description provided for @opportunityDetailClientPhotos.
+  ///
+  /// In ar, this message translates to:
+  /// **'صور من العميل'**
+  String get opportunityDetailClientPhotos;
+
   /// No description provided for @opportunityClosed.
   ///
   /// In ar, this message translates to:
   /// **'الفرصة اتقفلت'**
   String get opportunityClosed;
+
+  /// No description provided for @opportunityDetailDescription.
+  ///
+  /// In ar, this message translates to:
+  /// **'وصف الفرصة'**
+  String get opportunityDetailDescription;
+
+  /// No description provided for @opportunityDetailLocation.
+  ///
+  /// In ar, this message translates to:
+  /// **'الموقع'**
+  String get opportunityDetailLocation;
+
+  /// No description provided for @opportunityDetailMapAction.
+  ///
+  /// In ar, this message translates to:
+  /// **'عرض على الخريطة'**
+  String get opportunityDetailMapAction;
+
+  /// No description provided for @opportunityDetailMapOpenError.
+  ///
+  /// In ar, this message translates to:
+  /// **'تعذر فتح تطبيق الخرائط'**
+  String get opportunityDetailMapOpenError;
+
+  /// No description provided for @opportunityDetailMapPreview.
+  ///
+  /// In ar, this message translates to:
+  /// **'رسم توضيحي غير دقيق للموقع'**
+  String get opportunityDetailMapPreview;
+
+  /// No description provided for @opportunityDetailMoreActions.
+  ///
+  /// In ar, this message translates to:
+  /// **'إجراءات أخرى'**
+  String get opportunityDetailMoreActions;
+
+  /// No description provided for @opportunityDetailNoLocation.
+  ///
+  /// In ar, this message translates to:
+  /// **'الموقع غير محدد'**
+  String get opportunityDetailNoLocation;
+
+  /// No description provided for @opportunityDetailPhotosUnavailable.
+  ///
+  /// In ar, this message translates to:
+  /// **'لا توجد صور مرفقة بالطلب'**
+  String get opportunityDetailPhotosUnavailable;
+
+  /// No description provided for @opportunityDetailQuoteNotSent.
+  ///
+  /// In ar, this message translates to:
+  /// **'لم تقدّم عرضًا بعد'**
+  String get opportunityDetailQuoteNotSent;
+
+  /// No description provided for @opportunityDetailQuoteStateLoading.
+  ///
+  /// In ar, this message translates to:
+  /// **'جارٍ التحقق من حالة عرضك'**
+  String get opportunityDetailQuoteStateLoading;
+
+  /// No description provided for @opportunityDetailQuoteStateUnavailable.
+  ///
+  /// In ar, this message translates to:
+  /// **'حالة عرضك غير متاحة'**
+  String get opportunityDetailQuoteStateUnavailable;
+
+  /// No description provided for @opportunityDetailRequirements.
+  ///
+  /// In ar, this message translates to:
+  /// **'متطلبات خاصة'**
+  String get opportunityDetailRequirements;
+
+  /// No description provided for @opportunityDetailRetryQuoteState.
+  ///
+  /// In ar, this message translates to:
+  /// **'تعذر تحميل حالة عرضك — أعد المحاولة'**
+  String get opportunityDetailRetryQuoteState;
+
+  /// No description provided for @opportunityDetailScope.
+  ///
+  /// In ar, this message translates to:
+  /// **'نطاق العمل'**
+  String get opportunityDetailScope;
+
+  /// No description provided for @opportunityDetailStartLabel.
+  ///
+  /// In ar, this message translates to:
+  /// **'موعد البدء'**
+  String get opportunityDetailStartLabel;
+
+  /// No description provided for @opportunityDetailSelectPhoto.
+  ///
+  /// In ar, this message translates to:
+  /// **'اختيار الصورة {index}'**
+  String opportunityDetailSelectPhoto(int index);
+
+  /// No description provided for @opportunityDetailTiming.
+  ///
+  /// In ar, this message translates to:
+  /// **'موعد التنفيذ'**
+  String get opportunityDetailTiming;
+
+  /// No description provided for @opportunityDetailOwner.
+  ///
+  /// In ar, this message translates to:
+  /// **'صاحب الطلب'**
+  String get opportunityDetailOwner;
 
   /// No description provided for @opportunityDetailsTitle.
   ///
@@ -6277,6 +6733,12 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'الفرصة مفتوحة'**
   String get opportunityOpen;
+
+  /// No description provided for @copyOpportunitySummary.
+  ///
+  /// In ar, this message translates to:
+  /// **'نسخ تفاصيل الفرصة'**
+  String get copyOpportunitySummary;
 
   /// No description provided for @opportunityQuality.
   ///
@@ -7064,6 +7526,378 @@ abstract class AppLocalizations {
   /// **'محترفين موثوقين، قريبين من بيتك'**
   String get homeHeroSubtitle;
 
+  /// No description provided for @homeReferenceCity.
+  ///
+  /// In ar, this message translates to:
+  /// **'القاهرة'**
+  String get homeReferenceCity;
+
+  /// No description provided for @homeReferenceHeroKicker.
+  ///
+  /// In ar, this message translates to:
+  /// **'بداية مشروعك'**
+  String get homeReferenceHeroKicker;
+
+  /// No description provided for @homeReferenceHeroTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'شطّب بيتك بثقة'**
+  String get homeReferenceHeroTitle;
+
+  /// No description provided for @homeReferenceHeroBody.
+  ///
+  /// In ar, this message translates to:
+  /// **'قولنا محتاج إيه، ونساعدك تبدأ صح'**
+  String get homeReferenceHeroBody;
+
+  /// No description provided for @homeReferenceHeroPrimary.
+  ///
+  /// In ar, this message translates to:
+  /// **'ابدأ مشروعك'**
+  String get homeReferenceHeroPrimary;
+
+  /// No description provided for @homeReferenceHeroSecondary.
+  ///
+  /// In ar, this message translates to:
+  /// **'استكشف المحترفين'**
+  String get homeReferenceHeroSecondary;
+
+  /// No description provided for @homeReferenceGreetingTagline.
+  ///
+  /// In ar, this message translates to:
+  /// **'كل بيت حكاية .. ونحن معك فيها'**
+  String get homeReferenceGreetingTagline;
+
+  /// No description provided for @homeReferenceHeroTitleLineOne.
+  ///
+  /// In ar, this message translates to:
+  /// **'من الفكرة'**
+  String get homeReferenceHeroTitleLineOne;
+
+  /// No description provided for @homeReferenceHeroTitleLineTwo.
+  ///
+  /// In ar, this message translates to:
+  /// **'إلى البيت اللي تحبه'**
+  String get homeReferenceHeroTitleLineTwo;
+
+  /// No description provided for @homeReferenceHeroSupportBody.
+  ///
+  /// In ar, this message translates to:
+  /// **'محترفون موثوقين لمساعدتك في كل خطوة من التخطيط والتصميم وحتى التنفيذ.'**
+  String get homeReferenceHeroSupportBody;
+
+  /// No description provided for @homeReferenceServiceFullRenovationLabel.
+  ///
+  /// In ar, this message translates to:
+  /// **'تشطيب كامل'**
+  String get homeReferenceServiceFullRenovationLabel;
+
+  /// No description provided for @homeReferenceHeroTagline.
+  ///
+  /// In ar, this message translates to:
+  /// **'كل بيت\nليه حكاية'**
+  String get homeReferenceHeroTagline;
+
+  /// No description provided for @homeReferenceProjectStatus.
+  ///
+  /// In ar, this message translates to:
+  /// **'مشروعي الحالي'**
+  String get homeReferenceProjectStatus;
+
+  /// No description provided for @homeReferenceProjectTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'تجديد شقة المعادي'**
+  String get homeReferenceProjectTitle;
+
+  /// No description provided for @homeReferenceProjectLocation.
+  ///
+  /// In ar, this message translates to:
+  /// **'المعادي، القاهرة'**
+  String get homeReferenceProjectLocation;
+
+  /// No description provided for @homeReferenceProjectStage.
+  ///
+  /// In ar, this message translates to:
+  /// **'الخطوة الحالية: تنفيذ النجارة'**
+  String get homeReferenceProjectStage;
+
+  /// No description provided for @homeReferenceProjectProgress.
+  ///
+  /// In ar, this message translates to:
+  /// **'نسبة إنجاز المشروع {percent}%'**
+  String homeReferenceProjectProgress(Object percent);
+
+  /// No description provided for @homeReferenceNewOffers.
+  ///
+  /// In ar, this message translates to:
+  /// **'{count} عروض جديدة'**
+  String homeReferenceNewOffers(Object count);
+
+  /// No description provided for @homeReferenceProjectFollow.
+  ///
+  /// In ar, this message translates to:
+  /// **'متابعة المشروع'**
+  String get homeReferenceProjectFollow;
+
+  /// No description provided for @homeReferenceProjectDetails.
+  ///
+  /// In ar, this message translates to:
+  /// **'عرض التفاصيل'**
+  String get homeReferenceProjectDetails;
+
+  /// No description provided for @homeReferenceFeaturedTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'محترفون مميزون لك'**
+  String get homeReferenceFeaturedTitle;
+
+  /// No description provided for @homeReferenceTopRatedSubtitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'محترفون حازوا على أعلى تقييمات من العملاء'**
+  String get homeReferenceTopRatedSubtitle;
+
+  /// No description provided for @homeReferenceRealWorkSubtitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'شوف الفرق قبل وبعد التنفيذ'**
+  String get homeReferenceRealWorkSubtitle;
+
+  /// No description provided for @homeReferenceCaseDetails.
+  ///
+  /// In ar, this message translates to:
+  /// **'عرض التفاصيل'**
+  String get homeReferenceCaseDetails;
+
+  /// No description provided for @homeReferenceCaseQuote.
+  ///
+  /// In ar, this message translates to:
+  /// **'النتيجة مبهرة جداً وفوق توقعاتي'**
+  String get homeReferenceCaseQuote;
+
+  /// No description provided for @homeReferenceCommunityTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'من مجتمع شطب'**
+  String get homeReferenceCommunityTitle;
+
+  /// No description provided for @homeReferenceCommunityTip.
+  ///
+  /// In ar, this message translates to:
+  /// **'نصيحة من واقع التجربة'**
+  String get homeReferenceCommunityTip;
+
+  /// No description provided for @homeReferenceCommunityExperience.
+  ///
+  /// In ar, this message translates to:
+  /// **'تجربتي'**
+  String get homeReferenceCommunityExperience;
+
+  /// No description provided for @homeReferenceCommunityInviteTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'شارك تجربتك مع شطب'**
+  String get homeReferenceCommunityInviteTitle;
+
+  /// No description provided for @homeReferenceCommunityInviteBody.
+  ///
+  /// In ar, this message translates to:
+  /// **'مساعدتك لغيرك تصنع مجتمعنا'**
+  String get homeReferenceCommunityInviteBody;
+
+  /// No description provided for @homeReferenceWritePost.
+  ///
+  /// In ar, this message translates to:
+  /// **'اكتب مشاركة'**
+  String get homeReferenceWritePost;
+
+  /// No description provided for @homeReferenceClosingTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'جاهز تبدأ مشروعك؟'**
+  String get homeReferenceClosingTitle;
+
+  /// No description provided for @homeReferenceClosingBody.
+  ///
+  /// In ar, this message translates to:
+  /// **'أخبرنا عن احتياجاتك وخلي أول خطوة نحو بيت أحلى'**
+  String get homeReferenceClosingBody;
+
+  /// No description provided for @homeReferenceClosingQuote.
+  ///
+  /// In ar, this message translates to:
+  /// **'كل بيت\nبداية أجمل ♡'**
+  String get homeReferenceClosingQuote;
+
+  /// No description provided for @homeReferenceClosingAction.
+  ///
+  /// In ar, this message translates to:
+  /// **'ابدأ طلب جديد'**
+  String get homeReferenceClosingAction;
+
+  /// No description provided for @homeReferenceRequestQuote.
+  ///
+  /// In ar, this message translates to:
+  /// **'اطلب عرض'**
+  String get homeReferenceRequestQuote;
+
+  /// No description provided for @homeReferenceViewProfile.
+  ///
+  /// In ar, this message translates to:
+  /// **'عرض الملف'**
+  String get homeReferenceViewProfile;
+
+  /// No description provided for @homeReferenceSponsored.
+  ///
+  /// In ar, this message translates to:
+  /// **'إعلان'**
+  String get homeReferenceSponsored;
+
+  /// No description provided for @homeReferenceRankOne.
+  ///
+  /// In ar, this message translates to:
+  /// **'المركز الأول'**
+  String get homeReferenceRankOne;
+
+  /// No description provided for @homeReferenceRankTwo.
+  ///
+  /// In ar, this message translates to:
+  /// **'المركز الثاني'**
+  String get homeReferenceRankTwo;
+
+  /// No description provided for @homeReferenceRankThree.
+  ///
+  /// In ar, this message translates to:
+  /// **'المركز الثالث'**
+  String get homeReferenceRankThree;
+
+  /// No description provided for @homeReferenceLocationUnset.
+  ///
+  /// In ar, this message translates to:
+  /// **'اختار موقعك'**
+  String get homeReferenceLocationUnset;
+
+  /// No description provided for @homeReferenceStageOpen.
+  ///
+  /// In ar, this message translates to:
+  /// **'الخطوة الحالية: استقبال العروض'**
+  String get homeReferenceStageOpen;
+
+  /// No description provided for @homeReferenceStageHired.
+  ///
+  /// In ar, this message translates to:
+  /// **'الخطوة الحالية: التنفيذ'**
+  String get homeReferenceStageHired;
+
+  /// No description provided for @homeReferenceStageReview.
+  ///
+  /// In ar, this message translates to:
+  /// **'الخطوة الحالية: راجع وأكّد المرحلة'**
+  String get homeReferenceStageReview;
+
+  /// No description provided for @homeReferenceStageCompleted.
+  ///
+  /// In ar, this message translates to:
+  /// **'الخطوة الحالية: اكتمل المشروع'**
+  String get homeReferenceStageCompleted;
+
+  /// No description provided for @homeReferenceRequestTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'محتاج دهان شقة بالكامل'**
+  String get homeReferenceRequestTitle;
+
+  /// No description provided for @homeReferenceRequestLocation.
+  ///
+  /// In ar, this message translates to:
+  /// **'الزمالك، القاهرة'**
+  String get homeReferenceRequestLocation;
+
+  /// No description provided for @homeReferenceRequestDetails.
+  ///
+  /// In ar, this message translates to:
+  /// **'تم إضافة التفاصيل'**
+  String get homeReferenceRequestDetails;
+
+  /// No description provided for @homeReferenceRequestOffers.
+  ///
+  /// In ar, this message translates to:
+  /// **'2 من العروض'**
+  String get homeReferenceRequestOffers;
+
+  /// No description provided for @homeReferenceRequestMatches.
+  ///
+  /// In ar, this message translates to:
+  /// **'محترفون يناسبون مشروعك'**
+  String get homeReferenceRequestMatches;
+
+  /// No description provided for @homeReferenceRequestMore.
+  ///
+  /// In ar, this message translates to:
+  /// **'+7'**
+  String get homeReferenceRequestMore;
+
+  /// No description provided for @homeReferenceDiscoverTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'اكتشف المحترفين'**
+  String get homeReferenceDiscoverTitle;
+
+  /// No description provided for @homeReferenceDiscoverMatch.
+  ///
+  /// In ar, this message translates to:
+  /// **'مناسبين ليك'**
+  String get homeReferenceDiscoverMatch;
+
+  /// No description provided for @homeReferenceDiscoverRated.
+  ///
+  /// In ar, this message translates to:
+  /// **'الأعلى تقييماً'**
+  String get homeReferenceDiscoverRated;
+
+  /// No description provided for @homeReferenceDiscoverNearby.
+  ///
+  /// In ar, this message translates to:
+  /// **'الأقرب ليك'**
+  String get homeReferenceDiscoverNearby;
+
+  /// No description provided for @homeReferenceMatchBadge.
+  ///
+  /// In ar, this message translates to:
+  /// **'مناسب لمشروعك'**
+  String get homeReferenceMatchBadge;
+
+  /// No description provided for @homeReferenceExpertTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'اسأل أهل الخبرة'**
+  String get homeReferenceExpertTitle;
+
+  /// No description provided for @homeReferenceExpertName.
+  ///
+  /// In ar, this message translates to:
+  /// **'محمد رضا'**
+  String get homeReferenceExpertName;
+
+  /// No description provided for @homeReferenceExpertRole.
+  ///
+  /// In ar, this message translates to:
+  /// **'مهندس تشطيبات'**
+  String get homeReferenceExpertRole;
+
+  /// No description provided for @homeReferenceExpertBody.
+  ///
+  /// In ar, this message translates to:
+  /// **'تم تنفيذ أكثر من 120 مشروع في المعادي'**
+  String get homeReferenceExpertBody;
+
+  /// No description provided for @homeReferenceExpertAction.
+  ///
+  /// In ar, this message translates to:
+  /// **'شوف التجربة'**
+  String get homeReferenceExpertAction;
+
   /// No description provided for @homeSearchHint.
   ///
   /// In ar, this message translates to:
@@ -7543,6 +8377,720 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'استكشف أعمال المحترفين وشوف تفاصيل التنفيذ قبل ما تختار.'**
   String get homeProjectsEmptyMessage;
+
+  /// No description provided for @addProject.
+  ///
+  /// In ar, this message translates to:
+  /// **'أضف مشروعك'**
+  String get addProject;
+
+  /// No description provided for @createProjectCtaBody.
+  ///
+  /// In ar, this message translates to:
+  /// **'خلّي المحترفين يشوفوا احتياجك ويقدّموا عروضهم.'**
+  String get createProjectCtaBody;
+
+  /// No description provided for @sponsoredInfoTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'عن الإعلان الممول'**
+  String get sponsoredInfoTitle;
+
+  /// No description provided for @sponsoredInfoBody.
+  ///
+  /// In ar, this message translates to:
+  /// **'الإعلان الممول بيدفع مقابل ظهور إضافي في القسم ده. الترويج لا يغيّر تقييمات العملاء ولا يرفع ترتيب التقييمات.'**
+  String get sponsoredInfoBody;
+
+  /// No description provided for @understood.
+  ///
+  /// In ar, this message translates to:
+  /// **'فهمت'**
+  String get understood;
+
+  /// No description provided for @mostCompletedProfessionals.
+  ///
+  /// In ar, this message translates to:
+  /// **'الأكثر مشاريع مكتملة'**
+  String get mostCompletedProfessionals;
+
+  /// No description provided for @ratingFourPlus.
+  ///
+  /// In ar, this message translates to:
+  /// **'تقييم 4 فأعلى'**
+  String get ratingFourPlus;
+
+  /// No description provided for @ratingFourHalfPlus.
+  ///
+  /// In ar, this message translates to:
+  /// **'تقييم 4.5 فأعلى'**
+  String get ratingFourHalfPlus;
+
+  /// No description provided for @regionSearchHint.
+  ///
+  /// In ar, this message translates to:
+  /// **'ابحث عن منطقة ...'**
+  String get regionSearchHint;
+
+  /// No description provided for @confirmLocation.
+  ///
+  /// In ar, this message translates to:
+  /// **'تأكيد المنطقة'**
+  String get confirmLocation;
+
+  /// No description provided for @projectFlowStep.
+  ///
+  /// In ar, this message translates to:
+  /// **'الخطوة {current} من 3'**
+  String projectFlowStep(Object current);
+
+  /// No description provided for @projectFlowTitleStepOne.
+  ///
+  /// In ar, this message translates to:
+  /// **'محتاج تعمل إيه؟'**
+  String get projectFlowTitleStepOne;
+
+  /// No description provided for @projectFlowTitleStepTwo.
+  ///
+  /// In ar, this message translates to:
+  /// **'احكي لنا التفاصيل'**
+  String get projectFlowTitleStepTwo;
+
+  /// No description provided for @projectFlowTitleStepThree.
+  ///
+  /// In ar, this message translates to:
+  /// **'راجع طلبك'**
+  String get projectFlowTitleStepThree;
+
+  /// No description provided for @projectTitleLabel.
+  ///
+  /// In ar, this message translates to:
+  /// **'عنوان المشروع'**
+  String get projectTitleLabel;
+
+  /// No description provided for @projectTitleHint.
+  ///
+  /// In ar, this message translates to:
+  /// **'مثال: تشطيب شقة في القاهرة الجديدة'**
+  String get projectTitleHint;
+
+  /// No description provided for @areaLabel.
+  ///
+  /// In ar, this message translates to:
+  /// **'المساحة التقريبية'**
+  String get areaLabel;
+
+  /// No description provided for @areaHint.
+  ///
+  /// In ar, this message translates to:
+  /// **'مثال: 120'**
+  String get areaHint;
+
+  /// No description provided for @startTimingLabel.
+  ///
+  /// In ar, this message translates to:
+  /// **'متى ترغب في بدء التنفيذ؟'**
+  String get startTimingLabel;
+
+  /// No description provided for @startFlexible.
+  ///
+  /// In ar, this message translates to:
+  /// **'مرن في المواعيد'**
+  String get startFlexible;
+
+  /// No description provided for @startWithinThreeMonths.
+  ///
+  /// In ar, this message translates to:
+  /// **'خلال 3 أشهر'**
+  String get startWithinThreeMonths;
+
+  /// No description provided for @startWithinMonth.
+  ///
+  /// In ar, this message translates to:
+  /// **'خلال شهر'**
+  String get startWithinMonth;
+
+  /// No description provided for @budgetUndecided.
+  ///
+  /// In ar, this message translates to:
+  /// **'لسه بحدد'**
+  String get budgetUndecided;
+
+  /// No description provided for @addProjectPhotos.
+  ///
+  /// In ar, this message translates to:
+  /// **'أضف صور للمكان'**
+  String get addProjectPhotos;
+
+  /// No description provided for @reviewProjectDetails.
+  ///
+  /// In ar, this message translates to:
+  /// **'تفاصيل المشروع'**
+  String get reviewProjectDetails;
+
+  /// No description provided for @reviewUploadedPhotos.
+  ///
+  /// In ar, this message translates to:
+  /// **'صور المكان'**
+  String get reviewUploadedPhotos;
+
+  /// No description provided for @publishProject.
+  ///
+  /// In ar, this message translates to:
+  /// **'انشر المشروع'**
+  String get publishProject;
+
+  /// No description provided for @projectPublishedTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'تم نشر مشروعك بنجاح'**
+  String get projectPublishedTitle;
+
+  /// No description provided for @projectPublishedBody.
+  ///
+  /// In ar, this message translates to:
+  /// **'هنبلغك لما يوصلك عرض جديد.'**
+  String get projectPublishedBody;
+
+  /// No description provided for @trackProject.
+  ///
+  /// In ar, this message translates to:
+  /// **'متابعة المشروع'**
+  String get trackProject;
+
+  /// No description provided for @returnToProfessionals.
+  ///
+  /// In ar, this message translates to:
+  /// **'العودة للمحترفين'**
+  String get returnToProfessionals;
+
+  /// No description provided for @titleTooShort.
+  ///
+  /// In ar, this message translates to:
+  /// **'اكتب عنواناً أوضح'**
+  String get titleTooShort;
+
+  /// No description provided for @areaInvalid.
+  ///
+  /// In ar, this message translates to:
+  /// **'اكتب مساحة صحيحة'**
+  String get areaInvalid;
+
+  /// No description provided for @descriptionTooShort.
+  ///
+  /// In ar, this message translates to:
+  /// **'اكتب تفاصيل أكثر عشان نساعدك'**
+  String get descriptionTooShort;
+
+  /// No description provided for @chooseService.
+  ///
+  /// In ar, this message translates to:
+  /// **'اختار الخدمة المناسبة لمشروعك'**
+  String get chooseService;
+
+  /// No description provided for @noPortfolioProjects.
+  ///
+  /// In ar, this message translates to:
+  /// **'المحترف لسه مضفش أعمال'**
+  String get noPortfolioProjects;
+
+  /// No description provided for @portfolioPhotosCount.
+  ///
+  /// In ar, this message translates to:
+  /// **'{count} صور'**
+  String portfolioPhotosCount(Object count);
+
+  /// No description provided for @profileWorkHeading.
+  ///
+  /// In ar, this message translates to:
+  /// **'أعمال {name}'**
+  String profileWorkHeading(Object name);
+
+  /// No description provided for @profileAboutHeading.
+  ///
+  /// In ar, this message translates to:
+  /// **'نبذة عن {name}'**
+  String profileAboutHeading(Object name);
+
+  /// No description provided for @exploreWork.
+  ///
+  /// In ar, this message translates to:
+  /// **'استكشف الأعمال'**
+  String get exploreWork;
+
+  /// No description provided for @workArea.
+  ///
+  /// In ar, this message translates to:
+  /// **'منطقة العمل'**
+  String get workArea;
+
+  /// No description provided for @services.
+  ///
+  /// In ar, this message translates to:
+  /// **'الخدمات'**
+  String get services;
+
+  /// No description provided for @designStyle.
+  ///
+  /// In ar, this message translates to:
+  /// **'أسلوب التصميم'**
+  String get designStyle;
+
+  /// No description provided for @notificationsToday.
+  ///
+  /// In ar, this message translates to:
+  /// **'اليوم'**
+  String get notificationsToday;
+
+  /// No description provided for @notificationsEarlier.
+  ///
+  /// In ar, this message translates to:
+  /// **'سابقاً'**
+  String get notificationsEarlier;
+
+  /// No description provided for @notificationNoDestination.
+  ///
+  /// In ar, this message translates to:
+  /// **'التفاصيل غير متاحة حالياً'**
+  String get notificationNoDestination;
+
+  /// No description provided for @reviewsLoadFailed.
+  ///
+  /// In ar, this message translates to:
+  /// **'تعذر تحميل التقييمات'**
+  String get reviewsLoadFailed;
+
+  /// No description provided for @previousPhoto.
+  ///
+  /// In ar, this message translates to:
+  /// **'الصورة السابقة'**
+  String get previousPhoto;
+
+  /// No description provided for @nextPhoto.
+  ///
+  /// In ar, this message translates to:
+  /// **'الصورة التالية'**
+  String get nextPhoto;
+
+  /// No description provided for @assistantTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'مساعد شطّب الذكي'**
+  String get assistantTitle;
+
+  /// No description provided for @assistantSubtitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'دليلك لاختيار المحترفين وتشطيب بيتك'**
+  String get assistantSubtitle;
+
+  /// No description provided for @assistantEmptyTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'ازاي أقدر أساعدك في تشطيب بيتك؟'**
+  String get assistantEmptyTitle;
+
+  /// No description provided for @assistantEmptySubtitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'اسألني عن المحترفين، خطوات التشطيب، أو الخدمة المناسبة لمشروعك'**
+  String get assistantEmptySubtitle;
+
+  /// No description provided for @assistantInputHint.
+  ///
+  /// In ar, this message translates to:
+  /// **'اكتب سؤالك هنا... (مثال: محتاج نجار في القاهرة)'**
+  String get assistantInputHint;
+
+  /// No description provided for @assistantSend.
+  ///
+  /// In ar, this message translates to:
+  /// **'إرسال'**
+  String get assistantSend;
+
+  /// No description provided for @assistantClear.
+  ///
+  /// In ar, this message translates to:
+  /// **'محادثة جديدة'**
+  String get assistantClear;
+
+  /// No description provided for @assistantPrivacyNotice.
+  ///
+  /// In ar, this message translates to:
+  /// **'محادثتك مؤقتة، ولا يتم حفظ نص المحادثة.'**
+  String get assistantPrivacyNotice;
+
+  /// No description provided for @assistantThinking.
+  ///
+  /// In ar, this message translates to:
+  /// **'جاري تجهيز الرد...'**
+  String get assistantThinking;
+
+  /// No description provided for @assistantErrorFallback.
+  ///
+  /// In ar, this message translates to:
+  /// **'الخدمة غير متاحة مؤقتًا. يمكنك تصفح المحترفين مباشرة.'**
+  String get assistantErrorFallback;
+
+  /// No description provided for @assistantRetry.
+  ///
+  /// In ar, this message translates to:
+  /// **'إعادة المحاولة'**
+  String get assistantRetry;
+
+  /// No description provided for @assistantStarterHeading.
+  ///
+  /// In ar, this message translates to:
+  /// **'ابدأ بسؤال بسيط:'**
+  String get assistantStarterHeading;
+
+  /// No description provided for @assistantQuickPromptPlumber.
+  ///
+  /// In ar, this message translates to:
+  /// **'عايز سباك شاطر في الجيزة'**
+  String get assistantQuickPromptPlumber;
+
+  /// No description provided for @assistantQuickPromptFinishing.
+  ///
+  /// In ar, this message translates to:
+  /// **'إيه أول خطوة في تشطيب الشقة؟'**
+  String get assistantQuickPromptFinishing;
+
+  /// No description provided for @assistantQuickPromptPaint.
+  ///
+  /// In ar, this message translates to:
+  /// **'محتاج نقاش في القاهرة'**
+  String get assistantQuickPromptPaint;
+
+  /// No description provided for @assistantQuickPromptKitchen.
+  ///
+  /// In ar, this message translates to:
+  /// **'تفصيل مطبخ خشب في القاهرة الجديدة'**
+  String get assistantQuickPromptKitchen;
+
+  /// No description provided for @assistantShowResults.
+  ///
+  /// In ar, this message translates to:
+  /// **'عرض كل النتائج في الاستكشاف'**
+  String get assistantShowResults;
+
+  /// No description provided for @assistantFoundContractors.
+  ///
+  /// In ar, this message translates to:
+  /// **'لقينا لك محترفين مناسبين:'**
+  String get assistantFoundContractors;
+
+  /// No description provided for @assistantActionPostBrief.
+  ///
+  /// In ar, this message translates to:
+  /// **'انشر طلبك الآن'**
+  String get assistantActionPostBrief;
+
+  /// No description provided for @assistantActionBrowse.
+  ///
+  /// In ar, this message translates to:
+  /// **'تصفح كل المحترفين'**
+  String get assistantActionBrowse;
+
+  /// No description provided for @assistantActionViewPortfolio.
+  ///
+  /// In ar, this message translates to:
+  /// **'عرض معرض الأعمال'**
+  String get assistantActionViewPortfolio;
+
+  /// No description provided for @assistantActionPricing.
+  ///
+  /// In ar, this message translates to:
+  /// **'أسعار واشتراكات برو'**
+  String get assistantActionPricing;
+
+  /// No description provided for @assistantActionSupport.
+  ///
+  /// In ar, this message translates to:
+  /// **'تواصل مع الدعم'**
+  String get assistantActionSupport;
+
+  /// No description provided for @assistantSignInRequired.
+  ///
+  /// In ar, this message translates to:
+  /// **'سجّل دخولك لاستخدام المساعد الذكي'**
+  String get assistantSignInRequired;
+
+  /// No description provided for @onboardingStepLabel.
+  ///
+  /// In ar, this message translates to:
+  /// **'الخطوة {step} من {total}'**
+  String onboardingStepLabel(int step, int total);
+
+  /// No description provided for @onboardingStepRole.
+  ///
+  /// In ar, this message translates to:
+  /// **'نوع حسابك واسمك'**
+  String get onboardingStepRole;
+
+  /// No description provided for @onboardingStepHomeownerDetails.
+  ///
+  /// In ar, this message translates to:
+  /// **'بيتك'**
+  String get onboardingStepHomeownerDetails;
+
+  /// No description provided for @onboardingStepHomeownerLocation.
+  ///
+  /// In ar, this message translates to:
+  /// **'موقعك'**
+  String get onboardingStepHomeownerLocation;
+
+  /// No description provided for @onboardingStepContractorIdentity.
+  ///
+  /// In ar, this message translates to:
+  /// **'ملفك كمحترف'**
+  String get onboardingStepContractorIdentity;
+
+  /// No description provided for @onboardingStepContractorServices.
+  ///
+  /// In ar, this message translates to:
+  /// **'خدماتك ومناطق شغلك'**
+  String get onboardingStepContractorServices;
+
+  /// No description provided for @onboardingRoleLocked.
+  ///
+  /// In ar, this message translates to:
+  /// **'نوع حسابك اتحدد ومش ممكن تغيّره.'**
+  String get onboardingRoleLocked;
+
+  /// No description provided for @onboardingRoleRequired.
+  ///
+  /// In ar, this message translates to:
+  /// **'اختار إذا كنت بتدور على محترف أو بتقدم خدمات.'**
+  String get onboardingRoleRequired;
+
+  /// No description provided for @onboardingNameRequired.
+  ///
+  /// In ar, this message translates to:
+  /// **'اكتب اسم مكوّن من حرفين على الأقل.'**
+  String get onboardingNameRequired;
+
+  /// No description provided for @onboardingApartmentRequired.
+  ///
+  /// In ar, this message translates to:
+  /// **'اختار نوع شقتك عشان تكمّل.'**
+  String get onboardingApartmentRequired;
+
+  /// No description provided for @onboardingInterestRequired.
+  ///
+  /// In ar, this message translates to:
+  /// **'اختار مجال واحد على الأقل من احتياجك.'**
+  String get onboardingInterestRequired;
+
+  /// No description provided for @onboardingCityRequired.
+  ///
+  /// In ar, this message translates to:
+  /// **'اختار المحافظة.'**
+  String get onboardingCityRequired;
+
+  /// No description provided for @onboardingDistrictRequired.
+  ///
+  /// In ar, this message translates to:
+  /// **'اختار منطقة داخل المحافظة.'**
+  String get onboardingDistrictRequired;
+
+  /// No description provided for @onboardingSpecialtyRequired.
+  ///
+  /// In ar, this message translates to:
+  /// **'اختار تخصص واحد على الأقل وحدد تخصصك الأساسي.'**
+  String get onboardingSpecialtyRequired;
+
+  /// No description provided for @onboardingServiceAreaRequired.
+  ///
+  /// In ar, this message translates to:
+  /// **'اختار مدينة واحدة على الأقل بتشتغل فيها.'**
+  String get onboardingServiceAreaRequired;
+
+  /// No description provided for @onboardingSaving.
+  ///
+  /// In ar, this message translates to:
+  /// **'جارٍ حفظ تقدمك…'**
+  String get onboardingSaving;
+
+  /// No description provided for @onboardingSaveFailed.
+  ///
+  /// In ar, this message translates to:
+  /// **'ماقدرناش نحفظ الخطوة دي. إجاباتك لسه موجودة، حاول تاني.'**
+  String get onboardingSaveFailed;
+
+  /// No description provided for @onboardingRetrySave.
+  ///
+  /// In ar, this message translates to:
+  /// **'إعادة الحفظ'**
+  String get onboardingRetrySave;
+
+  /// No description provided for @onboardingContractorLogoTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'لوجو النشاط'**
+  String get onboardingContractorLogoTitle;
+
+  /// No description provided for @onboardingContractorLogoHint.
+  ///
+  /// In ar, this message translates to:
+  /// **'اختياري. تقدر تضيفه بعدين من ملفك الشخصي.'**
+  String get onboardingContractorLogoHint;
+
+  /// No description provided for @onboardingLogoUploadFailed.
+  ///
+  /// In ar, this message translates to:
+  /// **'تم حفظ بياناتك، لكن تعذر رفع اللوجو.'**
+  String get onboardingLogoUploadFailed;
+
+  /// No description provided for @onboardingRetryLogo.
+  ///
+  /// In ar, this message translates to:
+  /// **'إعادة رفع اللوجو'**
+  String get onboardingRetryLogo;
+
+  /// No description provided for @onboardingContinueWithoutLogo.
+  ///
+  /// In ar, this message translates to:
+  /// **'كمّل من غير لوجو'**
+  String get onboardingContinueWithoutLogo;
+
+  /// No description provided for @onboardingDistrictNasrCity.
+  ///
+  /// In ar, this message translates to:
+  /// **'مدينة نصر'**
+  String get onboardingDistrictNasrCity;
+
+  /// No description provided for @onboardingDistrictHeliopolis.
+  ///
+  /// In ar, this message translates to:
+  /// **'مصر الجديدة'**
+  String get onboardingDistrictHeliopolis;
+
+  /// No description provided for @onboardingDistrictMaadi.
+  ///
+  /// In ar, this message translates to:
+  /// **'المعادي'**
+  String get onboardingDistrictMaadi;
+
+  /// No description provided for @onboardingDistrictZamalek.
+  ///
+  /// In ar, this message translates to:
+  /// **'الزمالك'**
+  String get onboardingDistrictZamalek;
+
+  /// No description provided for @onboardingDistrictDowntown.
+  ///
+  /// In ar, this message translates to:
+  /// **'وسط البلد'**
+  String get onboardingDistrictDowntown;
+
+  /// No description provided for @onboardingDistrictMohandessin.
+  ///
+  /// In ar, this message translates to:
+  /// **'المهندسين'**
+  String get onboardingDistrictMohandessin;
+
+  /// No description provided for @onboardingDistrictDokki.
+  ///
+  /// In ar, this message translates to:
+  /// **'الدقي'**
+  String get onboardingDistrictDokki;
+
+  /// No description provided for @onboardingDistrictFaisal.
+  ///
+  /// In ar, this message translates to:
+  /// **'فيصل'**
+  String get onboardingDistrictFaisal;
+
+  /// No description provided for @onboardingDistrictHaram.
+  ///
+  /// In ar, this message translates to:
+  /// **'الهرم'**
+  String get onboardingDistrictHaram;
+
+  /// No description provided for @onboardingDistrictAgouza.
+  ///
+  /// In ar, this message translates to:
+  /// **'العجوزة'**
+  String get onboardingDistrictAgouza;
+
+  /// No description provided for @onboardingDistrictFirstSettlement.
+  ///
+  /// In ar, this message translates to:
+  /// **'التجمع الأول'**
+  String get onboardingDistrictFirstSettlement;
+
+  /// No description provided for @onboardingDistrictFifthSettlement.
+  ///
+  /// In ar, this message translates to:
+  /// **'التجمع الخامس'**
+  String get onboardingDistrictFifthSettlement;
+
+  /// No description provided for @onboardingDistrictRehab.
+  ///
+  /// In ar, this message translates to:
+  /// **'الرحاب'**
+  String get onboardingDistrictRehab;
+
+  /// No description provided for @onboardingDistrictMadinaty.
+  ///
+  /// In ar, this message translates to:
+  /// **'مدينتي'**
+  String get onboardingDistrictMadinaty;
+
+  /// No description provided for @onboardingDistrictFirstDistrict.
+  ///
+  /// In ar, this message translates to:
+  /// **'الحي الأول'**
+  String get onboardingDistrictFirstDistrict;
+
+  /// No description provided for @onboardingDistrictSeventhDistrict.
+  ///
+  /// In ar, this message translates to:
+  /// **'الحي السابع'**
+  String get onboardingDistrictSeventhDistrict;
+
+  /// No description provided for @onboardingDistrictOctoberGardens.
+  ///
+  /// In ar, this message translates to:
+  /// **'حدائق أكتوبر'**
+  String get onboardingDistrictOctoberGardens;
+
+  /// No description provided for @onboardingDistrictSheikhZayed.
+  ///
+  /// In ar, this message translates to:
+  /// **'الشيخ زايد'**
+  String get onboardingDistrictSheikhZayed;
+
+  /// No description provided for @onboardingDistrictSmouha.
+  ///
+  /// In ar, this message translates to:
+  /// **'سموحة'**
+  String get onboardingDistrictSmouha;
+
+  /// No description provided for @onboardingDistrictSidiGaber.
+  ///
+  /// In ar, this message translates to:
+  /// **'سيدي جابر'**
+  String get onboardingDistrictSidiGaber;
+
+  /// No description provided for @onboardingDistrictAgami.
+  ///
+  /// In ar, this message translates to:
+  /// **'العجمي'**
+  String get onboardingDistrictAgami;
+
+  /// No description provided for @onboardingDistrictMoharramBek.
+  ///
+  /// In ar, this message translates to:
+  /// **'محرم بك'**
+  String get onboardingDistrictMoharramBek;
+
+  /// No description provided for @onboardingDistrictMiami.
+  ///
+  /// In ar, this message translates to:
+  /// **'ميامي'**
+  String get onboardingDistrictMiami;
 }
 
 class _AppLocalizationsDelegate

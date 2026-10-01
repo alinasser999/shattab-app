@@ -5,6 +5,8 @@
 /// orphaned every active selection and made matching depend on display copy.
 library;
 
+import '../../../core/catalog/specialty_catalog.dart';
+
 /// A specialty quick-filter and the substrings that identify it inside a
 /// brief's `target_specialties`.
 ///
@@ -16,7 +18,15 @@ enum SpecialtyFilter {
   plumbing('specialty:plumbing', ['plumbing', 'سباك']),
   finishing('specialty:full_reno', ['full_reno', 'تشطيب']),
   bathrooms('specialty:bathroom', ['bathroom', 'حمام']),
-  kitchens('specialty:kitchen', ['kitchen', 'مطب']);
+  kitchens('specialty:kitchen', ['kitchen', 'مطب']),
+  carpentry('specialty:carpentry', ['carpentry']),
+  design('specialty:design', ['design']),
+  flooring('specialty:flooring', ['flooring']),
+  plastering('specialty:plastering', ['plastering']),
+  gypsumBoard('specialty:gypsum_board', ['gypsum_board']),
+  marbleGranite('specialty:marble_granite', ['marble_granite']),
+  aluminumUpvc('specialty:aluminum_upvc', ['aluminum_upvc']),
+  hvac('specialty:hvac', ['hvac']);
 
   const SpecialtyFilter(this.key, this.tokens);
 
@@ -25,6 +35,8 @@ enum SpecialtyFilter {
 
   /// Substrings that mark a brief specialty as belonging to this filter.
   final List<String> tokens;
+
+  String get rootKey => key.replaceFirst('specialty:', '');
 
   static SpecialtyFilter? fromKey(String key) {
     for (final f in SpecialtyFilter.values) {
@@ -72,8 +84,15 @@ bool matchesSpecialtyFilters(
   Set<SpecialtyFilter> selected,
 ) {
   if (selected.isEmpty) return true;
+  final roots = SpecialtyCatalog.rootKeys(
+    briefSpecialties,
+  ).map((value) => value.toLowerCase()).toSet();
+  final selectedRoots = {for (final f in selected) f.rootKey};
+  if (roots.any(selectedRoots.contains)) return true;
   final tokens = {for (final f in selected) ...f.tokens};
-  return briefSpecialties.any((s) => tokens.any(s.contains));
+  return briefSpecialties.any(
+    (s) => tokens.any((token) => s.toLowerCase().contains(token.toLowerCase())),
+  );
 }
 
 /// True when [createdAt] falls inside [filter]'s window, measured from [now].

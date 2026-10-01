@@ -1,8 +1,10 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:batsh/core/l10n/l10n_extension.dart';
+import '../../../core/l10n/catalog_labels.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/batsh_radius.dart';
 import '../../../core/theme/batsh_shadows.dart';
@@ -10,11 +12,13 @@ import '../../../core/theme/batsh_spacing.dart';
 import '../../../core/theme/batsh_typography.dart';
 import '../../../core/theme/theme_extension.dart';
 import '../../../core/utils/error_mapper.dart';
+import '../../../core/utils/image_url.dart';
 import '../../../core/widgets/batsh_empty_state.dart';
 import '../../../core/widgets/batsh_error.dart';
+import '../../../core/widgets/batsh_initial_plate.dart';
+import '../../../core/widgets/batsh_pressable.dart';
 import '../../../core/widgets/batsh_scaffold.dart';
 import '../../../core/widgets/batsh_shimmer.dart';
-import '../../../core/widgets/contractor_card.dart';
 import '../../auth/presentation/sign_in_sheet.dart';
 import '../../saved/presentation/providers/saved_providers.dart';
 import '../domain/contractor_listing.dart';
@@ -233,7 +237,7 @@ class _ProfessionalCollectionsScreenState
                 final listing = items[itemIndex];
                 return Padding(
                   padding: const EdgeInsets.only(bottom: BatshSpacing.lg),
-                  child: ContractorCard(
+                  child: _CollectionProfessionalCard(
                     listing: listing,
                     isSaved: savedIds.contains(listing.id),
                     onToggleSave: () => runSignedIn(
@@ -315,6 +319,168 @@ class _CollectionLead extends StatelessWidget {
   }
 }
 
+class _CollectionProfessionalCard extends StatelessWidget {
+  const _CollectionProfessionalCard({
+    required this.listing,
+    required this.isSaved,
+    required this.onToggleSave,
+    required this.onTap,
+  });
+
+  final ContractorListing listing;
+  final bool isSaved;
+  final VoidCallback onToggleSave;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final name = listing.businessName.trim().isNotEmpty
+        ? listing.businessName.trim()
+        : listing.fullName.trim();
+    final specialty = listing.specialties.isEmpty
+        ? context.l10n.providerKindContractor
+        : localizedSpecialtyLabel(context, listing.specialties.first);
+    final area = listing.serviceAreas.isEmpty
+        ? context.l10n.notSpecified
+        : listing.serviceAreas.first;
+    return BatshPressable(
+      onTap: onTap,
+      semanticLabel: name,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: context.colorScheme.surfaceContainerLowest,
+          borderRadius: BatshRadius.brLg,
+          border: Border.all(color: context.colorScheme.outlineVariant),
+          boxShadow: BatshShadows.soft,
+        ),
+        child: ClipRRect(
+          borderRadius: BatshRadius.brLg,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              SizedBox(
+                height: 156,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    _CollectionImage(url: listing.coverPhotoUrl, name: name),
+                    PositionedDirectional(
+                      top: BatshSpacing.xs,
+                      end: BatshSpacing.xs,
+                      child: Material(
+                        color: context.colorScheme.surface.withValues(
+                          alpha: .94,
+                        ),
+                        borderRadius: BatshRadius.brSm,
+                        child: InkWell(
+                          onTap: onToggleSave,
+                          borderRadius: BatshRadius.brSm,
+                          child: SizedBox.square(
+                            dimension: 44,
+                            child: Icon(
+                              isSaved
+                                  ? Icons.bookmark_rounded
+                                  : Icons.bookmark_border_rounded,
+                              color: isSaved
+                                  ? context.colorScheme.primary
+                                  : context.colorScheme.onSurface,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(BatshSpacing.md),
+                child: Directionality(
+                  textDirection: TextDirection.rtl,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(
+                        name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: BatshTypography.titleMd.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: BatshSpacing.xxs),
+                      Text(
+                        specialty,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: BatshTypography.bodyMd.copyWith(
+                          color: context.colorScheme.primary,
+                        ),
+                      ),
+                      const SizedBox(height: BatshSpacing.xxs),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.location_on_outlined,
+                            size: 16,
+                            color: context.colorScheme.onSurfaceVariant,
+                          ),
+                          const SizedBox(width: BatshSpacing.xxs),
+                          Expanded(
+                            child: Text(
+                              area,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: BatshTypography.bodySm.copyWith(
+                                color: context.colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                          ),
+                          if (listing.rating != null) ...[
+                            Text(
+                              listing.rating!.toStringAsFixed(1),
+                              style: BatshTypography.labelLg.copyWith(
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const Icon(
+                              Icons.star_rounded,
+                              size: 18,
+                              color: Colors.amber,
+                            ),
+                          ],
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _CollectionImage extends StatelessWidget {
+  const _CollectionImage({required this.url, required this.name});
+
+  final String? url;
+  final String name;
+
+  @override
+  Widget build(BuildContext context) {
+    if (isDisplayableImageUrl(url)) {
+      return CachedNetworkImage(
+        imageUrl: sizedImageUrl(url!, width: 720),
+        fit: BoxFit.cover,
+        errorWidget: (_, _, _) => BatshInitialPlate(name: name),
+      );
+    }
+    return BatshInitialPlate(name: name);
+  }
+}
+
 class _CollectionFooter extends StatelessWidget {
   const _CollectionFooter({
     required this.loading,
@@ -344,7 +510,13 @@ class _CollectionFooter extends StatelessWidget {
       );
     }
     if (!hasMore) return const SizedBox(height: BatshSpacing.md);
-    return const SizedBox(height: BatshSpacing.md);
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: BatshSpacing.md),
+      child: OutlinedButton(
+        onPressed: onRetry,
+        child: const Text('عرض المزيد'),
+      ),
+    );
   }
 }
 

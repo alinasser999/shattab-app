@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../theme/batsh_motion.dart';
+import '../theme/batsh_icon_size.dart';
 import '../theme/batsh_radius.dart';
 import '../theme/batsh_spacing.dart';
 import '../theme/batsh_typography.dart';
@@ -15,6 +16,10 @@ class BatshChip extends StatefulWidget {
     this.selected = false,
     this.onTap,
     this.compact = false,
+    this.minimumHitHeight = false,
+    this.singleSelection = false,
+    this.showSelectionMark = false,
+    this.semanticLabel,
   });
 
   final String label;
@@ -22,6 +27,10 @@ class BatshChip extends StatefulWidget {
   final bool selected;
   final VoidCallback? onTap;
   final bool compact;
+  final bool minimumHitHeight;
+  final bool singleSelection;
+  final bool showSelectionMark;
+  final String? semanticLabel;
 
   @override
   State<BatshChip> createState() => _BatshChipState();
@@ -42,11 +51,21 @@ class _BatshChipState extends State<BatshChip>
   void didUpdateWidget(BatshChip old) {
     super.didUpdateWidget(old);
     if (widget.selected != old.selected) {
-      if (widget.selected) {
+      if (MediaQuery.disableAnimationsOf(context)) {
+        _controller.value = widget.selected ? 1 : 0;
+      } else if (widget.selected) {
         _controller.forward();
       } else {
         _controller.reverse();
       }
+    }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (MediaQuery.disableAnimationsOf(context)) {
+      _controller.value = widget.selected ? 1 : 0;
     }
   }
 
@@ -58,20 +77,30 @@ class _BatshChipState extends State<BatshChip>
 
   @override
   Widget build(BuildContext context) {
+    final reduced = MediaQuery.disableAnimationsOf(context);
     return Semantics(
-      button: true,
+      button: widget.onTap != null,
+      enabled: widget.onTap != null,
       selected: widget.selected,
+      inMutuallyExclusiveGroup: widget.singleSelection,
+      label: widget.semanticLabel ?? widget.label,
       child: AnimatedBuilder(
         animation: _controller,
         builder: (_, child) {
           final t = _controller.value;
-          return Transform.scale(scale: 0.92 + (t * 0.08), child: child);
+          return Transform.scale(
+            scale: reduced ? 1 : 0.92 + (t * 0.08),
+            child: child,
+          );
         },
         child: GestureDetector(
           onTap: widget.onTap,
           child: AnimatedContainer(
-            duration: BatshMotion.fast,
-            curve: BatshMotion.easeOut,
+            duration: BatshMotion.durationFor(reduced, BatshMotion.fast),
+            curve: BatshMotion.curveFor(reduced, BatshMotion.easeOut),
+            constraints: widget.minimumHitHeight
+                ? const BoxConstraints(minHeight: 48)
+                : null,
             padding: EdgeInsets.symmetric(
               horizontal: widget.compact ? BatshSpacing.sm : BatshSpacing.md,
               vertical: widget.compact ? BatshSpacing.xs : BatshSpacing.sm,
@@ -118,6 +147,14 @@ class _BatshChipState extends State<BatshChip>
                                 : FontWeight.w500,
                           ),
                 ),
+                if (widget.selected && widget.showSelectionMark) ...[
+                  const SizedBox(width: BatshSpacing.xs),
+                  Icon(
+                    Icons.check_rounded,
+                    size: BatshIconSize.sm,
+                    color: context.colorScheme.primary,
+                  ),
+                ],
               ],
             ),
           ),

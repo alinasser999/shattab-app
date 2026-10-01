@@ -1,9 +1,13 @@
+import 'dart:async';
+
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:batsh/core/l10n/l10n_extension.dart';
+import '../../../core/l10n/catalog_labels.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/batsh_motion.dart';
 import '../../../core/theme/batsh_radius.dart';
@@ -11,22 +15,87 @@ import '../../../core/theme/batsh_shadows.dart';
 import '../../../core/theme/batsh_spacing.dart';
 import '../../../core/theme/batsh_typography.dart';
 import '../../../core/utils/error_mapper.dart';
+import '../../../core/utils/image_url.dart';
 import '../../../core/widgets/batsh_button.dart';
 import '../../../core/widgets/batsh_error.dart';
+import '../../../core/widgets/batsh_initial_plate.dart';
+import '../../../core/widgets/batsh_pressable.dart';
 import '../../../core/widgets/batsh_scaffold.dart';
+import '../../../core/widgets/batsh_snack.dart';
 import '../../../core/widgets/batsh_shimmer.dart';
-import '../../../core/widgets/contractor_card.dart';
 import '../../auth/presentation/providers/auth_provider.dart';
 import '../../auth/presentation/sign_in_sheet.dart';
+import '../../discovery/domain/contractor_listing.dart';
 import 'providers/saved_providers.dart';
 
 import 'package:batsh/core/theme/theme_extension.dart';
 
-class SavedScreen extends ConsumerWidget {
+class SavedScreen extends ConsumerStatefulWidget {
   const SavedScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SavedScreen> createState() => _SavedScreenState();
+}
+
+class _SavedScreenState extends ConsumerState<SavedScreen> {
+  final Set<String> _removed = {};
+  final Set<String> _busy = {};
+
+  Future<void> _remove(ContractorListing contractor) async {
+    if (_busy.contains(contractor.id)) return;
+    setState(() {
+      _busy.add(contractor.id);
+      _removed.add(contractor.id);
+    });
+    try {
+      await ref.read(savedControllerProvider.notifier).toggle(contractor.id);
+      if (!mounted) return;
+      setState(() => _busy.remove(contractor.id));
+      final messenger = ScaffoldMessenger.of(context);
+      messenger.hideCurrentSnackBar();
+      messenger.showSnackBar(
+        SnackBar(
+          content: const Text('تمت إزالة المحترف من المحفوظات'),
+          action: SnackBarAction(
+            label: 'تراجع',
+            onPressed: () => unawaited(_undo(contractor)),
+          ),
+        ),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _busy.remove(contractor.id);
+        _removed.remove(contractor.id);
+      });
+      BatshSnack.error(context, ErrorMapper.map(error));
+    }
+  }
+
+  Future<void> _undo(ContractorListing contractor) async {
+    if (_busy.contains(contractor.id)) return;
+    setState(() {
+      _busy.add(contractor.id);
+      _removed.remove(contractor.id);
+    });
+    try {
+      await ref.read(savedControllerProvider.notifier).toggle(contractor.id);
+      if (mounted) {
+        setState(() => _busy.remove(contractor.id));
+        BatshSnack.success(context, 'تمت إعادة المحترف إلى المحفوظات');
+      }
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _busy.remove(contractor.id);
+        _removed.add(contractor.id);
+      });
+      BatshSnack.error(context, ErrorMapper.map(error));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final async = ref.watch(savedContractorsProvider);
     final isGuest = ref.watch(currentSessionProvider) == null;
 
@@ -41,7 +110,9 @@ class SavedScreen extends ConsumerWidget {
           onRetry: () => ref.invalidate(savedContractorsProvider),
         ),
         data: (collection) {
-          final list = collection.items;
+          final list = collection.items
+              .where((item) => !_removed.contains(item.id))
+              .toList();
           return RefreshIndicator(
             backgroundColor: context.colorScheme.surfaceContainerLowest,
             onRefresh: () async {
@@ -106,13 +177,11 @@ class SavedScreen extends ConsumerWidget {
                         }
                         final contractor = list[i];
                         final reduced = MediaQuery.disableAnimationsOf(context);
-                        final card = ContractorCard(
+                        final card = _SavedProfessionalCard(
                           key: ValueKey(contractor.id),
                           listing: contractor,
-                          isSaved: true,
-                          onToggleSave: () => ref
-                              .read(savedControllerProvider.notifier)
-                              .toggle(contractor.id),
+                          busy: _busy.contains(contractor.id),
+                          onToggleSave: () => _remove(contractor),
                           onTap: () => context.push(
                             Routes.homeownerContractorProfilePath(
                               contractor.id,
@@ -132,6 +201,189 @@ class SavedScreen extends ConsumerWidget {
                   ),
           );
         },
+      ),
+    );
+  }
+}
+
+class _SavedProfessionalCard extends StatelessWidget {
+  const _SavedProfessionalCard({
+    super.key,
+    required this.listing,
+    required this.busy,
+    required this.onToggleSave,
+    required this.onTap,
+  });
+
+  final ContractorListing listing;
+  final bool busy;
+  final VoidCallback onToggleSave;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final name = listing.businessName.trim().isNotEmpty
+        ? listing.businessName.trim()
+        : listing.fullName.trim();
+    final specialty = listing.specialties.isEmpty
+        ? context.l10n.providerKindContractor
+        : localizedSpecialtyLabel(context, listing.specialties.first);
+    final area = listing.serviceAreas.isEmpty
+        ? context.l10n.notSpecified
+        : listing.serviceAreas.first;
+    final cover = listing.coverPhotoUrl;
+
+    return Semantics(
+      button: true,
+      label: context.l10n.homeViewProfile,
+      child: BatshPressable(
+        onTap: onTap,
+        semanticLabel: name,
+        child: Container(
+          constraints: const BoxConstraints(minHeight: 156),
+          decoration: BoxDecoration(
+            color: context.colorScheme.surfaceContainerLowest,
+            borderRadius: BatshRadius.brLg,
+            border: Border.all(color: context.colorScheme.outlineVariant),
+            boxShadow: BatshShadows.soft,
+          ),
+          child: Row(
+            textDirection: TextDirection.ltr,
+            children: [
+              SizedBox(
+                width: 142,
+                height: 156,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    ClipRRect(
+                      borderRadius: const BorderRadius.horizontal(
+                        left: Radius.circular(BatshRadius.lg),
+                      ),
+                      child: isDisplayableImageUrl(cover)
+                          ? CachedNetworkImage(
+                              imageUrl: sizedImageUrl(cover!, width: 520),
+                              fit: BoxFit.cover,
+                              errorWidget: (_, _, _) =>
+                                  BatshInitialPlate(name: name),
+                            )
+                          : BatshInitialPlate(name: name),
+                    ),
+                    PositionedDirectional(
+                      start: BatshSpacing.xs,
+                      bottom: BatshSpacing.xs,
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: .68),
+                          borderRadius: BatshRadius.brFull,
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: BatshSpacing.xs,
+                            vertical: 3,
+                          ),
+                          child: Text(
+                            'محفوظ',
+                            style: BatshTypography.labelSm.copyWith(
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: Directionality(
+                  textDirection: TextDirection.rtl,
+                  child: Padding(
+                    padding: const EdgeInsets.all(BatshSpacing.sm),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                name,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: BatshTypography.titleMd.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                            IconButton(
+                              tooltip: context.l10n.unsaveTooltip,
+                              onPressed: busy ? null : onToggleSave,
+                              icon: Icon(
+                                Icons.bookmark_rounded,
+                                color: context.colorScheme.primary,
+                              ),
+                            ),
+                          ],
+                        ),
+                        Text(
+                          specialty,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: BatshTypography.bodyMd.copyWith(
+                            color: context.colorScheme.primary,
+                          ),
+                        ),
+                        const SizedBox(height: BatshSpacing.xs),
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.location_on_outlined,
+                              size: 17,
+                              color: context.colorScheme.onSurfaceVariant,
+                            ),
+                            const SizedBox(width: BatshSpacing.xxs),
+                            Expanded(
+                              child: Text(
+                                area,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: BatshTypography.bodySm.copyWith(
+                                  color: context.colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const Spacer(),
+                        Row(
+                          children: [
+                            if (listing.rating != null)
+                              Text(
+                                listing.rating!.toStringAsFixed(1),
+                                style: BatshTypography.labelLg.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            if (listing.rating != null)
+                              const Icon(
+                                Icons.star_rounded,
+                                size: 18,
+                                color: Colors.amber,
+                              ),
+                            const Spacer(),
+                            TextButton(
+                              onPressed: onTap,
+                              child: Text(context.l10n.homeViewProfile),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

@@ -14,6 +14,7 @@ import '../../../core/theme/batsh_spacing.dart';
 import '../../../core/theme/batsh_theme.dart';
 import '../../../core/theme/batsh_typography.dart';
 import '../../../core/utils/extensions.dart';
+import '../../../core/utils/phone_number_formatter.dart';
 import '../../../core/utils/validators.dart';
 import '../../../core/widgets/batsh_button.dart';
 import '../../auth/data/auth_repository.dart';
@@ -42,6 +43,7 @@ class _PhoneEntryScreenState extends ConsumerState<PhoneEntryScreen> {
   final TextEditingController _controller = TextEditingController();
   final FocusNode _phoneFocus = FocusNode();
   String? _errorText;
+  String? _sendFeedback;
   final _scrollController = ScrollController();
 
   @override
@@ -65,10 +67,16 @@ class _PhoneEntryScreenState extends ConsumerState<PhoneEntryScreen> {
   Future<void> _forgotPassword() async {
     final phone = normalizeEgyptPhoneToE164(_controller.text);
     if (!Validators.isEgyptianPhone(phone)) {
-      setState(() => _errorText = context.l10n.invalidPhone);
+      setState(() {
+        _errorText = context.l10n.invalidPhone;
+        _sendFeedback = null;
+      });
       return;
     }
-    setState(() => _errorText = null);
+    setState(() {
+      _errorText = null;
+      _sendFeedback = null;
+    });
 
     final controller = ref.read(otpControllerProvider.notifier);
     final ok = await controller.sendOtp(phone);
@@ -76,8 +84,11 @@ class _PhoneEntryScreenState extends ConsumerState<PhoneEntryScreen> {
     if (ok) {
       context.push(Routes.otp);
     } else {
-      final error = ref.read(otpControllerProvider).errorMessage;
-      setState(() => _errorText = error ?? context.l10n.unknownErrorRetry);
+      final failure = ref.read(otpControllerProvider);
+      final message = failure.errorOperation == OtpOperation.send
+          ? failure.errorMessage
+          : null;
+      setState(() => _sendFeedback = message ?? context.l10n.unknownErrorRetry);
     }
   }
 
@@ -139,6 +150,19 @@ class _PhoneEntryScreenState extends ConsumerState<PhoneEntryScreen> {
                           onForgot: _forgotPassword,
                           disableMotion: disableMotion,
                         ),
+                        if (_sendFeedback != null) ...[
+                          const SizedBox(height: BatshSpacing.sm),
+                          Semantics(
+                            liveRegion: true,
+                            child: Text(
+                              _sendFeedback!,
+                              textAlign: TextAlign.center,
+                              style: BatshTypography.bodySm.copyWith(
+                                color: context.colorScheme.error,
+                              ),
+                            ),
+                          ),
+                        ],
                         SizedBox(height: BatshSpacing.gutter),
                         _Footer(
                           onLoginTap: _scrollToPhone,

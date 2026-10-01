@@ -1,6 +1,6 @@
-import 'package:flutter/material.dart';
 import 'dart:async';
 
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -8,35 +8,31 @@ import '../../../core/analytics/app_analytics.dart';
 import '../../../core/analytics/marketplace_events.dart';
 import '../../../core/l10n/l10n_extension.dart';
 import '../../../core/router/routes.dart';
-import '../../../core/theme/batsh_motion.dart';
 import '../../../core/theme/batsh_spacing.dart';
-import '../../../core/theme/batsh_typography.dart';
 import '../../../core/theme/theme_extension.dart';
 import '../../../core/utils/error_mapper.dart';
-import '../../../core/widgets/batsh_bottom_nav.dart';
 import '../../../core/widgets/batsh_scaffold.dart';
-import '../../../core/widgets/batsh_snack.dart';
-import '../../../core/widgets/shattab_experience_state.dart';
-import '../../../core/widgets/shattab_pattern.dart';
+import '../../auth/presentation/providers/auth_provider.dart';
+import '../../auth/presentation/sign_in_sheet.dart';
+import '../../briefs/domain/brief.dart';
 import '../../briefs/presentation/providers/briefs_providers.dart';
-import '../../discovery/domain/contractor_listing.dart';
 import '../../discovery/presentation/providers/discovery_providers.dart';
+import '../../explore/presentation/providers/explore_providers.dart';
 import '../../notifications/presentation/providers/notifications_providers.dart';
 import '../../onboarding/presentation/providers/onboarding_provider.dart';
 import '../../portfolio/data/portfolio_repository.dart';
+import '../../quotes/domain/quote.dart';
+import '../../quotes/presentation/providers/quotes_providers.dart';
 import '../../saved/presentation/providers/saved_providers.dart';
-import 'widgets/home_hero.dart';
-import 'widgets/home_live_states.dart';
-import 'widgets/home_shortcuts.dart';
-import 'widgets/home_showcase.dart';
-import 'widgets/home_start_journey.dart';
-import 'widgets/home_trust_sections.dart';
+import '../domain/reference_home_data.dart';
+import 'widgets/reference_home_experience.dart';
 
-/// The homeowner's landing surface.
+/// The homeowner landing surface.
 ///
-/// This page owns activation and current progress. The Professionals tab owns
-/// searching, filtering, ranking, and catalogue browsing, so the two tabs no
-/// longer compete for the same job.
+/// The visual composition lives in [ReferenceHomeExperience]. This screen is
+/// deliberately the orchestration seam: it resolves existing repositories,
+/// maps their domain models to the reference presentation models, and owns
+/// every destination/action so the landing page never becomes a static mock.
 class HomeownerHomeScreen extends ConsumerStatefulWidget {
   const HomeownerHomeScreen({super.key});
 
@@ -46,238 +42,569 @@ class HomeownerHomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeownerHomeScreenState extends ConsumerState<HomeownerHomeScreen> {
+  late final TextEditingController _searchController;
+  final Set<String> _previewSavedIds = <String>{};
+
   @override
   void initState() {
     super.initState();
-    unawaited(AppAnalytics.track(MarketplaceEvents.homeViewed));
+    if (!referenceHomePreviewEnabled) {
+      unawaited(AppAnalytics.track(MarketplaceEvents.homeViewed));
+    }
+    _searchController = TextEditingController(
+      text: referenceHomePreviewEnabled
+          ? ''
+          : ref.read(discoveryFiltersControllerProvider).searchQuery ?? '',
+    );
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final profileCity = ref.watch(homeownerProfileProvider).value?.city;
+    if (referenceHomePreviewEnabled) return _buildPreviewHome(context);
+
+    final preview = referenceHomePreviewEnabled;
+    final profileState = ref.watch(currentProfileProvider);
+    final homeownerState = ref.watch(homeownerProfileProvider);
+    final briefsState = ref.watch(myBriefsProvider);
+    final professionalsState = ref.watch(discoverContractorsProvider);
+    final topRatedState = ref.watch(topRatedProfessionalsProvider);
+    final workState = ref.watch(recentProjectsProvider);
+    final communityState = ref.watch(exploreFeedProvider);
+    final savedState = ref.watch(savedContractorIdsProvider);
+    final unreadCount = ref.watch(unreadNotificationsProvider);
+    final displayedUnreadCount = preview && unreadCount == 0 ? 1 : unreadCount;
+
+    final profile = profileState.maybeWhen(
+      data: (value) => value,
+      orElse: () => null,
+    );
+    final homeowner = homeownerState.maybeWhen(
+      data: (value) => value,
+      orElse: () => null,
+    );
+    final briefs = briefsState.asData?.value ?? const <Brief>[];
+    final activeBrief = _activeBrief(briefs);
+    final quoteState = activeBrief == null
+        ? null
+        : ref.watch(quotesForBriefProvider(activeBrief.id));
+
+    final professionalListings = professionalsState.asData?.value ?? const [];
+    final topRatedListings = (topRatedState.asData?.value ?? const [])
+        .where((listing) => listing.rating != null)
+        .toList(growable: false);
+    final workProjects = workState.asData?.value ?? const [];
+    final posts = communityState.asData?.value ?? const [];
+
+    // The compile-time preview intentionally wins over live rows so the
+    // supplied reference composition remains reproducible for visual QA.
+    // It is false in every normal build and never writes or claims anything
+    // about the marketplace.
+    final featuredProfessionals = preview
+        ? ReferenceHomePreviewData.professionals
+        : professionalListings.isNotEmpty
+        ? professionalListings
+              .take(3)
+              .map(ReferenceHomeProfessional.fromListing)
+              .toList(growable: false)
+        : const <ReferenceHomeProfessional>[];
+    final topRatedProfessionals = preview
+        ? ReferenceHomePreviewData.topRated
+        : topRatedListings.isNotEmpty
+        ? topRatedListings
+              .take(5)
+              .map(ReferenceHomeProfessional.fromListing)
+              .toList(growable: false)
+        : const <ReferenceHomeProfessional>[];
+    final work = preview
+        ? ReferenceHomePreviewData.work
+        : workProjects.isNotEmpty
+        ? ReferenceHomeWork.fromProject(workProjects.first)
+        : null;
+    final communityPosts = preview
+        ? ReferenceHomePreviewData.communityPosts
+        : posts.isNotEmpty
+        ? posts
+              .take(2)
+              .map(
+                (post) => ReferenceHomeCommunityPost.fromPost(
+                  post,
+                  timeLabel: _relativeTime(context, post.createdAt),
+                ),
+              )
+              .toList(growable: false)
+        : const <ReferenceHomeCommunityPost>[];
+
+    final project = preview
+        ? ReferenceHomePreviewData.project
+        : activeBrief == null
+        ? null
+        : _mapBriefToProject(activeBrief, quoteState);
+    final savedIds = <String>{
+      ...(savedState.value ?? const <String>{}),
+      ..._previewSavedIds,
+    };
+    final name = _displayName(context, profile?.fullName, preview);
+    final location = _displayLocation(context, homeowner, preview);
 
     return BatshScaffold(
       showAppBar: false,
       padding: EdgeInsets.zero,
-      body: RefreshIndicator(
-        onRefresh: () async {
-          ref.invalidate(myBriefsProvider);
-          ref.invalidate(notificationsProvider);
-          ref.invalidate(recentProjectsProvider);
-          ref.invalidate(topRatedProfessionalsProvider);
-          await ref.read(myBriefsProvider.future);
-        },
-        child: CustomScrollView(
-          key: const PageStorageKey<String>('homeowner-home-scroll'),
-          physics: const AlwaysScrollableScrollPhysics(),
-          slivers: [
-            SliverToBoxAdapter(
-              child: HomeHero(
-                locationLabel: profileCity,
-                unreadCount: ref.watch(unreadNotificationsProvider),
-                showDiscoveryControls: false,
-                onLocationTap: () => context.go(Routes.homeownerDiscover),
-                onNotificationTap: () => context.push(Routes.notifications),
-                onMenuTap: () => context.push(Routes.homeownerSettings),
-              ),
-            ),
-            SliverToBoxAdapter(
-              child: HomeStartJourney(
-                onDiscover: () => context.go(Routes.homeownerDiscover),
-                onRequestQuote: () => context.push(Routes.homeownerNewPost),
-              ),
-            ),
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.only(top: BatshSpacing.xl),
-                child: HomeLiveStateSection(
-                  onOpenRequests: () => context.go(Routes.homeownerRequests),
-                  onOpenNotifications: () => context.push(Routes.notifications),
-                  onStartRequest: () => context.push(Routes.homeownerNewPost),
-                ),
-              ),
-            ),
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.only(top: BatshSpacing.xxl),
-                child: HomeServiceCategories(
-                  onSelect: (specialty) {
-                    ref
-                        .read(discoveryFiltersControllerProvider.notifier)
-                        .setSpecialty(specialty);
-                    context.go(Routes.homeownerDiscover);
-                  },
-                  onViewAll: () => context.go(Routes.homeownerDiscover),
-                ),
-              ),
-            ),
-            const SliverToBoxAdapter(
-              child: Padding(
-                padding: EdgeInsets.only(top: BatshSpacing.xxl),
-                child: _HomeFeaturedSection(),
-              ),
-            ),
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.only(top: BatshSpacing.xxl),
-                child: HomeProjectsRail(
-                  onViewAll: () => context.push(Routes.homeownerCompletedWork),
-                  onOpenProject: (contractorId, projectId) => context.push(
-                    Routes.homeownerProjectDetailPath(contractorId, projectId),
+      backgroundColor: context.colorScheme.surface,
+      showPattern: false,
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          DecoratedBox(
+            decoration: BoxDecoration(
+              color: context.colorScheme.surface,
+              border: Border(
+                bottom: BorderSide(
+                  color: context.colorScheme.outlineVariant.withValues(
+                    alpha: 0.2,
                   ),
                 ),
               ),
             ),
-            const SliverToBoxAdapter(
-              child: Padding(
-                padding: EdgeInsets.only(top: BatshSpacing.xxl),
-                child: HomeProcessSection(),
-              ),
+            child: ReferenceHomeHeader(
+              locationLabel: location,
+              homeownerName: name,
+              avatarUrl:
+                  profile?.avatarUrl ??
+                  (preview
+                      ? ReferenceHomePreviewData.topRated.first.avatarUrl
+                      : null),
+              unreadCount: displayedUnreadCount,
+              onLocationTap: () => _openLocation(context),
+              onNotificationTap: () => _openNotifications(context),
+              onAccountTap: () => context.go(Routes.homeownerProfile),
             ),
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.only(top: BatshSpacing.xxl),
-                child: HomeCommunityInvite(
-                  onTap: () => context.go(Routes.homeownerExplore),
+          ),
+          Expanded(
+            child: CustomScrollView(
+              key: const PageStorageKey<String>('homeowner-home-scroll'),
+              physics: const AlwaysScrollableScrollPhysics(),
+              slivers: [
+                const SliverToBoxAdapter(child: SizedBox(height: 0)),
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: EdgeInsets.only(bottom: BatshSpacing.md),
+                    child: ReferenceHomeExperience(
+                      showHeader: false,
+                      locationLabel: location,
+                      homeownerName: name,
+                      avatarUrl:
+                          profile?.avatarUrl ??
+                          (preview
+                              ? 'assets/images/stitch_home_header_avatar.jpg'
+                              : null),
+                      unreadCount: displayedUnreadCount,
+                      onLocationTap: () => _openLocation(context),
+                      onNotificationTap: () => _openNotifications(context),
+                      onAccountTap: () => context.go(Routes.homeownerProfile),
+                      searchController: _searchController,
+                      onSearchSubmitted: (value) =>
+                          _submitSearch(context, value),
+                      onSearchChanged: (_) => setState(() {}),
+                      onSearchClear: () => _clearSearch(context),
+                      onStartProject: () => _startProject(context),
+                      onSelectService: (specialty) =>
+                          _selectService(context, specialty),
+                      onOpenProject: (item) => _openProject(context, item),
+                      onOpenProjectOffers: (item) =>
+                          _openProject(context, item),
+                      onOpenProjectDetails: (item) =>
+                          _openProject(context, item),
+                      onOpenFeaturedProfessionals: () =>
+                          context.go(Routes.homeownerDiscover),
+                      onOpenTopRated: () =>
+                          context.push(Routes.homeownerTopRatedProfessionals),
+                      onOpenWork: (item) => _openWork(context, item),
+                      onOpenCompletedWork: () =>
+                          context.push(Routes.homeownerCompletedWork),
+                      onOpenCommunity: (post) => _openCommunity(context, post),
+                      onOpenCommunityFeed: () =>
+                          context.go(Routes.homeownerExplore),
+                      onCreatePost: () => _createCommunityPost(context),
+                      onOpenClosingCta: () => _startProject(context),
+                      featuredProfessionals: featuredProfessionals,
+                      topRatedProfessionals: topRatedProfessionals,
+                      project: project,
+                      work: work,
+                      communityPosts: communityPosts,
+                      savedProfessionalIds: savedIds,
+                      onOpenProfessional: (id) =>
+                          _openProfessional(context, id),
+                      onRequestQuote: (id) => _requestQuote(context, id),
+                      onToggleSaved: (id) => _toggleSaved(context, id),
+                      professionalsLoading:
+                          !preview && professionalsState.isLoading,
+                      professionalsError:
+                          !preview && professionalsState.hasError
+                          ? ErrorMapper.map(professionalsState.error!)
+                          : null,
+                      onRetryProfessionals: preview
+                          ? null
+                          : () => ref.invalidate(discoverContractorsProvider),
+                      topRatedLoading: !preview && topRatedState.isLoading,
+                      topRatedError: !preview && topRatedState.hasError
+                          ? ErrorMapper.map(topRatedState.error!)
+                          : null,
+                      onRetryTopRated: preview
+                          ? null
+                          : () => ref.invalidate(topRatedProfessionalsProvider),
+                      workLoading: !preview && workState.isLoading,
+                      workError: !preview && workState.hasError
+                          ? ErrorMapper.map(workState.error!)
+                          : null,
+                      onRetryWork: preview
+                          ? null
+                          : () => ref.invalidate(recentProjectsProvider),
+                      communityLoading: !preview && communityState.isLoading,
+                      communityError: !preview && communityState.hasError
+                          ? ErrorMapper.map(communityState.error!)
+                          : null,
+                      onRetryCommunity: preview
+                          ? null
+                          : () => ref.invalidate(exploreFeedProvider),
+                      showOfferCount:
+                          preview ||
+                          (quoteState?.hasValue == true &&
+                              quoteState?.hasError != true),
+                    ),
+                  ),
                 ),
-              ),
+              ],
             ),
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.only(top: BatshSpacing.xxl),
-                child: HomeClosingCta(
-                  onTap: () => context.push(Routes.homeownerNewPost),
-                ),
-              ),
-            ),
-            SliverToBoxAdapter(
-              child: SizedBox(
-                height:
-                    BatshBottomNav.contentBottomInset(context) +
-                    BatshSpacing.ml,
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
-}
 
-/// One professional, argued for — wired to the live catalogue.
-///
-/// The first reviewed professional from the rating-ranked page carries the
-/// card. The section stays out of the way until it has something honest to
-/// show: hidden while loading, on error, and when the catalogue is still
-/// empty; a quiet "soon" state appears only when contractors exist but none
-/// carry reviews yet, because that difference is exactly what a new
-/// marketplace's homeowner is wondering about.
-class _HomeFeaturedSection extends ConsumerStatefulWidget {
-  const _HomeFeaturedSection();
+  Widget _buildPreviewHome(BuildContext context) {
+    final name = _displayName(context, null, true);
+    final location = context.l10n.cityNewCairo;
+    const avatarUrl = 'assets/images/stitch_home_header_avatar.jpg';
 
-  @override
-  ConsumerState<_HomeFeaturedSection> createState() =>
-      _HomeFeaturedSectionState();
-}
-
-class _HomeFeaturedSectionState extends ConsumerState<_HomeFeaturedSection> {
-  /// Ids with an in-flight toggle. Mirrors the discover tab's optimistic
-  /// pattern: the heart flips immediately, a failure rolls it back with a
-  /// snack, and a double-tap while the write is in flight is a no-op.
-  final Set<String> _optimisticToggled = {};
-
-  ContractorListing? _pick(List<ContractorListing> listings) {
-    for (final listing in listings) {
-      if (listing.reviewCount > 0) return listing;
-    }
-    return null;
-  }
-
-  Future<void> _toggleSaved(ContractorListing listing) async {
-    if (_optimisticToggled.contains(listing.id)) return;
-    setState(() => _optimisticToggled.add(listing.id));
-    try {
-      await ref.read(savedControllerProvider.notifier).toggle(listing.id);
-      if (mounted) setState(() => _optimisticToggled.remove(listing.id));
-    } catch (error) {
-      if (!mounted) return;
-      setState(() => _optimisticToggled.remove(listing.id));
-      BatshSnack.error(context, ErrorMapper.map(error));
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final topAsync = ref.watch(topRatedProfessionalsProvider);
-    final listings = topAsync.value;
-    final listing = listings == null ? null : _pick(listings);
-
-    // Loading, failed fetch, or a catalogue with nobody in it yet: the home
-    // page simply continues to its next section rather than advertising a
-    // shelf that has nothing on it.
-    Widget content = const SizedBox.shrink();
-    if (!topAsync.isLoading && !topAsync.hasError && listings != null) {
-      if (listings.isNotEmpty && listing == null) {
-        // Contractors exist, none reviewed yet. This is the one empty case
-        // worth a sentence: it explains why the shelf is bare and what will
-        // fill it.
-        content = Padding(
-          padding: const EdgeInsets.symmetric(horizontal: homeGutter),
-          child: ShattabExperienceState(
-            icon: Icons.auto_awesome,
-            title: context.l10n.homeFeaturedEmptyTitle,
-            message: context.l10n.homeFeaturedEmptyMessage,
-            compact: true,
-            pattern: ShattabPatternKind.terrazzo,
-          ),
-        );
-      } else if (listing != null) {
-        content = HomeFeaturedProfessionalCard(
-          listing: listing,
-          isSaved: _isSaved(listing),
-          onToggleSave: () => _toggleSaved(listing),
-          onOpenProfile: () =>
-              context.push(Routes.homeownerContractorProfilePath(listing.id)),
-        );
-      }
-    }
-
-    // One authored motion moment: the section crossfades when its data
-    // lands, instead of popping. Reduced-motion collapses the duration.
-    final reduceMotion = MediaQuery.maybeDisableAnimationsOf(context) ?? false;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: homeGutter),
-          child: Semantics(
-            header: true,
-            child: Text(
-              context.l10n.featuredProfessional,
-              style: BatshTypography.headlineSm.copyWith(
-                color: context.colorScheme.onSurface,
+    return BatshScaffold(
+      showAppBar: false,
+      padding: EdgeInsets.zero,
+      backgroundColor: context.colorScheme.surface,
+      showPattern: false,
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          DecoratedBox(
+            decoration: BoxDecoration(
+              color: context.colorScheme.surface,
+              border: Border(
+                bottom: BorderSide(
+                  color: context.colorScheme.outlineVariant.withValues(
+                    alpha: 0.2,
+                  ),
+                ),
               ),
             ),
+            child: ReferenceHomeHeader(
+              locationLabel: location,
+              homeownerName: name,
+              avatarUrl: avatarUrl,
+              unreadCount: 1,
+              onLocationTap: () => _openLocation(context),
+              onNotificationTap: () => _openNotifications(context),
+              onAccountTap: () => context.go(Routes.homeownerProfile),
+            ),
           ),
-        ),
-        const SizedBox(height: BatshSpacing.xs),
-        AnimatedSwitcher(
-          duration: reduceMotion ? Duration.zero : BatshMotion.normal,
-          switchInCurve: BatshMotion.easeOut,
-          child: KeyedSubtree(
-            key: ValueKey(listing != null ? 'card:${listing.id}' : '$content'),
-            child: content,
+          Expanded(
+            child: CustomScrollView(
+              key: const PageStorageKey<String>('homeowner-home-scroll'),
+              physics: const AlwaysScrollableScrollPhysics(),
+              slivers: [
+                const SliverToBoxAdapter(child: SizedBox(height: 0)),
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: EdgeInsets.only(bottom: BatshSpacing.md),
+                    child: ReferenceHomeExperience(
+                      showHeader: false,
+                      locationLabel: location,
+                      homeownerName: name,
+                      avatarUrl: avatarUrl,
+                      unreadCount: 1,
+                      onLocationTap: () => _openLocation(context),
+                      onNotificationTap: () => _openNotifications(context),
+                      onAccountTap: () => context.go(Routes.homeownerProfile),
+                      searchController: _searchController,
+                      onSearchSubmitted: (value) =>
+                          _submitSearch(context, value),
+                      onSearchChanged: (_) => setState(() {}),
+                      onSearchClear: () => _clearSearch(context),
+                      onStartProject: () => _startProject(context),
+                      onSelectService: (specialty) =>
+                          _selectService(context, specialty),
+                      onOpenProject: (item) => _openProject(context, item),
+                      onOpenProjectOffers: (item) =>
+                          _openProject(context, item),
+                      onOpenProjectDetails: (item) =>
+                          _openProject(context, item),
+                      onOpenFeaturedProfessionals: () =>
+                          context.go(Routes.homeownerDiscover),
+                      onOpenTopRated: () =>
+                          context.push(Routes.homeownerTopRatedProfessionals),
+                      onOpenWork: (item) => _openWork(context, item),
+                      onOpenCompletedWork: () =>
+                          context.push(Routes.homeownerCompletedWork),
+                      onOpenCommunity: (post) => _openCommunity(context, post),
+                      onOpenCommunityFeed: () =>
+                          context.go(Routes.homeownerExplore),
+                      onCreatePost: () => _createCommunityPost(context),
+                      onOpenClosingCta: () => _startProject(context),
+                      featuredProfessionals:
+                          ReferenceHomePreviewData.professionals,
+                      topRatedProfessionals: ReferenceHomePreviewData.topRated,
+                      project: ReferenceHomePreviewData.project,
+                      work: ReferenceHomePreviewData.work,
+                      communityPosts: ReferenceHomePreviewData.communityPosts,
+                      savedProfessionalIds: _previewSavedIds,
+                      staticPreview: true,
+                      onOpenProfessional: (id) =>
+                          _openProfessional(context, id),
+                      onRequestQuote: (id) => _requestQuote(context, id),
+                      onToggleSaved: (id) => _toggleSaved(context, id),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
-  bool _isSaved(ContractorListing listing) {
-    final base = (ref.watch(savedContractorIdsProvider).value ?? {}).contains(
-      listing.id,
+  void _submitSearch(BuildContext context, String value) {
+    final query = value.trim();
+    ref
+        .read(discoveryFiltersControllerProvider.notifier)
+        .setSearch(query.isEmpty ? null : query);
+    context.go(Routes.homeownerDiscover);
+  }
+
+  void _clearSearch(BuildContext context) {
+    _searchController.clear();
+    ref.read(discoveryFiltersControllerProvider.notifier).setSearch(null);
+    setState(() {});
+  }
+
+  void _selectService(BuildContext context, String specialty) {
+    final normalizedSpecialty = specialty.trim();
+    ref
+        .read(discoveryFiltersControllerProvider.notifier)
+        .setSpecialty(normalizedSpecialty.isEmpty ? null : normalizedSpecialty);
+    context.go(Routes.homeownerDiscover);
+  }
+
+  void _openLocation(BuildContext context) {
+    _runSignedIn(
+      context,
+      reason: context.l10n.changeLocationDescription,
+      action: () => context.push(Routes.homeownerEditProfile),
     );
-    final optimistic = _optimisticToggled.contains(listing.id);
-    return optimistic ? !base : base;
+  }
+
+  void _openNotifications(BuildContext context) {
+    _runSignedIn(
+      context,
+      reason: context.l10n.notificationsTitle,
+      action: () => context.push(Routes.notifications),
+    );
+  }
+
+  void _startProject(BuildContext context) {
+    _runSignedIn(
+      context,
+      reason: context.l10n.homeReferenceClosingTitle,
+      action: () => context.push(Routes.homeownerNewPost),
+    );
+  }
+
+  void _createCommunityPost(BuildContext context) {
+    _runSignedIn(
+      context,
+      reason: context.l10n.homeReferenceWritePost,
+      action: () => context.push(Routes.homeownerExploreCreatePost),
+    );
+  }
+
+  void _openProfessional(BuildContext context, String id) {
+    context.push(Routes.homeownerContractorProfilePath(id));
+  }
+
+  void _requestQuote(BuildContext context, String id) {
+    if (id.startsWith('preview-')) {
+      _startProject(context);
+      return;
+    }
+    _runSignedIn(
+      context,
+      reason: context.l10n.homeReferenceRequestQuote,
+      action: () => context.push(Routes.homeownerSendBriefPath(id)),
+    );
+  }
+
+  void _toggleSaved(BuildContext context, String id) {
+    if (id.startsWith('preview-')) {
+      setState(() {
+        if (!_previewSavedIds.add(id)) _previewSavedIds.remove(id);
+      });
+      return;
+    }
+    _runSignedIn(
+      context,
+      reason: context.l10n.saveTooltip,
+      action: () =>
+          unawaited(ref.read(savedControllerProvider.notifier).toggle(id)),
+    );
+  }
+
+  void _openProject(BuildContext context, ReferenceHomeProject item) {
+    if (item.isPreview) {
+      context.go(Routes.homeownerRequests);
+      return;
+    }
+    context.push(Routes.homeownerBriefDetailPath(item.id));
+  }
+
+  void _openWork(BuildContext context, ReferenceHomeWork item) {
+    if (item.isPreview) {
+      context.push(Routes.homeownerCompletedWork);
+      return;
+    }
+    context.push(Routes.homeownerProjectDetailPath(item.contractorId, item.id));
+  }
+
+  void _openCommunity(BuildContext context, ReferenceHomeCommunityPost post) {
+    if (post.isPreview) {
+      context.go(Routes.homeownerExplore);
+      return;
+    }
+    context.push(Routes.homeownerCommunityPostPath(post.id));
+  }
+
+  void _runSignedIn(
+    BuildContext context, {
+    required String reason,
+    required VoidCallback action,
+  }) {
+    unawaited(runSignedIn(context, ref, reason: reason, action: action));
+  }
+
+  ReferenceHomeProject _mapBriefToProject(
+    Brief brief,
+    AsyncValue<List<Quote>>? quoteState,
+  ) {
+    final offerCount =
+        quoteState?.maybeWhen(
+          data: (quotes) => quotes
+              .where((quote) => quote.status != QuoteStatus.withdrawn)
+              .length,
+          orElse: () => 0,
+        ) ??
+        0;
+    final progress = switch (brief.stage) {
+      BriefStage.open => 0.25,
+      BriefStage.hired => 0.5,
+      BriefStage.completionRequested => 0.8,
+      BriefStage.completed => 1.0,
+    };
+    return ReferenceHomeProject(
+      id: brief.id,
+      title: brief.projectTitle?.trim().isNotEmpty == true
+          ? brief.projectTitle!.trim()
+          : brief.workDescription,
+      location: [
+        brief.district,
+        brief.city,
+      ].whereType<String>().where((part) => part.trim().isNotEmpty).join('، '),
+      imageUrl: brief.photoUrls.firstOrNull ?? '',
+      progress: progress,
+      stage: _stageLabel(context, brief.stage),
+      offerCount: offerCount,
+    );
+  }
+
+  String _stageLabel(BuildContext context, BriefStage stage) {
+    return switch (stage) {
+      BriefStage.open => context.l10n.homeReferenceStageOpen,
+      BriefStage.hired => context.l10n.homeReferenceStageHired,
+      BriefStage.completionRequested => context.l10n.homeReferenceStageReview,
+      BriefStage.completed => context.l10n.homeReferenceStageCompleted,
+    };
+  }
+
+  String _displayName(BuildContext context, String? value, bool preview) {
+    final name = value?.trim();
+    if (name != null && name.isNotEmpty) return name;
+    if (preview) return 'أحمد';
+    return context.l10n.homeownerAccountRole;
+  }
+
+  String _displayLocation(
+    BuildContext context,
+    dynamic homeowner,
+    bool preview,
+  ) {
+    final parts = <String?>[homeowner?.district, homeowner?.city]
+        .whereType<String>()
+        .where((part) => part.trim().isNotEmpty)
+        .toList(growable: false);
+    if (parts.isNotEmpty) return parts.join('، ');
+    return preview
+        ? context.l10n.cityNewCairo
+        : context.l10n.homeReferenceLocationUnset;
+  }
+
+  Brief? _activeBrief(List<Brief> briefs) {
+    for (final brief in briefs) {
+      if (brief.status == BriefStatus.open && !brief.isCompleted) {
+        return brief;
+      }
+    }
+    return briefs.isEmpty ? null : briefs.first;
+  }
+
+  String _relativeTime(BuildContext context, DateTime dateTime) {
+    final elapsed = DateTime.now().difference(dateTime);
+    if (elapsed.inSeconds < 60) return context.l10n.agoNow;
+    if (elapsed.inMinutes < 60) {
+      final value = elapsed.inMinutes;
+      final template = value == 1 ? context.l10n.agoMin : context.l10n.agoMins;
+      return template.replaceFirst('%s', _arabicDigits(value));
+    }
+    if (elapsed.inHours < 24) {
+      final value = elapsed.inHours;
+      final template = value == 1
+          ? context.l10n.agoHour
+          : context.l10n.agoHours;
+      return template.replaceFirst('%s', _arabicDigits(value));
+    }
+    final value = elapsed.inDays;
+    final template = value == 1 ? context.l10n.agoDay : context.l10n.agoDays;
+    return template.replaceFirst('%s', _arabicDigits(value));
+  }
+
+  String _arabicDigits(int value) {
+    const latin = '0123456789';
+    const arabic = '٠١٢٣٤٥٦٧٨٩';
+    return value
+        .toString()
+        .split('')
+        .map((digit) => arabic[latin.indexOf(digit)])
+        .join();
   }
 }

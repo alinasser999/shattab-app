@@ -2,6 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../../core/l10n/l10n_extension.dart';
+import '../../../../../core/l10n/catalog_labels.dart';
 import '../../../../../core/theme/batsh_icon_size.dart';
 import '../../../../../core/theme/batsh_radius.dart';
 import '../../../../../core/theme/batsh_shadows.dart';
@@ -145,7 +146,7 @@ class _CardCopy extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final specialty = _specialtyLabel(brief);
+    final specialty = _specialtyLabel(context, brief);
     final reasons = match.reasons.take(2).toList(growable: false);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -636,10 +637,10 @@ String? _firstDisplayableImage(List<String> urls) {
 int _displayableImageCount(List<String> urls) =>
     urls.where(isDisplayableImageUrl).length;
 
-String _specialtyLabel(Brief brief) {
+String _specialtyLabel(BuildContext context, Brief brief) {
   if (brief.targetSpecialties.isEmpty) return '';
   final key = brief.targetSpecialties.first;
-  return OnboardingCatalog.specialtiesCatalog[key] ?? key;
+  return localizedSpecialtyDisplayLabel(context, key);
 }
 
 String _recommendationLabel(

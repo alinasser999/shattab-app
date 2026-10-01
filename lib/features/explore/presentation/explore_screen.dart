@@ -87,11 +87,14 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
   }
 
   Future<void> _signInForFeed() async {
-    await showSignInSheet(context, reason: context.l10n.signInToInteract);
-    if (!mounted) return;
-    if (ref.read(currentSessionProvider) != null) {
-      ref.invalidate(exploreFeedProvider);
+    final completed = await showSignInSheet(
+      context,
+      reason: context.l10n.signInToInteract,
+    );
+    if (!completed || !mounted || ref.read(currentSessionProvider) == null) {
+      return;
     }
+    ref.invalidate(exploreFeedProvider);
   }
 
   void _openTypedCreatePost(CommunityPostKind kind) {

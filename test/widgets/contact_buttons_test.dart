@@ -10,6 +10,9 @@ void main() {
     expect(whatsappPhoneDigits('+20 10 0123 4567'), '201001234567');
     expect(whatsappPhoneDigits('0020 10 0123 4567'), '201001234567');
     expect(whatsappPhoneDigits(''), isEmpty);
+    expect(isValidContactPhone('010 0123 4567'), isTrue);
+    expect(isValidContactPhone('not-a-phone'), isFalse);
+    expect(isValidContactPhone('01012'), isFalse);
   });
 
   group('WhatsAppButton', () {
@@ -47,6 +50,10 @@ void main() {
       // into being terse for assistive tech too.
       expect(find.text(S.whatsappShort), findsOneWidget);
       expect(find.bySemanticsLabel(S.contactViaWhatsApp), findsOneWidget);
+      expect(
+        tester.widget<OutlinedButton>(find.byType(OutlinedButton)).onPressed,
+        isNull,
+      );
     });
   });
 
@@ -77,6 +84,10 @@ void main() {
       );
 
       expect(find.text(S.call), findsOneWidget);
+      expect(
+        tester.widget<OutlinedButton>(find.byType(OutlinedButton)).onPressed,
+        isNull,
+      );
     });
   });
 

@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/l10n/catalog_labels.dart';
+import '../../../../core/cache/media_cache.dart';
 import '../../../../core/l10n/l10n_extension.dart';
 import '../../../../core/router/routes.dart';
 import '../../../../core/theme/batsh_radius.dart';
@@ -10,12 +11,14 @@ import '../../../../core/theme/batsh_shadows.dart';
 import '../../../../core/theme/batsh_spacing.dart';
 import '../../../../core/theme/batsh_typography.dart';
 import '../../../../core/theme/theme_extension.dart';
+import '../../../../core/widgets/batsh_button.dart';
 import '../../../../core/widgets/batsh_pressable.dart';
+import '../../../../core/widgets/batsh_initial_plate.dart';
 import '../../../../core/widgets/batsh_section_header.dart';
 import '../../../../core/widgets/batsh_shimmer.dart';
 import '../../../portfolio/data/portfolio_repository.dart';
 import '../../../portfolio/domain/portfolio_project.dart';
-import 'mockup_assets.dart';
+import '../../../../core/utils/image_url.dart';
 
 /// A dark visual chapter that keeps the discovery screen from becoming a
 /// stack of identical cream cards. Real projects win; visual fallbacks keep a
@@ -30,20 +33,13 @@ class RecentWorkRail extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final projects = ref.watch(recentProjectsProvider);
     return projects.when(
-      error: (_, _) => _RailFrame(
-        items: _fallbackItems(context),
-        fallbackContractorId: fallbackContractorId,
-      ),
+      error: (_, _) => const SizedBox.shrink(),
       loading: () => const _RailFrame.loading(),
       data: (all) {
         final actual = skip > 0 ? all.skip(skip).toList() : all;
-        final items = actual.isEmpty
-            ? _fallbackItems(context)
-            : actual.map(_RailItem.fromProject).toList();
-        return _RailFrame(
-          items: items,
-          fallbackContractorId: actual.isEmpty ? fallbackContractorId : null,
-        );
+        if (actual.isEmpty) return const SizedBox.shrink();
+        final items = actual.map(_RailItem.fromProject).toList();
+        return _RailFrame(items: items, fallbackContractorId: null);
       },
     );
   }
@@ -96,14 +92,13 @@ class _RailFrame extends StatelessWidget {
                     padding: EdgeInsets.zero,
                   ),
                 ),
-                TextButton(
+                BatshButton(
+                  style: BatshButtonStyle.ghost,
+                  fullWidth: false,
+                  animate: false,
                   onPressed: () => context.push(Routes.homeownerCompletedWork),
-                  child: Text(
-                    context.l10n.viewAll,
-                    style: BatshTypography.labelMd.copyWith(
-                      color: context.colorScheme.onInverseSurface,
-                    ),
-                  ),
+                  label: context.l10n.viewAll,
+                  foregroundColor: context.colorScheme.onInverseSurface,
                 ),
               ],
             ),
@@ -185,24 +180,16 @@ class _WorkTile extends StatelessWidget {
           child: Stack(
             fit: StackFit.expand,
             children: [
-              MockupImage(url: item.url, memCacheWidth: 560),
-              const IgnorePointer(
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.bottomCenter,
-                      end: Alignment.center,
-                      colors: [Color(0xD9000000), Color(0x00000000)],
-                    ),
-                  ),
-                ),
-              ),
-              if (item.isPlaceholder)
-                const PositionedDirectional(
-                  top: BatshSpacing.sm,
-                  end: BatshSpacing.sm,
-                  child: MockupSampleBadge(),
-                ),
+              if (isDisplayableImageUrl(item.url))
+                CachedNetworkImage(
+                  imageUrl: sizedImageUrl(item.url, width: 560),
+                  cacheManager: mediaCacheManager,
+                  fit: BoxFit.cover,
+                  memCacheWidth: 560,
+                  errorWidget: (_, _, _) => BatshInitialPlate(name: item.title),
+                )
+              else
+                BatshInitialPlate(name: item.title),
               PositionedDirectional(
                 start: BatshSpacing.sm,
                 end: BatshSpacing.sm,
@@ -218,7 +205,7 @@ class _WorkTile extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: BatshTypography.labelMd.copyWith(
-                          color: Colors.white,
+                          color: context.colorScheme.onPrimary,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
@@ -227,7 +214,9 @@ class _WorkTile extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: BatshTypography.labelSm.copyWith(
-                          color: Colors.white.withValues(alpha: 0.84),
+                          color: context.colorScheme.onPrimary.withValues(
+                            alpha: 0.84,
+                          ),
                         ),
                       ),
                     ],
@@ -268,24 +257,3 @@ class _RailItem {
   final String? contractorId;
   final bool isPlaceholder;
 }
-
-List<_RailItem> _fallbackItems(BuildContext context) => [
-  _RailItem(
-    url: mockupPortfolioImages[0],
-    title: localizedSpecialtyLabel(context, 'full_reno'),
-    subtitle: localizedSpecialtyLabel(context, 'design'),
-    isPlaceholder: true,
-  ),
-  _RailItem(
-    url: mockupPortfolioImages[1],
-    title: localizedSpecialtyLabel(context, 'design'),
-    subtitle: localizedSpecialtyLabel(context, 'full_reno'),
-    isPlaceholder: true,
-  ),
-  _RailItem(
-    url: mockupPortfolioImages[2],
-    title: localizedSpecialtyLabel(context, 'paint'),
-    subtitle: localizedSpecialtyLabel(context, 'full_reno'),
-    isPlaceholder: true,
-  ),
-];

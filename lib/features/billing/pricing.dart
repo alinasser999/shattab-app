@@ -4,8 +4,13 @@
 class BatshPricing {
   const BatshPricing._();
 
-  /// Free contractors may send this many quotes per calendar month.
-  static const int freeMonthlyQuota = 3;
+  /// Free contractors may send this many quotes in any rolling 30-day window.
+  static const int freeRolling30DayQuota = 5;
+
+  /// Backward-compatible alias for older callers; this is not a calendar
+  /// month allowance.
+  @Deprecated('Use freeRolling30DayQuota.')
+  static const int freeMonthlyQuota = freeRolling30DayQuota;
 
   /// Free-tier portfolio project cap.
   static const int freePortfolioCap = 5;

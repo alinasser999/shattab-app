@@ -7,11 +7,14 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
 import 'package:batsh/core/l10n/l10n_extension.dart';
+import '../../../core/catalog/specialty_catalog.dart';
+import '../../../core/l10n/catalog_labels.dart';
 import '../../../core/theme/batsh_radius.dart';
 import '../../../core/theme/batsh_shadows.dart';
 import '../../../core/theme/batsh_spacing.dart';
 import '../../../core/theme/batsh_typography.dart';
 import '../../../core/widgets/batsh_button.dart';
+import '../../../core/widgets/batsh_chip.dart';
 import '../../../core/widgets/batsh_scaffold.dart';
 import '../../../core/widgets/batsh_text_field.dart';
 import '../../auth/presentation/providers/auth_provider.dart';
@@ -108,7 +111,9 @@ class _HomeownerEditProfileScreenState
       _apartmentType = hoProfile.apartmentType;
       _city = hoProfile.city;
       _district = hoProfile.district;
-      _interests = hoProfile.renovationInterests.toSet();
+      _interests = SpecialtyCatalog.rootKeys(
+        hoProfile.renovationInterests,
+      ).toSet();
       _nameCtrl.text = currentName;
       _hydrated = true;
     }
@@ -512,30 +517,18 @@ class _InterestChips extends StatelessWidget {
     return Wrap(
       spacing: BatshSpacing.sm,
       runSpacing: BatshSpacing.sm,
-      children: OnboardingCatalog.interestsCatalog.entries.map((entry) {
-        final isSelected = selected.contains(entry.key);
-        return ChoiceChip(
-          label: Text(
-            entry.value,
-            style: BatshTypography.labelMd.copyWith(
-              color: isSelected ? context.colorScheme.onPrimaryContainer : null,
-            ),
-          ),
+      children: SpecialtyCatalog.roots.map((root) {
+        final isSelected = selected.contains(root.key);
+        return BatshChip(
+          label: localizedSpecialtyLabel(context, root.key),
+          icon: specialtyIcon(root.key),
           selected: isSelected,
-          selectedColor: context.colorScheme.primaryContainer,
-          backgroundColor: context.colorScheme.surfaceContainer,
-          side: BorderSide(
-            color: isSelected
-                ? context.colorScheme.primary
-                : context.colorScheme.outlineVariant,
-          ),
-          shape: RoundedRectangleBorder(borderRadius: BatshRadius.brDefault),
-          onSelected: (_) {
+          onTap: () {
             final next = Set<String>.from(selected);
             if (isSelected) {
-              next.remove(entry.key);
+              next.remove(root.key);
             } else {
-              next.add(entry.key);
+              next.add(root.key);
             }
             onChanged(next);
           },

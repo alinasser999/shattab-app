@@ -7,6 +7,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/analytics/app_analytics.dart';
+import '../../../core/catalog/specialty_catalog.dart';
 import '../../../core/media/media_storage.dart';
 import '../../../core/media/media_storage_provider.dart';
 import '../../../core/supabase/supabase_provider.dart';
@@ -171,8 +172,9 @@ class BriefsRepository {
     // misleading, unpersonalized marketplace feed.
     if (profile == null) return const <Brief>[];
 
-    final profileSpecialties =
-        (profile['specialties'] as List?)?.cast<String>() ?? <String>[];
+    final profileSpecialties = SpecialtyCatalog.rootKeys(
+      (profile['specialties'] as List?)?.cast<String>() ?? <String>[],
+    );
     final serviceAreas =
         (profile['service_areas'] as List?)?.cast<String>() ?? <String>[];
 
@@ -186,14 +188,17 @@ class BriefsRepository {
         ) // hired jobs leave the feed (migration 0009)
         .eq('status', 'open');
 
-    final specialties = targetSpecialties
-        ?.where((value) => value.isNotEmpty)
-        .toList();
+    final specialties = targetSpecialties == null
+        ? null
+        : SpecialtyCatalog.rootKeys(targetSpecialties);
     final effectiveSpecialties = specialties?.isNotEmpty == true
         ? specialties!
         : profileSpecialties;
     if (effectiveSpecialties.isNotEmpty) {
-      query = query.overlaps('target_specialties', effectiveSpecialties);
+      query = query.overlaps(
+        'target_specialties',
+        SpecialtyCatalog.matchingKeys(effectiveSpecialties),
+      );
     }
     if (city != null && city.trim().isNotEmpty) {
       query = query.eq('city', city.trim());
@@ -247,7 +252,9 @@ class BriefsRepository {
           'city': city,
           'district': district,
           'work_description': workDescription,
-          'target_specialties': targetSpecialties,
+          'target_specialties': SpecialtyCatalog.normalizeSelection(
+            targetSpecialties,
+          ),
         })
         .eq('id', briefId)
         .timeout(_writeTimeout);
@@ -330,22 +337,63 @@ class BriefsRepository {
     required String workDescription,
     required List<String> photoUrls,
     required List<String> targetSpecialties,
+    String? projectTitle,
+    int? estimatedArea,
+    String? budgetNote,
+    String? startTiming,
+    String? publishKey,
   }) async {
-    final row = await _client
-        .from('briefs')
-        .insert({
-          'homeowner_id': homeownerId,
-          'target_contractor_id': targetContractorId,
-          'apartment_type': apartmentType.dbValue,
-          'city': city,
-          'district': district,
-          'work_description': workDescription,
-          'photo_urls': photoUrls,
-          'target_specialties': targetSpecialties,
-        })
-        .select()
-        .single()
-        .timeout(_writeTimeout);
+    final payload = <String, dynamic>{
+      'homeowner_id': homeownerId,
+      'target_contractor_id': targetContractorId,
+      'apartment_type': apartmentType.dbValue,
+      'city': city,
+      'district': district,
+      'work_description': workDescription,
+      'photo_urls': photoUrls,
+      'target_specialties': SpecialtyCatalog.normalizeSelection(
+        targetSpecialties,
+      ),
+    };
+    // Keep the original insert shape for existing callers and staged
+    // environments. The extra publish-flow fields are sent only when the
+    // forward migration is present; a missing migration then fails visibly
+    // instead of making a successful-but-incomplete record.
+    if (projectTitle != null ||
+        estimatedArea != null ||
+        budgetNote != null ||
+        startTiming != null ||
+        publishKey != null) {
+      payload.addAll({
+        'project_title': projectTitle,
+        'estimated_area': estimatedArea,
+        'budget_note': budgetNote,
+        'start_timing': startTiming,
+        'publish_key': publishKey,
+      });
+    }
+    Map<String, dynamic> row;
+    try {
+      row = await _client
+          .from('briefs')
+          .insert(payload)
+          .select()
+          .single()
+          .timeout(_writeTimeout);
+    } on PostgrestException catch (error) {
+      if (error.code != '23505' || publishKey == null) rethrow;
+      final existing = await _client
+          .from('briefs')
+          .select()
+          .eq('homeowner_id', homeownerId)
+          .eq('publish_key', publishKey)
+          .maybeSingle()
+          .timeout(_readTimeout);
+      // Another uniqueness conflict is not a successful retry. Only return
+      // the row owned by this homeowner and bearing this exact logical key.
+      if (existing == null) rethrow;
+      return Brief.fromJson(existing);
+    }
 
     // Supply side of the marketplace: every quote, hire and review descends
     // from a brief, so this is the denominator the rest of the funnel gets
@@ -386,6 +434,54 @@ class BriefsRepository {
         .timeout(_writeTimeout);
   }
 
+  /// Best-effort cleanup for uploads owned by a brief creation attempt.
+  ///
+  /// The caller uses this when a parallel upload batch or the follow-up DB
+  /// update fails. Storage is deliberately cleaned before the brief row is
+  /// deleted/cancelled, and a cleanup failure never masks the original error.
+  Future<void> deleteUploadedPhotos(Iterable<String> urls) async {
+    final references = urls.toList(growable: false);
+    if (references.isEmpty) return;
+
+    final mediaStorage = _mediaStorage;
+    if (mediaStorage != null) {
+      for (final url in references) {
+        try {
+          await mediaStorage.deletePublicReference(
+            url,
+            category: MediaCategory.briefPhoto,
+          );
+        } catch (_) {
+          // Best effort: do not replace the failed brief operation's error.
+        }
+      }
+      return;
+    }
+
+    final paths = references
+        .map(_storagePathFromUrl)
+        .whereType<String>()
+        .toList(growable: false);
+    if (paths.isEmpty) return;
+    try {
+      await _client.storage.from('brief-photos').remove(paths);
+    } catch (_) {
+      // Best effort: do not replace the failed brief operation's error.
+    }
+  }
+
+  /// Extracts the storage object path from a public Supabase URL.
+  static String? _storagePathFromUrl(String rawUrl) {
+    final uri = Uri.tryParse(rawUrl);
+    if (uri == null) return null;
+    final segments = uri.pathSegments;
+    final publicIndex = segments.indexOf('public');
+    if (publicIndex == -1 || publicIndex + 2 >= segments.length) return null;
+    if (segments[publicIndex + 1] != 'brief-photos') return null;
+    final path = segments.sublist(publicIndex + 2).join('/');
+    return path.isEmpty ? null : path;
+  }
+
   /// Uploads a single photo to brief-photos bucket. Returns the public URL.
   /// Path: {homeowner_id}/{brief_id_or_draft_id}/{seq}.jpg
   Future<String> uploadPhoto({
@@ -424,6 +520,7 @@ class BriefsRepository {
           fileOptions: const FileOptions(
             upsert: true,
             contentType: 'image/jpeg',
+            cacheControl: privateMediaCacheControl,
           ),
         )
         .timeout(const Duration(seconds: 30));

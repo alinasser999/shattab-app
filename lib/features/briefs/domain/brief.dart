@@ -46,6 +46,10 @@ class Brief {
     this.completionRequestedAt,
     this.completedAt,
     this.editedAt,
+    this.projectTitle,
+    this.estimatedArea,
+    this.budgetNote,
+    this.startTiming,
   });
 
   final String id;
@@ -76,6 +80,14 @@ class Brief {
   /// Set by the database (migration 0020) whenever the homeowner changes the
   /// scope: description, unit type, location, specialties, or photos.
   final DateTime? editedAt;
+
+  /// Optional homeowner-facing brief details introduced by the Professionals
+  /// publish flow. They stay nullable so old rows and older clients remain
+  /// readable during the migration window.
+  final String? projectTitle;
+  final int? estimatedArea;
+  final String? budgetNote;
+  final String? startTiming;
 
   /// True when the scope changed after posting. Contractors see this, because
   /// a quote written against the original wording may no longer fit.
@@ -148,5 +160,9 @@ class Brief {
     editedAt: json['edited_at'] == null
         ? null
         : DateTime.parse(json['edited_at'] as String),
+    projectTitle: json['project_title'] as String?,
+    estimatedArea: (json['estimated_area'] as num?)?.toInt(),
+    budgetNote: json['budget_note'] as String?,
+    startTiming: json['start_timing'] as String?,
   );
 }

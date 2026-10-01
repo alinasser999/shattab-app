@@ -8,6 +8,7 @@ import '../../../core/router/routes.dart';
 import '../../../core/theme/batsh_spacing.dart';
 import '../../../core/theme/batsh_typography.dart';
 import '../../../core/widgets/batsh_card.dart';
+import '../../../core/widgets/batsh_button.dart';
 import '../../../core/widgets/batsh_empty_state.dart';
 import '../../../core/widgets/batsh_error.dart';
 import '../../../core/widgets/batsh_scaffold.dart';
@@ -51,6 +52,11 @@ class MyQuotesScreen extends ConsumerWidget {
               title: context.l10n.myQuotesEmptyTitle,
               message: context.l10n.myQuotesEmptyMessage,
               icon: Icons.request_quote_outlined,
+              action: BatshButton(
+                label: context.l10n.opportunitiesTitle,
+                icon: Icons.work_outline_rounded,
+                onPressed: () => context.go(Routes.contractorDashboard),
+              ),
             );
           }
           return RefreshIndicator(
@@ -60,11 +66,17 @@ class MyQuotesScreen extends ConsumerWidget {
               itemCount: quotes.length,
               separatorBuilder: (_, _) =>
                   const SizedBox(height: BatshSpacing.md),
-              itemBuilder: (context, i) =>
-                  _QuoteRow(quote: quotes[i].quote, brief: quotes[i].brief)
-                      .animate()
-                      .fadeIn(delay: (60 * i.clamp(0, 8)).ms, duration: 260.ms)
-                      .slideY(begin: 0.06, end: 0, curve: BatshMotion.easeOut),
+              itemBuilder: (context, i) {
+                final row = _QuoteRow(
+                  quote: quotes[i].quote,
+                  brief: quotes[i].brief,
+                );
+                if (MediaQuery.disableAnimationsOf(context)) return row;
+                return row
+                    .animate()
+                    .fadeIn(delay: (60 * i.clamp(0, 8)).ms, duration: 260.ms)
+                    .slideY(begin: 0.06, end: 0, curve: BatshMotion.easeOut);
+              },
             ),
           );
         },

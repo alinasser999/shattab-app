@@ -9,9 +9,12 @@ service-role key, trust a client-provided user id, or expose R2 credentials.
 
 ## Setup
 
-1. Create the R2 bucket and a public custom domain for approved public media.
-2. Replace the non-secret placeholders in `wrangler.toml`.
-3. Add secrets without committing them:
+1. Create the R2 bucket and attach a public custom domain for approved public
+   media. The bucket's `r2.dev` URL is intentionally not used for production.
+2. Register either a workers.dev subdomain or a production Worker route for
+   this signer. `workers_dev` stays `false` until one of those targets exists.
+3. Replace the non-secret placeholders in `wrangler.toml`.
+4. Add secrets without committing them:
 
 ```powershell
 wrangler secret put SUPABASE_ANON_KEY
@@ -19,21 +22,22 @@ wrangler secret put R2_ACCESS_KEY_ID
 wrangler secret put R2_SECRET_ACCESS_KEY
 ```
 
-4. Configure `ALLOWED_ORIGINS` with the real Flutter Web origin(s). Mobile
+5. Configure `ALLOWED_ORIGINS` with the real Flutter Web origin(s). Mobile
    builds send no `Origin` header and are unaffected; a web build with a
    missing origin fails at preflight with an error that never says "CORS".
-5. Configure the R2 bucket CORS policy using `r2-cors.example.json`. Worker
+6. Configure the R2 bucket CORS policy using `r2-cors.example.json` (or the
+   checked-in production file). Worker
    CORS protects the signer; bucket CORS protects the browser's direct PUT.
    `Content-Length` and `Cache-Control` must be allowed — both are signed.
-6. Abort incomplete multipart uploads, which otherwise accumulate invisibly
+7. Abort incomplete multipart uploads, which otherwise accumulate invisibly
    and are billed:
 
 ```powershell
-wrangler r2 bucket lifecycle add shattab-public-media abort-stale-multipart "" --abort-multipart-days 1
+npx wrangler r2 bucket lifecycle add shattab-public-media abort-incomplete-multipart public/ --abort-multipart-days=1 --force
 ```
 
-7. Run `npm run typecheck`, `npm test`, and `npm run deploy:dry`.
-8. Deploy only after the authenticated upload, delete, and purge flows have
+8. Run `npm run typecheck`, `npm test`, and `npm run deploy:dry`.
+9. Deploy only after the authenticated upload, delete, and purge flows have
    been tested against a non-production bucket. `npm test` verifies the SigV4
    signature against an independent reference implementation, but only a live
    PUT proves R2 agrees.
@@ -43,6 +47,11 @@ The Flutter app intentionally keeps R2 disabled until the deployed Worker,
 public hostname, CORS policy, and secrets have all passed the smoke test.
 Enable only the public categories that have been explicitly reviewed; private
 verification and payment media never use this Worker.
+
+For the current Shattab account, the bucket and production CORS policy are
+already created. The remaining external setup is the `shattab.app` Cloudflare
+zone (for `media.shattab.app`), a signer target, and a bucket-scoped R2 Object
+Read & Write token. Keep the app rollout disabled until those are verified.
 
 ## Endpoints
 

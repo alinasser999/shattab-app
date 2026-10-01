@@ -1,109 +1,37 @@
-# Shattab (شطب) — Egyptian Contractor Hiring Marketplace
+# Shattab (شطب) — Product Brief
 
-## Register
+> This is a product brief, not a release-status report. For the checked-in code map, current authentication behavior, CI commands, migration evidence, and verification limits, see the [maintained agent handoff](docs/AGENT_HANDOFF.md).
 
-product
+## Product purpose
 
-## One-Liner
+Shattab connects Egyptian homeowners who need renovation or finishing work with contractors and other renovation professionals. Homeowners can discover profiles, publish work briefs, compare quotes, and review completed work. Contractors can find relevant opportunities, respond to direct requests, send quotes, and present portfolio work.
 
-Mobile marketplace connecting Egyptian homeowners with verified contractors for renovation and finishing jobs. Homeowners post work briefs; contractors quote, get hired, and build portfolios.
+## Users and roles
 
-## Users
+- **Homeowner (طالب خدمة):** describes a home project, finds professionals, and reviews proposals.
+- **Contractor (مقاول):** manages specialties and service areas, follows opportunities, sends quotes, and maintains a portfolio.
 
-**Homeowners (طالب خدمة):** Egyptian apartment/ villa owners (25–50) who need renovation, finishing, painting, electrical, or plumbing work. They want to discover vetted contractors, compare quotes, check portfolios and reviews, and hire without middlemen. Primary touchpoints: discover screen, brief creation, quote review.
+The consumer app has these two account roles. Operator-console access is separate and is enforced by the database.
 
-**Contractors (مقاول):** Independent Egyptian finishing contractors, electricians, plumbers, painters (25–55). They want job leads matched to their specialty and service area, a simple quoting flow, an inbox for direct requests, and a portfolio to showcase work. Primary touchpoints: opportunities feed, inbox, portfolio management.
+## Product principles
 
-## Product Purpose
+- **Arabic-first and RTL:** Arabic is the primary product language; English is also supported in the app.
+- **Trust and clarity:** explain contractor information, verification state, quotes, and payment status without implying more certainty than the evidence supports.
+- **Contact without chat:** user-to-user messaging is not part of the product; contact uses phone and WhatsApp handoffs.
+- **Database-enforced access:** Supabase RLS and server-side RPCs enforce data access and privileged transitions.
 
-Solve the trust and discovery problem in Egypt's fragmented home renovation market. Homeowners don't know who to trust; contractors can't find consistent leads. Shattab bridges both sides with phone OTP auth (no passwords), role-based onboarding, specialty/area matching, WhatsApp/Call contact (no in-app chat), and a quotes system.
+## Authentication status
 
-## Tech Stack
+The product policy needs a decision. The current Flutter login source offers phone/password sign-in and sign-up, Google, and Apple on supported Apple platforms. SMS OTP remains in signup confirmation, password recovery, and the guest write-action flow. Older text in this file described OTP-only access; it is historical and is not a reliable description of the current implementation. Do not change authentication behavior based on this note alone.
 
-- **Client:** Flutter 3.41 (Android + iOS, no web/desktop)
-- **Backend:** Supabase (Postgres, Auth, Storage, RLS)
-- **State:** Riverpod 3.x with codegen (`riverpod_annotation`)
-- **Routing:** go_router v17 with `StatefulShellRoute.indexedStack`
-- **Auth:** Phone OTP only (+20 Egypt), role locked at signup
-- **Contact:** WhatsApp/Call deep links via `url_launcher` (no in-app chat)
-- **Design:** Modern Heritage — terracotta (`#9E3D18`), olive, gold, warm cream
-- **Fonts:** Cairo & Tajawal (Arabic-first with Latin fallback) via google_fonts
+## Brand and interface direction
 
-## Database Schema (Supabase, 4 migrations)
+The in-flight brand direction is Shattab Full Brand Identity, including the Arabic roof-line mark, terracotta (`#9E3D18`), olive, gold, and warm cream. The checked-in Flutter fonts include bundled IBM Plex Sans Arabic and Tajawal. The implemented tokens and assets may be in progress; consult `design-system/`, `design-system/shattab/MASTER.md`, and `lib/core/theme/` before making visual claims.
 
-| Table | Purpose |
-|-------|---------|
-| `profiles` | Auth base — role, name, phone, avatar |
-| `homeowner_profiles` | Apartment type, city/district, renovation interests |
-| `contractor_profiles` | Business name, bio, specialties[], service_areas[], experience |
-| `briefs` | Job posts — description, apt type, city, photos, target specialties, homeowner_id, is_post/direct, status |
-| `saved_contractors` | Homeowner bookmark list (profile_id + contractor_id) |
-| `projects` | Portfolio — title, category, year, location, description, photos[] |
-| `quotes` | Price proposals — brief_id, contractor_id, price_min/max, duration, note, status |
-| `reviews` | Ratings — 1–5 stars, comment, linked to brief + accepted quote |
+Reference photography, sample people, and sample project-work images are concept assets unless separate evidence establishes identity, affiliation, ownership, or verification. Do not present a reference image as proof that a real contractor completed or verified the depicted work.
 
-## Feature Map
+## Current implementation areas
 
-### M1 Foundation (Done)
-- Phone OTP auth with role choice (homeowner | contractor)
-- Onboarding: collect profile details, specialties, service areas
-- Role-aware routing: `/h/*` for homeowner, `/c/*` for contractor
-- Core theme: BatshColors, BatshTypography, BatshSpacing, BatshRadius, BatshShadows, BatshMotion
-- Atomic widgets: BatshCard, BatshChip, BatshButton, BatshScaffold, BatshTextField, BatshShimmer, BatshEmptyState, BatshError, BatshLoading
+The source tree contains Flutter areas for onboarding, role shells, home, discovery, briefs, quotes, inbox, portfolio, reviews, billing, verification, moderation, notifications, and the community feed; a separate Next.js operator console; Supabase functions and migrations; and Cloudflare media-signer source. Their inclusion in the working tree does not establish release readiness or live database/deployment state.
 
-### M2 Customer Core (Done)
-- Homeowner: discover contractors by specialty/city, view profiles, save/bookmark
-- Homeowner: create public brief (post) or send direct request to specific contractor
-- Homeowner: my posts & requests screen
-- Contractor: "فرص شغل" opportunities feed — open briefs matched by specialty ∩ service_area
-- Contact: WhatsApp + Call CTA on every matched brief and quote
-- DB: briefs, saved_contractors tables + storage bucket
-
-### M3 Contractor Core (Done)
-- Quotes: send/receive/accept/decline (one quote per contractor per brief)
-- Contractor inbox (Tab 2): direct requests with quote status badges
-- Contractor portfolio (Tab 3): CRUD projects with photos
-- Homeowner quote review: accept/decline/rate in brief detail
-- Motion: flutter_animate staggered entrances, shimmer skeletons, hero transitions
-
-### M4 (Not started)
-- Push notifications, in-app chat, reviews polish, admin tools
-
-## Shell Structure
-
-### Homeowner (`/h/*`) — 4 tabs
-1. **اكتشف (Discover)** — Contractor search/filter by specialty/city, featured + trending + all contractors
-2. **طلباتي (Requests)** — Own briefs + direct requests, FAB to create new post
-3. **المحفوظات (Saved)** — Saved/bookmarked contractors
-4. **حسابي (Profile)** — Identity card, stats, dark/motion mode toggles, sign out
-
-### Contractor (`/c/*`) — 4 tabs
-1. **فرص شغل (Opportunities)** — Open briefs matched by specialty, filter chips, send quote
-2. **الطلبات (Inbox)** — Direct briefs sent to contractor, quote status badges
-3. **أعمالي (Portfolio)** — CRUD portfolio projects with photos
-4. **حسابي (Profile)** — Contractor showcase, edit profile, sign out
-
-## Design Principles
-
-1. **Trust first** — Terracotta primary anchors warmth and reliability; clear labels, verified contractor badges, transparent pricing
-2. **Egyptian Modern Heritage** — Warm cream surfaces, olive secondary (growth/trust), gold tertiary (craft/value), not generic SaaS tones
-3. **Arabic-native, not translated** — RTL by default, Arabic-first fonts (Cairo + Tajawal), all copy in `strings.dart`
-4. **Contact, not chat** — All connections happen via WhatsApp/Call. No in-app messaging keeps scope focused and trust high
-5. **Skeletons before spinners** — Every async surface shows shimmer skeletons, never `CircularProgressIndicator` in the middle of content
-
-## Accessibility & Inclusion
-
-- Arabic RTL throughout — text direction, alignment, nav flow
-- Phone OTP only — no email/password barrier in a market where email is not universal
-- Minimum touch targets 44×44dp
-- Reduced motion respected via `BatshMotion` tokens
-- WCAG AA contrast target — terracotta on cream tested via BatshColors
-
-## Key Conventions
-
-- All Arabic copy in `lib/core/l10n/strings.dart` class `S`
-- `Batsh*` widgets only — no bare Material widgets outside theme layer
-- `package:batsh/...` imports (repo name not changed from original `batsh`)
-- `.value` not `.valueOrNull` (removed in Riverpod 3)
-- Custom `copyWith` + `fromJson` for domain models (no freezed unless 8+ fields)
-- `flutter_animate` for all animations, `Cairo` for display, `Tajawal` for body
+See [docs/AGENT_HANDOFF.md](docs/AGENT_HANDOFF.md) for the maintained architecture map, setup, current snapshot context, and database limitations.

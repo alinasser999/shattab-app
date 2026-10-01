@@ -1,20 +1,24 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../core/l10n/catalog_labels.dart';
+import '../../../../core/cache/media_cache.dart';
 import '../../../../core/l10n/l10n_extension.dart';
 import '../../../../core/theme/batsh_colors.dart';
+import '../../../../core/theme/batsh_border_width.dart';
 import '../../../../core/theme/batsh_icon_size.dart';
 import '../../../../core/theme/batsh_radius.dart';
 import '../../../../core/theme/batsh_shadows.dart';
 import '../../../../core/theme/batsh_spacing.dart';
 import '../../../../core/theme/batsh_typography.dart';
 import '../../../../core/theme/theme_extension.dart';
+import '../../../../core/utils/image_url.dart';
+import '../../../../core/widgets/batsh_initial_plate.dart';
 import '../../../../core/widgets/batsh_pressable.dart';
 import '../../../../core/widgets/shattab_pattern.dart';
 import '../../../portfolio/domain/portfolio_project.dart';
 import '../../domain/contractor_listing.dart';
 import '../../domain/trust_signals.dart';
-import 'mockup_assets.dart';
 
 /// Screen edges for the professional profile.
 const double profileGutter = BatshSpacing.marginMobile;
@@ -405,7 +409,7 @@ class _Tab extends StatelessWidget {
       button: true,
       selected: selected,
       label: label,
-      child: InkWell(
+      child: BatshPressable(
         onTap: onTap,
         child: Container(
           constraints: const BoxConstraints(minHeight: BatshSpacing.minHitArea),
@@ -414,8 +418,8 @@ class _Tab extends StatelessWidget {
           decoration: BoxDecoration(
             border: Border(
               bottom: BorderSide(
-                color: selected ? color : Colors.transparent,
-                width: 2.5,
+                color: selected ? color : context.colorScheme.surface,
+                width: BatshBorderWidth.strong,
               ),
             ),
           ),
@@ -513,9 +517,9 @@ class _ExpandToggle extends StatelessWidget {
       button: true,
       expanded: expanded,
       label: label,
-      child: InkWell(
+      child: BatshPressable(
         onTap: onTap,
-        borderRadius: BatshRadius.brSm,
+        semanticLabel: label,
         child: Container(
           constraints: const BoxConstraints(minHeight: BatshSpacing.minHitArea),
           alignment: AlignmentDirectional.centerStart,
@@ -576,7 +580,7 @@ class ProfileServicesRow extends StatelessWidget {
         separatorBuilder: (_, _) => const SizedBox(width: BatshSpacing.xs),
         itemBuilder: (_, index) {
           final key = specialties[index];
-          final label = localizedSpecialtyLabel(context, key);
+          final label = localizedSpecialtyDisplayLabel(context, key);
           return SizedBox(
             width: _tileWidth,
             child: Semantics(
@@ -731,34 +735,31 @@ class _FilterChip extends StatelessWidget {
       button: true,
       selected: selected,
       label: label,
-      child: Material(
-        color: selected
-            ? context.colorScheme.primary
-            : context.colorScheme.surfaceContainerLowest,
-        borderRadius: BatshRadius.brFull,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BatshRadius.brFull,
-          child: Container(
-            alignment: Alignment.center,
-            padding: const EdgeInsets.symmetric(horizontal: BatshSpacing.md),
-            decoration: BoxDecoration(
-              borderRadius: BatshRadius.brFull,
-              border: Border.all(
-                color: selected
-                    ? context.colorScheme.primary
-                    : context.colorScheme.outlineVariant,
-              ),
+      child: BatshPressable(
+        onTap: onTap,
+        semanticLabel: label,
+        child: Container(
+          decoration: BoxDecoration(
+            color: selected
+                ? context.colorScheme.primary
+                : context.colorScheme.surfaceContainerLowest,
+            borderRadius: BatshRadius.brFull,
+            border: Border.all(
+              color: selected
+                  ? context.colorScheme.primary
+                  : context.colorScheme.outlineVariant,
             ),
-            child: ExcludeSemantics(
-              child: Text(
-                label,
-                style: BatshTypography.labelMd.copyWith(
-                  color: selected
-                      ? context.colorScheme.onPrimary
-                      : context.colorScheme.onSurfaceVariant,
-                  fontWeight: FontWeight.w700,
-                ),
+          ),
+          alignment: Alignment.center,
+          padding: const EdgeInsets.symmetric(horizontal: BatshSpacing.md),
+          child: ExcludeSemantics(
+            child: Text(
+              label,
+              style: BatshTypography.labelMd.copyWith(
+                color: selected
+                    ? context.colorScheme.onPrimary
+                    : context.colorScheme.onSurfaceVariant,
+                fontWeight: FontWeight.w700,
               ),
             ),
           ),
@@ -785,14 +786,17 @@ class _ProjectTile extends StatelessWidget {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            MockupImage(url: project.coverPhotoUrl, memCacheWidth: 520),
-            const IgnorePointer(
+            _ProjectMedia(project: project),
+            IgnorePointer(
               child: DecoratedBox(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.bottomCenter,
                     end: Alignment.center,
-                    colors: [Color(0xD9000000), Color(0x00000000)],
+                    colors: [
+                      BatshColors.scrim,
+                      BatshColors.scrim.withValues(alpha: 0),
+                    ],
                   ),
                 ),
               ),
@@ -815,7 +819,7 @@ class _ProjectTile extends StatelessWidget {
                   child: Text(
                     context.l10n.completedProjectsShort,
                     style: BatshTypography.labelSm.copyWith(
-                      color: Colors.white,
+                      color: BatshColors.onPrimary,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
@@ -835,7 +839,7 @@ class _ProjectTile extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: BatshTypography.labelMd.copyWith(
-                        color: Colors.white,
+                        color: BatshColors.onPrimary,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -844,8 +848,8 @@ class _ProjectTile extends StatelessWidget {
                         children: [
                           const Icon(
                             Icons.place_outlined,
-                            size: 13,
-                            color: Colors.white,
+                            size: BatshIconSize.xs,
+                            color: BatshColors.onPrimary,
                           ),
                           const SizedBox(width: BatshSpacing.xxxs),
                           Flexible(
@@ -854,7 +858,9 @@ class _ProjectTile extends StatelessWidget {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: BatshTypography.labelSm.copyWith(
-                                color: Colors.white.withValues(alpha: 0.86),
+                                color: BatshColors.onPrimary.withValues(
+                                  alpha: 0.86,
+                                ),
                               ),
                             ),
                           ),
@@ -867,6 +873,28 @@ class _ProjectTile extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _ProjectMedia extends StatelessWidget {
+  const _ProjectMedia({required this.project});
+
+  final PortfolioProject project;
+
+  @override
+  Widget build(BuildContext context) {
+    final url = project.coverPhotoUrl;
+    if (!isDisplayableImageUrl(url)) {
+      return BatshInitialPlate(name: project.title);
+    }
+    return CachedNetworkImage(
+      imageUrl: sizedImageUrl(url, width: 520),
+      cacheManager: mediaCacheManager,
+      fit: BoxFit.cover,
+      memCacheWidth: 520,
+      placeholder: (_, _) => BatshInitialPlate(name: project.title),
+      errorWidget: (_, _, _) => BatshInitialPlate(name: project.title),
     );
   }
 }
@@ -988,25 +1016,25 @@ class _ClosingButton extends StatelessWidget {
     return Semantics(
       button: true,
       label: context.l10n.profileClosingAction,
-      child: Material(
-        color: context.colorScheme.primary,
-        borderRadius: BatshRadius.brFull,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BatshRadius.brFull,
-          child: Container(
-            height: 52,
-            alignment: Alignment.center,
-            padding: const EdgeInsets.symmetric(horizontal: BatshSpacing.md),
-            child: ExcludeSemantics(
-              child: Text(
-                context.l10n.profileClosingAction,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: BatshTypography.titleMd.copyWith(
-                  color: context.colorScheme.onPrimary,
-                  fontWeight: FontWeight.w700,
-                ),
+      child: BatshPressable(
+        onTap: onTap,
+        semanticLabel: context.l10n.profileClosingAction,
+        child: Container(
+          decoration: BoxDecoration(
+            color: context.colorScheme.primary,
+            borderRadius: BatshRadius.brFull,
+          ),
+          height: 52,
+          alignment: Alignment.center,
+          padding: const EdgeInsets.symmetric(horizontal: BatshSpacing.md),
+          child: ExcludeSemantics(
+            child: Text(
+              context.l10n.profileClosingAction,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: BatshTypography.titleMd.copyWith(
+                color: context.colorScheme.onPrimary,
+                fontWeight: FontWeight.w700,
               ),
             ),
           ),

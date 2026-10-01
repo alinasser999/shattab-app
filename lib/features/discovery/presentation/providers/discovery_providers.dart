@@ -20,6 +20,8 @@ class DiscoveryFiltersController extends _$DiscoveryFiltersController {
       specialty: specialty,
       city: state.city,
       searchQuery: state.searchQuery,
+      sort: state.sort,
+      minimumRating: state.minimumRating,
     );
   }
 
@@ -28,14 +30,45 @@ class DiscoveryFiltersController extends _$DiscoveryFiltersController {
       specialty: state.specialty,
       city: city,
       searchQuery: state.searchQuery,
+      sort: state.sort,
+      minimumRating: state.minimumRating,
     );
   }
 
   void setSearch(String? q) {
+    final normalized = q?.trim();
     state = DiscoveryFilters(
       specialty: state.specialty,
       city: state.city,
-      searchQuery: q,
+      searchQuery: normalized == null || normalized.isEmpty ? null : normalized,
+      // The search RPC orders by match rank/name/id. Resetting the catalogue
+      // sort makes that precedence explicit and prevents a stale "top rated"
+      // label from describing a relevance-ordered result set.
+      sort: normalized == null || normalized.isEmpty
+          ? state.sort
+          : DiscoverySort.name,
+      minimumRating: state.minimumRating,
+    );
+  }
+
+  void setSort(DiscoverySort sort) {
+    if (sort == state.sort) return;
+    state = DiscoveryFilters(
+      specialty: state.specialty,
+      city: state.city,
+      searchQuery: state.searchQuery,
+      sort: sort,
+      minimumRating: state.minimumRating,
+    );
+  }
+
+  void setMinimumRating(double? rating) {
+    state = DiscoveryFilters(
+      specialty: state.specialty,
+      city: state.city,
+      searchQuery: state.searchQuery,
+      sort: state.sort,
+      minimumRating: rating,
     );
   }
 
@@ -60,6 +93,9 @@ class DiscoverContractors extends _$DiscoverContractors {
   bool _hasMore = true;
   bool _loadingMore = false;
   DiscoveryCursor? _cursor;
+  int _filterGeneration = 0;
+  int _requestSequence = 0;
+  int _activeRequest = 0;
 
   /// Whether more pages may remain — false once a short (< pageSize) page lands.
   bool get hasMore => _hasMore;
@@ -67,10 +103,15 @@ class DiscoverContractors extends _$DiscoverContractors {
   @override
   Future<List<ContractorListing>> build() async {
     final filters = ref.watch(discoveryFiltersControllerProvider);
+    final generation = ++_filterGeneration;
     _loadingMore = false;
+    _activeRequest = ++_requestSequence;
+    _cursor = null;
+    _hasMore = true;
     final page = await ref
         .read(discoveryRepositoryProvider)
         .fetchContractorsPage(filters);
+    if (generation != _filterGeneration) return const [];
     _cursor = page.cursor;
     _hasMore = page.hasMore;
     return page.items;
@@ -82,12 +123,21 @@ class DiscoverContractors extends _$DiscoverContractors {
     if (_loadingMore || !_hasMore) return;
     final current = state.value;
     if (current == null) return;
+    final generation = _filterGeneration;
+    final filters = ref.read(discoveryFiltersControllerProvider);
+    final request = ++_requestSequence;
+    _activeRequest = request;
     _loadingMore = true;
     try {
-      final filters = ref.read(discoveryFiltersControllerProvider);
       final page = await ref
           .read(discoveryRepositoryProvider)
           .fetchContractorsPage(filters, after: _cursor);
+      final currentFilters = ref.read(discoveryFiltersControllerProvider);
+      if (generation != _filterGeneration ||
+          filters != currentFilters ||
+          request != _activeRequest) {
+        return;
+      }
       _cursor = page.cursor;
       _hasMore = page.hasMore;
       final ids = current.map((item) => item.id).toSet();
@@ -96,7 +146,7 @@ class DiscoverContractors extends _$DiscoverContractors {
         ...page.items.where((item) => ids.add(item.id)),
       ]);
     } finally {
-      _loadingMore = false;
+      if (request == _activeRequest) _loadingMore = false;
     }
   }
 }

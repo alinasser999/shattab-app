@@ -21,4 +21,9 @@ abstract final class MarketplaceEvents {
   static const communityCommentCreated = 'community_comment_created';
   static const communityCommentEdited = 'community_comment_edited';
   static const communityCommentDeleted = 'community_comment_deleted';
+  static const assistantOpened = 'assistant_opened';
+  static const assistantMessageSent = 'assistant_message_sent';
+  static const assistantDiscoveryHandoff = 'assistant_discovery_handoff';
+  static const assistantHelpActionSelected = 'assistant_help_action_selected';
+  static const assistantQuickPromptSelected = 'assistant_quick_prompt_selected';
 }

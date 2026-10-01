@@ -19,8 +19,8 @@ Brief _brief({String description = 'تشطيب شقة كاملة'}) => Brief(
   createdAt: DateTime(2026, 8, 1),
 );
 
-Widget _app(Widget child) => MaterialApp(
-  locale: const Locale('ar'),
+Widget _app(Widget child, {Locale locale = const Locale('ar')}) => MaterialApp(
+  locale: locale,
   localizationsDelegates: AppLocalizations.localizationsDelegates,
   supportedLocales: AppLocalizations.supportedLocales,
   theme: BatshTheme.light(),
@@ -65,7 +65,6 @@ void main() {
             onAnnualChanged: (value) => setState(() => annual = value),
             onSubscribe: () {},
             isLoading: false,
-            trialAvailable: true,
           ),
         ),
       ),
@@ -78,7 +77,38 @@ void main() {
 
     expect(find.textContaining('٢٩٩٠'), findsOneWidget);
     expect(find.textContaining('وفّرت'), findsOneWidget);
+    expect(find.textContaining('مجاني'), findsNothing);
+    expect(find.textContaining('تجربة'), findsNothing);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Pro conversion copy makes no trial promise in either locale', (
+    tester,
+  ) async {
+    for (final locale in [const Locale('ar'), const Locale('en')]) {
+      await tester.pumpWidget(
+        _app(
+          RequestsProConversionCard(
+            annual: false,
+            onAnnualChanged: (_) {},
+            onSubscribe: () {},
+            isLoading: false,
+          ),
+          locale: locale,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final visibleText = tester
+          .widgetList<Text>(find.byType(Text))
+          .map((widget) => widget.data ?? widget.textSpan?.toPlainText() ?? '')
+          .join(' ')
+          .toLowerCase();
+      expect(visibleText, isNot(contains('مجاني')));
+      expect(visibleText, isNot(contains('تجربة')));
+      expect(visibleText, isNot(contains('free month')));
+      expect(visibleText, isNot(contains('free trial')));
+    }
   });
 
   testWidgets('usage banner exposes the Pro state', (tester) async {

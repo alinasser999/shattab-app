@@ -1,3 +1,6 @@
+import '../../../core/catalog/specialty_catalog.dart';
+import '../../discovery/domain/contractor_listing.dart';
+
 enum ApartmentType {
   studio,
   oneBedroom,
@@ -43,8 +46,10 @@ class HomeownerProfile {
 
   bool get hasApartmentType => apartmentType != null;
   bool get hasLocation =>
-      (city?.isNotEmpty ?? false) && (district?.isNotEmpty ?? false);
-  bool get hasInterests => renovationInterests.isNotEmpty;
+      (city?.trim().isNotEmpty ?? false) &&
+      (district?.trim().isNotEmpty ?? false);
+  bool get hasInterests =>
+      renovationInterests.any((interest) => interest.trim().isNotEmpty);
 
   HomeownerProfile copyWith({
     ApartmentType? apartmentType,
@@ -83,6 +88,7 @@ class ContractorProfile {
     this.yearsExperience,
     this.plan = 'free',
     this.planExpiresAt,
+    this.providerKind = ProviderKind.contractor,
   });
 
   final String profileId;
@@ -94,6 +100,7 @@ class ContractorProfile {
   final int? yearsExperience;
   final String plan;
   final DateTime? planExpiresAt;
+  final ProviderKind providerKind;
 
   /// Active Pro = plan 'pro' and not expired. Drives the lead-gate: a free
   /// contractor sees an upgrade CTA instead of the send-quote action, and the
@@ -103,11 +110,25 @@ class ContractorProfile {
       planExpiresAt != null &&
       planExpiresAt!.isAfter(DateTime.now());
 
-  bool get hasBusinessName =>
-      businessName != null && businessName!.trim().isNotEmpty;
-  bool get hasSpecialties => specialties.isNotEmpty;
-  bool get hasServiceAreas => serviceAreas.isNotEmpty;
+  bool get hasBusinessName => (businessName?.trim().length ?? 0) >= 2;
+  bool get requiresBusinessName => providerKind.requiresBusinessName;
+  bool get hasSpecialties =>
+      specialties.any((specialty) => specialty.trim().isNotEmpty);
+  bool get hasServiceAreas =>
+      serviceAreas.any((area) => area.trim().isNotEmpty);
   bool get hasExperience => yearsExperience != null;
+
+  /// The personal name is captured in Role Select. Only organization kinds
+  /// require a separate business name before the opportunities feed.
+  bool hasRequiredIdentity({String? responsibleName}) {
+    final hasResponsibleName = (responsibleName?.trim().length ?? 0) >= 2;
+    return hasResponsibleName && (!requiresBusinessName || hasBusinessName);
+  }
+
+  List<String> get normalizedSpecialties =>
+      SpecialtyCatalog.normalizeSelection(specialties);
+
+  List<String> get rootSpecialties => SpecialtyCatalog.rootKeys(specialties);
 
   ContractorProfile copyWith({
     String? businessName,
@@ -118,6 +139,7 @@ class ContractorProfile {
     int? yearsExperience,
     String? plan,
     DateTime? planExpiresAt,
+    ProviderKind? providerKind,
   }) => ContractorProfile(
     profileId: profileId,
     businessName: businessName ?? this.businessName,
@@ -128,6 +150,7 @@ class ContractorProfile {
     yearsExperience: yearsExperience ?? this.yearsExperience,
     plan: plan ?? this.plan,
     planExpiresAt: planExpiresAt ?? this.planExpiresAt,
+    providerKind: providerKind ?? this.providerKind,
   );
 
   factory ContractorProfile.fromJson(Map<String, dynamic> json) =>
@@ -147,7 +170,14 @@ class ContractorProfile {
         planExpiresAt: json['plan_expires_at'] == null
             ? null
             : DateTime.parse(json['plan_expires_at'] as String),
+        providerKind: ProviderKind.fromWire(json['provider_kind'] as String?),
       );
+}
+
+extension ProviderKindBusinessNameRequirement on ProviderKind {
+  bool get requiresBusinessName =>
+      this == ProviderKind.engineeringOffice ||
+      this == ProviderKind.finishingCompany;
 }
 
 /// Reference data for onboarding pickers (Arabic display, dbValue is what we persist).
@@ -183,28 +213,6 @@ class OnboardingCatalog {
       districts: ['سموحة', 'سيدي جابر', 'العجمي', 'محرم بك', 'ميامي'],
     ),
   ];
-
-  static const Map<String, String> interestsCatalog = {
-    'paint': 'دهانات',
-    'flooring': 'أرضيات',
-    'kitchen': 'مطبخ',
-    'bathroom': 'حمام',
-    'electrical': 'كهرباء',
-    'plumbing': 'سباكة',
-    'full_reno': 'تشطيب كامل',
-  };
-
-  static const Map<String, String> specialtiesCatalog = {
-    'paint': 'دهانات',
-    'flooring': 'أرضيات',
-    'kitchen': 'مطابخ',
-    'bathroom': 'حمامات',
-    'electrical': 'كهرباء',
-    'plumbing': 'سباكة',
-    'carpentry': 'نجارة',
-    'design': 'تصميم داخلي',
-    'full_reno': 'تشطيب كامل',
-  };
 
   static const Map<ApartmentType, String> apartmentLabels = {
     ApartmentType.studio: 'استوديو',

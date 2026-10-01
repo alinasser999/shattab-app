@@ -64,6 +64,24 @@ void main() {
         isTrue,
       );
     });
+
+    test('matches the newly catalogued service roots', () {
+      expect(matchesSpecialtyFilters(['hvac'], {SpecialtyFilter.hvac}), isTrue);
+      expect(
+        matchesSpecialtyFilters(
+          ['gypsum_board'],
+          {SpecialtyFilter.gypsumBoard},
+        ),
+        isTrue,
+      );
+      expect(
+        matchesSpecialtyFilters(
+          ['flooring:ceramic'],
+          {SpecialtyFilter.flooring},
+        ),
+        isTrue,
+      );
+    });
   });
 
   group('SpecialtyFilter.selectedFrom', () {

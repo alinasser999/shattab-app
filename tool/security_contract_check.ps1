@@ -206,7 +206,7 @@ Require-Text $adminMostBlocked 'create or replace function public\.admin_most_bl
   'Moderation block aggregation must be database-backed.'
 Require-Text $adminMostBlocked 'having count\(\*\) >= 2' `
   'Moderation block aggregation must exclude single-user noise.'
-Require-Text $rlsRegression 'select plan\(20\)' `
+Require-Text $rlsRegression 'select plan\(27\)' `
   'RLS regression coverage must keep its expected assertion count explicit.'
 Require-Text $rlsRegression 'get_homeowner_contact_for_brief' `
   'RLS regression coverage must include the homeowner-contact boundary.'

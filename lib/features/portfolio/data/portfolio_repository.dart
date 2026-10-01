@@ -100,6 +100,37 @@ class PortfolioRepository {
     return PortfolioProject.fromJson(row);
   }
 
+  Future<bool> isProjectSaved(String projectId) async {
+    final homeownerId = _client.auth.currentUser?.id;
+    if (homeownerId == null) return false;
+    final row = await _client
+        .from('saved_portfolio_projects')
+        .select('project_id')
+        .eq('homeowner_id', homeownerId)
+        .eq('project_id', projectId)
+        .maybeSingle();
+    return row != null;
+  }
+
+  Future<void> saveProject(String projectId) async {
+    final homeownerId = _client.auth.currentUser?.id;
+    if (homeownerId == null) throw StateError('No authenticated user.');
+    await _client.from('saved_portfolio_projects').upsert({
+      'homeowner_id': homeownerId,
+      'project_id': projectId,
+    }, onConflict: 'homeowner_id, project_id');
+  }
+
+  Future<void> unsaveProject(String projectId) async {
+    final homeownerId = _client.auth.currentUser?.id;
+    if (homeownerId == null) return;
+    await _client
+        .from('saved_portfolio_projects')
+        .delete()
+        .eq('homeowner_id', homeownerId)
+        .eq('project_id', projectId);
+  }
+
   Future<PortfolioProject> create({
     required String contractorId,
     required String title,
@@ -200,7 +231,11 @@ class PortfolioRepository {
     await storage.uploadBinary(
       path,
       await ImageCompression.prepare(uploadBytes),
-      fileOptions: const FileOptions(upsert: true, contentType: 'image/jpeg'),
+      fileOptions: const FileOptions(
+        upsert: true,
+        contentType: 'image/jpeg',
+        cacheControl: publicMediaMutableCacheControl,
+      ),
     );
     return storage.getPublicUrl(path);
   }

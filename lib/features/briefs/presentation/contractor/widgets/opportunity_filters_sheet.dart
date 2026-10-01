@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../../../core/catalog/specialty_catalog.dart';
+import '../../../../../core/l10n/catalog_labels.dart';
 import '../../../../../core/l10n/l10n_extension.dart';
 import '../../../../../core/theme/batsh_icon_size.dart';
 import '../../../../../core/theme/batsh_radius.dart';
@@ -164,14 +166,17 @@ class _OpportunityFiltersSheetState extends State<_OpportunityFiltersSheet> {
                     spacing: BatshSpacing.sm,
                     runSpacing: BatshSpacing.sm,
                     children: [
-                      for (final entry
-                          in OnboardingCatalog.specialtiesCatalog.entries)
+                      for (final root in SpecialtyCatalog.roots)
                         _Choice(
-                          label: entry.value,
-                          selected: _filters.specialties.contains(entry.key),
+                          label: localizedSpecialtyLabel(context, root.key),
+                          selected: SpecialtyCatalog.rootKeys(
+                            _filters.specialties,
+                          ).contains(root.key),
                           onSelected: () {
-                            final next = {..._filters.specialties};
-                            if (!next.remove(entry.key)) next.add(entry.key);
+                            final next = SpecialtyCatalog.rootKeys(
+                              _filters.specialties,
+                            ).toSet();
+                            if (!next.remove(root.key)) next.add(root.key);
                             setState(
                               () => _filters = _filters.copyWith(
                                 specialties: next,

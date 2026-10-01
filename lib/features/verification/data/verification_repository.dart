@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/models/draft_photo.dart';
+import '../../../core/media/media_storage.dart';
 import '../../../core/supabase/supabase_provider.dart';
 import '../../../core/utils/image_compression.dart';
 import '../../../core/utils/upload_policy.dart';
@@ -65,6 +66,7 @@ class VerificationRepository {
           // risk without enabling a real verification workflow.
           upsert: false,
           contentType: 'image/jpeg',
+          cacheControl: privateMediaCacheControl,
         ),
       );
       paths.add(name);

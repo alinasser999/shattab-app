@@ -112,8 +112,55 @@ export const PROVIDER_KIND_LABEL: Record<string, string> = {
   engineering_office: 'Engineering office',
   finishing_company: 'Finishing company',
   interior_designer: 'Interior designer',
+  specialized_provider: 'Specialized office/company',
   tradesman: 'Tradesman',
 };
+
+const SPECIALTY_LABEL: Record<string, string> = {
+  paint: 'Painting',
+  flooring: 'Flooring',
+  kitchen: 'Kitchens',
+  bathroom: 'Bathrooms',
+  electrical: 'Electrical',
+  plumbing: 'Plumbing',
+  carpentry: 'Carpentry',
+  design: 'Interior design',
+  full_reno: 'Full renovation',
+  plastering: 'Plastering',
+  gypsum_board: 'Gypsum board and ceilings',
+  marble_granite: 'Marble and granite',
+  aluminum_upvc: 'Aluminum and UPVC',
+  hvac: 'Air conditioning and ventilation',
+  'flooring:ceramic': 'Ceramic',
+  'flooring:porcelain': 'Porcelain',
+};
+
+const SPECIALTY_PARENT: Record<string, string> = {
+  'flooring:ceramic': 'flooring',
+  'flooring:porcelain': 'flooring',
+};
+
+export function formatSpecialties(values: string[] | null | undefined): string {
+  const roots: string[] = [];
+  const details: string[] = [];
+  const seen = new Set<string>();
+  for (const raw of values ?? []) {
+    const key = raw.trim();
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    if (SPECIALTY_PARENT[key]) details.push(key);
+    else roots.push(key);
+  }
+  return [...roots, ...details]
+    .map((key) => {
+      const label = SPECIALTY_LABEL[key] ?? 'Other specialty';
+      const parent = SPECIALTY_PARENT[key];
+      return parent
+        ? `${SPECIALTY_LABEL[parent] ?? 'Flooring'} · ${label}`
+        : label;
+    })
+    .join(', ') || '—';
+}
 
 export const REPORT_REASON_LABEL: Record<string, string> = {
   spam: 'Spam',

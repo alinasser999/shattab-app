@@ -9,6 +9,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_web_plugins:
+    sdk: flutter
   flutter_localizations:
     sdk: flutter
 
@@ -57,6 +59,7 @@ dependencies:
   # Connectivity transitions, so an error screen can retry itself when the
   # signal comes back instead of waiting for the user to keep tapping.
   connectivity_plus: ^6.1.0
+  web: ^1.1.1
 
 dev_dependencies:
   flutter_test:
@@ -94,6 +97,18 @@ flutter:
           weight: 600
         - asset: assets/fonts/IBMPlexSansArabic-700.ttf
           weight: 700
+    - family: Tajawal
+      fonts:
+        - asset: assets/fonts/Tajawal-400.ttf
+          weight: 400
+        - asset: assets/fonts/Tajawal-500.ttf
+          weight: 500
+        - asset: assets/fonts/Tajawal-700.ttf
+          weight: 700
+        - asset: assets/fonts/Tajawal-800.ttf
+          weight: 800
+        - asset: assets/fonts/Tajawal-900.ttf
+          weight: 900
 
 flutter_launcher_icons:
   android: "ic_launcher"

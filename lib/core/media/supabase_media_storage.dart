@@ -27,10 +27,15 @@ class SupabaseMediaStorage implements MediaStorageService {
     UploadPolicy.validateImageBytes(uploadBytes);
     final path = supabasePath ?? '$userId/$fileName';
     final storage = _client.storage.from(category.supabaseBucket);
+    final cacheControl = mediaCacheControlFor(category, upsert: upsert);
     await storage.uploadBinary(
       path,
       uploadBytes,
-      fileOptions: FileOptions(upsert: upsert, contentType: uploadContentType),
+      fileOptions: FileOptions(
+        upsert: upsert,
+        contentType: uploadContentType,
+        cacheControl: cacheControl,
+      ),
     );
     return MediaUploadResult(
       url: storage.getPublicUrl(path),

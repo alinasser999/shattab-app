@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import 'package:batsh/core/l10n/l10n_extension.dart';
 
+import '../../../core/catalog/specialty_catalog.dart';
+
 /// Joined view of a contractor — `profiles` row + `contractor_profiles` row.
 class ContractorListing {
   const ContractorListing({
@@ -151,7 +153,9 @@ class ContractorListing {
       logoUrl: cp?['logo_url'] as String?,
       coverPhotoUrl: cp?['cover_photo_url'] as String?,
       headline: cp?['headline'] as String?,
-      specialties: ((cp?['specialties'] as List?) ?? const []).cast<String>(),
+      specialties: SpecialtyCatalog.normalizeSelection(
+        ((cp?['specialties'] as List?) ?? const []).cast<String>(),
+      ),
       serviceAreas: ((cp?['service_areas'] as List?) ?? const [])
           .cast<String>(),
       yearsExperience: cp?['years_experience'] as int?,
@@ -209,6 +213,7 @@ enum ProviderKind {
   engineeringOffice,
   finishingCompany,
   interiorDesigner,
+  specializedProvider,
   tradesman;
 
   /// snake_case value as stored in Postgres.
@@ -218,6 +223,7 @@ enum ProviderKind {
     ProviderKind.engineeringOffice => 'engineering_office',
     ProviderKind.finishingCompany => 'finishing_company',
     ProviderKind.interiorDesigner => 'interior_designer',
+    ProviderKind.specializedProvider => 'specialized_provider',
     ProviderKind.tradesman => 'tradesman',
   };
 
@@ -228,6 +234,7 @@ enum ProviderKind {
     'engineering_office' => ProviderKind.engineeringOffice,
     'finishing_company' => ProviderKind.finishingCompany,
     'interior_designer' => ProviderKind.interiorDesigner,
+    'specialized_provider' => ProviderKind.specializedProvider,
     'tradesman' => ProviderKind.tradesman,
     _ => ProviderKind.contractor,
   };
@@ -241,6 +248,8 @@ enum ProviderKind {
       context.l10n.providerKindEngineeringOffice,
     ProviderKind.finishingCompany => context.l10n.providerKindFinishingCompany,
     ProviderKind.interiorDesigner => context.l10n.providerKindInteriorDesigner,
+    ProviderKind.specializedProvider =>
+      context.l10n.providerKindSpecializedProvider,
     ProviderKind.tradesman => context.l10n.providerKindTradesman,
   };
 
@@ -252,6 +261,7 @@ enum ProviderKind {
     ProviderKind.engineeringOffice => Icons.domain_outlined,
     ProviderKind.finishingCompany => Icons.business_outlined,
     ProviderKind.interiorDesigner => Icons.chair_outlined,
+    ProviderKind.specializedProvider => Icons.storefront_outlined,
     ProviderKind.tradesman => Icons.handyman_outlined,
   };
 }

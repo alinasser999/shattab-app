@@ -5,21 +5,46 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/analytics/app_analytics.dart';
+import '../../../core/catalog/specialty_catalog.dart';
 import '../../../core/supabase/supabase_provider.dart';
 import '../domain/contractor_listing.dart';
 
 part 'discovery_repository.g.dart';
 
+enum DiscoverySort {
+  rating('rating'),
+  name('name'),
+  projects('projects');
+
+  const DiscoverySort(this.wire);
+
+  final String wire;
+}
+
 class DiscoveryFilters {
-  const DiscoveryFilters({this.specialty, this.city, this.searchQuery});
+  const DiscoveryFilters({
+    this.specialty,
+    this.city,
+    this.searchQuery,
+    this.sort = DiscoverySort.name,
+    this.minimumRating,
+  });
 
   final String? specialty;
   final String? city;
   final String? searchQuery;
+  final DiscoverySort sort;
+  final double? minimumRating;
+
+  /// Server filters are always root-level. This keeps a direct/deep-link
+  /// child filter compatible with professionals that only stored the parent.
+  String? get rootSpecialty =>
+      specialty == null ? null : SpecialtyCatalog.rootKeyFor(specialty!);
 
   bool get isEmpty =>
       specialty == null &&
       city == null &&
+      minimumRating == null &&
       (searchQuery == null || searchQuery!.trim().isEmpty);
 }
 
@@ -33,6 +58,7 @@ class DiscoveryCursor {
     this.matchRank,
     this.rating,
     this.ratingCount,
+    this.projectsCompleted,
   });
 
   final String id;
@@ -40,6 +66,7 @@ class DiscoveryCursor {
   final int? matchRank;
   final double? rating;
   final int? ratingCount;
+  final int? projectsCompleted;
 }
 
 class DiscoveryPage {
@@ -71,37 +98,93 @@ class DiscoveryRepository {
   }) async {
     final boundedLimit = limit.clamp(1, 50).toInt();
     final search = filters.searchQuery?.trim() ?? '';
-    final rows = await _client
-        .rpc(
-          search.isNotEmpty
-              ? 'discover_contractors_cursor'
-              : 'list_contractors_cursor',
-          params: search.isNotEmpty
-              ? {
-                  'p_query': search,
-                  'p_specialty': filters.specialty,
-                  'p_city': filters.city,
-                  'p_limit': boundedLimit,
-                  'p_after_rank': after?.matchRank,
-                  'p_after_name': after?.fullName,
-                  'p_after_id': after?.id,
-                }
-              : {
-                  'p_specialty': filters.specialty,
-                  'p_city': filters.city,
-                  'p_limit': boundedLimit,
-                  'p_sort': 'name',
-                  'p_after_name': after?.fullName,
-                  'p_after_id': after?.id,
-                },
-        )
-        .timeout(const Duration(seconds: 15));
+    final usesV2 =
+        search.isEmpty &&
+        (filters.sort == DiscoverySort.projects ||
+            filters.minimumRating != null);
+    final legacyParams = search.isNotEmpty
+        ? {
+            'p_query': search,
+            'p_specialty': filters.rootSpecialty,
+            'p_city': filters.city,
+            'p_limit': boundedLimit,
+            'p_after_rank': after?.matchRank,
+            'p_after_name': after?.fullName,
+            'p_after_id': after?.id,
+          }
+        : {
+            'p_specialty': filters.rootSpecialty,
+            'p_city': filters.city,
+            'p_limit': boundedLimit,
+            'p_sort': filters.sort.wire,
+            'p_only_reviewed': filters.sort == DiscoverySort.rating,
+            'p_after_name': after?.fullName,
+            'p_after_id': after?.id,
+            'p_after_rating': filters.sort == DiscoverySort.rating
+                ? after?.rating
+                : null,
+            'p_after_rating_count': filters.sort == DiscoverySort.rating
+                ? after?.ratingCount
+                : null,
+          };
+    final v2Params = {
+      'p_specialty': filters.rootSpecialty,
+      'p_city': filters.city,
+      'p_limit': boundedLimit,
+      'p_sort': filters.sort.wire,
+      'p_min_rating': filters.minimumRating,
+      'p_after_name': after?.fullName,
+      'p_after_id': after?.id,
+      'p_after_rating': filters.sort == DiscoverySort.rating
+          ? after?.rating
+          : null,
+      'p_after_rating_count': filters.sort == DiscoverySort.rating
+          ? after?.ratingCount
+          : null,
+      'p_after_projects': filters.sort == DiscoverySort.projects
+          ? after?.projectsCompleted
+          : null,
+    };
+    late final dynamic rows;
+    try {
+      rows = await _client
+          .rpc(
+            search.isNotEmpty
+                ? 'discover_contractors_cursor'
+                : usesV2
+                ? 'list_contractors_cursor_v2'
+                : 'list_contractors_cursor',
+            params: usesV2 ? v2Params : legacyParams,
+          )
+          .timeout(const Duration(seconds: 15));
+    } catch (_) {
+      // The forward-compatible v2 RPC is deployed with the app migration. If
+      // a staged environment has not received it yet, keep browsing on the
+      // proven public RPC; only the extra sort/filter fidelity is degraded.
+      if (!usesV2) rethrow;
+      rows = await _client
+          .rpc('list_contractors_cursor', params: legacyParams)
+          .timeout(const Duration(seconds: 15));
+    }
     final rawRows = (rows as List)
         .map((row) => Map<String, dynamic>.from(row as Map))
         .toList();
     final results = rawRows
         .map(ContractorListing.fromJoined)
-        .toList(growable: false);
+        .where(
+          (item) =>
+              filters.minimumRating == null ||
+              (item.hasReviews && item.reviewAvg >= filters.minimumRating!),
+        )
+        .toList();
+    if (filters.sort == DiscoverySort.projects) {
+      results.sort((a, b) {
+        final projectOrder = b.projectsCompleted.compareTo(a.projectsCompleted);
+        if (projectOrder != 0) return projectOrder;
+        final nameOrder = _listingName(a).compareTo(_listingName(b));
+        return nameOrder != 0 ? nameOrder : a.id.compareTo(b.id);
+      });
+    }
 
     // First page only, so this counts searches rather than scroll depth. The
     // query text is intentionally never sent to analytics.
@@ -167,7 +250,13 @@ class DiscoveryRepository {
     final rows = await _client
         .rpc(
           'list_sponsored_contractors',
-          params: {'p_specialty': specialty, 'p_city': city, 'p_limit': 6},
+          params: {
+            'p_specialty': specialty == null
+                ? null
+                : SpecialtyCatalog.rootKeyFor(specialty),
+            'p_city': city,
+            'p_limit': 6,
+          },
         )
         .timeout(const Duration(seconds: 12));
     if (rows is! List) return const [];
@@ -191,8 +280,15 @@ class DiscoveryRepository {
       // page and repeat the collection.
       rating: (profile?['rating_avg'] as num?)?.toDouble() ?? -1,
       ratingCount: (profile?['rating_count'] as num?)?.toInt() ?? 0,
+      projectsCompleted: (profile?['projects_completed'] as num?)?.toInt() ?? 0,
     );
   }
+
+  static String _listingName(ContractorListing listing) =>
+      (listing.businessName.trim().isNotEmpty
+              ? listing.businessName
+              : listing.fullName)
+          .trim();
 
   Future<ContractorListing?> fetchContractor(String id) async {
     final rows = await _client

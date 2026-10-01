@@ -5,6 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:batsh/core/l10n/l10n_extension.dart';
 import '../../../core/theme/batsh_spacing.dart';
 import '../../../core/theme/batsh_typography.dart';
+import '../../../core/utils/phone_number_formatter.dart';
+import '../../../core/utils/error_mapper.dart';
 import '../../../core/utils/extensions.dart';
 import '../../../core/utils/validators.dart';
 import '../../../core/widgets/batsh_button.dart';
@@ -38,25 +40,29 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
       return;
     }
     setState(() => _errorText = null);
-    final ok = await ref.read(otpControllerProvider.notifier).verifyOtp(code);
-    if (!mounted) return;
-    if (!ok) {
-      final error = ref.read(otpControllerProvider).errorMessage;
-      setState(() => _errorText = error ?? context.l10n.invalidOtp);
-    }
+    await ref.read(otpControllerProvider.notifier).verifyOtp(code);
     // On success the router redirect kicks in via currentSessionProvider.
   }
 
   Future<void> _resend() async {
-    final phone = ref.read(otpControllerProvider).phone;
-    if (phone == null) return;
-    await ref.read(otpControllerProvider.notifier).sendOtp(phone);
+    setState(() => _errorText = null);
+    await ref.read(otpControllerProvider.notifier).resendCode();
   }
 
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(otpControllerProvider);
     final isMobile = context.isMobile;
+    final verificationError = state.errorOperation == OtpOperation.verify
+        ? state.errorMessage
+        : null;
+    final resendError = state.errorOperation == OtpOperation.resend
+        ? state.errorMessage
+        : null;
+    final signupPhone =
+        state.purpose == OtpPurpose.signupConfirmation && state.phone != null
+        ? _maskPhone(state.phone!)
+        : null;
 
     return BatshScaffold(
       title: context.l10n.otpTitle,
@@ -73,22 +79,38 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
                     : BatshTypography.headlineLg,
               ),
               const SizedBox(height: BatshSpacing.sm),
-              Text(
-                state.phone ?? '',
-                style: BatshTypography.bodyMd.copyWith(
-                  color: context.colorScheme.onSurfaceVariant,
+              if (signupPhone != null)
+                Semantics(
+                  liveRegion: true,
+                  label: context.l10n.signupOtpSentTo(signupPhone),
+                  child: ExcludeSemantics(
+                    child: Text(
+                      context.l10n.signupOtpSentTo('\u2066$signupPhone\u2069'),
+                      style: BatshTypography.bodyMd.copyWith(
+                        color: context.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                )
+              else
+                Text(
+                  '\u2066${state.phone ?? ''}\u2069',
+                  textDirection: TextDirection.ltr,
+                  style: BatshTypography.bodyMd.copyWith(
+                    color: context.colorScheme.onSurfaceVariant,
+                  ),
                 ),
-              ),
               const SizedBox(height: BatshSpacing.lg),
               BatshTextField(
                 controller: _controller,
+                semanticLabel: context.l10n.otpTitle,
                 hint: context.l10n.otpHint,
                 keyboardType: TextInputType.number,
                 textInputAction: TextInputAction.done,
                 onSubmitted: (_) => _submit(),
-                errorText: _errorText,
+                errorText: _errorText ?? verificationError,
                 inputFormatters: [
-                  FilteringTextInputFormatter.digitsOnly,
+                  LocalizedDigitsOnlyFormatter(),
                   LengthLimitingTextInputFormatter(6),
                 ],
                 autofocus: true,
@@ -104,19 +126,39 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
                 child: TextButton(
                   onPressed: state.canResend ? _resend : null,
                   child: Text(
-                    state.canResend
-                        ? context.l10n.resendCode
-                        : context.l10n.resendInSeconds.replaceAll(
+                    state.cooldownSeconds > 0
+                        ? context.l10n.resendInSeconds.replaceAll(
                             '%s',
                             '${state.cooldownSeconds}',
-                          ),
+                          )
+                        : context.l10n.resendCode,
                   ),
                 ),
               ),
+              if (resendError != null) ...[
+                const SizedBox(height: BatshSpacing.sm),
+                Semantics(
+                  liveRegion: true,
+                  child: Text(
+                    resendError,
+                    textAlign: TextAlign.center,
+                    style: BatshTypography.bodySm.copyWith(
+                      color: context.colorScheme.error,
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
         ),
       ),
     );
   }
+}
+
+String _maskPhone(String phone) {
+  final digits = asciiDigitsOnly(phone);
+  if (digits.length <= 4) return '••••';
+  final countryPrefix = digits.startsWith('20') ? '+20 ' : '';
+  return '$countryPrefix•••• ${digits.substring(digits.length - 4)}';
 }

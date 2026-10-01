@@ -1,3 +1,4 @@
+import '../../../core/catalog/specialty_catalog.dart';
 import '../../onboarding/domain/onboarding_models.dart';
 import '../../portfolio/domain/portfolio_project.dart';
 import 'brief.dart';
@@ -51,7 +52,7 @@ class OpportunityFilters {
       hideApplied;
 
   int get advancedFilterCount =>
-      specialties.length +
+      SpecialtyCatalog.rootKeys(specialties).length +
       (city == null ? 0 : 1) +
       (recency == OpportunityRecency.any ? 0 : 1) +
       (hideApplied ? 1 : 0);
@@ -60,7 +61,7 @@ class OpportunityFilters {
   /// server query. Sort order, applied state, and nearby/not-applied focus
   /// stay client-side; time-window filters are pushed down to the query.
   String get serverQueryKey {
-    final sortedSpecialties = specialties.toList()..sort();
+    final sortedSpecialties = SpecialtyCatalog.rootKeys(specialties)..sort();
     return [
       city ?? '',
       sortedSpecialties.join(','),
@@ -364,8 +365,12 @@ double _ratio(int numerator, int denominator) {
 }
 
 bool _hasIntersection(Iterable<String> left, Iterable<String> right) {
-  final normalizedRight = right.map(_normalizeTaxonomyValue).toSet();
-  return left.map(_normalizeTaxonomyValue).any(normalizedRight.contains);
+  final normalizedRight = SpecialtyCatalog.rootKeys(
+    right,
+  ).map(_normalizeTaxonomyValue).toSet();
+  return SpecialtyCatalog.rootKeys(
+    left,
+  ).map(_normalizeTaxonomyValue).any(normalizedRight.contains);
 }
 
 String _normalizeTaxonomyValue(String value) => value.trim().toLowerCase();

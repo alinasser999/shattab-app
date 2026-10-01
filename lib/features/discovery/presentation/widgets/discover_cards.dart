@@ -1,5 +1,7 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
+import '../../../../core/catalog/specialty_catalog.dart';
 import '../../../../core/l10n/catalog_labels.dart';
 import '../../../../core/l10n/l10n_extension.dart';
 import '../../../../core/theme/batsh_icon_size.dart';
@@ -9,10 +11,11 @@ import '../../../../core/theme/batsh_spacing.dart';
 import '../../../../core/theme/batsh_typography.dart';
 import '../../../../core/theme/theme_extension.dart';
 import '../../../../core/utils/image_url.dart';
+import '../../../../core/cache/media_cache.dart';
 import '../../../../core/widgets/avatar_with_initials.dart';
 import '../../../../core/widgets/batsh_pressable.dart';
+import '../../../../core/widgets/batsh_initial_plate.dart';
 import '../../domain/contractor_listing.dart';
-import 'mockup_assets.dart';
 
 class NearbyProfessionalCard extends StatelessWidget {
   const NearbyProfessionalCard({
@@ -37,70 +40,75 @@ class NearbyProfessionalCard extends StatelessWidget {
       child: BatshPressable(
         onTap: onTap,
         semanticLabel: name,
-        child: Material(
-          color: context.colorScheme.surfaceContainerLowest,
+        child: ClipRRect(
           borderRadius: BatshRadius.brXl,
-          clipBehavior: Clip.antiAlias,
-          child: Directionality(
-            textDirection: TextDirection.ltr,
-            child: Row(
-              children: [
-                SizedBox(
-                  width: 104,
-                  child: Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      MockupImage(
-                        url: hasRealCover
-                            ? listing.coverPhotoUrl
-                            : mockupPortfolioImages[1],
-                        memCacheWidth: 360,
-                      ),
-                      if (!hasRealCover)
-                        const PositionedDirectional(
-                          top: BatshSpacing.xs,
-                          start: BatshSpacing.xs,
-                          child: MockupSampleBadge(),
-                        ),
-                    ],
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: context.colorScheme.surfaceContainerLowest,
+            ),
+            child: Directionality(
+              textDirection: TextDirection.ltr,
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: 104,
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        if (hasRealCover)
+                          CachedNetworkImage(
+                            imageUrl: sizedImageUrl(
+                              listing.coverPhotoUrl!,
+                              width: 360,
+                            ),
+                            cacheManager: mediaCacheManager,
+                            fit: BoxFit.cover,
+                            memCacheWidth: 360,
+                            errorWidget: (_, _, _) =>
+                                BatshInitialPlate(name: name),
+                          )
+                        else
+                          BatshInitialPlate(name: name),
+                      ],
+                    ),
                   ),
-                ),
-                Expanded(
-                  child: Directionality(
-                    textDirection: TextDirection.rtl,
-                    child: Padding(
-                      padding: const EdgeInsets.all(BatshSpacing.sm),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            name,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: BatshTypography.labelLg,
-                          ),
-                          if (area.isNotEmpty)
+                  Expanded(
+                    child: Directionality(
+                      textDirection: TextDirection.rtl,
+                      child: Padding(
+                        padding: const EdgeInsets.all(BatshSpacing.sm),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
                             Text(
-                              area,
-                              maxLines: 1,
+                              name,
+                              maxLines: 2,
                               overflow: TextOverflow.ellipsis,
-                              style: BatshTypography.bodySm.copyWith(
-                                color: context.colorScheme.onSurfaceVariant,
+                              style: BatshTypography.labelLg,
+                            ),
+                            if (area.isNotEmpty)
+                              Text(
+                                area,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: BatshTypography.bodySm.copyWith(
+                                  color: context.colorScheme.onSurfaceVariant,
+                                ),
                               ),
-                            ),
-                          if (listing.hasReviews)
-                            _InlineMetric(
-                              icon: Icons.star_rounded,
-                              value: listing.reviewAvg.toStringAsFixed(1),
-                              label: '(${listing.reviewCount})',
-                            ),
-                        ],
+                            if (listing.hasReviews)
+                              _InlineMetric(
+                                icon: Icons.star_rounded,
+                                value: listing.reviewAvg.toStringAsFixed(1),
+                                label: '(${listing.reviewCount})',
+                              ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -207,32 +215,17 @@ class CategoryStrip extends StatelessWidget {
 
   static const double _itemWidth = 70;
   static const double _plateSize = 58;
-  static const _keys = [
-    'full_reno',
-    'design',
-    'paint',
-    'electrical',
-    'plumbing',
-  ];
-  static const _icons = <String, IconData>{
-    'full_reno': Icons.home_work_outlined,
-    'design': Icons.chair_outlined,
-    'paint': Icons.format_paint_outlined,
-    'electrical': Icons.bolt_outlined,
-    'plumbing': Icons.plumbing_outlined,
-  };
-
   static double heightFor(BuildContext context) =>
       _plateSize + BatshSpacing.xs + MediaQuery.textScalerOf(context).scale(30);
 
   @override
   Widget build(BuildContext context) {
     final items = [
-      for (final key in _keys)
+      for (final key in SpecialtyCatalog.popularRootKeys)
         (
           key: key,
           label: localizedSpecialtyLabel(context, key),
-          icon: _icons[key]!,
+          icon: specialtyIcon(key),
         ),
       (key: '', label: context.l10n.more, icon: Icons.more_horiz_rounded),
     ];

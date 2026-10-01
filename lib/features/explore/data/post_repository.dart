@@ -615,6 +615,7 @@ class PostRepository {
           fileOptions: const FileOptions(
             upsert: false,
             contentType: 'image/jpeg',
+            cacheControl: publicMediaImmutableCacheControl,
           ),
         );
     return _client.storage.from('post-media').getPublicUrl(path);

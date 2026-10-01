@@ -9,10 +9,10 @@ import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'package:batsh/core/l10n/l10n_extension.dart';
-import '../../../../core/debug/debug_config.dart';
+import '../../../../core/debug/debug_flags.dart';
+import '../../../../core/debug/debug_role_override.dart';
 import '../../../../core/utils/error_mapper.dart';
 import '../../../../core/router/routes.dart';
-import '../../../../core/supabase/supabase_provider.dart';
 import '../../briefs/presentation/providers/briefs_providers.dart';
 import '../../billing/presentation/providers/billing_providers.dart';
 import '../../../../core/theme/batsh_radius.dart';
@@ -60,6 +60,7 @@ class ProfileScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final profileAsync = ref.watch(currentProfileProvider);
+    final debugRole = ref.watch(debugRoleOverrideProvider);
 
     return profileAsync.when(
       loading: () => BatshScaffold(
@@ -74,16 +75,17 @@ class ProfileScreen extends ConsumerWidget {
         ),
       ),
       data: (profile) {
-        if (profile == null) {
+        final viewProfile = profileForDebugRole(profile, debugRole);
+        if (viewProfile == null) {
           return BatshScaffold(
             title: context.l10n.profileTitle,
             body: _GuestProfile(),
           );
         }
-        if (profile.role == UserRole.contractor) {
-          return _ContractorProfile(profile: profile);
+        if (viewProfile.role == UserRole.contractor) {
+          return _ContractorProfile(profile: viewProfile);
         }
-        return _HomeownerProfile(profile: profile);
+        return _HomeownerProfile(profile: viewProfile);
       },
     );
   }

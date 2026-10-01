@@ -4,7 +4,7 @@ import { setPlan, setVerified, suspendUser, unsuspendUser } from '@/lib/actions'
 import {
   Avatar, Badge, Button, ErrorState, Input, Label, Panel, Select, Textarea,
 } from '@/components/ui';
-import { PROVIDER_KIND_LABEL, fmtAgo, fmtDateTime, fmtNum, fmtPhone } from '@/lib/format';
+import { formatSpecialties, PROVIDER_KIND_LABEL, fmtAgo, fmtDateTime, fmtNum, fmtPhone } from '@/lib/format';
 
 /**
  * Detail panel for one account.
@@ -135,7 +135,7 @@ export async function UserDrawer({ userId, backHref }: { userId?: string; backHr
                   : 'Free'
             }
           />
-          <Row label="Specialties" value={(d.contractor.specialties ?? []).join(', ') || '—'} rtl />
+          <Row label="Specialties" value={formatSpecialties(d.contractor.specialties)} rtl />
           <Row label="Areas" value={(d.contractor.service_areas ?? []).join(', ') || '—'} rtl />
         </dl>
       ) : null}

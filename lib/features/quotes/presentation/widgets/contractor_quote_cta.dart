@@ -26,7 +26,7 @@ class ContractorQuoteCta extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(myQuoteForBriefProvider(briefId));
-    // Free contractors can quote up to a monthly cap (0025); only a spent quota
+    // Free contractors can quote up to the rolling 30-day cap (0025); only a spent quota
     // shows the paywall. The same rule is enforced in RLS — this is UX, not the
     // security boundary. While the quota is still loading, assume the quote can
     // be sent: briefly flashing the paywall at a paying contractor is worse
@@ -58,7 +58,7 @@ class ContractorQuoteCta extends ConsumerWidget {
           button,
           const SizedBox(height: BatshSpacing.xs),
           Text(
-            context.l10n.quotesLeftThisMonth(remaining!),
+            context.l10n.quotesLeftInRolling30Days(remaining!),
             textAlign: TextAlign.center,
             style: BatshTypography.labelSm.copyWith(
               color: context.colorScheme.onSurfaceVariant,

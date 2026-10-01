@@ -1,7 +1,8 @@
 # Shattab Design System Master
 
-This file is the compact implementation contract for Shattab. The complete
-brand rationale and usage rules live in `docs/brand-identity.md`.
+This file is the compact implementation contract for Shattab. The strategic
+brand rationale lives in `docs/brand-identity.md`; the canonical product UI
+direction lives in `docs/brand-ux-board.md`.
 
 ## Design read
 
@@ -11,13 +12,20 @@ generic real-estate luxury.
 
 ## Source of truth
 
-- Brand rules: `docs/brand-identity.md`
+- Product UI visual source: `docs/brand-ux-board.md`
+- Strategic brand rules: `docs/brand-identity.md`
+- Brand kit handoff: `docs/brand-kit/README.md`
 - Flutter colors: `lib/core/theme/batsh_colors.dart`
 - Flutter typography: `lib/core/theme/batsh_typography.dart`
 - Spacing: `lib/core/theme/batsh_spacing.dart`
 - Radius: `lib/core/theme/batsh_radius.dart`
 - Shadows: `lib/core/theme/batsh_shadows.dart`
 - Motion: `lib/core/theme/batsh_motion.dart`
+
+New product screens must follow the board's screen contracts and identity
+primitives. If feature code needs a visual rule that is not already there,
+update the board first, then express the decision through shared tokens or
+`Batsh*` primitives.
 
 ## Core tokens
 

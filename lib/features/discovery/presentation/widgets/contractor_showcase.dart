@@ -2,6 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../core/widgets/batsh_initial_plate.dart';
+import '../../../../core/l10n/catalog_labels.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -21,7 +22,6 @@ import '../../../../core/widgets/contact_buttons.dart';
 import '../../../../core/widgets/tier_badge.dart';
 import '../../../../core/utils/support_contact.dart';
 import '../../../auth/presentation/sign_in_sheet.dart';
-import '../../../onboarding/domain/onboarding_models.dart';
 import '../../../portfolio/domain/portfolio_project.dart';
 import '../../../portfolio/presentation/providers/portfolio_providers.dart';
 import '../../../reviews/presentation/reviews_sheet.dart';

@@ -1,0 +1,233 @@
+team:
+  id: shattab-software-engineering
+  display_name: Shattab Software Engineering Team
+  version: 1
+  entrypoint: TEAM.md
+  task_artifact_root: artifacts/agent-team
+  activation: one fresh role instance per task; activate the next role only after its handoff artifact exists
+  parent_orchestrator: current-task-agent
+  default_sequence:
+    - system-architect-planner
+    - coder-implementer
+    - code-reviewer-security-auditor
+    - qa-test-runner
+    - devops-release
+  completion_policy:
+    planner_spec_required: true
+    reviewer_blocking_findings_stop: true
+    qa_failure_stops_release: true
+    release_gate_failure_stops_release: true
+    post_review_behavior_change_requires_re_review: true
+
+roles:
+  - id: system-architect-planner
+    name: System Architect / Planner
+    prompt: roles/system-architect-planner.md
+    mode: read_and_specify
+    writes:
+      - artifacts/agent-team/<task-id>/01-architecture.md
+    must_not_write:
+      - application source
+      - tests
+      - build or deployment configuration
+
+  - id: coder-implementer
+    name: Coder / Implementer
+    prompt: roles/coder-implementer.md
+    mode: implement
+    writes:
+      - application files named by the approved architecture artifact
+      - artifacts/agent-team/<task-id>/02-implementation.md
+    must_not_write:
+      - unrelated files
+      - tests owned by QA unless explicitly required as a fixture change
+      - secrets
+
+  - id: code-reviewer-security-auditor
+    name: Code Reviewer / Security Auditor
+    prompt: roles/code-reviewer-security-auditor.md
+    mode: read_only_review
+    writes:
+      - artifacts/agent-team/<task-id>/03-review.md
+    must_not_write:
+      - source code
+      - tests
+      - configuration
+
+  - id: qa-test-runner
+    name: QA & Test Runner
+    prompt: roles/qa-test-runner.md
+    mode: test_and_report
+    writes:
+      - tests and test fixtures only
+      - artifacts/agent-team/<task-id>/04-qa.md
+    must_not_write:
+      - production source
+      - secrets
+      - deployment configuration unless the task is explicitly a test-harness change
+
+  - id: devops-release
+    name: DevOps & Release Agent
+    prompt: roles/devops-release.md
+    mode: release_and_configuration
+    writes:
+      - build, dependency, CI/CD, infrastructure, and environment-template files required by the task
+      - artifacts/agent-team/<task-id>/05-release.md
+    must_not_write:
+      - secret values
+      - feature logic owned by the implementer
+
+conditional_specialists:
+    - id: product-acceptance-analyst
+      name: Product / Acceptance Analyst
+      prompt: roles/product-acceptance-analyst.md
+      conditional: true
+      activation:
+        criteria:
+          - product behavior or a user-visible workflow changes
+          - role semantics, business rules, or acceptance criteria change
+          - the request or available evidence contains unresolved product ambiguity
+        run_before: system-architect-planner
+      run_before: system-architect-planner
+      mode: pre_planning_analysis
+      writes:
+        - artifacts/agent-team/<task-id>/specialist-product-acceptance.md
+      must_not_write:
+        - application source
+        - tests
+        - migrations or SQL
+        - CI, deployment, or infrastructure configuration
+        - dependency or environment files
+        - secrets or credentials
+        - any other role or specialist artifact
+      handoff_artifact: artifacts/agent-team/<task-id>/specialist-product-acceptance.md
+      required_sections:
+        - task_id
+        - artifact_path
+        - files_examined
+        - files_changed
+        - commands
+        - user_and_business_outcome
+        - acceptance_contract
+        - ambiguities_and_questions
+        - non_goals
+        - unresolved_risks
+        - disposition
+      stop_condition:
+        ready: planner can write testable acceptance criteria without guessing
+        blocked: product decision, actor rule, or expected outcome is missing or contradictory
+
+    - id: supabase-schema-rls
+      name: Supabase Schema & RLS Agent
+      prompt: roles/supabase-schema-rls.md
+      conditional: true
+      activation:
+        criteria:
+          - database tables, migrations, SQL, or RPCs are in scope
+          - authentication, storage buckets or policies, RLS, or data access boundaries are in scope
+        run_before: system-architect-planner
+      run_before: system-architect-planner
+      mode: pre_planning_analysis
+      writes:
+        - artifacts/agent-team/<task-id>/specialist-supabase-schema-rls.md
+      must_not_write:
+        - application source
+        - tests
+        - migrations, SQL, or policies
+        - CI, deployment, or infrastructure configuration
+        - dependency or environment files
+        - secrets, service-role keys, or credentials
+        - any other role or specialist artifact
+      handoff_artifact: artifacts/agent-team/<task-id>/specialist-supabase-schema-rls.md
+      required_sections:
+        - task_id
+        - artifact_path
+        - files_examined
+        - files_changed
+        - commands_or_tools
+        - disk_state
+        - live_project_state
+        - schema_and_data_contract
+        - rls_auth_storage_analysis
+        - migration_and_compatibility_constraints
+        - unresolved_risks
+        - disposition
+      stop_condition:
+        ready: data contract and authorization assumptions are evidenced enough for planning
+        blocked: live state is required but inaccessible, access cannot be authorized safely, or compatibility is unresolved
+
+    - id: ux-rtl-accessibility
+      name: UX / Arabic RTL / Accessibility Agent
+      prompt: roles/ux-rtl-accessibility.md
+      conditional: true
+      activation:
+        criteria:
+          - Flutter or admin UI, navigation, forms, or responsive layout is in scope
+          - user-facing copy, loading or error states, motion, or design-system usage is in scope
+        run_before: system-architect-planner
+      run_before: system-architect-planner
+      mode: pre_planning_analysis
+      writes:
+        - artifacts/agent-team/<task-id>/specialist-ux-rtl-accessibility.md
+      must_not_write:
+        - application source
+        - tests
+        - migrations or SQL
+        - CI, deployment, or infrastructure configuration
+        - dependency or environment files
+        - secrets or credentials
+        - any other role or specialist artifact
+      handoff_artifact: artifacts/agent-team/<task-id>/specialist-ux-rtl-accessibility.md
+      required_sections:
+        - task_id
+        - artifact_path
+        - files_examined
+        - files_changed
+        - commands
+        - surfaces_and_states
+        - arabic_localization_and_rtl
+        - accessibility
+        - motion_and_reduced_motion
+        - design_system_and_navigation
+        - required_acceptance_checks
+        - unresolved_risks
+        - disposition
+      stop_condition:
+        ready: affected states and UX constraints are concrete and testable
+        blocked: target surface or design-system contract cannot be inspected, required copy is unavailable, or behavior cannot be verified
+
+handoffs:
+  - from: system-architect-planner
+    to: coder-implementer
+    artifact: 01-architecture.md
+    required_sections: [scope, constraints, file_plan, interfaces, acceptance_criteria, test_plan, risks]
+  - from: coder-implementer
+    to: code-reviewer-security-auditor
+    artifact: 02-implementation.md
+    required_sections: [summary, changed_files, decisions, verification, known_limits]
+  - from: code-reviewer-security-auditor
+    to: qa-test-runner
+    artifact: 03-review.md
+    required_sections: [disposition, findings, security_checks, required_fixes]
+  - from: qa-test-runner
+    to: devops-release
+    artifact: 04-qa.md
+    required_sections: [commands, results, coverage, regressions, release_recommendation]
+  - from: devops-release
+    to: current-task-agent
+    artifact: 05-release.md
+    required_sections: [changed_configuration, gates, deployment_status, rollback, final_disposition]
+
+specialist_handoffs:
+  - from: product-acceptance-analyst
+    to: system-architect-planner
+    artifact: specialist-product-acceptance.md
+    required_sections: [task_id, artifact_path, files_examined, files_changed, commands, user_and_business_outcome, acceptance_contract, ambiguities_and_questions, non_goals, unresolved_risks, disposition]
+  - from: supabase-schema-rls
+    to: system-architect-planner
+    artifact: specialist-supabase-schema-rls.md
+    required_sections: [task_id, artifact_path, files_examined, files_changed, commands_or_tools, disk_state, live_project_state, schema_and_data_contract, rls_auth_storage_analysis, migration_and_compatibility_constraints, unresolved_risks, disposition]
+  - from: ux-rtl-accessibility
+    to: system-architect-planner
+    artifact: specialist-ux-rtl-accessibility.md
+    required_sections: [task_id, artifact_path, files_examined, files_changed, commands, surfaces_and_states, arabic_localization_and_rtl, accessibility, motion_and_reduced_motion, design_system_and_navigation, required_acceptance_checks, unresolved_risks, disposition]

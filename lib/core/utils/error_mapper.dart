@@ -1,5 +1,8 @@
 import '../l10n/strings.dart';
 
+/// The OTP request being reported, independent of the current OTP flow.
+enum OtpOperation { send, resend, verify }
+
 /// Maps exceptions to safe user-facing Arabic error messages.
 /// Never exposes internal error details to users.
 class ErrorMapper {
@@ -16,6 +19,10 @@ class ErrorMapper {
     if (msg.contains('disposed') || msg.contains('ref.mounted')) {
       return S.errServerError;
     }
+
+    // Transport failures must win over generic auth wording. Some Auth/SMS
+    // errors include both an OTP-related term and a network detail.
+    if (_isNetworkError(msg)) return S.errNetwork;
 
     // Auth errors
     if (msg.contains('signups') && msg.contains('disabled')) {
@@ -40,23 +47,8 @@ class ErrorMapper {
         msg.contains('email not confirmed')) {
       return S.errAuthFailed;
     }
-    if (msg.contains('otp') && msg.contains('expired')) {
-      return S.errOtpExpired;
-    }
-    if (msg.contains('otp') || msg.contains('sms') || msg.contains('token')) {
-      return S.errOtpFailed;
-    }
     if (msg.contains('session') && msg.contains('not found')) {
       return S.errSessionExpired;
-    }
-
-    // Network / timeout errors
-    if (msg.contains('network') ||
-        msg.contains('timeout') ||
-        msg.contains('connection') ||
-        msg.contains('socket') ||
-        msg.contains('dns')) {
-      return S.errNetwork;
     }
 
     // Bare error codes raised by our own RPCs (accept_quote in 0009,
@@ -108,4 +100,48 @@ class ErrorMapper {
     // Default
     return S.errServerError;
   }
+
+  /// Maps failures from OTP actions without treating send/provider errors as
+  /// rejected verification codes.
+  static String mapOtp(dynamic error, {required OtpOperation operation}) {
+    final msg = error.toString().toLowerCase();
+    if (_isNetworkError(msg)) return S.errNetwork;
+
+    if (operation != OtpOperation.verify) return S.unknownErrorRetry;
+
+    if (_isExpiredOtpOutcome(msg)) return S.errOtpExpired;
+    if (_isRejectedOtpOutcome(msg)) return S.errOtpFailed;
+    return S.unknownErrorRetry;
+  }
+
+  static bool _isNetworkError(String msg) =>
+      msg.contains('network') ||
+      msg.contains('timeout') ||
+      msg.contains('timed out') ||
+      msg.contains('connection') ||
+      msg.contains('socket') ||
+      msg.contains('dns') ||
+      msg.contains('host lookup');
+
+  static bool _isExpiredOtpOutcome(String msg) =>
+      msg.contains('otp_expired') ||
+      msg.contains('otp expired') ||
+      msg.contains('otp has expired') ||
+      msg.contains('verification code expired') ||
+      msg.contains('code expired') ||
+      msg.contains('token expired') ||
+      msg.contains('token has expired');
+
+  static bool _isRejectedOtpOutcome(String msg) =>
+      msg.contains('otp_invalid') ||
+      msg.contains('invalid otp') ||
+      msg.contains('otp is invalid') ||
+      msg.contains('invalid verification code') ||
+      msg.contains('verification code is invalid') ||
+      msg.contains('invalid code') ||
+      msg.contains('code_invalid') ||
+      msg.contains('invalid token') ||
+      msg.contains('invalid_token') ||
+      msg.contains('token is invalid') ||
+      msg.contains('token_invalid');
 }

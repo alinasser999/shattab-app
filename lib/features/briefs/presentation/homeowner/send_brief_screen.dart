@@ -116,9 +116,13 @@ class _SendBriefScreenState extends ConsumerState<SendBriefScreen> {
 
   Future<void> _submit() async {
     if (ref.read(currentSessionProvider) == null) {
-      await showSignInSheet(context, reason: context.l10n.signInToSendRequest);
-      if (!mounted) return;
-      if (ref.read(currentSessionProvider) == null) return;
+      final completed = await showSignInSheet(
+        context,
+        reason: context.l10n.signInToSendRequest,
+      );
+      if (!completed || !mounted || ref.read(currentSessionProvider) == null) {
+        return;
+      }
     }
     final desc = _descCtrl.text.trim();
     if (desc.length < 10) {

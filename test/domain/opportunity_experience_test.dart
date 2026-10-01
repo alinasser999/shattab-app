@@ -77,6 +77,40 @@ void main() {
   });
 
   test(
+    'matches flooring requests and profiles across parent and child keys',
+    () {
+      final flooringRequest = brief(specialties: const ['flooring:ceramic']);
+      final parentProfile = const ContractorProfile(
+        profileId: 'flooring-parent',
+        specialties: ['flooring'],
+        serviceAreas: ['القاهرة'],
+      );
+      final childProfile = const ContractorProfile(
+        profileId: 'flooring-child',
+        specialties: ['flooring:porcelain'],
+        serviceAreas: ['القاهرة'],
+      );
+
+      expect(
+        calculateOpportunityMatch(
+          brief: flooringRequest,
+          contractor: parentProfile,
+          now: now,
+        ).reasons,
+        contains(OpportunityRecommendationReason.specialtyMatch),
+      );
+      expect(
+        calculateOpportunityMatch(
+          brief: brief(specialties: const ['flooring']),
+          contractor: childProfile,
+          now: now,
+        ).reasons,
+        contains(OpportunityRecommendationReason.specialtyMatch),
+      );
+    },
+  );
+
+  test(
     'filters combine focus, specialty, city, recency, and applied state',
     () {
       final item = brief();
