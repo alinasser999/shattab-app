@@ -214,11 +214,12 @@ class _Footer extends StatelessWidget {
           ],
         ),
         const SizedBox(height: BatshSpacing.gutter),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
+        Wrap(
+          alignment: WrapAlignment.center,
+          spacing: BatshSpacing.xs,
           children: [
             Text(
-              '${context.l10n.loginPrompt} ',
+              context.l10n.loginPrompt,
               style: BatshTypography.bodyMd.copyWith(
                 color: context.colorScheme.onSurfaceVariant,
               ),

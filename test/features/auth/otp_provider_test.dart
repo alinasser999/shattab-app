@@ -33,11 +33,11 @@ void main() {
     expect(repository.signupResendCalls, 0);
     expect(repository.signInOtpCalls, 0);
 
-    final verified = await controller.verifyOtp('synthetic-code-token');
+    final verified = await controller.verifyOtp('123456');
 
     expect(verified, isTrue);
     expect(repository.verifiedPhone, 'opaque-test-phone');
-    expect(repository.verifiedCode, 'synthetic-code-token');
+    expect(repository.verifiedCode, '123456');
     expect(repository.verifyCalls, 1);
     expect(
       container.read(otpControllerProvider).purpose,
@@ -202,7 +202,7 @@ void main() {
     final controller = container.read(otpControllerProvider.notifier);
     controller.beginSignupConfirmation('opaque-test-phone');
 
-    expect(await controller.verifyOtp('synthetic-code-token'), isFalse);
+    expect(await controller.verifyOtp('123456'), isFalse);
     final rejectedState = container.read(otpControllerProvider);
     expect(rejectedState.isVerifying, isFalse);
     expect(rejectedState.errorOperation, OtpOperation.verify);
@@ -211,7 +211,7 @@ void main() {
     repository.nextVerificationResponse = AuthResponse(
       session: _syntheticSession,
     );
-    expect(await controller.verifyOtp('synthetic-code-token'), isTrue);
+    expect(await controller.verifyOtp('123456'), isTrue);
     final acceptedState = container.read(otpControllerProvider);
     expect(acceptedState.isVerifying, isFalse);
     expect(acceptedState.errorOperation, isNull);
@@ -233,7 +233,7 @@ void main() {
     final controller = container.read(otpControllerProvider.notifier);
     controller.beginSignupConfirmation('opaque-test-phone');
 
-    expect(await controller.verifyOtp('synthetic-code-token'), isFalse);
+    expect(await controller.verifyOtp('123456'), isFalse);
     var state = container.read(otpControllerProvider);
     expect(state.isVerifying, isFalse);
     expect(state.errorOperation, OtpOperation.verify);
@@ -243,7 +243,7 @@ void main() {
     repository.nextVerificationResponse = AuthResponse(
       session: _syntheticSession,
     );
-    expect(await controller.verifyOtp('synthetic-code-token'), isTrue);
+    expect(await controller.verifyOtp('123456'), isTrue);
     state = container.read(otpControllerProvider);
     expect(state.isVerifying, isFalse);
     expect(state.errorOperation, isNull);
@@ -268,9 +268,9 @@ void main() {
       final controller = container.read(otpControllerProvider.notifier);
       controller.beginSignupConfirmation('opaque-test-phone');
 
-      final firstAttempt = controller.verifyOtp('first-synthetic-code');
+      final firstAttempt = controller.verifyOtp('123456');
       expect(container.read(otpControllerProvider).isVerifying, isTrue);
-      expect(await controller.verifyOtp('second-synthetic-code'), isFalse);
+      expect(await controller.verifyOtp('654321'), isFalse);
       expect(await controller.sendOtp('another-synthetic-phone'), isFalse);
       expect(await controller.resendCode(), isFalse);
       expect(repository.verifyCalls, 1);
@@ -280,7 +280,7 @@ void main() {
       pendingVerification.complete(AuthResponse(session: _syntheticSession));
       expect(await firstAttempt, isTrue);
       expect(container.read(otpControllerProvider).isVerifying, isFalse);
-      expect(repository.verifiedCode, 'first-synthetic-code');
+      expect(repository.verifiedCode, '123456');
     },
   );
 }

@@ -699,11 +699,15 @@ class _GoogleButton extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: BatshSpacing.sm),
-                Text(
-                  context.l10n.continueWithGoogle,
-                  style: BatshTypography.labelLg.copyWith(
-                    color: context.colorScheme.onSurface,
-                    fontWeight: FontWeight.w700,
+                Flexible(
+                  child: Text(
+                    context.l10n.continueWithGoogle,
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    style: BatshTypography.labelLg.copyWith(
+                      color: context.colorScheme.onSurface,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
               ],
