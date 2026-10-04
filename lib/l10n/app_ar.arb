@@ -446,7 +446,7 @@
   "reviewFilterWithPhotos": "فيها صور",
   "reviewsNoMatch": "مفيش تقييمات بالفلتر ده",
   "reviewsClearFilter": "امسح الفلتر",
-  "ratingOutOfFive": "من ٥",
+  "ratingOutOfFive": "{rating} من 5 نجوم",
   "projectDurationLabel": "مدة التنفيذ",
   "projectDurationMonths": "{n} شهر",
   "@projectDurationMonths": {
@@ -920,8 +920,16 @@
     }
   },
   "debugMode": "وضع التجربة (Debug)",
-  "demoLoginHomeowner": "دخول كصاحب شقة",
-  "demoLoginContractor": "دخول كمحترف",
+  "debugLoginTitle": "دخول حساب المراجعة",
+  "debugLoginHelper": "أدخل البريد الإلكتروني وكلمة المرور لحساب مراجعة موجود. نوع الحساب المسجّل هو اللي بيحدد هتروح لفين.",
+  "debugLoginEmailLabel": "البريد الإلكتروني للحساب",
+  "debugLoginPasswordLabel": "كلمة مرور الحساب",
+  "debugLoginSubmit": "دخول",
+  "debugLoginCancel": "إلغاء",
+  "debugLoginCredentialsRequired": "أدخل البريد الإلكتروني وكلمة المرور.",
+  "debugLoginFailed": "تعذّر تسجيل الدخول بهذا الحساب. راجع البيانات وحاول تاني.",
+  "demoLoginHomeowner": "دخول بحساب صاحب البيت",
+  "demoLoginContractor": "دخول بحساب مقاول",
   "debugRoleSwitcher": "تبديل الدور",
   "debugRoleSwitcherTitle": "اعرض التطبيق بدور مختلف",
   "debugRoleSwitcherBody": "التبديل للعرض فقط. بيانات حسابك وصلاحياتك تفضل مرتبطة بدورك الحقيقي.",
@@ -1254,7 +1262,9 @@
   "workAreaSquareMeters": "{area} متر",
   "@workAreaSquareMeters": {
     "placeholders": {
-      "area": { "type": "int" }
+      "area": {
+        "type": "int"
+      }
     }
   },
   "searchForMatchingOpportunities": "دور على فرص مناسبة لشغلك",
@@ -1288,9 +1298,15 @@
   "opportunityCompactSummary": "{count} مناسبة · {fresh} جديدة النهارده · {area} في مناطق شغلك",
   "@opportunityCompactSummary": {
     "placeholders": {
-      "count": {"type": "int"},
-      "fresh": {"type": "int"},
-      "area": {"type": "int"}
+      "count": {
+        "type": "int"
+      },
+      "fresh": {
+        "type": "int"
+      },
+      "area": {
+        "type": "int"
+      }
     }
   },
   "projectPhotoLabel": "صورة مشروع",
@@ -1347,7 +1363,9 @@
   "opportunityDetailSelectPhoto": "اختيار الصورة {index}",
   "@opportunityDetailSelectPhoto": {
     "placeholders": {
-      "index": { "type": "int" }
+      "index": {
+        "type": "int"
+      }
     }
   },
   "opportunityDetailTiming": "موعد التنفيذ",
@@ -1625,7 +1643,14 @@
   "homeLiveCompleted": "المشروع اكتمل",
   "homeLiveRequestPosted": "اتنشر",
   "homeLiveUnreadCount": "{count} إشعار",
-  "@homeLiveUnreadCount": {"description": "Number of unread notifications shown on the homeowner home activity card", "placeholders": {"count": {"type": "int"}}},
+  "@homeLiveUnreadCount": {
+    "description": "Number of unread notifications shown on the homeowner home activity card",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "quoteSentTitle": "عرضك اتبعت",
   "quoteSentMessage": "صاحب الطلب استلم تفاصيل عرضك. هتوصلك أي تحديثات هنا.",
   "draftRestored": "رجعنا لك المسودة اللي حفظتها",
@@ -1675,7 +1700,6 @@
   "projectPublishedBody": "هنبلغك لما يوصلك عرض جديد.",
   "trackProject": "متابعة المشروع",
   "returnToProfessionals": "العودة للمحترفين",
-  "fieldRequired": "الحقل ده مطلوب",
   "titleTooShort": "اكتب عنواناً أوضح",
   "areaInvalid": "اكتب مساحة صحيحة",
   "descriptionTooShort": "اكتب تفاصيل أكثر عشان نساعدك",
@@ -1721,8 +1745,12 @@
   "onboardingStepLabel": "الخطوة {step} من {total}",
   "@onboardingStepLabel": {
     "placeholders": {
-      "step": { "type": "int" },
-      "total": { "type": "int" }
+      "step": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
     }
   },
   "onboardingStepRole": "نوع حسابك واسمك",
@@ -1770,5 +1798,142 @@
   "onboardingDistrictAgami": "العجمي",
   "onboardingDistrictMoharramBek": "محرم بك",
   "onboardingDistrictMiami": "ميامي",
-  "@@locale": "ar"
+  "@@locale": "ar",
+  "startupRetryMessage": "تعذّر بدء شطّب. جرّب تاني لما الاتصال يرجع.",
+  "chooseStarRating": "اختيار {rating} من 5 نجوم",
+  "@ratingOutOfFive": {
+    "placeholders": {
+      "rating": {
+        "type": "String"
+      }
+    }
+  },
+  "@chooseStarRating": {
+    "placeholders": {
+      "rating": {
+        "type": "String"
+      }
+    }
+  },
+  "removeFilter": "إزالة فلتر {label}",
+  "preferencesSaveFailed": "تعذّر حفظ الاختيار. جرّب تاني.",
+  "preferencesSaving": "جاري حفظ الاختيار…",
+  "@removeFilter": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "addPhotos": "إضافة صور",
+  "photoSelectionFailed": "تعذّر اختيار الصور. جرّب تاني أو راجع إذن الصور.",
+  "closeSheet": "إغلاق",
+  "referenceProfileTitle": "ملف المحترف",
+  "referenceProfessionalsTitle": "المحترفون",
+  "referenceSaveProfessional": "حفظ المحترف",
+  "referenceUnsaveProfessional": "إزالة من المحفوظات",
+  "referencePremiumDisclosure": "ظهور مميز",
+  "referenceAdDisclosure": "إعلان",
+  "referenceVerified": "موثق من شطب",
+  "referenceViewProfile": "عرض الملف",
+  "referenceAbout": "نبذة",
+  "referenceWorks": "الأعمال",
+  "referenceServices": "الخدمات",
+  "referenceAboutProfessional": "نبذة عن المحترف",
+  "referencePreviousWork": "الأعمال السابقة",
+  "referenceServiceAreas": "مناطق الخدمة",
+  "referenceWorkingApproach": "طريقة الشغل",
+  "referenceViewAll": "عرض الكل",
+  "referenceRequestQuote": "اطلب عرض",
+  "referenceMessageProfessional": "راسل المحترف",
+  "referenceMissingBio": "لم يضف المحترف نبذة بعد",
+  "referenceMissingWork": "لم تُضف أعمال سابقة بعد",
+  "referenceSignInContact": "سجّل دخولك للتواصل مع المحترف",
+  "referenceSearchHint": "ابحث عن محترف أو خدمة ...",
+  "referenceAll": "الكل",
+  "referenceInteriorDesign": "تصميم داخلي",
+  "referenceFinishing": "تشطيبات",
+  "referenceKitchen": "مطابخ",
+  "referencePlumbing": "سباكة",
+  "referenceElectricity": "كهرباء",
+  "referenceSort": "ترتيب: ",
+  "referenceCompatible": "الأكثر توافقاً",
+  "referenceRelevant": "الأكثر صلة",
+  "referenceMostProjects": "الأكثر مشاريع",
+  "referenceClient": "عميل شطب",
+  "referenceMyProjects": "مشاريعي",
+  "referenceStepOneTitle": "نفهم احتياجاتك",
+  "referenceStepOneBody": "جلسة مبدئية لشرح أفكارك ومتطلباتك",
+  "referenceStepTwoTitle": "نجهز التصميم والعرض",
+  "referenceStepTwoBody": "مخططات ثنائية وثلاثية الأبعاد واختيار الخامات",
+  "referenceStepThreeTitle": "نتابع التنفيذ والتسليم",
+  "referenceStepThreeBody": "متابعة مستمرة وضمان جودة التنفيذ",
+  "referenceCompletedProjects": "مشروع مكتمل",
+  "referenceYearsExperience": "سنوات خبرة",
+  "referenceProfessionalsCount": "{count} محترف متاح",
+  "@referenceProfessionalsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "referenceDisplayedProfessionalsCount": "{count} محترف معروض",
+  "@referenceDisplayedProfessionalsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "referenceCompletedProjectsCount": "{count} مشروع مكتمل",
+  "@referenceCompletedProjectsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "referenceYearsExperienceCount": "{years} سنوات خبرة",
+  "@referenceYearsExperienceCount": {
+    "placeholders": {
+      "years": {
+        "type": "String"
+      }
+    }
+  },
+  "referenceReviewCount": "({count} تقييم)",
+  "@referenceReviewCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "referenceStarCount": "{count} نجوم",
+  "@referenceStarCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "referenceWorkApproachDisclaimer": "خطوات استرشادية للاتفاق على العمل؛ اتفق على التفاصيل مباشرة مع المحترف.",
+  "professionalContactReviewPrompt": "اشتغلتوا سوا؟ رأيك هيساعد أصحاب بيوت تانية يختاروا بثقة. تقييمك مش هياخد دقيقة.",
+  "professionalContactReviewPrimaryAction": "أقيّم تجربتي",
+  "professionalContactReviewNotTogether": "ما اشتغلناش سوا",
+  "professionalContactReviewDismiss": "إخفاء التذكير",
+  "professionalContactReviewActionFailed": "تعذّر حفظ اختيارك. حاول مرة تانية.",
+  "professionalContactReviewFormIntro": "شاركنا تقييمك لتجربتك. التقييم بحسب إفادتك، ومش تأكيد مستقل على إتمام الشغل.",
+  "professionalContactReviewAttribution": "تجربة بحسب إفادة صاحب البيت؛ بدأ التواصل من خلال شطّب.",
+  "homeownerLocationHint": "حدد المدينة والحي اللي يقع فيه البيت.",
+  "homeownerReferenceSearchHint": "ابحث عن محترف أو خدمة",
+  "homeownerReferenceProfessionalsTitle": "محترفون لمشروعك",
+  "homeownerReferenceWorkTitle": "أعمال تلهمك",
+  "homeownerReferenceStartTitle": "ابدأ مشروع بيتك",
+  "homeownerReferenceStartBody": "احكي لنا عن احتياجك وابدأ بخطوة واضحة.",
+  "homeownerReferenceStartSteps": "حدد احتياجك ← استقبل عروضًا ← اختر المحترف المناسب",
+  "homeownerReferencePhotoUnavailable": "صورة العمل غير متاحة",
+  "homeownerReferenceOffers": "{count} عروض",
+  "@homeownerReferenceOffers": {"placeholders": {"count": {"type": "int"}}}
 }

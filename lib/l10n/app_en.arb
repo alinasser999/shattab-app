@@ -245,7 +245,9 @@
   "communityFilterAnnouncement": "Post filter: {filter}",
   "@communityFilterAnnouncement": {
     "placeholders": {
-      "filter": {"type": "String"}
+      "filter": {
+        "type": "String"
+      }
     }
   },
   "communityAuthorHomeowner": "Homeowner",
@@ -254,7 +256,9 @@
   "communityTimePublic": "Posted {time}",
   "@communityTimePublic": {
     "placeholders": {
-      "time": {"type": "String"}
+      "time": {
+        "type": "String"
+      }
     }
   },
   "createPost": "Create Post",
@@ -442,7 +446,7 @@
   "reviewFilterWithPhotos": "With photos",
   "reviewsNoMatch": "No reviews match this filter",
   "reviewsClearFilter": "Clear filter",
-  "ratingOutOfFive": "out of 5",
+  "ratingOutOfFive": "{rating} out of 5 stars",
   "projectDurationLabel": "Duration",
   "projectDurationMonths": "{n} months",
   "@projectDurationMonths": {
@@ -828,8 +832,12 @@
   "greetingPersonalized": "{greeting}, {name}",
   "@greetingPersonalized": {
     "placeholders": {
-      "greeting": {"type": "String"},
-      "name": {"type": "String"}
+      "greeting": {
+        "type": "String"
+      },
+      "name": {
+        "type": "String"
+      }
     }
   },
   "newJobs": "New Jobs",
@@ -912,8 +920,16 @@
     }
   },
   "debugMode": "Debug Mode",
-  "demoLoginHomeowner": "Login as Homeowner",
-  "demoLoginContractor": "Login as Professional",
+  "debugLoginTitle": "Review account sign-in",
+  "debugLoginHelper": "Enter the email and password for an existing review account. The account's saved role controls where you go.",
+  "debugLoginEmailLabel": "Account email",
+  "debugLoginPasswordLabel": "Account password",
+  "debugLoginSubmit": "Sign in",
+  "debugLoginCancel": "Cancel",
+  "debugLoginCredentialsRequired": "Enter both email and password.",
+  "debugLoginFailed": "Could not sign in with this review account. Check the details and try again.",
+  "demoLoginHomeowner": "Continue with homeowner account",
+  "demoLoginContractor": "Continue with contractor account",
   "debugRoleSwitcher": "Switch role",
   "debugRoleSwitcherTitle": "View the app as another role",
   "debugRoleSwitcherBody": "View-only preview. Your account data and permissions stay tied to your real role.",
@@ -1139,11 +1155,11 @@
   "briefSentMessageNew": "The contractor received your project details and will contact you soon.\\nYou can call them on WhatsApp now if you want to speed things up.",
   "cancelBriefMessage": "It cannot be reactivated after cancellation.",
   "chooseRoleSubtitle": "Choose what fits you so we can tailor the experience",
-  "confirmCompletionBody": "Once you confirm, the job is recorded as finished and you can rate the contractor. This can\u0027t be undone.",
+  "confirmCompletionBody": "Once you confirm, the job is recorded as finished and you can rate the contractor. This can't be undone.",
   "contractorSaysDone": "The Professional says the work is finished",
   "contractorsWillSeeMatched": "Contractors whose specialties and areas match will see the post.",
-  "couldNotOpenApp": "Couldn\u0027t open the app. Make sure it\u0027s installed.",
-  "deleteBriefBody": "This can\u0027t be undone.",
+  "couldNotOpenApp": "Couldn't open the app. Make sure it's installed.",
+  "deleteBriefBody": "This can't be undone.",
   "deleteBriefWithQuotesBody": "Contractors have already sent quotes, so it will be cancelled rather than deleted, to preserve their work.",
   "deletePostConfirm": "Are you sure you want to delete this post?",
   "deleteWorkConfirm": "Are you sure you want to delete this work?",
@@ -1167,10 +1183,10 @@
   "phoneVisibleContractor": "Your phone number will be visible to the contractor when they receive the request.",
   "phoneVisibleContractors": "Your phone number will be visible to contractors who see the post.",
   "portfolioEmptyMessage": "Show your work so clients can see your quality. Start by adding your first project.",
-  "portfolioLoadFailed": "Couldn\u0027t load previous work",
+  "portfolioLoadFailed": "Couldn't load previous work",
   "postUnavailableSub": "It may have been deleted, or its owner made it private.",
   "priceMinLessThanMax": "Price from must be less than price to",
-  "proBenefitRequests": "View job requests \u0026 contact details",
+  "proBenefitRequests": "View job requests & contact details",
   "profileGreeting": "Hello, I saw your profile on Shattab and wanted to reach out",
   "proRoiLine": "One won job can cover the whole year",
   "proValueLine": "Keep the work coming, quotes without limits",
@@ -1194,8 +1210,8 @@
   "verifyUploadHint": "National ID, plus trade licence or professional permit if you have one.",
   "whatsappBriefGreeting": "Hello, I sent you a request on Shattab",
   "whatsappPostGreeting": "Hello, I saw your post on Shattab and would like to know more about the work",
-  "whatsYourName": "What\u0027s your name?",
-  "withdrawQuoteBody": "The homeowner won\u0027t be able to accept it after you withdraw. You can send a new quote later.",
+  "whatsYourName": "What's your name?",
+  "withdrawQuoteBody": "The homeowner won't be able to accept it after you withdraw. You can send a new quote later.",
   "workDoneRequested": "The homeowner has been told you finished",
   "workTitleHint": "Example: Apartment finishing in Tagamo3",
   "adjustOpportunityPreferences": "Adjust opportunity preferences",
@@ -1246,7 +1262,9 @@
   "workAreaSquareMeters": "{area} m²",
   "@workAreaSquareMeters": {
     "placeholders": {
-      "area": { "type": "int" }
+      "area": {
+        "type": "int"
+      }
     }
   },
   "searchForMatchingOpportunities": "Find opportunities that fit your work",
@@ -1280,9 +1298,15 @@
   "opportunityCompactSummary": "{count} matches · {fresh} new today · {area} in your work areas",
   "@opportunityCompactSummary": {
     "placeholders": {
-      "count": {"type": "int"},
-      "fresh": {"type": "int"},
-      "area": {"type": "int"}
+      "count": {
+        "type": "int"
+      },
+      "fresh": {
+        "type": "int"
+      },
+      "area": {
+        "type": "int"
+      }
     }
   },
   "projectPhotoLabel": "Project photo",
@@ -1339,7 +1363,9 @@
   "opportunityDetailSelectPhoto": "Select photo {index}",
   "@opportunityDetailSelectPhoto": {
     "placeholders": {
-      "index": { "type": "int" }
+      "index": {
+        "type": "int"
+      }
     }
   },
   "opportunityDetailTiming": "Execution timing",
@@ -1617,7 +1643,14 @@
   "homeLiveCompleted": "Project complete",
   "homeLiveRequestPosted": "Posted",
   "homeLiveUnreadCount": "{count} unread",
-  "@homeLiveUnreadCount": {"description": "Number of unread notifications shown on the homeowner home activity card", "placeholders": {"count": {"type": "int"}}},
+  "@homeLiveUnreadCount": {
+    "description": "Number of unread notifications shown on the homeowner home activity card",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "quoteSentTitle": "Your quote was sent",
   "quoteSentMessage": "The homeowner received your quote details. We will show you any updates here.",
   "draftRestored": "Your saved draft is ready",
@@ -1667,7 +1700,6 @@
   "projectPublishedBody": "We will let you know when a new offer arrives.",
   "trackProject": "Track project",
   "returnToProfessionals": "Back to professionals",
-  "fieldRequired": "This field is required",
   "titleTooShort": "Write a clearer title",
   "areaInvalid": "Enter a valid area",
   "descriptionTooShort": "Add more detail so we can help",
@@ -1713,8 +1745,12 @@
   "onboardingStepLabel": "Step {step} of {total}",
   "@onboardingStepLabel": {
     "placeholders": {
-      "step": { "type": "int" },
-      "total": { "type": "int" }
+      "step": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
     }
   },
   "onboardingStepRole": "Your account type and name",
@@ -1761,5 +1797,142 @@
   "onboardingDistrictSidiGaber": "Sidi Gaber",
   "onboardingDistrictAgami": "Agami",
   "onboardingDistrictMoharramBek": "Moharram Bek",
-  "onboardingDistrictMiami": "Miami"
+  "onboardingDistrictMiami": "Miami",
+  "startupRetryMessage": "Shattab could not start. Check your connection and try again.",
+  "chooseStarRating": "Choose {rating} out of 5 stars",
+  "@ratingOutOfFive": {
+    "placeholders": {
+      "rating": {
+        "type": "String"
+      }
+    }
+  },
+  "@chooseStarRating": {
+    "placeholders": {
+      "rating": {
+        "type": "String"
+      }
+    }
+  },
+  "removeFilter": "Remove {label} filter",
+  "preferencesSaveFailed": "Could not save your preference. Try again.",
+  "preferencesSaving": "Saving your preference…",
+  "@removeFilter": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "addPhotos": "Add photos",
+  "photoSelectionFailed": "Could not select photos. Try again or check photo access.",
+  "closeSheet": "Close",
+  "referenceProfileTitle": "Professional profile",
+  "referenceProfessionalsTitle": "Professionals",
+  "referenceSaveProfessional": "Save professional",
+  "referenceUnsaveProfessional": "Remove from saved",
+  "referencePremiumDisclosure": "Promoted placement",
+  "referenceAdDisclosure": "Advertisement",
+  "referenceVerified": "Verified by Shattab",
+  "referenceViewProfile": "View profile",
+  "referenceAbout": "About",
+  "referenceWorks": "Work",
+  "referenceServices": "Services",
+  "referenceAboutProfessional": "About the professional",
+  "referencePreviousWork": "Previous work",
+  "referenceServiceAreas": "Service areas",
+  "referenceWorkingApproach": "Working approach",
+  "referenceViewAll": "View all",
+  "referenceRequestQuote": "Request quote",
+  "referenceMessageProfessional": "Message professional",
+  "referenceMissingBio": "The professional has not added an overview",
+  "referenceMissingWork": "No previous work added yet",
+  "referenceSignInContact": "Sign in to contact the professional",
+  "referenceSearchHint": "Search for a professional or service ...",
+  "referenceAll": "All",
+  "referenceInteriorDesign": "Interior design",
+  "referenceFinishing": "Finishing",
+  "referenceKitchen": "Kitchens",
+  "referencePlumbing": "Plumbing",
+  "referenceElectricity": "Electrical",
+  "referenceSort": "Sort: ",
+  "referenceCompatible": "Best match",
+  "referenceRelevant": "Most relevant",
+  "referenceMostProjects": "Most completed projects",
+  "referenceClient": "Shattab customer",
+  "referenceMyProjects": "My projects",
+  "referenceStepOneTitle": "Understand your needs",
+  "referenceStepOneBody": "An initial meeting to explain your ideas and requirements",
+  "referenceStepTwoTitle": "Prepare the design and quote",
+  "referenceStepTwoBody": "Plans in 2D and 3D and selection of materials",
+  "referenceStepThreeTitle": "Follow execution and handover",
+  "referenceStepThreeBody": "Ongoing follow up and execution quality checks",
+  "referenceCompletedProjects": "completed projects",
+  "referenceYearsExperience": "years of experience",
+  "referenceProfessionalsCount": "{count} professionals available",
+  "@referenceProfessionalsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "referenceDisplayedProfessionalsCount": "{count} professionals loaded",
+  "@referenceDisplayedProfessionalsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "referenceCompletedProjectsCount": "{count} completed projects",
+  "@referenceCompletedProjectsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "referenceYearsExperienceCount": "{years} years of experience",
+  "@referenceYearsExperienceCount": {
+    "placeholders": {
+      "years": {
+        "type": "String"
+      }
+    }
+  },
+  "referenceReviewCount": "({count} reviews)",
+  "@referenceReviewCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "referenceStarCount": "{count} stars",
+  "@referenceStarCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "referenceWorkApproachDisclaimer": "Suggested steps for planning the work; agree the details directly with the professional.",
+  "professionalContactReviewPrompt": "Did you work together? Your review can help other homeowners choose with confidence. It takes less than a minute.",
+  "professionalContactReviewPrimaryAction": "Review my experience",
+  "professionalContactReviewNotTogether": "We did not work together",
+  "professionalContactReviewDismiss": "Hide reminder",
+  "professionalContactReviewActionFailed": "Could not save your choice. Try again.",
+  "professionalContactReviewFormIntro": "Share your review of the experience. This is your report and does not independently confirm the work was completed.",
+  "professionalContactReviewAttribution": "Homeowner-reported experience; first contact began through Shattab.",
+  "homeownerLocationHint": "Choose the city and area where your home is located.",
+  "homeownerReferenceSearchHint": "Find a professional or service",
+  "homeownerReferenceProfessionalsTitle": "Professionals for your project",
+  "homeownerReferenceWorkTitle": "Work to inspire you",
+  "homeownerReferenceStartTitle": "Start your home project",
+  "homeownerReferenceStartBody": "Tell us what you need and take a clear first step.",
+  "homeownerReferenceStartSteps": "Describe your needs → receive quotes → choose a professional",
+  "homeownerReferencePhotoUnavailable": "Work photo unavailable",
+  "homeownerReferenceOffers": "{count} offers",
+  "@homeownerReferenceOffers": {"placeholders": {"count": {"type": "int"}}}
 }

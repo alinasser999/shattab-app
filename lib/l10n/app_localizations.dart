@@ -2363,8 +2363,8 @@ abstract class AppLocalizations {
   /// No description provided for @ratingOutOfFive.
   ///
   /// In ar, this message translates to:
-  /// **'من ٥'**
-  String get ratingOutOfFive;
+  /// **'{rating} من 5 نجوم'**
+  String ratingOutOfFive(String rating);
 
   /// No description provided for @projectDurationLabel.
   ///
@@ -4688,16 +4688,64 @@ abstract class AppLocalizations {
   /// **'وضع التجربة (Debug)'**
   String get debugMode;
 
+  /// No description provided for @debugLoginTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'دخول حساب المراجعة'**
+  String get debugLoginTitle;
+
+  /// No description provided for @debugLoginHelper.
+  ///
+  /// In ar, this message translates to:
+  /// **'أدخل البريد الإلكتروني وكلمة المرور لحساب مراجعة موجود. نوع الحساب المسجّل هو اللي بيحدد هتروح لفين.'**
+  String get debugLoginHelper;
+
+  /// No description provided for @debugLoginEmailLabel.
+  ///
+  /// In ar, this message translates to:
+  /// **'البريد الإلكتروني للحساب'**
+  String get debugLoginEmailLabel;
+
+  /// No description provided for @debugLoginPasswordLabel.
+  ///
+  /// In ar, this message translates to:
+  /// **'كلمة مرور الحساب'**
+  String get debugLoginPasswordLabel;
+
+  /// No description provided for @debugLoginSubmit.
+  ///
+  /// In ar, this message translates to:
+  /// **'دخول'**
+  String get debugLoginSubmit;
+
+  /// No description provided for @debugLoginCancel.
+  ///
+  /// In ar, this message translates to:
+  /// **'إلغاء'**
+  String get debugLoginCancel;
+
+  /// No description provided for @debugLoginCredentialsRequired.
+  ///
+  /// In ar, this message translates to:
+  /// **'أدخل البريد الإلكتروني وكلمة المرور.'**
+  String get debugLoginCredentialsRequired;
+
+  /// No description provided for @debugLoginFailed.
+  ///
+  /// In ar, this message translates to:
+  /// **'تعذّر تسجيل الدخول بهذا الحساب. راجع البيانات وحاول تاني.'**
+  String get debugLoginFailed;
+
   /// No description provided for @demoLoginHomeowner.
   ///
   /// In ar, this message translates to:
-  /// **'دخول كصاحب شقة'**
+  /// **'دخول بحساب صاحب البيت'**
   String get demoLoginHomeowner;
 
   /// No description provided for @demoLoginContractor.
   ///
   /// In ar, this message translates to:
-  /// **'دخول كمحترف'**
+  /// **'دخول بحساب مقاول'**
   String get demoLoginContractor;
 
   /// No description provided for @debugRoleSwitcher.
@@ -9091,6 +9139,444 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'ميامي'**
   String get onboardingDistrictMiami;
+
+  /// No description provided for @startupRetryMessage.
+  ///
+  /// In ar, this message translates to:
+  /// **'تعذّر بدء شطّب. جرّب تاني لما الاتصال يرجع.'**
+  String get startupRetryMessage;
+
+  /// No description provided for @chooseStarRating.
+  ///
+  /// In ar, this message translates to:
+  /// **'اختيار {rating} من 5 نجوم'**
+  String chooseStarRating(String rating);
+
+  /// No description provided for @removeFilter.
+  ///
+  /// In ar, this message translates to:
+  /// **'إزالة فلتر {label}'**
+  String removeFilter(String label);
+
+  /// No description provided for @preferencesSaveFailed.
+  ///
+  /// In ar, this message translates to:
+  /// **'تعذّر حفظ الاختيار. جرّب تاني.'**
+  String get preferencesSaveFailed;
+
+  /// No description provided for @preferencesSaving.
+  ///
+  /// In ar, this message translates to:
+  /// **'جاري حفظ الاختيار…'**
+  String get preferencesSaving;
+
+  /// No description provided for @addPhotos.
+  ///
+  /// In ar, this message translates to:
+  /// **'إضافة صور'**
+  String get addPhotos;
+
+  /// No description provided for @photoSelectionFailed.
+  ///
+  /// In ar, this message translates to:
+  /// **'تعذّر اختيار الصور. جرّب تاني أو راجع إذن الصور.'**
+  String get photoSelectionFailed;
+
+  /// No description provided for @closeSheet.
+  ///
+  /// In ar, this message translates to:
+  /// **'إغلاق'**
+  String get closeSheet;
+
+  /// No description provided for @referenceProfileTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'ملف المحترف'**
+  String get referenceProfileTitle;
+
+  /// No description provided for @referenceProfessionalsTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'المحترفون'**
+  String get referenceProfessionalsTitle;
+
+  /// No description provided for @referenceSaveProfessional.
+  ///
+  /// In ar, this message translates to:
+  /// **'حفظ المحترف'**
+  String get referenceSaveProfessional;
+
+  /// No description provided for @referenceUnsaveProfessional.
+  ///
+  /// In ar, this message translates to:
+  /// **'إزالة من المحفوظات'**
+  String get referenceUnsaveProfessional;
+
+  /// No description provided for @referencePremiumDisclosure.
+  ///
+  /// In ar, this message translates to:
+  /// **'ظهور مميز'**
+  String get referencePremiumDisclosure;
+
+  /// No description provided for @referenceAdDisclosure.
+  ///
+  /// In ar, this message translates to:
+  /// **'إعلان'**
+  String get referenceAdDisclosure;
+
+  /// No description provided for @referenceVerified.
+  ///
+  /// In ar, this message translates to:
+  /// **'موثق من شطب'**
+  String get referenceVerified;
+
+  /// No description provided for @referenceViewProfile.
+  ///
+  /// In ar, this message translates to:
+  /// **'عرض الملف'**
+  String get referenceViewProfile;
+
+  /// No description provided for @referenceAbout.
+  ///
+  /// In ar, this message translates to:
+  /// **'نبذة'**
+  String get referenceAbout;
+
+  /// No description provided for @referenceWorks.
+  ///
+  /// In ar, this message translates to:
+  /// **'الأعمال'**
+  String get referenceWorks;
+
+  /// No description provided for @referenceServices.
+  ///
+  /// In ar, this message translates to:
+  /// **'الخدمات'**
+  String get referenceServices;
+
+  /// No description provided for @referenceAboutProfessional.
+  ///
+  /// In ar, this message translates to:
+  /// **'نبذة عن المحترف'**
+  String get referenceAboutProfessional;
+
+  /// No description provided for @referencePreviousWork.
+  ///
+  /// In ar, this message translates to:
+  /// **'الأعمال السابقة'**
+  String get referencePreviousWork;
+
+  /// No description provided for @referenceServiceAreas.
+  ///
+  /// In ar, this message translates to:
+  /// **'مناطق الخدمة'**
+  String get referenceServiceAreas;
+
+  /// No description provided for @referenceWorkingApproach.
+  ///
+  /// In ar, this message translates to:
+  /// **'طريقة الشغل'**
+  String get referenceWorkingApproach;
+
+  /// No description provided for @referenceViewAll.
+  ///
+  /// In ar, this message translates to:
+  /// **'عرض الكل'**
+  String get referenceViewAll;
+
+  /// No description provided for @referenceRequestQuote.
+  ///
+  /// In ar, this message translates to:
+  /// **'اطلب عرض'**
+  String get referenceRequestQuote;
+
+  /// No description provided for @referenceMessageProfessional.
+  ///
+  /// In ar, this message translates to:
+  /// **'راسل المحترف'**
+  String get referenceMessageProfessional;
+
+  /// No description provided for @referenceMissingBio.
+  ///
+  /// In ar, this message translates to:
+  /// **'لم يضف المحترف نبذة بعد'**
+  String get referenceMissingBio;
+
+  /// No description provided for @referenceMissingWork.
+  ///
+  /// In ar, this message translates to:
+  /// **'لم تُضف أعمال سابقة بعد'**
+  String get referenceMissingWork;
+
+  /// No description provided for @referenceSignInContact.
+  ///
+  /// In ar, this message translates to:
+  /// **'سجّل دخولك للتواصل مع المحترف'**
+  String get referenceSignInContact;
+
+  /// No description provided for @referenceSearchHint.
+  ///
+  /// In ar, this message translates to:
+  /// **'ابحث عن محترف أو خدمة ...'**
+  String get referenceSearchHint;
+
+  /// No description provided for @referenceAll.
+  ///
+  /// In ar, this message translates to:
+  /// **'الكل'**
+  String get referenceAll;
+
+  /// No description provided for @referenceInteriorDesign.
+  ///
+  /// In ar, this message translates to:
+  /// **'تصميم داخلي'**
+  String get referenceInteriorDesign;
+
+  /// No description provided for @referenceFinishing.
+  ///
+  /// In ar, this message translates to:
+  /// **'تشطيبات'**
+  String get referenceFinishing;
+
+  /// No description provided for @referenceKitchen.
+  ///
+  /// In ar, this message translates to:
+  /// **'مطابخ'**
+  String get referenceKitchen;
+
+  /// No description provided for @referencePlumbing.
+  ///
+  /// In ar, this message translates to:
+  /// **'سباكة'**
+  String get referencePlumbing;
+
+  /// No description provided for @referenceElectricity.
+  ///
+  /// In ar, this message translates to:
+  /// **'كهرباء'**
+  String get referenceElectricity;
+
+  /// No description provided for @referenceSort.
+  ///
+  /// In ar, this message translates to:
+  /// **'ترتيب: '**
+  String get referenceSort;
+
+  /// No description provided for @referenceCompatible.
+  ///
+  /// In ar, this message translates to:
+  /// **'الأكثر توافقاً'**
+  String get referenceCompatible;
+
+  /// No description provided for @referenceRelevant.
+  ///
+  /// In ar, this message translates to:
+  /// **'الأكثر صلة'**
+  String get referenceRelevant;
+
+  /// No description provided for @referenceMostProjects.
+  ///
+  /// In ar, this message translates to:
+  /// **'الأكثر مشاريع'**
+  String get referenceMostProjects;
+
+  /// No description provided for @referenceClient.
+  ///
+  /// In ar, this message translates to:
+  /// **'عميل شطب'**
+  String get referenceClient;
+
+  /// No description provided for @referenceMyProjects.
+  ///
+  /// In ar, this message translates to:
+  /// **'مشاريعي'**
+  String get referenceMyProjects;
+
+  /// No description provided for @referenceStepOneTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'نفهم احتياجاتك'**
+  String get referenceStepOneTitle;
+
+  /// No description provided for @referenceStepOneBody.
+  ///
+  /// In ar, this message translates to:
+  /// **'جلسة مبدئية لشرح أفكارك ومتطلباتك'**
+  String get referenceStepOneBody;
+
+  /// No description provided for @referenceStepTwoTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'نجهز التصميم والعرض'**
+  String get referenceStepTwoTitle;
+
+  /// No description provided for @referenceStepTwoBody.
+  ///
+  /// In ar, this message translates to:
+  /// **'مخططات ثنائية وثلاثية الأبعاد واختيار الخامات'**
+  String get referenceStepTwoBody;
+
+  /// No description provided for @referenceStepThreeTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'نتابع التنفيذ والتسليم'**
+  String get referenceStepThreeTitle;
+
+  /// No description provided for @referenceStepThreeBody.
+  ///
+  /// In ar, this message translates to:
+  /// **'متابعة مستمرة وضمان جودة التنفيذ'**
+  String get referenceStepThreeBody;
+
+  /// No description provided for @referenceCompletedProjects.
+  ///
+  /// In ar, this message translates to:
+  /// **'مشروع مكتمل'**
+  String get referenceCompletedProjects;
+
+  /// No description provided for @referenceYearsExperience.
+  ///
+  /// In ar, this message translates to:
+  /// **'سنوات خبرة'**
+  String get referenceYearsExperience;
+
+  /// No description provided for @referenceProfessionalsCount.
+  ///
+  /// In ar, this message translates to:
+  /// **'{count} محترف متاح'**
+  String referenceProfessionalsCount(int count);
+
+  /// No description provided for @referenceDisplayedProfessionalsCount.
+  ///
+  /// In ar, this message translates to:
+  /// **'{count} محترف معروض'**
+  String referenceDisplayedProfessionalsCount(int count);
+
+  /// No description provided for @referenceCompletedProjectsCount.
+  ///
+  /// In ar, this message translates to:
+  /// **'{count} مشروع مكتمل'**
+  String referenceCompletedProjectsCount(int count);
+
+  /// No description provided for @referenceYearsExperienceCount.
+  ///
+  /// In ar, this message translates to:
+  /// **'{years} سنوات خبرة'**
+  String referenceYearsExperienceCount(String years);
+
+  /// No description provided for @referenceReviewCount.
+  ///
+  /// In ar, this message translates to:
+  /// **'({count} تقييم)'**
+  String referenceReviewCount(int count);
+
+  /// No description provided for @referenceStarCount.
+  ///
+  /// In ar, this message translates to:
+  /// **'{count} نجوم'**
+  String referenceStarCount(int count);
+
+  /// No description provided for @referenceWorkApproachDisclaimer.
+  ///
+  /// In ar, this message translates to:
+  /// **'خطوات استرشادية للاتفاق على العمل؛ اتفق على التفاصيل مباشرة مع المحترف.'**
+  String get referenceWorkApproachDisclaimer;
+
+  /// No description provided for @professionalContactReviewPrompt.
+  ///
+  /// In ar, this message translates to:
+  /// **'اشتغلتوا سوا؟ رأيك هيساعد أصحاب بيوت تانية يختاروا بثقة. تقييمك مش هياخد دقيقة.'**
+  String get professionalContactReviewPrompt;
+
+  /// No description provided for @professionalContactReviewPrimaryAction.
+  ///
+  /// In ar, this message translates to:
+  /// **'أقيّم تجربتي'**
+  String get professionalContactReviewPrimaryAction;
+
+  /// No description provided for @professionalContactReviewNotTogether.
+  ///
+  /// In ar, this message translates to:
+  /// **'ما اشتغلناش سوا'**
+  String get professionalContactReviewNotTogether;
+
+  /// No description provided for @professionalContactReviewDismiss.
+  ///
+  /// In ar, this message translates to:
+  /// **'إخفاء التذكير'**
+  String get professionalContactReviewDismiss;
+
+  /// No description provided for @professionalContactReviewActionFailed.
+  ///
+  /// In ar, this message translates to:
+  /// **'تعذّر حفظ اختيارك. حاول مرة تانية.'**
+  String get professionalContactReviewActionFailed;
+
+  /// No description provided for @professionalContactReviewFormIntro.
+  ///
+  /// In ar, this message translates to:
+  /// **'شاركنا تقييمك لتجربتك. التقييم بحسب إفادتك، ومش تأكيد مستقل على إتمام الشغل.'**
+  String get professionalContactReviewFormIntro;
+
+  /// No description provided for @professionalContactReviewAttribution.
+  ///
+  /// In ar, this message translates to:
+  /// **'تجربة بحسب إفادة صاحب البيت؛ بدأ التواصل من خلال شطّب.'**
+  String get professionalContactReviewAttribution;
+
+  /// No description provided for @homeownerLocationHint.
+  ///
+  /// In ar, this message translates to:
+  /// **'حدد المدينة والحي اللي يقع فيه البيت.'**
+  String get homeownerLocationHint;
+
+  /// No description provided for @homeownerReferenceSearchHint.
+  ///
+  /// In ar, this message translates to:
+  /// **'ابحث عن محترف أو خدمة'**
+  String get homeownerReferenceSearchHint;
+
+  /// No description provided for @homeownerReferenceProfessionalsTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'محترفون لمشروعك'**
+  String get homeownerReferenceProfessionalsTitle;
+
+  /// No description provided for @homeownerReferenceWorkTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'أعمال تلهمك'**
+  String get homeownerReferenceWorkTitle;
+
+  /// No description provided for @homeownerReferenceStartTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'ابدأ مشروع بيتك'**
+  String get homeownerReferenceStartTitle;
+
+  /// No description provided for @homeownerReferenceStartBody.
+  ///
+  /// In ar, this message translates to:
+  /// **'احكي لنا عن احتياجك وابدأ بخطوة واضحة.'**
+  String get homeownerReferenceStartBody;
+
+  /// No description provided for @homeownerReferenceStartSteps.
+  ///
+  /// In ar, this message translates to:
+  /// **'حدد احتياجك ← استقبل عروضًا ← اختر المحترف المناسب'**
+  String get homeownerReferenceStartSteps;
+
+  /// No description provided for @homeownerReferencePhotoUnavailable.
+  ///
+  /// In ar, this message translates to:
+  /// **'صورة العمل غير متاحة'**
+  String get homeownerReferencePhotoUnavailable;
+
+  /// No description provided for @homeownerReferenceOffers.
+  ///
+  /// In ar, this message translates to:
+  /// **'{count} عروض'**
+  String homeownerReferenceOffers(int count);
 }
 
 class _AppLocalizationsDelegate

@@ -1,3 +1,4 @@
+import '../../../../core/widgets/professional_reference_primitives.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -6,11 +7,9 @@ import 'package:batsh/core/l10n/l10n_extension.dart';
 import '../../../../core/l10n/catalog_labels.dart';
 import '../../../../core/router/routes.dart';
 import '../../../../core/theme/batsh_spacing.dart';
-import '../../../../core/theme/batsh_typography.dart';
+import '../../../../core/theme/professional_reference_theme.dart';
 import '../../../../core/theme/theme_extension.dart';
 import '../../../../core/utils/error_mapper.dart';
-import '../../../../core/widgets/batsh_button.dart';
-import '../../../../core/widgets/batsh_chip.dart';
 import '../../../../core/widgets/batsh_error.dart';
 import '../../../../core/widgets/batsh_scaffold.dart';
 import '../../../../core/widgets/batsh_shimmer.dart';
@@ -75,6 +74,21 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
         .updateHomeownerLocation(city: _selectedCity, district: district);
   }
 
+  void _focusAndReveal(FocusNode focusNode) {
+    FocusScope.of(context).requestFocus(focusNode);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final targetContext = focusNode.context;
+      if (!mounted || targetContext == null) return;
+      Scrollable.ensureVisible(
+        targetContext,
+        alignment: 0.16,
+        duration: MediaQuery.disableAnimationsOf(context)
+            ? Duration.zero
+            : const Duration(milliseconds: 180),
+      );
+    });
+  }
+
   bool get _hasSupportedPair =>
       _selectedCity != null && _districts.contains(_selectedDistrict);
 
@@ -84,11 +98,11 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
       _saveError = null;
     });
     if (_selectedCity == null) {
-      FocusScope.of(context).requestFocus(_cityFocus);
+      _focusAndReveal(_cityFocus);
       return;
     }
     if (!_hasSupportedPair) {
-      FocusScope.of(context).requestFocus(_districtFocus);
+      _focusAndReveal(_districtFocus);
       return;
     }
 
@@ -129,39 +143,74 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
       _hydrated = true;
     }
 
-    final stepBody = homeownerAsync.hasError
-        ? BatshError(
-            message: ErrorMapper.map(homeownerAsync.error!),
-            onRetry: () => ref.invalidate(homeownerProfileProvider),
-          )
-        : homeownerAsync.isLoading
-        ? const BatshSkeletonRegion(
-            child: BatshListSkeleton(count: 2, height: 72),
-          )
-        : _form(context);
+    return Theme(
+      data: ProfessionalReferenceTheme.scopedTheme(Theme.of(context)),
+      child: Builder(
+        builder: (referenceContext) {
+          final stepBody = homeownerAsync.hasError
+              ? BatshError(
+                  message: ErrorMapper.map(homeownerAsync.error!),
+                  onRetry: () => ref.invalidate(homeownerProfileProvider),
+                )
+              : homeownerAsync.isLoading
+              ? const BatshSkeletonRegion(
+                  child: BatshListSkeleton(count: 2, height: 72),
+                )
+              : _form(referenceContext);
 
-    return PopScope<void>(
-      canPop: false,
-      onPopInvokedWithResult: (didPop, _) {
-        if (!didPop) _back();
-      },
-      child: BatshScaffold(
-        title: context.l10n.locationTitle,
-        animateEntrance: false,
-        body: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              OnboardingProgressHeader(
-                step: 3,
-                stepLabel: context.l10n.onboardingStepHomeownerLocation,
-                onBack: _back,
+          return PopScope<void>(
+            canPop: false,
+            onPopInvokedWithResult: (didPop, _) {
+              if (!didPop) _back();
+            },
+            child: BatshScaffold(
+              title: referenceContext.l10n.locationTitle,
+              titleTextStyle: ProfessionalReferenceTheme.text(
+                20,
+                weight: FontWeight.w700,
               ),
-              const SizedBox(height: BatshSpacing.lg),
-              stepBody,
-            ],
-          ),
-        ),
+              animateEntrance: false,
+              body: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(
+                    child: SingleChildScrollView(
+                      keyboardDismissBehavior:
+                          ScrollViewKeyboardDismissBehavior.onDrag,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          OnboardingProgressHeader(
+                            step: 3,
+                            stepLabel: referenceContext
+                                .l10n
+                                .onboardingStepHomeownerLocation,
+                            onBack: _back,
+                            referenceStyle: true,
+                          ),
+                          const SizedBox(height: BatshSpacing.lg),
+                          stepBody,
+                          const SizedBox(height: BatshSpacing.lg),
+                        ],
+                      ),
+                    ),
+                  ),
+                  ProfessionalReferencePrimaryButton(
+                    footerSpacing: true,
+                    label: referenceContext.l10n.done,
+                    onPressed:
+                        _busy ||
+                            homeownerAsync.isLoading ||
+                            homeownerAsync.hasError
+                        ? null
+                        : _complete,
+                    isLoading: _busy,
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -171,8 +220,18 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
     children: [
       Text(
         context.l10n.cityLabel,
-        style: BatshTypography.labelMd.copyWith(
-          color: context.colorScheme.onSurfaceVariant,
+        style: ProfessionalReferenceTheme.text(
+          16,
+          color: ProfessionalReferenceTheme.navy,
+          weight: FontWeight.w700,
+        ),
+      ),
+      const SizedBox(height: BatshSpacing.xs),
+      Text(
+        context.l10n.homeownerLocationHint,
+        style: ProfessionalReferenceTheme.text(
+          16,
+          color: ProfessionalReferenceTheme.muted,
         ),
       ),
       const SizedBox(height: BatshSpacing.sm),
@@ -185,22 +244,14 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
           child: Wrap(
             spacing: BatshSpacing.sm,
             runSpacing: BatshSpacing.sm,
-            children: OnboardingCatalog.citiesAndDistricts
-                .map(
-                  (entry) => BatshChip(
-                    label: localizedOnboardingCityLabel(context, entry.city),
-                    selected: _selectedCity == entry.city,
-                    semanticLabel: localizedOnboardingCityLabel(
-                      context,
-                      entry.city,
-                    ),
-                    minimumHitHeight: true,
-                    singleSelection: true,
-                    showSelectionMark: true,
-                    onTap: _busy ? null : () => _selectCity(entry.city),
-                  ),
-                )
-                .toList(),
+            children: OnboardingCatalog.citiesAndDistricts.map((entry) {
+              final label = localizedOnboardingCityLabel(context, entry.city);
+              return _ReferenceChoiceButton(
+                label: label,
+                selected: _selectedCity == entry.city,
+                onPressed: _busy ? null : () => _selectCity(entry.city),
+              );
+            }).toList(),
           ),
         ),
       ),
@@ -212,8 +263,10 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
         const SizedBox(height: BatshSpacing.lg),
         Text(
           context.l10n.districtLabel,
-          style: BatshTypography.labelMd.copyWith(
-            color: context.colorScheme.onSurfaceVariant,
+          style: ProfessionalReferenceTheme.text(
+            16,
+            color: ProfessionalReferenceTheme.navy,
+            weight: FontWeight.w700,
           ),
         ),
         const SizedBox(height: BatshSpacing.sm),
@@ -226,25 +279,17 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
             child: Wrap(
               spacing: BatshSpacing.sm,
               runSpacing: BatshSpacing.sm,
-              children: _districts
-                  .map(
-                    (district) => BatshChip(
-                      label: localizedOnboardingDistrictLabel(
-                        context,
-                        district,
-                      ),
-                      selected: _selectedDistrict == district,
-                      semanticLabel: localizedOnboardingDistrictLabel(
-                        context,
-                        district,
-                      ),
-                      minimumHitHeight: true,
-                      singleSelection: true,
-                      showSelectionMark: true,
-                      onTap: _busy ? null : () => _selectDistrict(district),
-                    ),
-                  )
-                  .toList(),
+              children: _districts.map((district) {
+                final label = localizedOnboardingDistrictLabel(
+                  context,
+                  district,
+                );
+                return _ReferenceChoiceButton(
+                  label: label,
+                  selected: _selectedDistrict == district,
+                  onPressed: _busy ? null : () => _selectDistrict(district),
+                );
+              }).toList(),
             ),
           ),
         ),
@@ -263,20 +308,13 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
           liveRegion: true,
           child: Text(
             context.l10n.onboardingSaving,
-            style: BatshTypography.bodySm.copyWith(
-              color: context.colorScheme.onSurfaceVariant,
+            style: ProfessionalReferenceTheme.text(
+              16,
+              color: ProfessionalReferenceTheme.muted,
             ),
           ),
         ),
       ],
-      const SizedBox(height: BatshSpacing.xl),
-      BatshButton(
-        label: context.l10n.done,
-        onPressed: _busy ? null : _complete,
-        isLoading: _busy,
-        animate: false,
-      ),
-      const SizedBox(height: BatshSpacing.lg),
     ],
   );
 }
@@ -291,7 +329,82 @@ class _InlineError extends StatelessWidget {
     liveRegion: true,
     child: Text(
       message,
-      style: BatshTypography.bodySm.copyWith(color: context.colorScheme.error),
+      style: ProfessionalReferenceTheme.text(
+        14,
+        color: context.colorScheme.error,
+        weight: FontWeight.w600,
+      ),
     ),
   );
+}
+
+class _ReferenceChoiceButton extends StatelessWidget {
+  const _ReferenceChoiceButton({
+    required this.label,
+    required this.selected,
+    required this.onPressed,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final selectedColor = ProfessionalReferenceTheme.action;
+    return Semantics(
+      button: onPressed != null,
+      enabled: onPressed != null,
+      selected: selected,
+      inMutuallyExclusiveGroup: true,
+      label: label,
+      onTap: onPressed,
+      child: ExcludeSemantics(
+        child: OutlinedButton(
+          onPressed: onPressed,
+          style: OutlinedButton.styleFrom(
+            minimumSize: const Size(48, 48),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            foregroundColor: selected
+                ? selectedColor
+                : ProfessionalReferenceTheme.navy,
+            backgroundColor: selected
+                ? ProfessionalReferenceTheme.cream
+                : Colors.white,
+            side: BorderSide(
+              color: selected
+                  ? ProfessionalReferenceTheme.orange
+                  : const Color(0xffd9dce3),
+              width: selected ? 1.5 : 1,
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Flexible(
+                child: Text(
+                  label,
+                  textAlign: TextAlign.center,
+                  style: ProfessionalReferenceTheme.text(
+                    16,
+                    color: selected
+                        ? selectedColor
+                        : ProfessionalReferenceTheme.navy,
+                    weight: selected ? FontWeight.w700 : FontWeight.w500,
+                  ),
+                ),
+              ),
+              if (selected) ...[
+                const SizedBox(width: 6),
+                Icon(Icons.check_rounded, size: 18, color: selectedColor),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }

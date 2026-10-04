@@ -14,6 +14,7 @@ import '../../../core/widgets/batsh_error.dart';
 import '../../../core/widgets/batsh_scaffold.dart';
 import '../../../core/widgets/batsh_shimmer.dart';
 import '../../discovery/presentation/providers/discovery_providers.dart';
+import '../../discovery/presentation/widgets/professional_reference_components.dart';
 import '../../../core/utils/error_mapper.dart';
 import '../domain/portfolio_project.dart';
 import 'providers/portfolio_providers.dart';
@@ -119,20 +120,24 @@ class _ProjectMagazineCard extends StatelessWidget {
                 decoration: BoxDecoration(boxShadow: BatshShadows.soft),
                 child: Hero(
                   tag: 'portfolio-${project.id}',
-                  child: CachedNetworkImage(
-                    imageUrl: project.coverPhotoUrl,
-                    fit: BoxFit.cover,
-                    errorWidget: (_, _, _) => Container(
-                      color: context.colorScheme.surfaceContainer,
-                      child: Center(
-                        child: Icon(
-                          Icons.image_outlined,
-                          size: BatshIconSize.xxl,
-                          color: context.colorScheme.onSurfaceVariant,
+                  child:
+                      project.coverPhotoUrl.startsWith('assets/') &&
+                          referenceMediaAllowed(project.coverPhotoUrl)
+                      ? ReferenceMedia(url: project.coverPhotoUrl)
+                      : CachedNetworkImage(
+                          imageUrl: project.coverPhotoUrl,
+                          fit: BoxFit.cover,
+                          errorWidget: (_, _, _) => Container(
+                            color: context.colorScheme.surfaceContainer,
+                            child: Center(
+                              child: Icon(
+                                Icons.image_outlined,
+                                size: BatshIconSize.xxl,
+                                color: context.colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                          ),
                         ),
-                      ),
-                    ),
-                  ),
                 ),
               ),
             ),

@@ -1,3 +1,6 @@
+import '../../discovery/domain/contractor_listing.dart';
+import '../../../core/theme/professional_reference_theme.dart';
+import '../../portfolio/presentation/providers/portfolio_providers.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -13,9 +16,12 @@ import '../../../core/theme/theme_extension.dart';
 import '../../../core/utils/error_mapper.dart';
 import '../../../core/widgets/batsh_scaffold.dart';
 import '../../auth/presentation/providers/auth_provider.dart';
+import '../../auth/domain/profile.dart';
 import '../../auth/presentation/sign_in_sheet.dart';
 import '../../briefs/domain/brief.dart';
 import '../../briefs/presentation/providers/briefs_providers.dart';
+import '../../contact_followup/presentation/widgets/professional_contact_review_card.dart';
+import '../../contact_followup/presentation/providers/professional_contact_providers.dart';
 import '../../discovery/presentation/providers/discovery_providers.dart';
 import '../../explore/presentation/providers/explore_providers.dart';
 import '../../notifications/presentation/providers/notifications_providers.dart';
@@ -41,13 +47,21 @@ class HomeownerHomeScreen extends ConsumerStatefulWidget {
       _HomeownerHomeScreenState();
 }
 
-class _HomeownerHomeScreenState extends ConsumerState<HomeownerHomeScreen> {
+class _HomeownerHomeScreenState extends ConsumerState<HomeownerHomeScreen>
+    with WidgetsBindingObserver {
+  static const _contactReviewPollInterval = Duration(minutes: 5);
+
   late final TextEditingController _searchController;
   final Set<String> _previewSavedIds = <String>{};
+  GoRouter? _router;
+  Timer? _contactReviewPollTimer;
+  bool _homeRouteActive = false;
+  bool _appResumed = true;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     if (!referenceHomePreviewEnabled) {
       unawaited(AppAnalytics.track(MarketplaceEvents.homeViewed));
     }
@@ -59,13 +73,121 @@ class _HomeownerHomeScreenState extends ConsumerState<HomeownerHomeScreen> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final router = GoRouter.of(context);
+    if (!identical(_router, router)) {
+      _router?.routeInformationProvider.removeListener(_handleHomeRouteChange);
+      _router = router;
+      router.routeInformationProvider.addListener(_handleHomeRouteChange);
+    }
+    _handleHomeRouteChange();
+  }
+
+  @override
   void dispose() {
+    _contactReviewPollTimer?.cancel();
+    _router?.routeInformationProvider.removeListener(_handleHomeRouteChange);
+    WidgetsBinding.instance.removeObserver(this);
     _searchController.dispose();
     super.dispose();
   }
 
+  bool get _isSignedInHomeowner {
+    final session = ref.read(currentSessionProvider);
+    final profile = ref.read(currentProfileProvider).asData?.value;
+    return session != null &&
+        profile?.id == session.user.id &&
+        profile?.role == UserRole.homeowner;
+  }
+
+  void _handleHomeRouteChange() {
+    final isHome =
+        _router?.routeInformationProvider.value.uri.path ==
+        Routes.homeownerHome;
+    if (isHome == _homeRouteActive) return;
+
+    _homeRouteActive = isHome;
+    if (isHome) {
+      _refreshContactReviewIfUnresolved();
+      _ensureContactReviewPolling();
+    } else {
+      _contactReviewPollTimer?.cancel();
+      _contactReviewPollTimer = null;
+    }
+  }
+
+  void _refreshContactReviewIfUnresolved() {
+    if (!mounted || !_isSignedInHomeowner) return;
+    final current = ref.read(professionalContactEpisodeProvider);
+    if (current.isLoading || current.asData?.value != null) return;
+    ref.invalidate(professionalContactEpisodeProvider);
+  }
+
+  void _ensureContactReviewPolling() {
+    if (!mounted ||
+        !_homeRouteActive ||
+        !_appResumed ||
+        !_isSignedInHomeowner ||
+        _contactReviewPollTimer != null) {
+      return;
+    }
+
+    final current = ref.read(professionalContactEpisodeProvider);
+    if (current.asData?.value != null) {
+      _contactReviewPollTimer?.cancel();
+      _contactReviewPollTimer = null;
+      return;
+    }
+    if (current.isLoading) return;
+
+    _contactReviewPollTimer = Timer.periodic(_contactReviewPollInterval, (_) {
+      if (!mounted ||
+          !_homeRouteActive ||
+          !_appResumed ||
+          !_isSignedInHomeowner) {
+        _contactReviewPollTimer?.cancel();
+        _contactReviewPollTimer = null;
+        return;
+      }
+
+      final latest = ref.read(professionalContactEpisodeProvider);
+      if (latest.asData?.value != null) {
+        _contactReviewPollTimer?.cancel();
+        _contactReviewPollTimer = null;
+      } else if (!latest.isLoading) {
+        ref.invalidate(professionalContactEpisodeProvider);
+      }
+    });
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    _appResumed = state == AppLifecycleState.resumed;
+    if (!_appResumed) {
+      _contactReviewPollTimer?.cancel();
+      _contactReviewPollTimer = null;
+      return;
+    }
+
+    if (_homeRouteActive) {
+      _refreshContactReviewIfUnresolved();
+      _ensureContactReviewPolling();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    // Resolve providers while the ConsumerState is building; the theme only
+    // wraps rendering, so ref.listen retains its consumer lifecycle boundary.
+    final content = _buildHome(context);
+    return Theme(
+      data: ProfessionalReferenceTheme.scopedTheme(Theme.of(context)),
+      child: content,
+    );
+  }
+
+  Widget _buildHome(BuildContext context) {
     if (referenceHomePreviewEnabled) return _buildPreviewHome(context);
 
     final preview = referenceHomePreviewEnabled;
@@ -84,6 +206,25 @@ class _HomeownerHomeScreenState extends ConsumerState<HomeownerHomeScreen> {
       data: (value) => value,
       orElse: () => null,
     );
+    final session = ref.watch(currentSessionProvider);
+    final showContactReview =
+        session != null &&
+        profile?.id == session.user.id &&
+        profile?.role == UserRole.homeowner;
+    if (showContactReview) {
+      _ensureContactReviewPolling();
+      ref.listen(professionalContactEpisodeProvider, (_, next) {
+        if (next.asData?.value != null) {
+          _contactReviewPollTimer?.cancel();
+          _contactReviewPollTimer = null;
+        } else {
+          _ensureContactReviewPolling();
+        }
+      });
+    } else {
+      _contactReviewPollTimer?.cancel();
+      _contactReviewPollTimer = null;
+    }
     final homeowner = homeownerState.maybeWhen(
       data: (value) => value,
       orElse: () => null,
@@ -110,17 +251,24 @@ class _HomeownerHomeScreenState extends ConsumerState<HomeownerHomeScreen> {
         : professionalListings.isNotEmpty
         ? professionalListings
               .take(3)
-              .map(ReferenceHomeProfessional.fromListing)
+              .map(_mapProfessional)
               .toList(growable: false)
         : const <ReferenceHomeProfessional>[];
-    final topRatedProfessionals = preview
-        ? ReferenceHomePreviewData.topRated
-        : topRatedListings.isNotEmpty
-        ? topRatedListings
-              .take(5)
-              .map(ReferenceHomeProfessional.fromListing)
-              .toList(growable: false)
-        : const <ReferenceHomeProfessional>[];
+    final featuredIds = featuredProfessionals.map((item) => item.id).toSet();
+    final topRatedIds = <String>{};
+    final topRatedProfessionals =
+        (preview
+                ? ReferenceHomePreviewData.topRated
+                : topRatedListings
+                      .where(
+                        (listing) =>
+                            !featuredIds.contains(listing.id) &&
+                            topRatedIds.add(listing.id),
+                      )
+                      .take(5)
+                      .map(_mapProfessional))
+            .where((item) => !featuredIds.contains(item.id))
+            .toList(growable: false);
     final work = preview
         ? ReferenceHomePreviewData.work
         : workProjects.isNotEmpty
@@ -155,14 +303,14 @@ class _HomeownerHomeScreenState extends ConsumerState<HomeownerHomeScreen> {
     return BatshScaffold(
       showAppBar: false,
       padding: EdgeInsets.zero,
-      backgroundColor: context.colorScheme.surface,
+      backgroundColor: ProfessionalReferenceTheme.background,
       showPattern: false,
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           DecoratedBox(
             decoration: BoxDecoration(
-              color: context.colorScheme.surface,
+              color: ProfessionalReferenceTheme.background,
               border: Border(
                 bottom: BorderSide(
                   color: context.colorScheme.outlineVariant.withValues(
@@ -191,6 +339,10 @@ class _HomeownerHomeScreenState extends ConsumerState<HomeownerHomeScreen> {
               physics: const AlwaysScrollableScrollPhysics(),
               slivers: [
                 const SliverToBoxAdapter(child: SizedBox(height: 0)),
+                if (showContactReview)
+                  const SliverToBoxAdapter(
+                    child: ProfessionalContactReviewCard(),
+                  ),
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: EdgeInsets.only(bottom: BatshSpacing.md),
@@ -295,14 +447,14 @@ class _HomeownerHomeScreenState extends ConsumerState<HomeownerHomeScreen> {
     return BatshScaffold(
       showAppBar: false,
       padding: EdgeInsets.zero,
-      backgroundColor: context.colorScheme.surface,
+      backgroundColor: ProfessionalReferenceTheme.background,
       showPattern: false,
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           DecoratedBox(
             decoration: BoxDecoration(
-              color: context.colorScheme.surface,
+              color: ProfessionalReferenceTheme.background,
               border: Border(
                 bottom: BorderSide(
                   color: context.colorScheme.outlineVariant.withValues(
@@ -569,13 +721,44 @@ class _HomeownerHomeScreenState extends ConsumerState<HomeownerHomeScreen> {
         : context.l10n.homeReferenceLocationUnset;
   }
 
+  ReferenceHomeProfessional _mapProfessional(ContractorListing listing) {
+    final mapped = ReferenceHomeProfessional.fromListing(listing);
+    if (mapped.coverPhotoUrl?.trim().isNotEmpty == true) return mapped;
+    final portfolio = ref
+        .watch(portfolioForContractorProvider(mapped.id))
+        .asData
+        ?.value;
+    final matching = portfolio
+        ?.where(
+          (project) =>
+              project.contractorId == mapped.id &&
+              project.coverPhotoUrl.trim().isNotEmpty,
+        )
+        .firstOrNull;
+    if (matching == null) return mapped;
+    return ReferenceHomeProfessional(
+      id: mapped.id,
+      name: mapped.name,
+      specialty: mapped.specialty,
+      location: mapped.location,
+      avatarUrl: mapped.avatarUrl,
+      coverPhotoUrl: matching.coverPhotoUrl,
+      rating: mapped.rating,
+      reviewCount: mapped.reviewCount,
+      projectsCompleted: mapped.projectsCompleted,
+      verified: mapped.verified,
+      sponsored: mapped.sponsored,
+    );
+  }
+
   Brief? _activeBrief(List<Brief> briefs) {
     for (final brief in briefs) {
-      if (brief.status == BriefStatus.open && !brief.isCompleted) {
+      if ((brief.status == BriefStatus.open && !brief.isCompleted) ||
+          brief.awaitsCompletionConfirmation) {
         return brief;
       }
     }
-    return briefs.isEmpty ? null : briefs.first;
+    return null;
   }
 
   String _relativeTime(BuildContext context, DateTime dateTime) {

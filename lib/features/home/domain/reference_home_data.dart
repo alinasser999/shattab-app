@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import '../../discovery/domain/contractor_listing.dart';
 import '../../explore/domain/post.dart';
 import '../../portfolio/domain/portfolio_project.dart';
@@ -8,9 +9,8 @@ import '../../portfolio/domain/portfolio_project.dart';
 /// or professional records. Keeping this switch compile-time-only makes it
 /// impossible for a normal release to silently turn a screenshot fixture into
 /// marketplace evidence.
-const bool referenceHomePreviewEnabled = bool.fromEnvironment(
-  'SHATTAB_REFERENCE_PREVIEW',
-);
+const bool referenceHomePreviewEnabled =
+    kDebugMode && bool.fromEnvironment('SHATTAB_REFERENCE_PREVIEW');
 
 class ReferenceHomeProfessional {
   const ReferenceHomeProfessional({
@@ -22,6 +22,7 @@ class ReferenceHomeProfessional {
     required this.rating,
     required this.reviewCount,
     required this.projectsCompleted,
+    this.coverPhotoUrl,
     this.verified = false,
     this.sponsored = false,
   });
@@ -31,6 +32,7 @@ class ReferenceHomeProfessional {
   final String specialty;
   final String location;
   final String avatarUrl;
+  final String? coverPhotoUrl;
   final double rating;
   final int reviewCount;
   final int projectsCompleted;
@@ -49,6 +51,7 @@ class ReferenceHomeProfessional {
           : listing.specialties.first,
       location: listing.serviceAreas.firstOrNull ?? '',
       avatarUrl: listing.logoUrl ?? '',
+      coverPhotoUrl: listing.coverPhotoUrl,
       rating: listing.rating ?? 0,
       reviewCount: listing.reviewCount,
       projectsCompleted: listing.projectsCompleted,

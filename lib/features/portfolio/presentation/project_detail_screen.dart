@@ -25,6 +25,7 @@ import '../../auth/presentation/providers/auth_provider.dart';
 import '../../auth/presentation/sign_in_sheet.dart';
 import '../../discovery/presentation/providers/discovery_providers.dart';
 import '../../discovery/domain/contractor_listing.dart';
+import '../../discovery/presentation/widgets/professional_reference_components.dart';
 import '../data/portfolio_repository.dart';
 import '../domain/portfolio_project.dart';
 import 'providers/portfolio_providers.dart';
@@ -93,7 +94,17 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
 
   void _openViewer(List<String> photos, int index) {
     unawaited(
-      BatshPhotoViewer.show(context, urls: photos, initialIndex: index),
+      BatshPhotoViewer.show(
+        context,
+        urls: photos,
+        initialIndex: index,
+        imageBuilder:
+            photos.any(
+              (url) => url.startsWith('assets/') && referenceMediaAllowed(url),
+            )
+            ? (_, url) => ReferenceMedia(url: url, fit: BoxFit.contain)
+            : null,
+      ),
     );
   }
 
@@ -121,8 +132,8 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
 
   Widget _buildDetails(BuildContext context, PortfolioProject project) {
     final photos = <String>{
-      if (isDisplayableImageUrl(project.coverPhotoUrl)) project.coverPhotoUrl,
-      ...project.photoUrls.where(isDisplayableImageUrl),
+      if (referenceMediaAllowed(project.coverPhotoUrl)) project.coverPhotoUrl,
+      ...project.photoUrls.where(referenceMediaAllowed),
     }.toList();
     if (photos.isEmpty) photos.add('');
     final selected = _selectedIndex.clamp(0, photos.length - 1).toInt();
@@ -376,6 +387,8 @@ class _ProjectHero extends StatelessWidget {
   Widget build(BuildContext context) {
     final image = photo.isEmpty
         ? BatshInitialPlate(name: project.title)
+        : photo.startsWith('assets/') && referenceMediaAllowed(photo)
+        ? ReferenceMedia(url: photo)
         : CachedNetworkImage(
             imageUrl: sizedImageUrl(photo, width: 1200),
             fit: BoxFit.cover,
@@ -438,6 +451,8 @@ class _ProjectThumbnailStrip extends StatelessWidget {
                 clipBehavior: Clip.antiAlias,
                 child: url.isEmpty
                     ? BatshInitialPlate(name: context.l10n.projectDetailsTitle)
+                    : url.startsWith('assets/') && referenceMediaAllowed(url)
+                    ? ReferenceMedia(url: url)
                     : CachedNetworkImage(
                         imageUrl: sizedImageUrl(url, width: 260),
                         fit: BoxFit.cover,

@@ -51,10 +51,10 @@ The bundled family is `IBM Plex Sans Arabic`.
 | Title medium | 18 | 600 | 26 |
 | Body large | 17 | 400 | 26 |
 | Body medium | 15 | 400 | 24 |
-| Body small | 13 | 400 | 20 |
+| Body small | 14 | 400 | 21 |
 | Label large | 15 | 600 | 22 |
-| Label medium | 13 | 500 | 18 |
-| Label small | 11 | 500 | 16 |
+| Label medium | 14 | 500 | 21 |
+| Label small | 12 | 500 | 17 |
 
 Arabic does not use negative tracking. Keep enough leading for marks and
 descenders. Mixed Arabic and Latin labels use the same family.
@@ -95,3 +95,9 @@ to a workflow.
 - Preserve visible focus.
 - Test large text, dark mode, 320dp width, and long translated strings.
 - Keep fixed navigation from obscuring the final content.
+
+## Consumer component contract (2026-10-01)
+
+Functional home, auth and account controls use this same scheme and bundled typeface. Legacy `home*` color aliases remain for compatibility; the shell no longer applies them as a separate theme. Supporting labels are14dp, metadata12dp, with full system TextScaler retained. Critical text wraps; controls use minimum heights rather than shrinking text.
+
+Default page canvas is plain cream/dark surface. Cards use tonal surfaces and outlines; elevation is opt-in. Navigation measures label height. Default forms no longer receive a600ms body entrance. Reduced motion renders progress, success and route changes immediately. See [UI/UX component contract](ui-ux-component-contract.md) for keyboard, sheet and state details. Validation results live in the task artifacts; this document is not a runtime or release certification.

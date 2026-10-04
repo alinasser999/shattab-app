@@ -1199,7 +1199,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reviewsClearFilter => 'Clear filter';
 
   @override
-  String get ratingOutOfFive => 'out of 5';
+  String ratingOutOfFive(String rating) {
+    return '$rating out of 5 stars';
+  }
 
   @override
   String get projectDurationLabel => 'Duration';
@@ -2408,10 +2410,36 @@ class AppLocalizationsEn extends AppLocalizations {
   String get debugMode => 'Debug Mode';
 
   @override
-  String get demoLoginHomeowner => 'Login as Homeowner';
+  String get debugLoginTitle => 'Review account sign-in';
 
   @override
-  String get demoLoginContractor => 'Login as Professional';
+  String get debugLoginHelper =>
+      'Enter the email and password for an existing review account. The account\'s saved role controls where you go.';
+
+  @override
+  String get debugLoginEmailLabel => 'Account email';
+
+  @override
+  String get debugLoginPasswordLabel => 'Account password';
+
+  @override
+  String get debugLoginSubmit => 'Sign in';
+
+  @override
+  String get debugLoginCancel => 'Cancel';
+
+  @override
+  String get debugLoginCredentialsRequired => 'Enter both email and password.';
+
+  @override
+  String get debugLoginFailed =>
+      'Could not sign in with this review account. Check the details and try again.';
+
+  @override
+  String get demoLoginHomeowner => 'Continue with homeowner account';
+
+  @override
+  String get demoLoginContractor => 'Continue with contractor account';
 
   @override
   String get debugRoleSwitcher => 'Switch role';
@@ -4788,4 +4816,257 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get onboardingDistrictMiami => 'Miami';
+
+  @override
+  String get startupRetryMessage =>
+      'Shattab could not start. Check your connection and try again.';
+
+  @override
+  String chooseStarRating(String rating) {
+    return 'Choose $rating out of 5 stars';
+  }
+
+  @override
+  String removeFilter(String label) {
+    return 'Remove $label filter';
+  }
+
+  @override
+  String get preferencesSaveFailed =>
+      'Could not save your preference. Try again.';
+
+  @override
+  String get preferencesSaving => 'Saving your preference…';
+
+  @override
+  String get addPhotos => 'Add photos';
+
+  @override
+  String get photoSelectionFailed =>
+      'Could not select photos. Try again or check photo access.';
+
+  @override
+  String get closeSheet => 'Close';
+
+  @override
+  String get referenceProfileTitle => 'Professional profile';
+
+  @override
+  String get referenceProfessionalsTitle => 'Professionals';
+
+  @override
+  String get referenceSaveProfessional => 'Save professional';
+
+  @override
+  String get referenceUnsaveProfessional => 'Remove from saved';
+
+  @override
+  String get referencePremiumDisclosure => 'Promoted placement';
+
+  @override
+  String get referenceAdDisclosure => 'Advertisement';
+
+  @override
+  String get referenceVerified => 'Verified by Shattab';
+
+  @override
+  String get referenceViewProfile => 'View profile';
+
+  @override
+  String get referenceAbout => 'About';
+
+  @override
+  String get referenceWorks => 'Work';
+
+  @override
+  String get referenceServices => 'Services';
+
+  @override
+  String get referenceAboutProfessional => 'About the professional';
+
+  @override
+  String get referencePreviousWork => 'Previous work';
+
+  @override
+  String get referenceServiceAreas => 'Service areas';
+
+  @override
+  String get referenceWorkingApproach => 'Working approach';
+
+  @override
+  String get referenceViewAll => 'View all';
+
+  @override
+  String get referenceRequestQuote => 'Request quote';
+
+  @override
+  String get referenceMessageProfessional => 'Message professional';
+
+  @override
+  String get referenceMissingBio =>
+      'The professional has not added an overview';
+
+  @override
+  String get referenceMissingWork => 'No previous work added yet';
+
+  @override
+  String get referenceSignInContact => 'Sign in to contact the professional';
+
+  @override
+  String get referenceSearchHint => 'Search for a professional or service ...';
+
+  @override
+  String get referenceAll => 'All';
+
+  @override
+  String get referenceInteriorDesign => 'Interior design';
+
+  @override
+  String get referenceFinishing => 'Finishing';
+
+  @override
+  String get referenceKitchen => 'Kitchens';
+
+  @override
+  String get referencePlumbing => 'Plumbing';
+
+  @override
+  String get referenceElectricity => 'Electrical';
+
+  @override
+  String get referenceSort => 'Sort: ';
+
+  @override
+  String get referenceCompatible => 'Best match';
+
+  @override
+  String get referenceRelevant => 'Most relevant';
+
+  @override
+  String get referenceMostProjects => 'Most completed projects';
+
+  @override
+  String get referenceClient => 'Shattab customer';
+
+  @override
+  String get referenceMyProjects => 'My projects';
+
+  @override
+  String get referenceStepOneTitle => 'Understand your needs';
+
+  @override
+  String get referenceStepOneBody =>
+      'An initial meeting to explain your ideas and requirements';
+
+  @override
+  String get referenceStepTwoTitle => 'Prepare the design and quote';
+
+  @override
+  String get referenceStepTwoBody =>
+      'Plans in 2D and 3D and selection of materials';
+
+  @override
+  String get referenceStepThreeTitle => 'Follow execution and handover';
+
+  @override
+  String get referenceStepThreeBody =>
+      'Ongoing follow up and execution quality checks';
+
+  @override
+  String get referenceCompletedProjects => 'completed projects';
+
+  @override
+  String get referenceYearsExperience => 'years of experience';
+
+  @override
+  String referenceProfessionalsCount(int count) {
+    return '$count professionals available';
+  }
+
+  @override
+  String referenceDisplayedProfessionalsCount(int count) {
+    return '$count professionals loaded';
+  }
+
+  @override
+  String referenceCompletedProjectsCount(int count) {
+    return '$count completed projects';
+  }
+
+  @override
+  String referenceYearsExperienceCount(String years) {
+    return '$years years of experience';
+  }
+
+  @override
+  String referenceReviewCount(int count) {
+    return '($count reviews)';
+  }
+
+  @override
+  String referenceStarCount(int count) {
+    return '$count stars';
+  }
+
+  @override
+  String get referenceWorkApproachDisclaimer =>
+      'Suggested steps for planning the work; agree the details directly with the professional.';
+
+  @override
+  String get professionalContactReviewPrompt =>
+      'Did you work together? Your review can help other homeowners choose with confidence. It takes less than a minute.';
+
+  @override
+  String get professionalContactReviewPrimaryAction => 'Review my experience';
+
+  @override
+  String get professionalContactReviewNotTogether => 'We did not work together';
+
+  @override
+  String get professionalContactReviewDismiss => 'Hide reminder';
+
+  @override
+  String get professionalContactReviewActionFailed =>
+      'Could not save your choice. Try again.';
+
+  @override
+  String get professionalContactReviewFormIntro =>
+      'Share your review of the experience. This is your report and does not independently confirm the work was completed.';
+
+  @override
+  String get professionalContactReviewAttribution =>
+      'Homeowner-reported experience; first contact began through Shattab.';
+
+  @override
+  String get homeownerLocationHint =>
+      'Choose the city and area where your home is located.';
+
+  @override
+  String get homeownerReferenceSearchHint => 'Find a professional or service';
+
+  @override
+  String get homeownerReferenceProfessionalsTitle =>
+      'Professionals for your project';
+
+  @override
+  String get homeownerReferenceWorkTitle => 'Work to inspire you';
+
+  @override
+  String get homeownerReferenceStartTitle => 'Start your home project';
+
+  @override
+  String get homeownerReferenceStartBody =>
+      'Tell us what you need and take a clear first step.';
+
+  @override
+  String get homeownerReferenceStartSteps =>
+      'Describe your needs → receive quotes → choose a professional';
+
+  @override
+  String get homeownerReferencePhotoUnavailable => 'Work photo unavailable';
+
+  @override
+  String homeownerReferenceOffers(int count) {
+    return '$count offers';
+  }
 }

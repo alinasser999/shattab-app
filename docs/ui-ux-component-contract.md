@@ -1,0 +1,12 @@
+# Shattab Flutter component contract
+
+Implemented incrementally in task ui-ux-20261001; this is a design/interaction contract, not proof that every screen passed runtime/device checks.
+
+- Identity: one Batsh ColorScheme and bundled IBM Plex Sans Arabic. Ambient RTL/LTR with directional gutters; phone/OTP/reference values can use LTR islands. Approved logo, genuine photos and real server statuses only.
+- Text: preserve the system TextScaler, including200%. Body15/24, supporting14/21, metadata12/17. No FittedBox for functional text. Photos may have fixed aspect ratios; adjacent text uses natural height.
+- Actions: enabled targets are at least48dp. Native Material buttons/switches provide keyboard activation. Custom BatshPressable handles Enter/Space once and shows a focus border. Preserve independent save/share children; suppress duplicate decorative text at the actual leaf, not a whole interactive card. Native button label remains during busy state; busy controls reject activation.
+- Chrome: plain default canvas. Bounded content widths are screen-specific. Navigation measures the tallest wrapping label. Stable titles/back wrap detail async state. Avoid whole-body entrances on fetch/refresh.
+- Sheets: BatshSheet bounds its content to available viewport, supplies localized close and owns bottom keyboard inset once; descendants receive a removed bottom viewInset. The optional ownsKeyboardInset=false preserves an intentional content-owned inset. Content supplies a bounded lazy list or SingleChildScrollView for a form. Do not wrap an unbounded Expanded/ListView blindly. Dialog content scrolls; actions use Material wrapping layout.
+- States: error is distinct from empty/unknown. A compact section retry keeps sibling content visible. Loading is one semantic status; skeleton shapes are decorative. Error/empty states scroll if viewport height is bounded. Save/upload/pending does not imply approval or completed server workflow.
+- Motion: short press feedback and navigation, guarded by system/app disableAnimations. Reduced mode removes travel/scale/shake/delay/loops. Routine loading and confirmation stay static and immediately visible.
+- Verification: target320/390/wide, Arabic/English, light/dark, full scale2, keyboard inset, focus/semantics and reduced motion. Native media/OAuth/SMS/accessibility/performance needs isolated device evidence. Task artifacts record exact checks and limitations.

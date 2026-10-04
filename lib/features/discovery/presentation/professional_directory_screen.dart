@@ -1,39 +1,26 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-
 import 'package:batsh/core/l10n/l10n_extension.dart';
 import '../../../core/l10n/catalog_labels.dart';
 import '../../../core/router/routes.dart';
-import '../../../core/theme/batsh_icon_size.dart';
-import '../../../core/theme/batsh_motion.dart';
 import '../../../core/theme/batsh_radius.dart';
-import '../../../core/theme/batsh_shadows.dart';
 import '../../../core/theme/batsh_spacing.dart';
 import '../../../core/theme/batsh_typography.dart';
 import '../../../core/theme/theme_extension.dart';
 import '../../../core/utils/error_mapper.dart';
-import '../../../core/utils/support_contact.dart';
-import '../../../core/widgets/avatar_with_initials.dart';
-import '../../../core/widgets/batsh_pressable.dart';
-import '../../../core/widgets/batsh_scaffold.dart';
-import '../../../core/widgets/batsh_search_bar.dart';
 import '../../../core/widgets/batsh_snack.dart';
-import '../../../core/widgets/shattab_experience_state.dart';
-import '../../../core/widgets/shattab_pattern.dart';
 import '../../auth/presentation/sign_in_sheet.dart';
-import '../../notifications/presentation/providers/notifications_providers.dart';
 import '../../onboarding/domain/onboarding_models.dart';
 import '../../saved/presentation/providers/saved_providers.dart';
+import '../../portfolio/presentation/providers/portfolio_providers.dart';
 import '../data/discovery_repository.dart';
 import '../domain/contractor_listing.dart';
+import '../domain/professional_reference_fixture.dart';
 import 'providers/discovery_providers.dart';
+import 'widgets/professional_reference_components.dart';
 
-/// The homeowner catalogue. All cards are backed by the discovery query; a
-/// missing image is represented honestly instead of being replaced by a stock
-/// room photo.
 class ProfessionalDirectoryScreen extends ConsumerStatefulWidget {
   const ProfessionalDirectoryScreen({super.key});
 
@@ -47,6 +34,7 @@ class _ProfessionalDirectoryScreenState
   final _searchController = TextEditingController();
   final _scrollController = ScrollController();
   Timer? _debounce;
+  String? _localSearchInput;
   final Map<String, bool> _optimisticSaved = {};
   Object? _loadMoreError;
   bool _loadingMore = false;
@@ -58,9 +46,16 @@ class _ProfessionalDirectoryScreenState
         (filters.minimumRating == null ? 0 : 1);
   }
 
+  String? _normalizeSearchQuery(String? query) {
+    final normalized = query?.trim();
+    return normalized == null || normalized.isEmpty ? null : normalized;
+  }
+
   @override
   void initState() {
     super.initState();
+    _searchController.text =
+        ref.read(discoveryFiltersControllerProvider).searchQuery ?? '';
     _scrollController.addListener(() {
       if (_scrollController.hasClients &&
           _scrollController.position.extentAfter < 480) {
@@ -161,1756 +156,227 @@ class _ProfessionalDirectoryScreenState
   }
 
   void _clearAll() {
+    _debounce?.cancel();
+    _debounce = null;
+    _localSearchInput = null;
     _searchController.clear();
     ref.read(discoveryFiltersControllerProvider.notifier).clear();
   }
 
   void _setSearch(String value) {
     _debounce?.cancel();
-    _debounce = Timer(const Duration(milliseconds: 260), () {
-      if (!mounted) return;
+    _localSearchInput = value;
+    final timer = Timer(const Duration(milliseconds: 260), () {
+      if (!mounted || _searchController.text != value) return;
+      _debounce = null;
       ref.read(discoveryFiltersControllerProvider.notifier).setSearch(value);
     });
+    _debounce = timer;
   }
 
   @override
   Widget build(BuildContext context) {
+    ref.listen<DiscoveryFilters>(discoveryFiltersControllerProvider, (
+      previous,
+      next,
+    ) {
+      if (previous?.searchQuery == next.searchQuery) return;
+
+      final localSearchInput = _localSearchInput;
+      if (localSearchInput != null &&
+          _normalizeSearchQuery(localSearchInput) ==
+              _normalizeSearchQuery(next.searchQuery)) {
+        // The provider query already represents the current field input. Keep
+        // the user's exact text and cursor, including input not represented by
+        // trim, whether the update came from this debounce or another control.
+        return;
+      }
+
+      _debounce?.cancel();
+      _debounce = null;
+      _localSearchInput = null;
+      final nextSearch = next.searchQuery ?? '';
+      if (_searchController.text == nextSearch) return;
+      _searchController.value = TextEditingValue(
+        text: nextSearch,
+        selection: TextSelection.collapsed(offset: nextSearch.length),
+      );
+    });
     final filters = ref.watch(discoveryFiltersControllerProvider);
     final contractors = ref.watch(discoverContractorsProvider);
-    final topRated = ref.watch(topRatedProfessionalsProvider);
     final sponsored = ref.watch(
       sponsoredProfessionalsProvider(filters.specialty, filters.city),
     );
     final savedIds = ref.watch(savedContractorIdsProvider).value ?? <String>{};
-    final location = filters.city ?? context.l10n.cityNewCairo;
     final hasQuery = filters.searchQuery?.isNotEmpty == true;
-
-    return BatshScaffold(
-      showAppBar: false,
-      padding: EdgeInsets.zero,
-      body: contractors.when(
-        loading: () => const _DirectoryLoading(),
-        error: (error, _) => Padding(
-          padding: const EdgeInsets.all(BatshSpacing.gutter),
-          child: ShattabExperienceState(
-            icon: Icons.cloud_off_outlined,
-            title: context.l10n.unknownErrorRetry,
-            message: ErrorMapper.map(error),
-            actionLabel: context.l10n.tryAgain,
-            onAction: () => ref.invalidate(discoverContractorsProvider),
-            secondaryActionLabel: context.l10n.helpSupport,
-            onSecondaryAction: () => openShattabSupport(context),
-            pattern: ShattabPatternKind.contour,
-          ),
-        ),
-        data: (items) => _buildContent(
-          context,
-          items: items,
-          filters: filters,
-          location: location,
-          hasQuery: hasQuery,
-          savedIds: savedIds,
-          sponsored: sponsored,
-          topRated: topRated,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildContent(
-    BuildContext context, {
-    required List<ContractorListing> items,
-    required DiscoveryFilters filters,
-    required String location,
-    required bool hasQuery,
-    required Set<String> savedIds,
-    required AsyncValue<List<ContractorListing>> sponsored,
-    required AsyncValue<List<ContractorListing>> topRated,
-  }) {
-    if (items.isEmpty) {
-      final filtered = !filters.isEmpty;
-      return Column(
-        children: [
-          _DirectoryHeader(
-            unreadCount: ref.watch(unreadNotificationsProvider),
-            onNotifications: () => context.push(Routes.notifications),
-            onSaved: () => context.push(Routes.homeownerSaved),
-            queryMode: hasQuery,
-            onExitQuery: hasQuery
-                ? () {
-                    _searchController.clear();
-                    ref
-                        .read(discoveryFiltersControllerProvider.notifier)
-                        .setSearch(null);
-                  }
-                : null,
-          ),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(BatshSpacing.gutter),
-              child: ShattabExperienceState(
-                icon: filtered
-                    ? Icons.filter_alt_off_outlined
-                    : Icons.search_off_outlined,
-                title: filtered
-                    ? context.l10n.noResultsFound
-                    : context.l10n.noContractorsTitle,
-                message: context.l10n.noContractorsMessage,
-                actionLabel: filtered
-                    ? context.l10n.clearFilters
-                    : context.l10n.tryAgain,
-                onAction: filtered
-                    ? _clearAll
-                    : () => ref.invalidate(discoverContractorsProvider),
-                pattern: filtered
-                    ? ShattabPatternKind.lattice
-                    : ShattabPatternKind.arches,
-              ),
-            ),
-          ),
-        ],
-      );
-    }
-
-    final sorted = [...items];
-    if (filters.sort == DiscoverySort.projects) {
-      sorted.sort((a, b) => b.projectsCompleted.compareTo(a.projectsCompleted));
-    } else if (filters.sort == DiscoverySort.rating) {
-      sorted.sort((a, b) => (b.rating ?? -1).compareTo(a.rating ?? -1));
-    }
-
-    final hasSponsored = !hasQuery && sponsored.value?.isNotEmpty == true;
-
-    return RefreshIndicator(
-      onRefresh: _refresh,
-      color: context.colorScheme.primary,
-      child: CustomScrollView(
-        key: const PageStorageKey<String>('homeowner-professionals'),
-        controller: _scrollController,
-        physics: const AlwaysScrollableScrollPhysics(),
-        slivers: [
-          SliverToBoxAdapter(
-            child: _DirectoryHeader(
-              unreadCount: ref.watch(unreadNotificationsProvider),
-              queryMode: hasQuery,
-              onNotifications: () => context.push(Routes.notifications),
-              onSaved: () => context.push(Routes.homeownerSaved),
-              onExitQuery: hasQuery
-                  ? () {
-                      _searchController.clear();
-                      ref
-                          .read(discoveryFiltersControllerProvider.notifier)
-                          .setSearch(null);
-                    }
-                  : null,
-            ),
-          ),
-          SliverToBoxAdapter(
-            child: _DirectoryControls(
-              searchController: _searchController,
-              onSearchChanged: _setSearch,
-              onClearSearch: () {
-                _searchController.clear();
-                ref
-                    .read(discoveryFiltersControllerProvider.notifier)
-                    .setSearch(null);
-              },
-              activeFilterCount: _activeFilterCount,
-              onFilter: _showFilters,
-              sort: filters.sort,
-              onSort: _showSort,
-              showSearch: true,
-              showSortAndFilter: false,
-            ),
-          ),
-          if (!hasQuery) ...[
-            SliverToBoxAdapter(
-              child: _LocationSelector(
-                location: location,
-                onTap: _showLocation,
-              ),
-            ),
-            SliverToBoxAdapter(
-              child: _CategoryRail(
-                selected: filters.specialty,
-                onSelected: (key) => ref
-                    .read(discoveryFiltersControllerProvider.notifier)
-                    .setSpecialty(key),
-              ),
-            ),
-          ],
-          SliverToBoxAdapter(
-            child: _ActiveCriteria(
-              filters: filters,
-              onClear: _clearAll,
-              onRemoveSpecialty: () => ref
-                  .read(discoveryFiltersControllerProvider.notifier)
-                  .setSpecialty(null),
-              onRemoveCity: () => ref
-                  .read(discoveryFiltersControllerProvider.notifier)
-                  .setCity(null),
-              onRemoveRating: () => ref
-                  .read(discoveryFiltersControllerProvider.notifier)
-                  .setMinimumRating(null),
-            ),
-          ),
-          if (hasSponsored) ...[
-            SliverToBoxAdapter(
-              child: _SectionHeading(title: 'محترفون في منطقتك'),
-            ),
-            SliverToBoxAdapter(
-              child: _SponsoredShelf(
-                listings: sponsored.value!,
-                savedIds: savedIds,
-                onInfo: () => _showSponsoredInfo(context),
-                onOpen: (listing) => context.push(
-                  Routes.homeownerContractorProfilePath(listing.id),
-                ),
-                onSave: (listing, currentlySaved) => runSignedIn(
-                  context,
-                  ref,
-                  reason: context.l10n.signInToSave,
-                  action: () =>
-                      _toggleSave(listing.id, currentlySaved: currentlySaved),
+    final ids = <String>{};
+    final items =
+        <ContractorListing>[
+              if (!hasQuery) ...?sponsored.value,
+              ...?contractors.value,
+            ]
+            .where(
+              (item) =>
+                  (filters.sort != DiscoverySort.rating || item.hasReviews) &&
+                  (filters.minimumRating == null ||
+                      (item.rating != null &&
+                          item.rating! >= filters.minimumRating!)) &&
+                  ids.add(item.id),
+            )
+            .toList();
+    final count = professionalReferenceEnabled && filters.isEmpty
+        ? 124
+        : items.length;
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        bottom: false,
+        child: RefreshIndicator(
+          onRefresh: _refresh,
+          color: referenceOrange,
+          child: CustomScrollView(
+            key: const PageStorageKey<String>('homeowner-professionals'),
+            controller: _scrollController,
+            physics: const AlwaysScrollableScrollPhysics(),
+            slivers: [
+              SliverToBoxAdapter(
+                child: _ReferenceDirectoryHeader(
+                  location: filters.city ?? context.l10n.cityNewCairo,
+                  onLocation: _showLocation,
+                  onFilters: _showFilters,
+                  activeFilterCount: _activeFilterCount,
                 ),
               ),
-            ),
-          ],
-          SliverToBoxAdapter(
-            child: _SectionHeading(
-              title: hasQuery ? 'نتائج البحث' : 'كل المحترفين',
-              subtitle: hasQuery
-                  ? context.l10n.professionalsAvailable(sorted.length)
-                  : null,
-            ),
-          ),
-          if (!hasQuery)
-            SliverToBoxAdapter(
-              child: _DirectoryControls(
-                searchController: _searchController,
-                onSearchChanged: _setSearch,
-                onClearSearch: () {
-                  _searchController.clear();
-                  ref
-                      .read(discoveryFiltersControllerProvider.notifier)
-                      .setSearch(null);
-                },
-                activeFilterCount: _activeFilterCount,
-                onFilter: _showFilters,
-                sort: filters.sort,
-                onSort: _showSort,
-                showSearch: false,
-                showSortAndFilter: true,
-              ),
-            ),
-          SliverPadding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: BatshSpacing.sectionH,
-            ),
-            sliver: SliverList.builder(
-              itemCount: sorted.length,
-              itemBuilder: (_, index) {
-                final listing = sorted[index];
-                final saved =
-                    _optimisticSaved[listing.id] ??
-                    savedIds.contains(listing.id);
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: BatshSpacing.sm),
-                  child: _ProfessionalCard(
-                    listing: listing,
-                    isSaved: saved,
-                    onOpen: () => context.push(
-                      Routes.homeownerContractorProfilePath(listing.id),
-                    ),
-                    onSave: () => runSignedIn(
-                      context,
-                      ref,
-                      reason: context.l10n.signInToSave,
-                      action: () => _toggleSave(
-                        listing.id,
-                        currentlySaved: savedIds.contains(listing.id),
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-          SliverToBoxAdapter(
-            child: _DirectoryFooter(
-              loading: _loadingMore,
-              error: _loadMoreError,
-              hasMore: ref.read(discoverContractorsProvider.notifier).hasMore,
-              onLoadMore: _loadMore,
-            ),
-          ),
-          if (!hasQuery)
-            SliverToBoxAdapter(
-              child: _TopRatedShelf(
-                state: topRated,
-                savedIds: savedIds,
-                onOpen: (listing) => context.push(
-                  Routes.homeownerContractorProfilePath(listing.id),
-                ),
-                onSave: (listing, currentlySaved) => runSignedIn(
-                  context,
-                  ref,
-                  reason: context.l10n.signInToSave,
-                  action: () =>
-                      _toggleSave(listing.id, currentlySaved: currentlySaved),
-                ),
-                onViewAll: () =>
-                    context.push(Routes.homeownerTopRatedProfessionals),
-              ),
-            ),
-          SliverToBoxAdapter(
-            child: _CreateProjectBanner(
-              onTap: () => runSignedIn(
-                context,
-                ref,
-                reason: 'سجّل دخولك لإضافة مشروعك',
-                action: () => context.push(Routes.homeownerNewPost),
-              ),
-            ),
-          ),
-          SliverToBoxAdapter(
-            child: SizedBox(height: 92 + MediaQuery.of(context).padding.bottom),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _showSponsoredInfo(BuildContext context) {
-    return showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (_) => const _InfoSheet(
-        icon: Icons.campaign_outlined,
-        title: 'إعلان ممول',
-        body:
-            'هذا الظهور الإضافي مدفوع من المحترف ليظهر في بداية القسم. الترويج يزيد الظهور فقط ولا يغيّر تقييمات العملاء أو ترتيب الجودة المكتسبة.',
-        action: 'فهمت',
-      ),
-    );
-  }
-}
-
-class _DirectoryHeader extends StatelessWidget {
-  const _DirectoryHeader({
-    required this.unreadCount,
-    required this.onNotifications,
-    required this.onSaved,
-    this.queryMode = false,
-    this.onExitQuery,
-  });
-
-  final int unreadCount;
-  final VoidCallback onNotifications;
-  final VoidCallback onSaved;
-  final bool queryMode;
-  final VoidCallback? onExitQuery;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = context.colorScheme;
-    final topInset = MediaQuery.paddingOf(context).top;
-    return Stack(
-      children: [
-        Container(
-          height: 162 + topInset,
-          color: scheme.surfaceContainerLowest,
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              IgnorePointer(
-                child: Opacity(
-                  opacity: .9,
-                  child: Image.asset(
-                    'assets/images/professionals_header_architecture_v2.png',
-                    fit: BoxFit.cover,
-                    alignment: Alignment.topLeft,
-                    filterQuality: FilterQuality.medium,
-                  ),
-                ),
-              ),
-              Positioned(
-                top: 0,
-                left: 0,
-                right: 0,
-                height: 38,
-                child: IgnorePointer(
-                  child: Opacity(
-                    opacity: .34,
-                    child: ShattabPattern(
-                      kind: ShattabPatternKind.lattice,
-                      color: scheme.primary,
-                      strokeWidth: 1.15,
-                    ),
-                  ),
-                ),
-              ),
-              IgnorePointer(
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        scheme.surface.withValues(alpha: .02),
-                        scheme.surface.withValues(alpha: .12),
-                        scheme.surface.withValues(alpha: .9),
-                      ],
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      stops: const [0, .62, 1],
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        SafeArea(
-          bottom: false,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(
-              BatshSpacing.sectionH,
-              BatshSpacing.xs,
-              BatshSpacing.sectionH,
-              BatshSpacing.md,
-            ),
-            child: Column(
-              children: [
-                Row(
-                  textDirection: TextDirection.ltr,
-                  children: [
-                    if (queryMode)
-                      _HeaderAction(
-                        icon: Icons.arrow_forward_rounded,
-                        label: 'العودة للمحترفين',
-                        onTap: onExitQuery ?? () {},
-                      )
-                    else ...[
-                      _HeaderAction(
-                        icon: Icons.notifications_none_rounded,
-                        label: 'الإشعارات',
-                        count: unreadCount,
-                        onTap: onNotifications,
-                      ),
-                      const Spacer(),
-                      _HeaderAction(
-                        icon: Icons.bookmark_border_rounded,
-                        label: 'المحفوظات',
-                        onTap: onSaved,
-                      ),
-                    ],
-                  ],
-                ),
-                const SizedBox(height: BatshSpacing.xs),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: Text(
-                    queryMode ? 'نتائج البحث' : 'اختار المحترف المناسب\nلبيتك',
-                    textAlign: TextAlign.right,
-                    style: BatshTypography.headlineMd.copyWith(
-                      color: scheme.onSurface,
-                      height: 1.2,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: BatshSpacing.xs),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: Container(width: 58, height: 2, color: scheme.primary),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _HeaderAction extends StatelessWidget {
-  const _HeaderAction({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-    this.count = 0,
-  });
-
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-  final int count;
-
-  @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      button: true,
-      label: label,
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          Material(
-            color: context.colorScheme.surface,
-            borderRadius: BatshRadius.brMd,
-            child: InkWell(
-              onTap: onTap,
-              borderRadius: BatshRadius.brMd,
-              child: const SizedBox.square(dimension: 48),
-            ),
-          ),
-          Positioned.fill(
-            child: IgnorePointer(
-              child: Icon(icon, color: context.colorScheme.onSurface, size: 22),
-            ),
-          ),
-          if (count > 0)
-            PositionedDirectional(
-              top: -3,
-              end: -3,
-              child: Container(
-                constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
-                padding: const EdgeInsets.symmetric(horizontal: 4),
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: context.colorScheme.primary,
-                  borderRadius: BatshRadius.brFull,
-                ),
-                child: Text(
-                  count > 9 ? '9+' : count.toString(),
-                  style: BatshTypography.labelSm.copyWith(
-                    color: context.colorScheme.onPrimary,
-                    fontSize: 10,
-                  ),
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-class _DirectoryControls extends StatelessWidget {
-  const _DirectoryControls({
-    required this.searchController,
-    required this.onSearchChanged,
-    required this.onClearSearch,
-    required this.activeFilterCount,
-    required this.onFilter,
-    required this.sort,
-    required this.onSort,
-    this.showSearch = true,
-    this.showSortAndFilter = true,
-  });
-
-  final TextEditingController searchController;
-  final ValueChanged<String> onSearchChanged;
-  final VoidCallback onClearSearch;
-  final int activeFilterCount;
-  final VoidCallback onFilter;
-  final DiscoverySort sort;
-  final VoidCallback onSort;
-  final bool showSearch;
-  final bool showSortAndFilter;
-
-  String _sortLabel() => switch (sort) {
-    DiscoverySort.rating => 'الأعلى تقييماً',
-    DiscoverySort.projects => 'الأكثر مشاريع مكتملة',
-    DiscoverySort.name => 'الافتراضي',
-  };
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        BatshSpacing.marginMobile,
-        BatshSpacing.xs,
-        BatshSpacing.marginMobile,
-        BatshSpacing.xs,
-      ),
-      child: Column(
-        children: [
-          if (showSearch)
-            BatshSearchBar(
-              controller: searchController,
-              hintText: 'إبحث باسم المحترف أو التخصص ...',
-              height: 44,
-              borderRadius: BatshRadius.brSm,
-              outlined: true,
-              rowTextDirection: TextDirection.ltr,
-              textDirection: TextDirection.rtl,
-              textAlign: TextAlign.right,
-              plainInput: true,
-              onChanged: onSearchChanged,
-              onClear: onClearSearch,
-            ),
-          if (showSearch && showSortAndFilter)
-            const SizedBox(height: BatshSpacing.sm),
-          if (showSortAndFilter)
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                textDirection: TextDirection.ltr,
-                children: [
-                  ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 184),
-                    child: _ControlButton(
-                      icon: Icons.swap_vert_rounded,
-                      label: 'ترتيب: ${_sortLabel()}',
-                      onTap: onSort,
-                    ),
-                  ),
-                  const SizedBox(width: BatshSpacing.sm),
-                  _ControlButton(
-                    icon: Icons.tune_rounded,
-                    label: activeFilterCount == 0
-                        ? 'فلتر'
-                        : 'فلتر ($activeFilterCount)',
-                    onTap: onFilter,
-                  ),
-                ],
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-class _LocationSelector extends StatelessWidget {
-  const _LocationSelector({required this.location, required this.onTap});
-
-  final String location;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        BatshSpacing.marginMobile,
-        0,
-        BatshSpacing.marginMobile,
-        BatshSpacing.xxs,
-      ),
-      child: Semantics(
-        button: true,
-        label: 'منطقة المشروع: $location',
-        child: Material(
-          color: context.colorScheme.surface,
-          borderRadius: BatshRadius.brMd,
-          child: InkWell(
-            onTap: onTap,
-            borderRadius: BatshRadius.brMd,
-            child: Container(
-              height: 44,
-              padding: const EdgeInsets.symmetric(horizontal: BatshSpacing.sm),
-              decoration: BoxDecoration(
-                borderRadius: BatshRadius.brMd,
-                border: Border.all(color: context.colorScheme.outlineVariant),
-              ),
-              child: Row(
-                textDirection: TextDirection.rtl,
-                children: [
-                  const Icon(Icons.location_on_outlined),
-                  const SizedBox(width: BatshSpacing.xs),
-                  Expanded(
-                    child: Text(location, style: BatshTypography.labelLg),
-                  ),
-                  const Icon(Icons.keyboard_arrow_down_rounded),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _ControlButton extends StatelessWidget {
-  const _ControlButton({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      button: true,
-      label: label,
-      child: Material(
-        color: context.colorScheme.surface,
-        borderRadius: BatshRadius.brMd,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BatshRadius.brMd,
-          child: Container(
-            height: 46,
-            padding: const EdgeInsets.symmetric(horizontal: BatshSpacing.sm),
-            decoration: BoxDecoration(
-              borderRadius: BatshRadius.brMd,
-              border: Border.all(color: context.colorScheme.outlineVariant),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(icon, size: BatshIconSize.md),
-                const SizedBox(width: BatshSpacing.xs),
-                Flexible(
-                  child: Text(
-                    label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: BatshTypography.labelMd,
-                  ),
-                ),
-                const SizedBox(width: 2),
-                const Icon(Icons.keyboard_arrow_down_rounded, size: 18),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _CategoryRail extends StatelessWidget {
-  const _CategoryRail({required this.selected, required this.onSelected});
-
-  final String? selected;
-  final ValueChanged<String?> onSelected;
-
-  static const _keys = ['all', 'full_reno', 'design', 'kitchen'];
-
-  double _tileWidth(String key) => switch (key) {
-    'all' => 72,
-    'full_reno' => 96,
-    'design' => 92,
-    'kitchen' => 82,
-    _ => 88,
-  };
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 70,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: BatshSpacing.sectionH),
-        itemCount: _keys.length,
-        separatorBuilder: (_, _) => const SizedBox(width: BatshSpacing.xs),
-        itemBuilder: (_, index) {
-          final key = _keys[index];
-          final isAll = key == 'all';
-          final active = isAll ? selected == null : selected == key;
-          final label = isAll ? 'الكل' : localizedSpecialtyLabel(context, key);
-          return Semantics(
-            button: true,
-            selected: active,
-            label: label,
-            child: GestureDetector(
-              onTap: () => onSelected(isAll ? null : key),
-              child: AnimatedContainer(
-                duration: BatshMotion.normal,
-                width: _tileWidth(key),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: BatshSpacing.xs,
-                  vertical: BatshSpacing.xs,
-                ),
-                decoration: BoxDecoration(
-                  color: active
-                      ? context.colorScheme.primaryFixed
-                      : context.colorScheme.surface,
-                  borderRadius: BatshRadius.brMd,
-                  border: Border.all(
-                    color: active
-                        ? context.colorScheme.primary
-                        : context.colorScheme.outlineVariant,
-                  ),
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      isAll ? Icons.home_outlined : specialtyIcon(key),
-                      size: 26,
-                      color: context.colorScheme.primary,
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      label,
-                      textAlign: TextAlign.center,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: BatshTypography.labelMd.copyWith(
-                        color: active
-                            ? context.colorScheme.primary
-                            : context.colorScheme.onSurface,
-                        fontWeight: FontWeight.w600,
-                        height: 1.25,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-}
-
-class _ActiveCriteria extends StatelessWidget {
-  const _ActiveCriteria({
-    required this.filters,
-    required this.onClear,
-    required this.onRemoveSpecialty,
-    required this.onRemoveCity,
-    required this.onRemoveRating,
-  });
-
-  final DiscoveryFilters filters;
-  final VoidCallback onClear;
-  final VoidCallback onRemoveSpecialty;
-  final VoidCallback onRemoveCity;
-  final VoidCallback onRemoveRating;
-
-  @override
-  Widget build(BuildContext context) {
-    if (filters.isEmpty) {
-      return const SizedBox(height: BatshSpacing.xs);
-    }
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        BatshSpacing.sectionH,
-        BatshSpacing.xs,
-        BatshSpacing.sectionH,
-        BatshSpacing.sm,
-      ),
-      child: Wrap(
-        alignment: WrapAlignment.end,
-        spacing: BatshSpacing.xs,
-        runSpacing: BatshSpacing.xs,
-        children: [
-          if (filters.specialty != null)
-            _CriteriaChip(
-              label: localizedSpecialtyLabel(context, filters.specialty!),
-              onRemove: onRemoveSpecialty,
-            ),
-          if (filters.city != null)
-            _CriteriaChip(label: filters.city!, onRemove: onRemoveCity),
-          if (filters.minimumRating != null)
-            _CriteriaChip(
-              label: 'تقييم ${filters.minimumRating!.toStringAsFixed(1)}+',
-              onRemove: onRemoveRating,
-            ),
-          TextButton(onPressed: onClear, child: const Text('إعادة ضبط')),
-        ],
-      ),
-    );
-  }
-}
-
-class _CriteriaChip extends StatelessWidget {
-  const _CriteriaChip({required this.label, required this.onRemove});
-
-  final String label;
-  final VoidCallback onRemove;
-
-  @override
-  Widget build(BuildContext context) {
-    return InputChip(
-      label: Text(label, style: BatshTypography.labelMd),
-      onDeleted: onRemove,
-      deleteIcon: const Icon(Icons.close_rounded, size: 16),
-      backgroundColor: context.colorScheme.primaryFixed,
-      side: BorderSide(
-        color: context.colorScheme.primary.withValues(alpha: .3),
-      ),
-      shape: const StadiumBorder(),
-    );
-  }
-}
-
-class _SponsoredShelf extends StatelessWidget {
-  const _SponsoredShelf({
-    required this.listings,
-    required this.savedIds,
-    required this.onInfo,
-    required this.onOpen,
-    required this.onSave,
-  });
-
-  final List<ContractorListing> listings;
-  final Set<String> savedIds;
-  final VoidCallback onInfo;
-  final ValueChanged<ContractorListing> onOpen;
-  final void Function(ContractorListing listing, bool currentlySaved) onSave;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(top: BatshSpacing.sm),
-      padding: const EdgeInsets.only(bottom: BatshSpacing.md),
-      decoration: BoxDecoration(
-        color: context.colorScheme.surfaceContainerLowest,
-        border: Border.symmetric(
-          horizontal: BorderSide(
-            color: context.colorScheme.primary.withValues(alpha: .12),
-          ),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          SizedBox(
-            height: 236,
-            child: ListView.separated(
-              reverse: true,
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(
-                horizontal: BatshSpacing.sectionH,
-              ),
-              itemCount: listings.length,
-              separatorBuilder: (_, _) =>
-                  const SizedBox(width: BatshSpacing.sm),
-              itemBuilder: (_, index) {
-                final listing = listings[index];
-                final saved = savedIds.contains(listing.id);
-                return _SponsoredCard(
-                  listing: listing,
-                  isSaved: saved,
-                  onTap: () => onOpen(listing),
-                  onSave: () => onSave(listing, saved),
-                  onInfo: onInfo,
-                );
-              },
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.only(top: BatshSpacing.xxs),
-            child: Center(child: _CarouselDots(count: listings.length)),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _SponsoredCard extends StatelessWidget {
-  const _SponsoredCard({
-    required this.listing,
-    required this.isSaved,
-    required this.onTap,
-    required this.onSave,
-    required this.onInfo,
-  });
-
-  final ContractorListing listing;
-  final bool isSaved;
-  final VoidCallback onTap;
-  final VoidCallback onSave;
-  final VoidCallback onInfo;
-
-  @override
-  Widget build(BuildContext context) {
-    final name = listing.businessName.trim().isNotEmpty
-        ? listing.businessName.trim()
-        : listing.fullName.trim();
-    return SizedBox(
-      width: (MediaQuery.sizeOf(context).width * .84)
-          .clamp(296.0, 332.0)
-          .toDouble(),
-      child: BatshPressable(
-        onTap: onTap,
-        semanticLabel: 'إعلان ممول: $name',
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            color: context.colorScheme.surface,
-            borderRadius: BatshRadius.brMd,
-            border: Border.all(color: context.colorScheme.outlineVariant),
-            boxShadow: BatshShadows.soft,
-          ),
-          child: ClipRRect(
-            borderRadius: BatshRadius.brMd,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                SizedBox(
-                  height: 132,
-                  child: Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      _ListingImage(url: listing.coverPhotoUrl, name: name),
-                      Positioned(
-                        top: BatshSpacing.xs,
-                        left: BatshSpacing.xs,
-                        child: _PaidBadge(onTap: onInfo),
-                      ),
-                      Positioned(
-                        top: BatshSpacing.xs,
-                        right: BatshSpacing.xs,
-                        child: _SaveButton(saved: isSaved, onTap: onSave),
-                      ),
-                    ],
-                  ),
-                ),
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(
-                      BatshSpacing.sm,
-                      BatshSpacing.xs,
-                      BatshSpacing.sm,
-                      BatshSpacing.sm,
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  child: Container(
+                    height: 30,
+                    decoration: BoxDecoration(
+                      color: const Color(0xfff4f4f8),
+                      borderRadius: BorderRadius.circular(12),
                     ),
                     child: Row(
-                      textDirection: TextDirection.ltr,
-                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        SizedBox(
-                          width: 124,
-                          height: 38,
-                          child: FilledButton(
-                            onPressed: onTap,
-                            style: FilledButton.styleFrom(
-                              padding: EdgeInsets.zero,
-                              textStyle: BatshTypography.labelMd,
-                            ),
-                            child: const Text('عرض الملف والأعمال'),
-                          ),
+                        const SizedBox(width: 10),
+                        const Icon(
+                          Icons.search,
+                          size: 19,
+                          color: Color(0xff24262c),
                         ),
-                        const SizedBox(width: BatshSpacing.sm),
+                        const SizedBox(width: 8),
                         Expanded(
-                          child: Directionality(
-                            textDirection: TextDirection.rtl,
-                            child: _SponsoredDetails(
-                              name: name,
-                              listing: listing,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _SponsoredDetails extends StatelessWidget {
-  const _SponsoredDetails({required this.name, required this.listing});
-
-  final String name;
-  final ContractorListing listing;
-
-  @override
-  Widget build(BuildContext context) {
-    final specialty = listing.specialties.isEmpty
-        ? null
-        : localizedSpecialtyDisplayLabel(context, listing.specialties.first);
-    final area = listing.serviceAreas.isEmpty
-        ? null
-        : listing.serviceAreas.first;
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        Text(
-          name,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: BatshTypography.labelLg.copyWith(fontWeight: FontWeight.w700),
-        ),
-        if (specialty != null)
-          Text(
-            specialty,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: BatshTypography.labelMd.copyWith(
-              color: context.colorScheme.primary,
-            ),
-          ),
-        Wrap(
-          alignment: WrapAlignment.end,
-          spacing: BatshSpacing.xs,
-          children: [
-            if (area != null)
-              Text(
-                area,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: BatshTypography.labelSm.copyWith(
-                  color: context.colorScheme.onSurfaceVariant,
-                ),
-              ),
-            if (listing.hasReviews)
-              _Metric(
-                icon: Icons.star_rounded,
-                value: listing.reviewAvg.toStringAsFixed(1),
-                color: context.colorScheme.tertiary,
-              ),
-            if (listing.projectsCompleted > 0)
-              Text(
-                '${listing.projectsCompleted} مشروع مكتمل',
-                style: BatshTypography.labelSm.copyWith(
-                  color: context.colorScheme.onSurfaceVariant,
-                ),
-              ),
-          ],
-        ),
-      ],
-    );
-  }
-}
-
-class _PaidBadge extends StatelessWidget {
-  const _PaidBadge({this.onTap});
-
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final badge = DecoratedBox(
-      decoration: BoxDecoration(
-        color: context.colorScheme.primary,
-        borderRadius: BatshRadius.brXs,
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-        child: Text(
-          'إعلان ممول',
-          style: BatshTypography.labelSm.copyWith(
-            color: context.colorScheme.onPrimary,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-      ),
-    );
-    if (onTap == null) return badge;
-    return Semantics(
-      button: true,
-      label: 'عن الإعلان الممول',
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BatshRadius.brXs,
-          child: badge,
-        ),
-      ),
-    );
-  }
-}
-
-class _CarouselDots extends StatelessWidget {
-  const _CarouselDots({required this.count});
-
-  final int count;
-
-  @override
-  Widget build(BuildContext context) {
-    final visibleCount = count > 4 ? 4 : count;
-    if (visibleCount < 2) return const SizedBox(height: BatshSpacing.xs);
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      textDirection: TextDirection.ltr,
-      children: [
-        for (var index = 0; index < visibleCount; index++)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 3),
-            child: AnimatedContainer(
-              duration: BatshMotion.normal,
-              width: index == 0 ? 10 : 8,
-              height: index == 0 ? 10 : 8,
-              decoration: BoxDecoration(
-                color: index == 0
-                    ? context.colorScheme.primary
-                    : context.colorScheme.primaryFixedDim,
-                shape: BoxShape.circle,
-              ),
-            ),
-          ),
-      ],
-    );
-  }
-}
-
-class _SectionHeading extends StatelessWidget {
-  const _SectionHeading({required this.title, this.subtitle});
-
-  final String title;
-  final String? subtitle;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        BatshSpacing.sectionH,
-        0,
-        BatshSpacing.sectionH,
-        BatshSpacing.sm,
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  title,
-                  textAlign: TextAlign.end,
-                  style: BatshTypography.titleLg.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                if (subtitle != null && subtitle!.isNotEmpty) ...[
-                  const SizedBox(height: BatshSpacing.xxs),
-                  Text(
-                    subtitle!,
-                    textAlign: TextAlign.end,
-                    style: BatshTypography.labelMd.copyWith(
-                      color: context.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-          const SizedBox(width: BatshSpacing.sm),
-          Container(width: 34, height: 2, color: context.colorScheme.primary),
-        ],
-      ),
-    );
-  }
-}
-
-class _ProfessionalCard extends StatelessWidget {
-  const _ProfessionalCard({
-    required this.listing,
-    required this.isSaved,
-    required this.onOpen,
-    required this.onSave,
-  });
-
-  final ContractorListing listing;
-  final bool isSaved;
-  final VoidCallback onOpen;
-  final VoidCallback onSave;
-
-  @override
-  Widget build(BuildContext context) {
-    final name = listing.businessName.trim().isNotEmpty
-        ? listing.businessName.trim()
-        : listing.fullName.trim();
-    final specialty = listing.specialties.isEmpty
-        ? 'محترف تشطيبات'
-        : localizedSpecialtyDisplayLabel(context, listing.specialties.first);
-    final city = listing.serviceAreas.isEmpty
-        ? null
-        : listing.serviceAreas.first;
-    return BatshPressable(
-      onTap: onOpen,
-      semanticLabel: name,
-      child: Container(
-        height: 132,
-        decoration: BoxDecoration(
-          color: context.colorScheme.surface,
-          borderRadius: BatshRadius.brMd,
-          border: Border.all(color: context.colorScheme.outlineVariant),
-          boxShadow: BatshShadows.soft,
-        ),
-        child: Row(
-          textDirection: TextDirection.ltr,
-          children: [
-            SizedBox(
-              width: 126,
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  ClipRRect(
-                    borderRadius: const BorderRadius.horizontal(
-                      left: Radius.circular(BatshRadius.md),
-                    ),
-                    child: _ListingImage(
-                      url: listing.coverPhotoUrl,
-                      name: name,
-                    ),
-                  ),
-                  Positioned(
-                    top: BatshSpacing.xs,
-                    left: BatshSpacing.xs,
-                    child: _SaveButton(saved: isSaved, onTap: onSave),
-                  ),
-                ],
-              ),
-            ),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsetsDirectional.fromSTEB(
-                  BatshSpacing.sm,
-                  BatshSpacing.sm,
-                  BatshSpacing.xs,
-                  BatshSpacing.sm,
-                ),
-                child: Directionality(
-                  textDirection: TextDirection.rtl,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      if (listing.isSponsored)
-                        const Padding(
-                          padding: EdgeInsets.only(bottom: BatshSpacing.xxs),
-                          child: _PaidBadge(),
-                        ),
-                      Text(
-                        name,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: BatshTypography.labelLg.copyWith(
-                          fontWeight: FontWeight.w700,
-                          height: 1.25,
-                        ),
-                      ),
-                      const SizedBox(height: BatshSpacing.xxs),
-                      Text(
-                        specialty,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: BatshTypography.bodySm.copyWith(
-                          color: context.colorScheme.primary,
-                        ),
-                      ),
-                      if (city != null) ...[
-                        const SizedBox(height: BatshSpacing.xxs),
-                        Row(
-                          children: [
-                            const Icon(Icons.location_on_outlined, size: 15),
-                            const SizedBox(width: BatshSpacing.xxs),
-                            Expanded(
-                              child: Text(
-                                city,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: BatshTypography.labelMd.copyWith(
-                                  color: context.colorScheme.onSurfaceVariant,
-                                ),
+                          child: TextField(
+                            controller: _searchController,
+                            onChanged: _setSearch,
+                            style: referenceText(11.5),
+                            decoration: InputDecoration(
+                              filled: false,
+                              fillColor: Colors.transparent,
+                              hintText: context.l10n.referenceSearchHint,
+                              hintStyle: referenceText(
+                                11.5,
+                                color: referenceMuted,
                               ),
+                              border: InputBorder.none,
+                              enabledBorder: InputBorder.none,
+                              focusedBorder: InputBorder.none,
+                              contentPadding: const EdgeInsets.only(bottom: 8),
+                              isDense: true,
                             ),
-                          ],
-                        ),
-                      ],
-                      const SizedBox(height: BatshSpacing.xxs),
-                      _ProfessionalMetrics(listing: listing),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsetsDirectional.only(end: BatshSpacing.xs),
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  color: context.colorScheme.primary,
-                  borderRadius: BatshRadius.brSm,
-                ),
-                child: const SizedBox(
-                  width: 42,
-                  height: 42,
-                  child: Icon(
-                    Icons.chevron_right_rounded,
-                    color: Colors.white,
-                    size: 27,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _ProfessionalMetrics extends StatelessWidget {
-  const _ProfessionalMetrics({required this.listing});
-
-  final ContractorListing listing;
-
-  @override
-  Widget build(BuildContext context) {
-    return Wrap(
-      alignment: WrapAlignment.end,
-      spacing: BatshSpacing.xs,
-      runSpacing: BatshSpacing.xxs,
-      children: [
-        if (listing.hasReviews) ...[
-          _Metric(
-            icon: Icons.star_rounded,
-            value: listing.reviewAvg.toStringAsFixed(1),
-            color: context.colorScheme.tertiary,
-          ),
-          Text(
-            '(${listing.reviewCount})',
-            style: BatshTypography.labelSm.copyWith(
-              color: context.colorScheme.onSurfaceVariant,
-            ),
-          ),
-        ] else
-          Text(
-            'بدون تقييمات',
-            style: BatshTypography.labelSm.copyWith(
-              color: context.colorScheme.onSurfaceVariant,
-            ),
-          ),
-        if (listing.projectsCompleted > 0)
-          Text(
-            '${listing.projectsCompleted} مشروع مكتمل',
-            style: BatshTypography.labelSm.copyWith(
-              color: context.colorScheme.onSurfaceVariant,
-            ),
-          ),
-      ],
-    );
-  }
-}
-
-class _Metric extends StatelessWidget {
-  const _Metric({required this.icon, required this.value, required this.color});
-
-  final IconData icon;
-  final String value;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(value, style: BatshTypography.labelLg),
-        const SizedBox(width: 2),
-        Icon(icon, size: 17, color: color),
-      ],
-    );
-  }
-}
-
-class _SaveButton extends StatelessWidget {
-  const _SaveButton({required this.saved, required this.onTap});
-
-  final bool saved;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: context.colorScheme.surface.withValues(alpha: .96),
-      borderRadius: BatshRadius.brSm,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BatshRadius.brSm,
-        child: SizedBox.square(
-          dimension: 44,
-          child: Icon(
-            saved ? Icons.bookmark_rounded : Icons.bookmark_border_rounded,
-            color: saved
-                ? context.colorScheme.primary
-                : context.colorScheme.onSurface,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _ListingImage extends StatelessWidget {
-  const _ListingImage({required this.url, required this.name});
-
-  final String? url;
-  final String name;
-
-  @override
-  Widget build(BuildContext context) {
-    final value = url?.trim() ?? '';
-    if (value.startsWith('http://') || value.startsWith('https://')) {
-      return Image.network(
-        value,
-        fit: BoxFit.cover,
-        errorBuilder: (_, _, _) => _ImageFallback(name: name),
-        loadingBuilder: (context, child, progress) =>
-            progress == null ? child : _ImageFallback(name: name),
-      );
-    }
-    return _ImageFallback(name: name);
-  }
-}
-
-class _ImageFallback extends StatelessWidget {
-  const _ImageFallback({required this.name});
-
-  final String name;
-
-  @override
-  Widget build(BuildContext context) {
-    return ColoredBox(
-      color: context.colorScheme.surfaceContainerHigh,
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          Opacity(
-            opacity: .08,
-            child: ShattabPattern(
-              kind: ShattabPatternKind.lattice,
-              color: context.colorScheme.primary,
-              strokeWidth: .8,
-            ),
-          ),
-          Center(child: AvatarWithInitials(name: name, radius: 24)),
-        ],
-      ),
-    );
-  }
-}
-
-class _TopRatedShelf extends StatelessWidget {
-  const _TopRatedShelf({
-    required this.state,
-    required this.savedIds,
-    required this.onOpen,
-    required this.onSave,
-    required this.onViewAll,
-  });
-
-  final AsyncValue<List<ContractorListing>> state;
-  final Set<String> savedIds;
-  final ValueChanged<ContractorListing> onOpen;
-  final void Function(ContractorListing listing, bool currentlySaved) onSave;
-  final VoidCallback onViewAll;
-
-  @override
-  Widget build(BuildContext context) {
-    final items = state.value ?? const <ContractorListing>[];
-    if (items.isEmpty) return const SizedBox.shrink();
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        SizedBox(
-          height: 28,
-          child: Opacity(
-            opacity: .22,
-            child: ShattabPattern(
-              kind: ShattabPatternKind.lattice,
-              color: context.colorScheme.primary,
-              strokeWidth: 1,
-            ),
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(
-            BatshSpacing.sectionH,
-            0,
-            BatshSpacing.sectionH,
-            BatshSpacing.xxs,
-          ),
-          child: Row(
-            textDirection: TextDirection.rtl,
-            children: [
-              const Icon(Icons.star_rounded, color: Colors.amber, size: 26),
-              const SizedBox(width: BatshSpacing.xs),
-              Text(
-                'الأعلى تقييماً',
-                style: BatshTypography.titleLg.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const Spacer(),
-              TextButton(onPressed: onViewAll, child: const Text('عرض الكل')),
-            ],
-          ),
-        ),
-        SizedBox(
-          height: 148,
-          child: ListView.separated(
-            reverse: true,
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: BatshSpacing.md),
-            itemCount: items.length,
-            separatorBuilder: (_, _) => const SizedBox(width: BatshSpacing.sm),
-            itemBuilder: (_, index) {
-              final listing = items[index];
-              final saved = savedIds.contains(listing.id);
-              return _TopRatedCard(
-                listing: listing,
-                isSaved: saved,
-                onTap: () => onOpen(listing),
-                onSave: () => onSave(listing, saved),
-              );
-            },
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.only(top: BatshSpacing.xxs),
-          child: Center(child: _CarouselDots(count: items.length)),
-        ),
-      ],
-    );
-  }
-}
-
-class _TopRatedCard extends StatelessWidget {
-  const _TopRatedCard({
-    required this.listing,
-    required this.isSaved,
-    required this.onTap,
-    required this.onSave,
-  });
-
-  final ContractorListing listing;
-  final bool isSaved;
-  final VoidCallback onTap;
-  final VoidCallback onSave;
-
-  @override
-  Widget build(BuildContext context) {
-    final name = listing.businessName.trim().isNotEmpty
-        ? listing.businessName.trim()
-        : listing.fullName.trim();
-    final specialty = listing.specialties.isEmpty
-        ? null
-        : localizedSpecialtyDisplayLabel(context, listing.specialties.first);
-    final area = listing.serviceAreas.isEmpty
-        ? null
-        : listing.serviceAreas.first;
-    return SizedBox(
-      width: (MediaQuery.sizeOf(context).width * .83)
-          .clamp(296.0, 330.0)
-          .toDouble(),
-      child: BatshPressable(
-        onTap: onTap,
-        semanticLabel: 'الأعلى تقييماً: $name',
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            color: context.colorScheme.surface,
-            borderRadius: BatshRadius.brMd,
-            border: Border.all(color: context.colorScheme.outlineVariant),
-            boxShadow: BatshShadows.soft,
-          ),
-          child: ClipRRect(
-            borderRadius: BatshRadius.brMd,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                SizedBox(
-                  height: 78,
-                  child: Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      _ListingImage(url: listing.coverPhotoUrl, name: name),
-                      Positioned(
-                        top: BatshSpacing.xs,
-                        right: BatshSpacing.xs,
-                        child: _SaveButton(saved: isSaved, onTap: onSave),
-                      ),
-                    ],
-                  ),
-                ),
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: BatshSpacing.sm,
-                      vertical: BatshSpacing.xxs,
-                    ),
-                    child: Row(
-                      textDirection: TextDirection.ltr,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        SizedBox(
-                          width: 124,
-                          height: 38,
-                          child: FilledButton(
-                            onPressed: onTap,
-                            style: FilledButton.styleFrom(
-                              padding: EdgeInsets.zero,
-                              textStyle: BatshTypography.labelMd,
-                            ),
-                            child: const Text('عرض الملف والأعمال'),
                           ),
                         ),
-                        const SizedBox(width: BatshSpacing.sm),
-                        Expanded(
-                          child: Directionality(
-                            textDirection: TextDirection.rtl,
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.end,
+                        if (_searchController.text.isNotEmpty)
+                          IconButton(
+                            iconSize: 16,
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(
+                              minWidth: 32,
+                              minHeight: 30,
+                            ),
+                            onPressed: () {
+                              _searchController.clear();
+                              ref
+                                  .read(
+                                    discoveryFiltersControllerProvider.notifier,
+                                  )
+                                  .setSearch(null);
+                            },
+                            icon: const Icon(
+                              Icons.close,
+                              color: referenceMuted,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 2),
+                  child: _ReferenceCategoryRail(
+                    selected: filters.specialty,
+                    onSelected: (key) => ref
+                        .read(discoveryFiltersControllerProvider.notifier)
+                        .setSpecialty(key),
+                  ),
+                ),
+              ),
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  child: SizedBox(
+                    height: 34,
+                    child: Row(
+                      children: [
+                        Text(
+                          !professionalReferenceEnabled &&
+                                  ref
+                                      .read(
+                                        discoverContractorsProvider.notifier,
+                                      )
+                                      .hasMore
+                              ? context.l10n
+                                    .referenceDisplayedProfessionalsCount(count)
+                              : context.l10n.referenceProfessionalsCount(count),
+                          style: referenceText(11.5),
+                        ),
+                        const Spacer(),
+                        InkWell(
+                          onTap: _showSort,
+                          child: SizedBox(
+                            height: 34,
+                            child: Row(
                               children: [
                                 Text(
-                                  name,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: BatshTypography.labelLg.copyWith(
-                                    fontWeight: FontWeight.w700,
+                                  context.l10n.referenceSort,
+                                  style: referenceText(
+                                    10.5,
+                                    color: referenceMuted,
                                   ),
                                 ),
-                                if (specialty != null)
-                                  Text(
-                                    specialty,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: BatshTypography.labelMd.copyWith(
-                                      color: context.colorScheme.primary,
-                                    ),
+                                Text(
+                                  switch (filters.sort) {
+                                    DiscoverySort.name =>
+                                      hasQuery
+                                          ? context.l10n.referenceRelevant
+                                          : context.l10n.referenceCompatible,
+                                    DiscoverySort.rating =>
+                                      context.l10n.topRated,
+                                    DiscoverySort.projects =>
+                                      context.l10n.referenceMostProjects,
+                                  },
+                                  style: referenceText(
+                                    10.5,
+                                    weight: FontWeight.w700,
                                   ),
-                                Wrap(
-                                  alignment: WrapAlignment.end,
-                                  spacing: BatshSpacing.xs,
-                                  children: [
-                                    if (area != null)
-                                      Text(
-                                        area,
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: BatshTypography.labelSm.copyWith(
-                                          color: context
-                                              .colorScheme
-                                              .onSurfaceVariant,
-                                        ),
-                                      ),
-                                    if (listing.hasReviews)
-                                      _Metric(
-                                        icon: Icons.star_rounded,
-                                        value: listing.reviewAvg
-                                            .toStringAsFixed(1),
-                                        color: context.colorScheme.tertiary,
-                                      )
-                                    else
-                                      Text(
-                                        'بدون تقييمات',
-                                        style: BatshTypography.labelSm.copyWith(
-                                          color: context
-                                              .colorScheme
-                                              .onSurfaceVariant,
-                                        ),
-                                      ),
-                                  ],
+                                ),
+                                const SizedBox(width: 3),
+                                const Icon(
+                                  Icons.expand_more,
+                                  size: 16,
+                                  color: referenceNavy,
                                 ),
                               ],
                             ),
@@ -1920,161 +386,195 @@ class _TopRatedCard extends StatelessWidget {
                     ),
                   ),
                 ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _DirectoryFooter extends StatelessWidget {
-  const _DirectoryFooter({
-    required this.loading,
-    required this.error,
-    required this.hasMore,
-    required this.onLoadMore,
-  });
-
-  final bool loading;
-  final Object? error;
-  final bool hasMore;
-  final VoidCallback onLoadMore;
-
-  @override
-  Widget build(BuildContext context) {
-    if (loading) {
-      return const Padding(
-        padding: EdgeInsets.all(BatshSpacing.lg),
-        child: Center(child: CircularProgressIndicator.adaptive()),
-      );
-    }
-    if (error != null) {
-      return Padding(
-        padding: const EdgeInsets.all(BatshSpacing.lg),
-        child: OutlinedButton.icon(
-          onPressed: onLoadMore,
-          icon: const Icon(Icons.refresh_rounded),
-          label: const Text('تعذر تحميل المزيد — إعادة المحاولة'),
-        ),
-      );
-    }
-    if (!hasMore) {
-      return const SizedBox(height: BatshSpacing.sm);
-    }
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        BatshSpacing.sectionH,
-        BatshSpacing.sm,
-        BatshSpacing.sectionH,
-        0,
-      ),
-      child: OutlinedButton(
-        onPressed: onLoadMore,
-        child: const Text('عرض المزيد من المحترفين'),
-      ),
-    );
-  }
-}
-
-class _CreateProjectBanner extends StatelessWidget {
-  const _CreateProjectBanner({required this.onTap});
-
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        BatshSpacing.sectionH,
-        BatshSpacing.md,
-        BatshSpacing.sectionH,
-        BatshSpacing.sectionH,
-      ),
-      child: Semantics(
-        container: true,
-        label: 'ابدأ بفكرة، وكملها مع محترف',
-        child: Container(
-          height: 132,
-          clipBehavior: Clip.antiAlias,
-          decoration: BoxDecoration(
-            color: context.colorScheme.surfaceContainerLow,
-            borderRadius: BatshRadius.brLg,
-            border: Border.all(
-              color: context.colorScheme.primary.withValues(alpha: .22),
-            ),
-            boxShadow: BatshShadows.soft,
-          ),
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              Opacity(
-                opacity: .34,
-                child: Image.asset(
-                  'assets/images/professionals_header_architecture_v2.png',
-                  fit: BoxFit.cover,
-                  alignment: Alignment.bottomLeft,
-                ),
               ),
-              DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      context.colorScheme.surfaceContainerLow.withValues(
-                        alpha: .18,
-                      ),
-                      context.colorScheme.surfaceContainerLow.withValues(
-                        alpha: .92,
-                      ),
-                    ],
-                    begin: Alignment.centerLeft,
-                    end: Alignment.centerRight,
+              if (contractors.hasError && items.isNotEmpty)
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            context.l10n.unknownErrorRetry,
+                            style: referenceText(11, color: referenceMuted),
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () =>
+                              ref.invalidate(discoverContractorsProvider),
+                          child: Text(context.l10n.tryAgain),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-              Opacity(
-                opacity: .12,
-                child: ShattabPattern(
-                  kind: ShattabPatternKind.lattice,
-                  color: context.colorScheme.primary,
-                  strokeWidth: 1,
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: BatshSpacing.md,
-                  vertical: BatshSpacing.sm,
-                ),
-                child: Row(
-                  textDirection: TextDirection.ltr,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        'ابدأ بفكرة،\nوكملها مع محترف',
-                        textAlign: TextAlign.right,
-                        style: BatshTypography.titleLg.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
+              if (contractors.isLoading && items.isEmpty)
+                const SliverToBoxAdapter(
+                  child: SizedBox(
+                    height: 260,
+                    child: Center(
+                      child: CircularProgressIndicator(color: referenceOrange),
                     ),
-                    const SizedBox(width: BatshSpacing.sm),
-                    SizedBox(
-                      height: 44,
-                      width: 116,
-                      child: FilledButton.icon(
-                        onPressed: onTap,
-                        icon: const Icon(Icons.arrow_back_rounded, size: 18),
-                        label: const Text('أضف مشروعك'),
-                        style: FilledButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(horizontal: 8),
-                          textStyle: BatshTypography.labelMd,
+                  ),
+                )
+              else if (contractors.hasError && items.isEmpty)
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      children: [
+                        Text(
+                          ErrorMapper.map(contractors.error!),
+                          style: referenceText(14),
                         ),
-                      ),
+                        TextButton(
+                          onPressed: () =>
+                              ref.invalidate(discoverContractorsProvider),
+                          child: Text(context.l10n.tryAgain),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
+                )
+              else if (items.isEmpty)
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      children: [
+                        Text(
+                          context.l10n.noResultsFound,
+                          style: referenceText(14),
+                        ),
+                        TextButton(
+                          onPressed: _clearAll,
+                          child: Text(context.l10n.clearFilters),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              else
+                SliverPadding(
+                  padding: EdgeInsets.zero,
+                  sliver: SliverList.builder(
+                    itemCount: items.length,
+                    itemBuilder: (context, index) {
+                      final listing = items[index];
+                      return Consumer(
+                        key: ValueKey(listing.id),
+                        builder: (context, cardRef, _) {
+                          final saved =
+                              _optimisticSaved[listing.id] ??
+                              savedIds.contains(listing.id);
+                          final projects =
+                              cardRef
+                                  .watch(
+                                    portfolioForContractorProvider(listing.id),
+                                  )
+                                  .value ??
+                              const [];
+                          final photos =
+                              professionalReferenceEnabled &&
+                                  listing.id ==
+                                      ProfessionalReferenceFixture.noorId
+                              ? ProfessionalReferenceFixture.galleryMediaForId(
+                                      listing.id,
+                                    )
+                                    .map(
+                                      (url) =>
+                                          url ==
+                                              ProfessionalReferenceFixture
+                                                  .livingRoomImage
+                                          ? 'assets/images/professional_reference_living_card.png'
+                                          : url,
+                                    )
+                                    .toList()
+                              : <String>{
+                                      if (referenceMediaAllowed(
+                                        listing.coverPhotoUrl,
+                                      ))
+                                        listing.coverPhotoUrl!,
+                                      ...projects
+                                          .expand(
+                                            (p) => [
+                                              p.coverPhotoUrl,
+                                              ...p.photoUrls,
+                                            ],
+                                          )
+                                          .where(referenceMediaAllowed),
+                                    }
+                                    .map(
+                                      (url) =>
+                                          professionalReferenceEnabled &&
+                                              ProfessionalReferenceFixture.isFixtureId(
+                                                listing.id,
+                                              ) &&
+                                              url ==
+                                                  ProfessionalReferenceFixture
+                                                      .bathroomImage
+                                          ? 'assets/images/professional_reference_bathroom_card.png'
+                                          : url,
+                                    )
+                                    .toList();
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 9),
+                            child: ReferenceProfessionalCard(
+                              listing: listing,
+                              saved: saved,
+                              photos: photos,
+                              onOpen: () => context.push(
+                                Routes.homeownerContractorProfilePath(
+                                  listing.id,
+                                ),
+                              ),
+                              onSave: () {
+                                if (professionalReferenceEnabled &&
+                                    ProfessionalReferenceFixture.isFixtureId(
+                                      listing.id,
+                                    )) {
+                                  unawaited(
+                                    _toggleSave(
+                                      listing.id,
+                                      currentlySaved: saved,
+                                    ),
+                                  );
+                                } else {
+                                  runSignedIn(
+                                    context,
+                                    ref,
+                                    reason: context.l10n.signInToSave,
+                                    action: () => _toggleSave(
+                                      listing.id,
+                                      currentlySaved: saved,
+                                    ),
+                                  );
+                                }
+                              },
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  ),
                 ),
-              ),
+              if (_loadingMore)
+                const SliverToBoxAdapter(
+                  child: Padding(
+                    padding: EdgeInsets.all(16),
+                    child: Center(
+                      child: CircularProgressIndicator(color: referenceOrange),
+                    ),
+                  ),
+                ),
+              if (_loadMoreError != null)
+                SliverToBoxAdapter(
+                  child: TextButton(
+                    onPressed: _loadMore,
+                    child: Text(context.l10n.tryAgain),
+                  ),
+                ),
+              const SliverToBoxAdapter(child: SizedBox(height: 12)),
             ],
           ),
         ),
@@ -2083,60 +583,224 @@ class _CreateProjectBanner extends StatelessWidget {
   }
 }
 
-class _InfoSheet extends StatelessWidget {
-  const _InfoSheet({
-    required this.icon,
-    required this.title,
-    required this.body,
-    required this.action,
+class _ReferenceDirectoryHeader extends StatelessWidget {
+  const _ReferenceDirectoryHeader({
+    required this.location,
+    required this.onLocation,
+    required this.onFilters,
+    required this.activeFilterCount,
   });
-
-  final IconData icon;
-  final String title;
-  final String body;
-  final String action;
-
+  final String location;
+  final VoidCallback onLocation, onFilters;
+  final int activeFilterCount;
   @override
-  Widget build(BuildContext context) {
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.all(BatshSpacing.lg),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
+  Widget build(BuildContext context) => SizedBox(
+    height: 47,
+    child: Stack(
+      alignment: Alignment.center,
+      children: [
+        Positioned(
+          left: 18,
+          top: 8,
+          child: Row(
+            textDirection: TextDirection.ltr,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Column(
+                children: [
+                  Text(
+                    'شطّب',
+                    style: referenceText(
+                      24,
+                      color: referenceOrange,
+                      weight: FontWeight.w800,
+                      height: 1,
+                    ),
+                  ),
+                  Text(
+                    'S H A T B',
+                    style: referenceText(
+                      7.5,
+                      color: referenceOrange,
+                      weight: FontWeight.w800,
+                      height: 1,
+                    ),
+                  ),
+                ],
+              ),
+              const Icon(Icons.home_rounded, color: referenceOrange, size: 22),
+            ],
+          ),
+        ),
+        Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Container(
-              width: 42,
-              height: 4,
-              decoration: BoxDecoration(
-                color: context.colorScheme.outlineVariant,
-                borderRadius: BatshRadius.brFull,
-              ),
-            ),
-            const SizedBox(height: BatshSpacing.lg),
-            CircleAvatar(
-              radius: 32,
-              backgroundColor: context.colorScheme.primaryFixed,
-              child: Icon(icon, color: context.colorScheme.primary, size: 30),
-            ),
-            const SizedBox(height: BatshSpacing.md),
-            Text(title, style: BatshTypography.headlineSm),
-            const SizedBox(height: BatshSpacing.sm),
             Text(
-              body,
-              textAlign: TextAlign.center,
-              style: BatshTypography.bodyLg.copyWith(
-                color: context.colorScheme.onSurfaceVariant,
-              ),
+              context.l10n.referenceProfessionalsTitle,
+              style: referenceText(16, weight: FontWeight.w800),
             ),
-            const SizedBox(height: BatshSpacing.lg),
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton(
-                onPressed: () => Navigator.pop(context),
-                child: Text(action),
+            InkWell(
+              onTap: onLocation,
+              child: Padding(
+                padding: const EdgeInsets.only(top: 2),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.location_on_outlined,
+                      size: 13,
+                      color: referenceMuted,
+                    ),
+                    const SizedBox(width: 3),
+                    Text(
+                      location,
+                      style: referenceText(10, color: referenceMuted),
+                    ),
+                    const SizedBox(width: 4),
+                    const Icon(
+                      Icons.expand_more,
+                      size: 13,
+                      color: referenceNavy,
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
+        ),
+        Positioned(
+          right: 5,
+          child: Stack(
+            children: [
+              ReferenceIconButton(
+                icon: Icons.tune,
+                label: 'الفلاتر',
+                onTap: onFilters,
+                size: 20,
+                color: const Color(0xff44454e),
+              ),
+              if (activeFilterCount > 0)
+                Positioned(
+                  right: 4,
+                  top: 4,
+                  child: Container(
+                    width: 13,
+                    height: 13,
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: referenceOrange,
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      '$activeFilterCount',
+                      style: referenceText(8, color: Colors.white),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+class _ReferenceCategoryRail extends StatelessWidget {
+  const _ReferenceCategoryRail({
+    required this.selected,
+    required this.onSelected,
+  });
+  final String? selected;
+  final ValueChanged<String?> onSelected;
+  @override
+  Widget build(BuildContext context) {
+    const keys = <String?>[
+      null,
+      'design',
+      'plumbing',
+      'electrical',
+      'full_reno',
+      'kitchen',
+    ];
+    final labels = [
+      context.l10n.referenceAll,
+      context.l10n.referenceInteriorDesign,
+      context.l10n.referencePlumbing,
+      context.l10n.referenceElectricity,
+      context.l10n.referenceFinishing,
+      context.l10n.referenceKitchen,
+    ];
+    const icons = [
+      Icons.grid_view_outlined,
+      Icons.chair_outlined,
+      Icons.plumbing_outlined,
+      Icons.bolt_outlined,
+      Icons.format_paint_outlined,
+      Icons.kitchen_outlined,
+    ];
+    return Directionality(
+      textDirection: TextDirection.ltr,
+      child: SizedBox(
+        height: 44,
+        child: ListView.separated(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+          itemCount: keys.length,
+          separatorBuilder: (_, _) => const SizedBox(width: 6),
+          itemBuilder: (_, i) {
+            final active = keys[i] == selected;
+            return Semantics(
+              button: true,
+              selected: active,
+              label: labels[i],
+              excludeSemantics: true,
+              onTap: () => onSelected(keys[i]),
+              child: InkWell(
+                onTap: () => onSelected(keys[i]),
+                borderRadius: BorderRadius.circular(9),
+                child: Align(
+                  alignment: Alignment.bottomCenter,
+                  child: Container(
+                    height: 40,
+                    width: i == 0
+                        ? 43
+                        : i == 1
+                        ? 64
+                        : 48,
+                    decoration: BoxDecoration(
+                      color: active ? referenceOrange : Colors.white,
+                      borderRadius: BorderRadius.circular(9),
+                      border: Border.all(color: const Color(0xfffbf2ed)),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xffbd9671).withValues(alpha: .06),
+                          blurRadius: 4,
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          icons[i],
+                          size: 18,
+                          color: active ? Colors.white : referenceOrange,
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          labels[i],
+                          style: referenceText(
+                            10,
+                            color: active ? Colors.white : referenceNavy,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
         ),
       ),
     );
@@ -2335,14 +999,22 @@ class _SortOption extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return RadioGroup<bool>(
-      groupValue: selected,
-      onChanged: (_) => onTap(),
-      child: ListTile(
-        onTap: onTap,
-        contentPadding: EdgeInsets.zero,
-        title: Text(title, textAlign: TextAlign.end),
-        leading: const Radio<bool>(value: true),
+    return Semantics(
+      label: title,
+      checked: selected,
+      inMutuallyExclusiveGroup: true,
+      onTap: onTap,
+      child: ExcludeSemantics(
+        child: RadioGroup<bool>(
+          groupValue: selected,
+          onChanged: (_) => onTap(),
+          child: ListTile(
+            onTap: onTap,
+            contentPadding: EdgeInsets.zero,
+            title: Text(title, textAlign: TextAlign.end),
+            leading: const Radio<bool>(value: true),
+          ),
+        ),
       ),
     );
   }
@@ -2375,6 +1047,7 @@ class _LocationSheetState extends State<_LocationSheet> {
         .toList();
     return _SheetFrame(
       title: 'اختر منطقة المشروع',
+      scrollContent: false,
       child: Column(
         children: [
           TextField(
@@ -2393,6 +1066,7 @@ class _LocationSheetState extends State<_LocationSheet> {
               groupValue: selected,
               onChanged: (value) => setState(() => selected = value),
               child: ListView.separated(
+                primary: false,
                 shrinkWrap: true,
                 itemCount: cities.length,
                 separatorBuilder: (_, _) =>
@@ -2432,10 +1106,15 @@ class _LocationSheetState extends State<_LocationSheet> {
 }
 
 class _SheetFrame extends StatelessWidget {
-  const _SheetFrame({required this.title, required this.child});
+  const _SheetFrame({
+    required this.title,
+    required this.child,
+    this.scrollContent = true,
+  });
 
   final String title;
   final Widget child;
+  final bool scrollContent;
 
   @override
   Widget build(BuildContext context) {
@@ -2455,32 +1134,39 @@ class _SheetFrame extends StatelessWidget {
             top: Radius.circular(BatshRadius.xxl),
           ),
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 42,
-              height: 4,
-              decoration: BoxDecoration(
-                color: context.colorScheme.outlineVariant,
-                borderRadius: BatshRadius.brFull,
-              ),
-            ),
-            const SizedBox(height: BatshSpacing.sm),
-            Row(
-              children: [
-                Text(title, style: BatshTypography.headlineSm),
-                const Spacer(),
-                IconButton(
-                  tooltip: 'إغلاق',
-                  onPressed: () => Navigator.pop(context),
-                  icon: const Icon(Icons.close_rounded),
+        child: Material(
+          color: Colors.transparent,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 42,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: context.colorScheme.outlineVariant,
+                  borderRadius: BatshRadius.brFull,
                 ),
-              ],
-            ),
-            const SizedBox(height: BatshSpacing.sm),
-            Flexible(child: SingleChildScrollView(child: child)),
-          ],
+              ),
+              const SizedBox(height: BatshSpacing.sm),
+              Row(
+                children: [
+                  Text(title, style: BatshTypography.headlineSm),
+                  const Spacer(),
+                  IconButton(
+                    tooltip: 'إغلاق',
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.close_rounded),
+                  ),
+                ],
+              ),
+              const SizedBox(height: BatshSpacing.sm),
+              Flexible(
+                child: scrollContent
+                    ? SingleChildScrollView(child: child)
+                    : child,
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -2500,46 +1186,25 @@ class _ChoiceChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return FilterChip(
+    return Semantics(
+      label: label,
       selected: selected,
-      label: Text(label),
-      onSelected: (_) => onTap(),
-      showCheckmark: true,
-      selectedColor: context.colorScheme.primaryFixed,
-      side: BorderSide(
-        color: selected
-            ? context.colorScheme.primary
-            : context.colorScheme.outlineVariant,
-      ),
-    );
-  }
-}
-
-class _DirectoryLoading extends StatelessWidget {
-  const _DirectoryLoading();
-
-  @override
-  Widget build(BuildContext context) {
-    return CustomScrollView(
-      slivers: [
-        const SliverToBoxAdapter(child: SizedBox(height: 172)),
-        SliverPadding(
-          padding: const EdgeInsets.all(BatshSpacing.sectionH),
-          sliver: SliverList.builder(
-            itemCount: 6,
-            itemBuilder: (_, _) => Padding(
-              padding: const EdgeInsets.only(bottom: BatshSpacing.sm),
-              child: Container(
-                height: 142,
-                decoration: BoxDecoration(
-                  color: context.colorScheme.surfaceContainerHigh,
-                  borderRadius: BatshRadius.brMd,
-                ),
-              ),
-            ),
+      button: true,
+      onTap: onTap,
+      child: ExcludeSemantics(
+        child: FilterChip(
+          selected: selected,
+          label: Text(label),
+          onSelected: (_) => onTap(),
+          showCheckmark: true,
+          selectedColor: context.colorScheme.primaryFixed,
+          side: BorderSide(
+            color: selected
+                ? context.colorScheme.primary
+                : context.colorScheme.outlineVariant,
           ),
         ),
-      ],
+      ),
     );
   }
 }

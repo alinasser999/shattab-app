@@ -86,3 +86,7 @@ Arabic.
 - Decorative gradients, fake statistics, AI-looking project evidence, or
   placeholder controls that look interactive.
 - Hard black shadows, tiny touch targets, hidden focus, or clipped Arabic.
+
+## Consumer implementation contract —2026-10-01
+
+Shared Flutter scheme/type/component definitions remain canonical. Functional UI uses IBM Plex Sans Arabic at all routes, natural text reflow with full system scaling, minimum48dp enabled targets, keyboard focus/activation and short optional motion. Default canvas is quiet; photo evidence and approved brand moments retain their hierarchy. Modal content must remain bounded and scrollable, with keyboard inset owned once. Unknown data stays unknown and read failures have real retry. Detailed contracts: [docs/ui-ux-component-contract.md](../../docs/ui-ux-component-contract.md). Final static/build/runtime/device evidence is recorded separately; no release-readiness claim follows from this contract.

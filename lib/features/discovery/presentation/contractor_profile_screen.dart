@@ -8,6 +8,7 @@ import '../../../core/widgets/batsh_error.dart';
 import '../../../core/widgets/batsh_shimmer.dart';
 import 'providers/discovery_providers.dart';
 import 'widgets/reference_professional_profile.dart';
+import 'widgets/professional_reference_components.dart';
 
 import 'package:batsh/core/theme/theme_extension.dart';
 
@@ -45,14 +46,8 @@ class ContractorProfileScreen extends ConsumerWidget {
             ),
           );
         }
-        // No docked action bar. The profile now asks twice in the flow of the
-        // page — a filled quote button directly under the identity block, and
-        // a closing panel after the evidence — which is the approved
-        // composition. A third, permanently docked copy of the same action
-        // would compete with both and eat the bottom inset the shell's own
-        // navigation already occupies.
         return Scaffold(
-          backgroundColor: context.colorScheme.surface,
+          backgroundColor: referenceBackground,
           body: RefreshIndicator(
             onRefresh: () async =>
                 ref.invalidate(contractorByIdProvider(contractorId)),

@@ -1,3 +1,4 @@
+import '../../../../core/widgets/professional_reference_primitives.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -8,15 +9,12 @@ import '../../../../core/l10n/catalog_labels.dart';
 import '../../../../core/router/routes.dart';
 import '../../../../core/theme/batsh_icon_size.dart';
 import '../../../../core/theme/batsh_spacing.dart';
-import '../../../../core/theme/batsh_typography.dart';
+import '../../../../core/theme/professional_reference_theme.dart';
 import '../../../../core/theme/theme_extension.dart';
 import '../../../../core/utils/error_mapper.dart';
-import '../../../../core/widgets/batsh_button.dart';
 import '../../../../core/widgets/batsh_card.dart';
-import '../../../../core/widgets/batsh_chip.dart';
 import '../../../../core/widgets/batsh_error.dart';
 import '../../../../core/widgets/batsh_scaffold.dart';
-import '../../../../core/widgets/batsh_section_header.dart';
 import '../../../../core/widgets/batsh_shimmer.dart';
 import '../../domain/onboarding_models.dart';
 import '../providers/onboarding_draft_provider.dart';
@@ -85,17 +83,32 @@ class _HomeownerDetailsScreenState
         .updateHomeownerDetails(apartmentType: _aptType, interests: next);
   }
 
+  void _focusAndReveal(FocusNode focusNode) {
+    FocusScope.of(context).requestFocus(focusNode);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final targetContext = focusNode.context;
+      if (!mounted || targetContext == null) return;
+      Scrollable.ensureVisible(
+        targetContext,
+        alignment: 0.16,
+        duration: MediaQuery.disableAnimationsOf(context)
+            ? Duration.zero
+            : const Duration(milliseconds: 180),
+      );
+    });
+  }
+
   Future<void> _next() async {
     setState(() {
       _showErrors = true;
       _saveError = null;
     });
     if (_aptType == null) {
-      FocusScope.of(context).requestFocus(_apartmentFocus);
+      _focusAndReveal(_apartmentFocus);
       return;
     }
     if (_interests.isEmpty) {
-      FocusScope.of(context).requestFocus(_interestFocus);
+      _focusAndReveal(_interestFocus);
       return;
     }
 
@@ -150,38 +163,125 @@ class _HomeownerDetailsScreenState
       _hydrated = true;
     }
 
-    final stepBody = homeownerAsync.hasError
-        ? BatshError(
-            message: ErrorMapper.map(homeownerAsync.error!),
-            onRetry: () => ref.invalidate(homeownerProfileProvider),
-          )
-        : homeownerAsync.isLoading
-        ? const BatshSkeletonRegion(
-            label: null,
-            child: BatshListSkeleton(count: 2, height: 72),
-          )
-        : _form(context);
+    return Theme(
+      data: ProfessionalReferenceTheme.scopedTheme(Theme.of(context)),
+      child: Builder(
+        builder: (referenceContext) {
+          final stepBody = homeownerAsync.hasError
+              ? BatshError(
+                  message: ErrorMapper.map(homeownerAsync.error!),
+                  onRetry: () => ref.invalidate(homeownerProfileProvider),
+                )
+              : homeownerAsync.isLoading
+              ? const BatshSkeletonRegion(
+                  label: null,
+                  child: BatshListSkeleton(count: 2, height: 72),
+                )
+              : _form(referenceContext);
 
-    return PopScope<void>(
-      canPop: false,
-      onPopInvokedWithResult: (didPop, _) {
-        if (!didPop) _back();
-      },
-      child: BatshScaffold(
-        title: context.l10n.yourData,
-        animateEntrance: false,
-        body: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              OnboardingProgressHeader(
-                step: 2,
-                stepLabel: context.l10n.onboardingStepHomeownerDetails,
-                onBack: _back,
+          return PopScope<void>(
+            canPop: false,
+            onPopInvokedWithResult: (didPop, _) {
+              if (!didPop) _back();
+            },
+            child: BatshScaffold(
+              title: referenceContext.l10n.yourData,
+              titleTextStyle: ProfessionalReferenceTheme.text(
+                20,
+                weight: FontWeight.w700,
               ),
-              const SizedBox(height: BatshSpacing.lg),
-              stepBody,
-            ],
+              animateEntrance: false,
+              body: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(
+                    child: SingleChildScrollView(
+                      keyboardDismissBehavior:
+                          ScrollViewKeyboardDismissBehavior.onDrag,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          OnboardingProgressHeader(
+                            step: 2,
+                            stepLabel: referenceContext
+                                .l10n
+                                .onboardingStepHomeownerDetails,
+                            onBack: _back,
+                            referenceStyle: true,
+                          ),
+                          const SizedBox(height: BatshSpacing.lg),
+                          stepBody,
+                          const SizedBox(height: BatshSpacing.lg),
+                        ],
+                      ),
+                    ),
+                  ),
+                  ProfessionalReferencePrimaryButton(
+                    footerSpacing: true,
+                    label: referenceContext.l10n.next,
+                    onPressed:
+                        _busy ||
+                            homeownerAsync.isLoading ||
+                            homeownerAsync.hasError
+                        ? null
+                        : _next,
+                    isLoading: _busy,
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _apartmentOption(BuildContext context, ApartmentType type) {
+    final label = _apartmentLabel(context, type);
+    final selected = _aptType == type;
+    return Semantics(
+      button: !_busy,
+      enabled: !_busy,
+      selected: selected,
+      inMutuallyExclusiveGroup: true,
+      label: label,
+      onTap: _busy ? null : () => _setApartmentType(type),
+      child: ExcludeSemantics(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 124),
+          child: BatshCard(
+            selected: selected,
+            highlightColor: selected ? ProfessionalReferenceTheme.cream : null,
+            onTap: _busy ? null : () => _setApartmentType(type),
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  _apartmentIcons[type],
+                  size: BatshIconSize.lg,
+                  color: selected
+                      ? ProfessionalReferenceTheme.orange
+                      : ProfessionalReferenceTheme.muted,
+                ),
+                const SizedBox(height: BatshSpacing.sm),
+                Text(
+                  label,
+                  textAlign: TextAlign.center,
+                  style: ProfessionalReferenceTheme.text(
+                    18,
+                    weight: FontWeight.w700,
+                  ),
+                ),
+                if (selected)
+                  Icon(
+                    Icons.check_circle_rounded,
+                    size: BatshIconSize.sm,
+                    color: ProfessionalReferenceTheme.action,
+                  ),
+              ],
+            ),
           ),
         ),
       ),
@@ -193,12 +293,13 @@ class _HomeownerDetailsScreenState
     children: [
       Text(
         context.l10n.homeownerDetailsHint,
-        style: BatshTypography.bodyMd.copyWith(
-          color: context.colorScheme.onSurfaceVariant,
+        style: ProfessionalReferenceTheme.text(
+          16,
+          color: ProfessionalReferenceTheme.muted,
         ),
       ),
       const SizedBox(height: BatshSpacing.md),
-      BatshSectionHeader(title: context.l10n.apartmentType),
+      _ReferenceSectionHeader(title: context.l10n.apartmentType),
       const SizedBox(height: BatshSpacing.sm),
       Focus(
         focusNode: _apartmentFocus,
@@ -206,58 +307,28 @@ class _HomeownerDetailsScreenState
           container: true,
           focusable: true,
           label: context.l10n.apartmentType,
-          child: GridView.count(
-            crossAxisCount: 2,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            crossAxisSpacing: BatshSpacing.gutter,
-            mainAxisSpacing: BatshSpacing.gutter,
-            childAspectRatio: 1.1,
-            children: ApartmentType.values.map((type) {
-              final label = _apartmentLabel(context, type);
-              final selected = _aptType == type;
-              return Semantics(
-                button: true,
-                selected: selected,
-                inMutuallyExclusiveGroup: true,
-                label: label,
-                child: ExcludeSemantics(
-                  child: BatshCard(
-                    selected: selected,
-                    onTap: _busy ? null : () => _setApartmentType(type),
-                    padding: const EdgeInsets.all(BatshSpacing.gutter),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          _apartmentIcons[type],
-                          size: BatshIconSize.lg,
-                          color: selected
-                              ? context.colorScheme.primary
-                              : context.colorScheme.onSurfaceVariant,
-                        ),
-                        const SizedBox(height: BatshSpacing.sm),
-                        Text(
-                          label,
-                          textAlign: TextAlign.center,
-                          style: BatshTypography.titleLg.copyWith(
-                            color: selected
-                                ? context.colorScheme.primary
-                                : context.colorScheme.onSurface,
-                          ),
-                        ),
-                        if (selected)
-                          Icon(
-                            Icons.check_circle_rounded,
-                            size: BatshIconSize.sm,
-                            color: context.colorScheme.primary,
-                          ),
-                      ],
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final columns =
+                  constraints.maxWidth < 320 &&
+                      MediaQuery.textScalerOf(context).scale(1) > 1.1
+                  ? 1
+                  : 2;
+              return Wrap(
+                spacing: BatshSpacing.gutter,
+                runSpacing: BatshSpacing.gutter,
+                children: [
+                  for (final type in ApartmentType.values)
+                    SizedBox(
+                      width:
+                          (constraints.maxWidth -
+                              BatshSpacing.gutter * (columns - 1)) /
+                          columns,
+                      child: _apartmentOption(context, type),
                     ),
-                  ),
-                ),
+                ],
               );
-            }).toList(),
+            },
           ),
         ),
       ),
@@ -266,7 +337,7 @@ class _HomeownerDetailsScreenState
         _InlineError(message: context.l10n.onboardingApartmentRequired),
       ],
       const SizedBox(height: BatshSpacing.lg),
-      BatshSectionHeader(title: context.l10n.interestAreas),
+      _ReferenceSectionHeader(title: context.l10n.interestAreas),
       const SizedBox(height: BatshSpacing.sm),
       Focus(
         focusNode: _interestFocus,
@@ -277,19 +348,15 @@ class _HomeownerDetailsScreenState
           child: Wrap(
             spacing: BatshSpacing.sm,
             runSpacing: BatshSpacing.sm,
-            children: SpecialtyCatalog.roots
-                .map(
-                  (root) => BatshChip(
-                    label: localizedSpecialtyLabel(context, root.key),
-                    icon: specialtyIcon(root.key),
-                    selected: _interests.contains(root.key),
-                    semanticLabel: localizedSpecialtyLabel(context, root.key),
-                    minimumHitHeight: true,
-                    showSelectionMark: true,
-                    onTap: _busy ? null : () => _toggleInterest(root.key),
-                  ),
-                )
-                .toList(),
+            children: SpecialtyCatalog.roots.map((root) {
+              final label = localizedSpecialtyLabel(context, root.key);
+              return _ReferenceChoiceButton(
+                label: label,
+                icon: specialtyIcon(root.key),
+                selected: _interests.contains(root.key),
+                onPressed: _busy ? null : () => _toggleInterest(root.key),
+              );
+            }).toList(),
           ),
         ),
       ),
@@ -307,20 +374,13 @@ class _HomeownerDetailsScreenState
           liveRegion: true,
           child: Text(
             context.l10n.onboardingSaving,
-            style: BatshTypography.bodySm.copyWith(
-              color: context.colorScheme.onSurfaceVariant,
+            style: ProfessionalReferenceTheme.text(
+              16,
+              color: ProfessionalReferenceTheme.muted,
             ),
           ),
         ),
       ],
-      const SizedBox(height: BatshSpacing.xl),
-      BatshButton(
-        label: context.l10n.next,
-        onPressed: _busy ? null : _next,
-        isLoading: _busy,
-        animate: false,
-      ),
-      const SizedBox(height: BatshSpacing.lg),
     ],
   );
 }
@@ -335,7 +395,104 @@ class _InlineError extends StatelessWidget {
     liveRegion: true,
     child: Text(
       message,
-      style: BatshTypography.bodySm.copyWith(color: context.colorScheme.error),
+      style: ProfessionalReferenceTheme.text(
+        14,
+        color: context.colorScheme.error,
+        weight: FontWeight.w600,
+      ),
     ),
   );
+}
+
+class _ReferenceSectionHeader extends StatelessWidget {
+  const _ReferenceSectionHeader({required this.title});
+
+  final String title;
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+    header: true,
+    child: Text(
+      title,
+      style: ProfessionalReferenceTheme.text(20, weight: FontWeight.w700),
+    ),
+  );
+}
+
+class _ReferenceChoiceButton extends StatelessWidget {
+  const _ReferenceChoiceButton({
+    required this.label,
+    required this.selected,
+    required this.onPressed,
+    this.icon,
+  });
+
+  final String label;
+  final IconData? icon;
+  final bool selected;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final style = ProfessionalReferenceTheme.text(
+      16,
+      color: selected
+          ? ProfessionalReferenceTheme.action
+          : ProfessionalReferenceTheme.navy,
+      weight: selected ? FontWeight.w700 : FontWeight.w500,
+    );
+    return Semantics(
+      button: onPressed != null,
+      enabled: onPressed != null,
+      selected: selected,
+      label: label,
+      onTap: onPressed,
+      child: ExcludeSemantics(
+        child: OutlinedButton(
+          onPressed: onPressed,
+          style: OutlinedButton.styleFrom(
+            minimumSize: const Size(48, 48),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            foregroundColor: selected
+                ? ProfessionalReferenceTheme.action
+                : ProfessionalReferenceTheme.navy,
+            backgroundColor: selected
+                ? ProfessionalReferenceTheme.cream
+                : Colors.white,
+            side: BorderSide(
+              color: selected
+                  ? ProfessionalReferenceTheme.orange
+                  : const Color(0xffd9dce3),
+              width: selected ? 1.5 : 1,
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (icon != null) ...[
+                Icon(
+                  icon,
+                  size: 18,
+                  color: selected
+                      ? ProfessionalReferenceTheme.action
+                      : ProfessionalReferenceTheme.muted,
+                ),
+                const SizedBox(width: 6),
+              ],
+              Flexible(
+                child: Text(label, style: style, textAlign: TextAlign.center),
+              ),
+              if (selected) ...[
+                const SizedBox(width: 6),
+                const Icon(Icons.check_rounded, size: 18),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }

@@ -1184,7 +1184,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get reviewsClearFilter => 'امسح الفلتر';
 
   @override
-  String get ratingOutOfFive => 'من ٥';
+  String ratingOutOfFive(String rating) {
+    return '$rating من 5 نجوم';
+  }
 
   @override
   String get projectDurationLabel => 'مدة التنفيذ';
@@ -2385,10 +2387,37 @@ class AppLocalizationsAr extends AppLocalizations {
   String get debugMode => 'وضع التجربة (Debug)';
 
   @override
-  String get demoLoginHomeowner => 'دخول كصاحب شقة';
+  String get debugLoginTitle => 'دخول حساب المراجعة';
 
   @override
-  String get demoLoginContractor => 'دخول كمحترف';
+  String get debugLoginHelper =>
+      'أدخل البريد الإلكتروني وكلمة المرور لحساب مراجعة موجود. نوع الحساب المسجّل هو اللي بيحدد هتروح لفين.';
+
+  @override
+  String get debugLoginEmailLabel => 'البريد الإلكتروني للحساب';
+
+  @override
+  String get debugLoginPasswordLabel => 'كلمة مرور الحساب';
+
+  @override
+  String get debugLoginSubmit => 'دخول';
+
+  @override
+  String get debugLoginCancel => 'إلغاء';
+
+  @override
+  String get debugLoginCredentialsRequired =>
+      'أدخل البريد الإلكتروني وكلمة المرور.';
+
+  @override
+  String get debugLoginFailed =>
+      'تعذّر تسجيل الدخول بهذا الحساب. راجع البيانات وحاول تاني.';
+
+  @override
+  String get demoLoginHomeowner => 'دخول بحساب صاحب البيت';
+
+  @override
+  String get demoLoginContractor => 'دخول بحساب مقاول';
 
   @override
   String get debugRoleSwitcher => 'تبديل الدور';
@@ -4721,4 +4750,251 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get onboardingDistrictMiami => 'ميامي';
+
+  @override
+  String get startupRetryMessage =>
+      'تعذّر بدء شطّب. جرّب تاني لما الاتصال يرجع.';
+
+  @override
+  String chooseStarRating(String rating) {
+    return 'اختيار $rating من 5 نجوم';
+  }
+
+  @override
+  String removeFilter(String label) {
+    return 'إزالة فلتر $label';
+  }
+
+  @override
+  String get preferencesSaveFailed => 'تعذّر حفظ الاختيار. جرّب تاني.';
+
+  @override
+  String get preferencesSaving => 'جاري حفظ الاختيار…';
+
+  @override
+  String get addPhotos => 'إضافة صور';
+
+  @override
+  String get photoSelectionFailed =>
+      'تعذّر اختيار الصور. جرّب تاني أو راجع إذن الصور.';
+
+  @override
+  String get closeSheet => 'إغلاق';
+
+  @override
+  String get referenceProfileTitle => 'ملف المحترف';
+
+  @override
+  String get referenceProfessionalsTitle => 'المحترفون';
+
+  @override
+  String get referenceSaveProfessional => 'حفظ المحترف';
+
+  @override
+  String get referenceUnsaveProfessional => 'إزالة من المحفوظات';
+
+  @override
+  String get referencePremiumDisclosure => 'ظهور مميز';
+
+  @override
+  String get referenceAdDisclosure => 'إعلان';
+
+  @override
+  String get referenceVerified => 'موثق من شطب';
+
+  @override
+  String get referenceViewProfile => 'عرض الملف';
+
+  @override
+  String get referenceAbout => 'نبذة';
+
+  @override
+  String get referenceWorks => 'الأعمال';
+
+  @override
+  String get referenceServices => 'الخدمات';
+
+  @override
+  String get referenceAboutProfessional => 'نبذة عن المحترف';
+
+  @override
+  String get referencePreviousWork => 'الأعمال السابقة';
+
+  @override
+  String get referenceServiceAreas => 'مناطق الخدمة';
+
+  @override
+  String get referenceWorkingApproach => 'طريقة الشغل';
+
+  @override
+  String get referenceViewAll => 'عرض الكل';
+
+  @override
+  String get referenceRequestQuote => 'اطلب عرض';
+
+  @override
+  String get referenceMessageProfessional => 'راسل المحترف';
+
+  @override
+  String get referenceMissingBio => 'لم يضف المحترف نبذة بعد';
+
+  @override
+  String get referenceMissingWork => 'لم تُضف أعمال سابقة بعد';
+
+  @override
+  String get referenceSignInContact => 'سجّل دخولك للتواصل مع المحترف';
+
+  @override
+  String get referenceSearchHint => 'ابحث عن محترف أو خدمة ...';
+
+  @override
+  String get referenceAll => 'الكل';
+
+  @override
+  String get referenceInteriorDesign => 'تصميم داخلي';
+
+  @override
+  String get referenceFinishing => 'تشطيبات';
+
+  @override
+  String get referenceKitchen => 'مطابخ';
+
+  @override
+  String get referencePlumbing => 'سباكة';
+
+  @override
+  String get referenceElectricity => 'كهرباء';
+
+  @override
+  String get referenceSort => 'ترتيب: ';
+
+  @override
+  String get referenceCompatible => 'الأكثر توافقاً';
+
+  @override
+  String get referenceRelevant => 'الأكثر صلة';
+
+  @override
+  String get referenceMostProjects => 'الأكثر مشاريع';
+
+  @override
+  String get referenceClient => 'عميل شطب';
+
+  @override
+  String get referenceMyProjects => 'مشاريعي';
+
+  @override
+  String get referenceStepOneTitle => 'نفهم احتياجاتك';
+
+  @override
+  String get referenceStepOneBody => 'جلسة مبدئية لشرح أفكارك ومتطلباتك';
+
+  @override
+  String get referenceStepTwoTitle => 'نجهز التصميم والعرض';
+
+  @override
+  String get referenceStepTwoBody =>
+      'مخططات ثنائية وثلاثية الأبعاد واختيار الخامات';
+
+  @override
+  String get referenceStepThreeTitle => 'نتابع التنفيذ والتسليم';
+
+  @override
+  String get referenceStepThreeBody => 'متابعة مستمرة وضمان جودة التنفيذ';
+
+  @override
+  String get referenceCompletedProjects => 'مشروع مكتمل';
+
+  @override
+  String get referenceYearsExperience => 'سنوات خبرة';
+
+  @override
+  String referenceProfessionalsCount(int count) {
+    return '$count محترف متاح';
+  }
+
+  @override
+  String referenceDisplayedProfessionalsCount(int count) {
+    return '$count محترف معروض';
+  }
+
+  @override
+  String referenceCompletedProjectsCount(int count) {
+    return '$count مشروع مكتمل';
+  }
+
+  @override
+  String referenceYearsExperienceCount(String years) {
+    return '$years سنوات خبرة';
+  }
+
+  @override
+  String referenceReviewCount(int count) {
+    return '($count تقييم)';
+  }
+
+  @override
+  String referenceStarCount(int count) {
+    return '$count نجوم';
+  }
+
+  @override
+  String get referenceWorkApproachDisclaimer =>
+      'خطوات استرشادية للاتفاق على العمل؛ اتفق على التفاصيل مباشرة مع المحترف.';
+
+  @override
+  String get professionalContactReviewPrompt =>
+      'اشتغلتوا سوا؟ رأيك هيساعد أصحاب بيوت تانية يختاروا بثقة. تقييمك مش هياخد دقيقة.';
+
+  @override
+  String get professionalContactReviewPrimaryAction => 'أقيّم تجربتي';
+
+  @override
+  String get professionalContactReviewNotTogether => 'ما اشتغلناش سوا';
+
+  @override
+  String get professionalContactReviewDismiss => 'إخفاء التذكير';
+
+  @override
+  String get professionalContactReviewActionFailed =>
+      'تعذّر حفظ اختيارك. حاول مرة تانية.';
+
+  @override
+  String get professionalContactReviewFormIntro =>
+      'شاركنا تقييمك لتجربتك. التقييم بحسب إفادتك، ومش تأكيد مستقل على إتمام الشغل.';
+
+  @override
+  String get professionalContactReviewAttribution =>
+      'تجربة بحسب إفادة صاحب البيت؛ بدأ التواصل من خلال شطّب.';
+
+  @override
+  String get homeownerLocationHint => 'حدد المدينة والحي اللي يقع فيه البيت.';
+
+  @override
+  String get homeownerReferenceSearchHint => 'ابحث عن محترف أو خدمة';
+
+  @override
+  String get homeownerReferenceProfessionalsTitle => 'محترفون لمشروعك';
+
+  @override
+  String get homeownerReferenceWorkTitle => 'أعمال تلهمك';
+
+  @override
+  String get homeownerReferenceStartTitle => 'ابدأ مشروع بيتك';
+
+  @override
+  String get homeownerReferenceStartBody =>
+      'احكي لنا عن احتياجك وابدأ بخطوة واضحة.';
+
+  @override
+  String get homeownerReferenceStartSteps =>
+      'حدد احتياجك ← استقبل عروضًا ← اختر المحترف المناسب';
+
+  @override
+  String get homeownerReferencePhotoUnavailable => 'صورة العمل غير متاحة';
+
+  @override
+  String homeownerReferenceOffers(int count) {
+    return '$count عروض';
+  }
 }

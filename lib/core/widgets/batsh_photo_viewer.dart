@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../l10n/l10n_extension.dart';
 
 import '../theme/batsh_radius.dart';
+import 'batsh_pressable.dart';
 import '../theme/batsh_spacing.dart';
 import '../theme/batsh_typography.dart';
 import '../theme/batsh_icon_size.dart';
@@ -20,16 +21,19 @@ class BatshPhotoViewer extends StatefulWidget {
     super.key,
     required this.urls,
     this.initialIndex = 0,
+    this.imageBuilder,
   });
 
   final List<String> urls;
   final int initialIndex;
+  final Widget Function(BuildContext context, String url)? imageBuilder;
 
   /// Pushes the viewer as an opaque full-screen route.
   static Future<void> show(
     BuildContext context, {
     required List<String> urls,
     int initialIndex = 0,
+    Widget Function(BuildContext context, String url)? imageBuilder,
   }) {
     if (urls.isEmpty) return Future.value();
     return Navigator.of(context).push(
@@ -38,6 +42,7 @@ class BatshPhotoViewer extends StatefulWidget {
         builder: (_) => BatshPhotoViewer(
           urls: urls,
           initialIndex: initialIndex.clamp(0, urls.length - 1),
+          imageBuilder: imageBuilder,
         ),
       ),
     );
@@ -73,38 +78,40 @@ class _BatshPhotoViewerState extends State<BatshPhotoViewer> {
               minScale: 1,
               maxScale: 4,
               child: Center(
-                child: CachedNetworkImage(
-                  imageUrl: widget.urls[i],
-                  fit: BoxFit.contain,
-                  width: double.infinity,
-                  placeholder: (_, _) => const Center(
-                    child: SizedBox(
-                      width: 28,
-                      height: 28,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white54,
-                      ),
-                    ),
-                  ),
-                  errorWidget: (_, _, _) => Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(
-                        Icons.broken_image_outlined,
-                        color: Colors.white38,
-                        size: BatshIconSize.xl,
-                      ),
-                      const SizedBox(height: BatshSpacing.sm),
-                      Text(
-                        context.l10n.imageUnavailable,
-                        style: BatshTypography.labelMd.copyWith(
-                          color: Colors.white60,
+                child:
+                    widget.imageBuilder?.call(context, widget.urls[i]) ??
+                    CachedNetworkImage(
+                      imageUrl: widget.urls[i],
+                      fit: BoxFit.contain,
+                      width: double.infinity,
+                      placeholder: (_, _) => const Center(
+                        child: SizedBox(
+                          width: 28,
+                          height: 28,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white54,
+                          ),
                         ),
                       ),
-                    ],
-                  ),
-                ),
+                      errorWidget: (_, _, _) => Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.broken_image_outlined,
+                            color: Colors.white38,
+                            size: BatshIconSize.xl,
+                          ),
+                          const SizedBox(height: BatshSpacing.sm),
+                          Text(
+                            context.l10n.imageUnavailable,
+                            style: BatshTypography.labelMd.copyWith(
+                              color: Colors.white60,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
               ),
             ),
           ),
@@ -161,7 +168,9 @@ class _BatshPhotoViewerState extends State<BatshPhotoViewer> {
                 onPressed: _index == 0
                     ? null
                     : () => _controller.previousPage(
-                        duration: const Duration(milliseconds: 180),
+                        duration: MediaQuery.disableAnimationsOf(context)
+                            ? Duration.zero
+                            : const Duration(milliseconds: 180),
                         curve: Curves.easeOut,
                       ),
               ),
@@ -175,7 +184,9 @@ class _BatshPhotoViewerState extends State<BatshPhotoViewer> {
                 onPressed: _index == widget.urls.length - 1
                     ? null
                     : () => _controller.nextPage(
-                        duration: const Duration(milliseconds: 180),
+                        duration: MediaQuery.disableAnimationsOf(context)
+                            ? Duration.zero
+                            : const Duration(milliseconds: 180),
                         curve: Curves.easeOut,
                       ),
               ),
@@ -198,20 +209,23 @@ class _BatshPhotoViewerState extends State<BatshPhotoViewer> {
                     separatorBuilder: (_, _) =>
                         const SizedBox(width: BatshSpacing.xs),
                     itemBuilder: (_, i) => Semantics(
-                      button: true,
                       selected: i == _index,
                       label: context.l10n.photoIndexOf(
                         i + 1,
                         widget.urls.length,
                       ),
-                      child: GestureDetector(
+                      child: BatshPressable(
                         onTap: () => _controller.animateToPage(
                           i,
-                          duration: const Duration(milliseconds: 180),
+                          duration: MediaQuery.disableAnimationsOf(context)
+                              ? Duration.zero
+                              : const Duration(milliseconds: 180),
                           curve: Curves.easeOut,
                         ),
                         child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 150),
+                          duration: MediaQuery.disableAnimationsOf(context)
+                              ? Duration.zero
+                              : const Duration(milliseconds: 150),
                           width: 64,
                           decoration: BoxDecoration(
                             borderRadius: BatshRadius.brSm,
@@ -261,20 +275,15 @@ class _ViewerArrow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Semantics(
-      button: true,
-      enabled: onPressed != null,
-      label: tooltip,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: Colors.black.withValues(alpha: .58),
-          shape: BoxShape.circle,
-        ),
-        child: IconButton(
-          tooltip: tooltip,
-          onPressed: onPressed,
-          icon: Icon(icon, color: Colors.white, size: BatshIconSize.lg),
-        ),
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: .58),
+        shape: BoxShape.circle,
+      ),
+      child: IconButton(
+        tooltip: tooltip,
+        onPressed: onPressed,
+        icon: Icon(icon, color: Colors.white, size: BatshIconSize.lg),
       ),
     );
   }

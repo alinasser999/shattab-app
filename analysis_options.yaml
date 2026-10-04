@@ -4,6 +4,9 @@ analyzer:
   exclude:
     - "**/*.g.dart"
     - "**/*.freezed.dart"
+    - "artifacts/**/baseline/**"
+    - "artifacts/**/baseline-source/**"
+    - "artifacts/ui-ux-makeover/**/b1-source/**"
   errors:
     invalid_annotation_target: ignore
     unnecessary_import: ignore
