@@ -117,6 +117,15 @@ class _ReviewRow extends StatelessWidget {
             ),
           ],
         ),
+        if (review.isContactOrigin) ...[
+          const SizedBox(height: BatshSpacing.xs),
+          Text(
+            context.l10n.professionalContactReviewAttribution,
+            style: BatshTypography.labelSm.copyWith(
+              color: context.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ],
         if (review.comment != null && review.comment!.trim().isNotEmpty) ...[
           const SizedBox(height: BatshSpacing.sm),
           Text(review.comment!.trim(), style: BatshTypography.bodyMd),
