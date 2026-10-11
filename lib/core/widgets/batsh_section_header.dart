@@ -63,18 +63,19 @@ class BatshSectionHeader extends StatelessWidget {
             const SizedBox(width: BatshSpacing.sm),
           ],
           Expanded(
-            child: Text(
-              title,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style:
-                  (isMajor
-                          ? BatshTypography.headlineSm
-                          : BatshTypography.titleMd)
-                      .copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: color ?? context.colorScheme.onSurface,
-                      ),
+            child: Semantics(
+              header: true,
+              child: Text(
+                title,
+                style:
+                    (isMajor
+                            ? BatshTypography.headlineSm
+                            : BatshTypography.titleMd)
+                        .copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: color ?? context.colorScheme.onSurface,
+                        ),
+              ),
             ),
           ),
           ?trailing,

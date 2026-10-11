@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../theme/batsh_motion.dart';
 import '../theme/batsh_icon_size.dart';
 import '../theme/batsh_radius.dart';
 import '../theme/batsh_spacing.dart';
@@ -8,7 +7,7 @@ import '../theme/batsh_typography.dart';
 
 import 'package:batsh/core/theme/theme_extension.dart';
 
-class BatshChip extends StatefulWidget {
+class BatshChip extends StatelessWidget {
   const BatshChip({
     super.key,
     required this.label,
@@ -21,7 +20,6 @@ class BatshChip extends StatefulWidget {
     this.showSelectionMark = false,
     this.semanticLabel,
   });
-
   final String label;
   final IconData? icon;
   final bool selected;
@@ -33,131 +31,80 @@ class BatshChip extends StatefulWidget {
   final String? semanticLabel;
 
   @override
-  State<BatshChip> createState() => _BatshChipState();
-}
-
-class _BatshChipState extends State<BatshChip>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(duration: BatshMotion.fast, vsync: this);
-    if (widget.selected) _controller.value = 1.0;
-  }
-
-  @override
-  void didUpdateWidget(BatshChip old) {
-    super.didUpdateWidget(old);
-    if (widget.selected != old.selected) {
-      if (MediaQuery.disableAnimationsOf(context)) {
-        _controller.value = widget.selected ? 1 : 0;
-      } else if (widget.selected) {
-        _controller.forward();
-      } else {
-        _controller.reverse();
-      }
-    }
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (MediaQuery.disableAnimationsOf(context)) {
-      _controller.value = widget.selected ? 1 : 0;
-    }
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final reduced = MediaQuery.disableAnimationsOf(context);
-    return Semantics(
-      button: widget.onTap != null,
-      enabled: widget.onTap != null,
-      selected: widget.selected,
-      inMutuallyExclusiveGroup: widget.singleSelection,
-      label: widget.semanticLabel ?? widget.label,
-      child: AnimatedBuilder(
-        animation: _controller,
-        builder: (_, child) {
-          final t = _controller.value;
-          return Transform.scale(
-            scale: reduced ? 1 : 0.92 + (t * 0.08),
-            child: child,
-          );
-        },
-        child: GestureDetector(
-          onTap: widget.onTap,
-          child: AnimatedContainer(
-            duration: BatshMotion.durationFor(reduced, BatshMotion.fast),
-            curve: BatshMotion.curveFor(reduced, BatshMotion.easeOut),
-            constraints: widget.minimumHitHeight
-                ? const BoxConstraints(minHeight: 48)
-                : null,
-            padding: EdgeInsets.symmetric(
-              horizontal: widget.compact ? BatshSpacing.sm : BatshSpacing.md,
-              vertical: widget.compact ? BatshSpacing.xs : BatshSpacing.sm,
-            ),
-            decoration: BoxDecoration(
-              color: widget.selected
-                  ? context.colorScheme.primaryFixed
-                  : context.colorScheme.surfaceContainer,
-              borderRadius: BatshRadius.brFull,
-              border: Border.all(
-                color: widget.selected
-                    ? context.colorScheme.primary
-                    : context.colorScheme.outlineVariant.withValues(alpha: 0.6),
-                width: widget.selected ? 1.5 : 1.0,
-              ),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (widget.icon != null) ...[
-                  Icon(
-                    widget.icon,
-                    size: widget.compact ? 14 : 16,
-                    color: widget.selected
-                        ? context.colorScheme.onPrimaryFixed
-                        : context.colorScheme.onSurfaceVariant.withValues(
-                            alpha: 0.6,
-                          ),
-                  ),
-                  SizedBox(width: widget.compact ? 4 : 6),
-                ],
-                Text(
-                  widget.label,
-                  style:
-                      (widget.compact
-                              ? BatshTypography.labelSm
-                              : BatshTypography.labelMd)
-                          .copyWith(
-                            color: widget.selected
-                                ? context.colorScheme.onPrimaryFixed
-                                : context.colorScheme.onSurfaceVariant,
-                            fontWeight: widget.selected
-                                ? FontWeight.w600
-                                : FontWeight.w500,
-                          ),
+    final colors = context.colorScheme;
+    final content = Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (icon != null) ...[
+          Icon(icon, size: BatshIconSize.sm),
+          const SizedBox(width: 6),
+        ],
+        Flexible(
+          child: Text(
+            label,
+            textAlign: TextAlign.center,
+            style: (compact ? BatshTypography.labelSm : BatshTypography.labelMd)
+                .copyWith(
+                  fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+                  color: selected
+                      ? colors.onPrimaryContainer
+                      : colors.onSurfaceVariant,
                 ),
-                if (widget.selected && widget.showSelectionMark) ...[
-                  const SizedBox(width: BatshSpacing.xs),
-                  Icon(
-                    Icons.check_rounded,
-                    size: BatshIconSize.sm,
-                    color: context.colorScheme.primary,
-                  ),
-                ],
-              ],
-            ),
           ),
+        ),
+        if (selected && (showSelectionMark || onTap != null)) ...[
+          const SizedBox(width: BatshSpacing.xs),
+          Icon(Icons.check_rounded, size: BatshIconSize.sm),
+        ],
+      ],
+    );
+    final shape = RoundedRectangleBorder(
+      borderRadius: BatshRadius.brFull,
+      side: BorderSide(
+        color: selected ? colors.primary : colors.outlineVariant,
+      ),
+    );
+    if (onTap == null) {
+      return AnimatedContainer(
+        duration: Duration.zero,
+        padding: EdgeInsets.symmetric(
+          horizontal: BatshSpacing.sm,
+          vertical: BatshSpacing.xs,
+        ),
+        decoration: BoxDecoration(
+          color: selected ? colors.primaryContainer : colors.surfaceContainer,
+          borderRadius: BatshRadius.brFull,
+          border: Border.all(
+            color: selected ? colors.primary : colors.outlineVariant,
+          ),
+        ),
+        child: content,
+      );
+    }
+    return Semantics(
+      selected: selected,
+      inMutuallyExclusiveGroup: singleSelection,
+      child: TextButton(
+        onPressed: onTap,
+        style: TextButton.styleFrom(
+          foregroundColor: selected
+              ? colors.onPrimaryContainer
+              : colors.onSurfaceVariant,
+          backgroundColor: selected
+              ? colors.primaryContainer
+              : colors.surfaceContainer,
+          minimumSize: const Size(48, 48),
+          shape: shape,
+          padding: EdgeInsets.symmetric(
+            horizontal: compact ? BatshSpacing.sm : BatshSpacing.md,
+            vertical: BatshSpacing.sm,
+          ),
+        ),
+        child: Semantics(
+          label: semanticLabel ?? label,
+          excludeSemantics: true,
+          child: content,
         ),
       ),
     );

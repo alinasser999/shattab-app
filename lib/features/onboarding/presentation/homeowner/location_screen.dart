@@ -1,3 +1,4 @@
+import '../../../../core/widgets/professional_reference_states.dart';
 import '../../../../core/widgets/professional_reference_primitives.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -10,7 +11,6 @@ import '../../../../core/theme/batsh_spacing.dart';
 import '../../../../core/theme/professional_reference_theme.dart';
 import '../../../../core/theme/theme_extension.dart';
 import '../../../../core/utils/error_mapper.dart';
-import '../../../../core/widgets/batsh_error.dart';
 import '../../../../core/widgets/batsh_scaffold.dart';
 import '../../../../core/widgets/batsh_shimmer.dart';
 import '../../domain/onboarding_models.dart';
@@ -148,7 +148,7 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
       child: Builder(
         builder: (referenceContext) {
           final stepBody = homeownerAsync.hasError
-              ? BatshError(
+              ? ProfessionalReferenceReadError(
                   message: ErrorMapper.map(homeownerAsync.error!),
                   onRetry: () => ref.invalidate(homeownerProfileProvider),
                 )
@@ -218,21 +218,10 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
   Widget _form(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
-      Text(
-        context.l10n.cityLabel,
-        style: ProfessionalReferenceTheme.text(
-          16,
-          color: ProfessionalReferenceTheme.navy,
-          weight: FontWeight.w700,
-        ),
-      ),
-      const SizedBox(height: BatshSpacing.xs),
-      Text(
-        context.l10n.homeownerLocationHint,
-        style: ProfessionalReferenceTheme.text(
-          16,
-          color: ProfessionalReferenceTheme.muted,
-        ),
+      ProfessionalReferenceWelcome(
+        title: context.l10n.cityLabel,
+        message: context.l10n.homeownerLocationHint,
+        motif: ProfessionalReferenceMotif.location,
       ),
       const SizedBox(height: BatshSpacing.sm),
       Focus(
@@ -300,7 +289,11 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
       ],
       if (_saveError != null) ...[
         const SizedBox(height: BatshSpacing.md),
-        _InlineError(message: _saveError!),
+        ProfessionalReferenceInlineStatus(
+          message: _saveError!,
+          retryLabel: context.l10n.tryAgain,
+          onRetry: _busy ? null : _complete,
+        ),
       ],
       if (_busy) ...[
         const SizedBox(height: BatshSpacing.md),
@@ -330,7 +323,7 @@ class _InlineError extends StatelessWidget {
     child: Text(
       message,
       style: ProfessionalReferenceTheme.text(
-        14,
+        16,
         color: context.colorScheme.error,
         weight: FontWeight.w600,
       ),

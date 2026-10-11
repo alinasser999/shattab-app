@@ -113,9 +113,7 @@ class BatshTheme {
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BatshRadius.brMd,
-          borderSide: BorderSide(
-            color: BatshColors.outlineVariant.withValues(alpha: 0.5),
-          ),
+          borderSide: BorderSide(color: BatshColors.outline),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BatshRadius.brMd,
@@ -321,9 +319,7 @@ class BatshTheme {
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BatshRadius.brMd,
-          borderSide: BorderSide(
-            color: colors.outlineVariant.withValues(alpha: 0.5),
-          ),
+          borderSide: BorderSide(color: colors.outline),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BatshRadius.brMd,

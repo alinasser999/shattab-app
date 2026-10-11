@@ -8,7 +8,6 @@ import '../../../core/router/routes.dart';
 import '../../../core/theme/batsh_icon_size.dart';
 import '../../../core/widgets/batsh_bottom_nav.dart';
 import '../../../core/widgets/batsh_fab.dart';
-import '../../../core/widgets/batsh_pattern_background.dart';
 
 import 'package:batsh/core/theme/theme_extension.dart';
 
@@ -28,7 +27,7 @@ List<BatshBottomNavItem> contractorBottomNavItems(BuildContext context) => [
   BatshBottomNavItem(
     icon: Icons.mail_outline,
     selectedIcon: Icons.mail,
-    label: context.l10n.workTabMessages,
+    label: context.l10n.tabRequests,
   ),
   BatshBottomNavItem(
     icon: Icons.work_outline,
@@ -36,9 +35,9 @@ List<BatshBottomNavItem> contractorBottomNavItems(BuildContext context) => [
     label: context.l10n.workTabJobs,
   ),
   BatshBottomNavItem(
-    icon: Icons.home_outlined,
-    selectedIcon: Icons.home_rounded,
-    label: context.l10n.workTabHome,
+    icon: Icons.photo_library_outlined,
+    selectedIcon: Icons.photo_library_rounded,
+    label: context.l10n.tabCommunity,
   ),
 ];
 
@@ -86,14 +85,12 @@ class ContractorShell extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: context.colorScheme.surface,
-      body: BatshPatternBackground(
-        child: Stack(
-          children: [
-            navigationShell,
-            // Dev-only (compiled in with --dart-define=SHATTAB_DEBUG_TOOLS).
-            if (DebugFlags.roleSwitcher) const DebugRoleSwitcherHost(),
-          ],
-        ),
+      body: Stack(
+        children: [
+          navigationShell,
+          // Dev-only (compiled in with --dart-define=SHATTAB_DEBUG_TOOLS).
+          if (DebugFlags.roleSwitcher) const DebugRoleSwitcherHost(),
+        ],
       ),
       floatingActionButton:
           _isOpportunityDetail || navigationShell.currentIndex == 0

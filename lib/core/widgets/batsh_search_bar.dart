@@ -4,7 +4,6 @@ import '../l10n/l10n_extension.dart';
 
 import '../theme/batsh_icon_size.dart';
 import '../theme/batsh_radius.dart';
-import '../theme/batsh_shadows.dart';
 import '../theme/batsh_spacing.dart';
 import '../theme/batsh_typography.dart';
 
@@ -123,7 +122,9 @@ class _BatshSearchBarState extends State<BatshSearchBar> {
     final hasText = widget.controller.text.isNotEmpty;
 
     return Container(
-      height: widget.height,
+      constraints: BoxConstraints(
+        minHeight: widget.height.clamp(48, double.infinity),
+      ),
       padding: const EdgeInsetsDirectional.only(
         start: BatshSpacing.gutter,
         end: BatshSpacing.xs,
@@ -132,9 +133,8 @@ class _BatshSearchBarState extends State<BatshSearchBar> {
         color: context.colorScheme.surface,
         borderRadius: widget.borderRadius,
         border: widget.outlined
-            ? Border.all(color: context.colorScheme.outlineVariant)
+            ? Border.all(color: context.colorScheme.outline)
             : null,
-        boxShadow: BatshShadows.soft,
       ),
       child: Row(
         textDirection: widget.rowTextDirection,
@@ -161,13 +161,16 @@ class _BatshSearchBarState extends State<BatshSearchBar> {
               ),
               decoration: InputDecoration(
                 hintText: widget.hintText,
+                labelText: widget.controller.text.isNotEmpty
+                    ? widget.hintText
+                    : null,
                 border: InputBorder.none,
                 enabledBorder: widget.plainInput ? InputBorder.none : null,
                 focusedBorder: widget.plainInput ? InputBorder.none : null,
                 disabledBorder: widget.plainInput ? InputBorder.none : null,
                 filled: widget.plainInput ? false : null,
                 isDense: true,
-                contentPadding: EdgeInsets.zero,
+                contentPadding: const EdgeInsets.symmetric(vertical: 12),
                 hintStyle: BatshTypography.bodyMd.copyWith(
                   fontFamily: widget.fontFamily,
                   fontSize: widget.fontSize,
@@ -180,15 +183,8 @@ class _BatshSearchBarState extends State<BatshSearchBar> {
           if (hasText)
             IconButton(
               tooltip: context.l10n.clearSearch,
-              constraints: widget.clearButtonLargeTarget
-                  ? const BoxConstraints(
-                      minWidth: BatshSpacing.minHitArea,
-                      minHeight: BatshSpacing.minHitArea,
-                    )
-                  : null,
-              visualDensity: widget.clearButtonLargeTarget
-                  ? VisualDensity.standard
-                  : VisualDensity.compact,
+              constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+              visualDensity: VisualDensity.standard,
               onPressed: widget.onClear,
               icon: Icon(
                 Icons.close_rounded,

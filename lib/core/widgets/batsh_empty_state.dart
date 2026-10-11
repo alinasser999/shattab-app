@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 
 import '../theme/batsh_spacing.dart';
 import '../theme/batsh_typography.dart';
 import '../theme/batsh_icon_size.dart';
-import '../theme/batsh_motion.dart';
 
 import 'package:batsh/core/theme/theme_extension.dart';
 
@@ -65,123 +63,66 @@ class BatshEmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final reduced = MediaQuery.disableAnimationsOf(context);
-
-    // nothingYet is an invitation, so it takes brand colour. noResults is a
-    // dead end the user created themselves, so it stays neutral — colouring it
-    // would read as a warning about a state that is not a problem.
-    final (medallionColor, glyphColor) = switch (kind) {
-      BatshEmptyStateKind.nothingYet => (
-        context.colorScheme.primaryFixed.withValues(alpha: 0.2),
-        context.colorScheme.primary.withValues(alpha: 0.65),
-      ),
-      BatshEmptyStateKind.noResults => (
-        context.colorScheme.surfaceContainerHigh,
-        context.colorScheme.onSurfaceVariant,
-      ),
-    };
-
-    final iconWidget = ExcludeSemantics(
-      child: Container(
-        width: _medallion,
-        height: _medallion,
-        decoration: BoxDecoration(
-          color: medallionColor,
-          shape: BoxShape.circle,
-        ),
-        child: Icon(icon, color: glyphColor, size: BatshIconSize.xl),
-      ),
-    );
-
-    final animatedIcon = reduced
-        ? iconWidget
-        : iconWidget
-              .animate()
-              .fadeIn(duration: 350.ms, curve: BatshMotion.easeOut)
-              .scale(
-                begin: const Offset(0.85, 0.85),
-                end: const Offset(1, 1),
-                curve: BatshMotion.springTap,
-              );
-
-    final titleWidget = Text(
-      title,
-      textAlign: TextAlign.center,
-      style: BatshTypography.titleLg.copyWith(
-        color: context.colorScheme.onSurface,
-      ),
-    );
-
-    final animatedTitle = reduced
-        ? titleWidget
-        : titleWidget
-              .animate(delay: 100.ms)
-              .fadeIn(duration: 350.ms, curve: BatshMotion.easeOut)
-              .slideY(begin: 0.2, end: 0, curve: BatshMotion.easeOut);
-
-    final messageWidget = Padding(
-      padding: const EdgeInsets.only(top: BatshSpacing.sm),
-      child: SizedBox(
-        width: 280,
-        child: Text(
-          message,
-          textAlign: TextAlign.center,
-          style: BatshTypography.bodyMd.copyWith(
-            color: context.colorScheme.onSurfaceVariant,
-          ),
-        ),
-      ),
-    );
-
-    final animatedMessage = reduced
-        ? messageWidget
-        : messageWidget
-              .animate(delay: 200.ms)
-              .fadeIn(duration: 350.ms, curve: BatshMotion.easeOut)
-              .slideY(begin: 0.2, end: 0, curve: BatshMotion.easeOut);
-
-    Widget? animatedAction;
-    if (action != null) {
-      final actionWidget = Padding(
-        padding: const EdgeInsets.only(top: BatshSpacing.lg),
-        child: SizedBox(width: double.infinity, child: action),
-      );
-      animatedAction = reduced
-          ? actionWidget
-          : actionWidget
-                .animate(delay: 300.ms)
-                .fadeIn(duration: 350.ms, curve: BatshMotion.easeOut)
-                .slideY(begin: 0.2, end: 0, curve: BatshMotion.easeOut);
-    }
-
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(BatshSpacing.xxl),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Title and message are announced as one label. Left as separate
-            // nodes a screen reader reads the headline, pauses, then reads the
-            // instruction as if it were unrelated text. The action stays
-            // outside this wrapper: merging it would swallow the button and
-            // leave the only way forward unreachable.
-            Semantics(
-              label: '$title $message',
-              excludeSemantics: true,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  animatedIcon,
-                  const SizedBox(height: BatshSpacing.gutter),
-                  animatedTitle,
-                  animatedMessage,
-                ],
+    final colors = context.colorScheme;
+    final content = Padding(
+      padding: const EdgeInsets.all(BatshSpacing.lg),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ExcludeSemantics(
+            child: Container(
+              width: _medallion,
+              height: _medallion,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: kind == BatshEmptyStateKind.nothingYet
+                    ? colors.primaryContainer
+                    : colors.surfaceContainerHigh,
+              ),
+              child: Icon(
+                icon,
+                size: BatshIconSize.xl,
+                color: kind == BatshEmptyStateKind.nothingYet
+                    ? colors.primary
+                    : colors.onSurfaceVariant,
               ),
             ),
-            ?animatedAction,
+          ),
+          const SizedBox(height: BatshSpacing.gutter),
+          Semantics(
+            header: true,
+            label: '$title $message',
+            excludeSemantics: true,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  title,
+                  textAlign: TextAlign.center,
+                  style: BatshTypography.titleLg,
+                ),
+                const SizedBox(height: BatshSpacing.sm),
+                Text(
+                  message,
+                  textAlign: TextAlign.center,
+                  style: BatshTypography.bodyMd.copyWith(
+                    color: colors.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (action != null) ...[
+            const SizedBox(height: BatshSpacing.lg),
+            action!,
           ],
-        ),
+        ],
       ),
+    );
+    return LayoutBuilder(
+      builder: (context, constraints) => constraints.hasBoundedHeight
+          ? Center(child: SingleChildScrollView(child: content))
+          : content,
     );
   }
 }

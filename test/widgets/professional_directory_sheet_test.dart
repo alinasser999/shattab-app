@@ -102,7 +102,19 @@ void main() {
 
         await tester.pumpWidget(_directoryApp(container));
         await tester.pumpAndSettle();
-        await tester.tap(find.bySemanticsLabel('الفلاتر'));
+        final filterButton = find.byTooltip('الفلاتر');
+        final filterSemantics = tester
+            .getSemantics(filterButton)
+            .getSemanticsData();
+        expect(filterSemantics.tooltip, 'الفلاتر');
+        expect(filterSemantics.flagsCollection.isButton, isTrue);
+        expect(filterSemantics.hasAction(SemanticsAction.tap), isTrue);
+        expect(
+          tester.getSize(filterButton).shortestSide,
+          greaterThanOrEqualTo(44),
+        );
+        expect(filterButton.hitTestable(), findsOneWidget);
+        await tester.tap(filterButton);
         await tester.pumpAndSettle();
 
         const ratingChoiceLabel = '4.5 نجمة فأعلى';

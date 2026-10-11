@@ -27,6 +27,8 @@ class BatshTextField extends StatelessWidget {
     this.suffixIcon,
     this.enabled = true,
     this.semanticLabel,
+    this.focusNode,
+    this.autofillHints,
   });
 
   final TextEditingController? controller;
@@ -46,106 +48,93 @@ class BatshTextField extends StatelessWidget {
   final Widget? suffixIcon;
   final bool enabled;
   final String? semanticLabel;
+  final FocusNode? focusNode;
+  final Iterable<String>? autofillHints;
 
   @override
   Widget build(BuildContext context) {
-    return Semantics(
-      label: semanticLabel ?? label,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          if (label != null) ...[
-            Padding(
-              padding: const EdgeInsets.only(bottom: BatshSpacing.sm),
-              child: Text(
-                label!,
-                style: BatshTypography.bodyMd.copyWith(
-                  color: context.colorScheme.onSurfaceVariant,
-                  fontWeight: FontWeight.w500,
-                ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        TextFormField(
+          controller: controller,
+          focusNode: focusNode,
+          autofillHints: autofillHints,
+          initialValue: controller == null ? initialValue : null,
+          autofocus: autofocus,
+          enabled: enabled,
+          keyboardType: keyboardType,
+          textInputAction: textInputAction,
+          inputFormatters: inputFormatters,
+          maxLines: maxLines,
+          maxLength: maxLength,
+          onChanged: onChanged,
+          onFieldSubmitted: onSubmitted,
+          style: BatshTypography.bodyMd,
+          cursorColor: context.colorScheme.primary,
+          cursorWidth: 2,
+          decoration: InputDecoration(
+            labelText: semanticLabel ?? label,
+            floatingLabelBehavior: FloatingLabelBehavior.always,
+            hintText: hint,
+            errorMaxLines: 4,
+            helperMaxLines: 4,
+            helperText: helperText,
+            errorText: errorText,
+            suffixIcon: suffixIcon,
+            counterText: '',
+            hintStyle: BatshTypography.bodyMd.copyWith(
+              color: context.colorScheme.onSurfaceVariant,
+            ),
+            errorStyle: BatshTypography.labelSm.copyWith(
+              color: context.colorScheme.error,
+            ),
+            filled: true,
+            fillColor: context.colorScheme.surfaceContainerLow,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: BatshSpacing.gutter,
+              vertical: BatshSpacing.md,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BatshRadius.brMd,
+              borderSide: BorderSide.none,
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BatshRadius.brMd,
+              borderSide: BorderSide(color: context.colorScheme.outline),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BatshRadius.brMd,
+              borderSide: BorderSide(
+                color: context.colorScheme.primary,
+                width: 2,
               ),
             ),
-          ],
-          TextFormField(
-            controller: controller,
-            initialValue: controller == null ? initialValue : null,
-            autofocus: autofocus,
-            enabled: enabled,
-            keyboardType: keyboardType,
-            textInputAction: textInputAction,
-            inputFormatters: inputFormatters,
-            maxLines: maxLines,
-            maxLength: maxLength,
-            onChanged: onChanged,
-            onFieldSubmitted: onSubmitted,
-            style: BatshTypography.bodyMd,
-            cursorColor: context.colorScheme.primary,
-            cursorWidth: 2,
-            decoration: InputDecoration(
-              hintText: hint,
-              helperText: helperText,
-              errorText: errorText,
-              suffixIcon: suffixIcon,
-              counterText: '',
-              hintStyle: BatshTypography.bodyMd.copyWith(
-                color: context.colorScheme.onSurfaceVariant.withValues(
-                  alpha: 0.6,
-                ),
-              ),
-              errorStyle: BatshTypography.labelSm.copyWith(
+            errorBorder: OutlineInputBorder(
+              borderRadius: BatshRadius.brMd,
+              borderSide: BorderSide(
                 color: context.colorScheme.error,
+                width: 1.5,
               ),
-              filled: true,
-              fillColor: context.colorScheme.surfaceContainerLow,
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: BatshSpacing.gutter,
-                vertical: BatshSpacing.md,
+            ),
+            focusedErrorBorder: OutlineInputBorder(
+              borderRadius: BatshRadius.brMd,
+              borderSide: BorderSide(
+                color: context.colorScheme.error,
+                width: 2,
               ),
-              border: OutlineInputBorder(
-                borderRadius: BatshRadius.brMd,
-                borderSide: BorderSide.none,
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BatshRadius.brMd,
-                borderSide: BorderSide(
-                  color: context.colorScheme.outlineVariant.withValues(
-                    alpha: 0.5,
-                  ),
-                ),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BatshRadius.brMd,
-                borderSide: BorderSide(
-                  color: context.colorScheme.primary,
-                  width: 2,
-                ),
-              ),
-              errorBorder: OutlineInputBorder(
-                borderRadius: BatshRadius.brMd,
-                borderSide: BorderSide(
-                  color: context.colorScheme.error,
-                  width: 1.5,
-                ),
-              ),
-              focusedErrorBorder: OutlineInputBorder(
-                borderRadius: BatshRadius.brMd,
-                borderSide: BorderSide(
-                  color: context.colorScheme.error,
-                  width: 2,
-                ),
-              ),
-              disabledBorder: OutlineInputBorder(
-                borderRadius: BatshRadius.brMd,
-                borderSide: BorderSide(
-                  color: context.colorScheme.outlineVariant.withValues(
-                    alpha: 0.3,
-                  ),
+            ),
+            disabledBorder: OutlineInputBorder(
+              borderRadius: BatshRadius.brMd,
+              borderSide: BorderSide(
+                color: context.colorScheme.outlineVariant.withValues(
+                  alpha: 0.3,
                 ),
               ),
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

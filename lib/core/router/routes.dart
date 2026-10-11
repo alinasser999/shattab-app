@@ -58,6 +58,7 @@ class Routes {
   static const String contractorPrivacy = '/c/profile/privacy';
   static const String contractorTerms = '/c/profile/terms';
   static const String contractorAssistant = '/c/assistant';
+  static const String assistantReauthentication = '/assistant/reauthenticate';
 
   // Monetization (full-screen, above the shell)
   static const String pro = '/pro';

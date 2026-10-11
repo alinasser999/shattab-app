@@ -1,7 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
-
-import '../theme/batsh_motion.dart';
 import '../theme/batsh_spacing.dart';
 import '../theme/batsh_typography.dart';
 
@@ -26,14 +23,15 @@ class BatshScaffold extends StatelessWidget {
     this.showAppBar = true,
     this.centerTitle = true,
     this.resizeToAvoidBottomInset = true,
-    this.animateEntrance = true,
+    this.animateEntrance = false,
     this.appBarBottom,
+    this.titleTextStyle,
     this.backgroundColor,
     this.extendBodyBehindAppBar = false,
     this.headerStyle = BatshHeaderStyle.normal,
     this.patternKind = ShattabPatternKind.contour,
     this.patternOpacity = 0.065,
-    this.showPattern = true,
+    this.showPattern = false,
   });
 
   final Widget body;
@@ -48,6 +46,7 @@ class BatshScaffold extends StatelessWidget {
   final bool resizeToAvoidBottomInset;
   final bool animateEntrance;
   final PreferredSizeWidget? appBarBottom;
+  final TextStyle? titleTextStyle;
   final Color? backgroundColor;
   final bool extendBodyBehindAppBar;
   final BatshHeaderStyle headerStyle;
@@ -62,18 +61,6 @@ class BatshScaffold extends StatelessWidget {
     Widget bodyContent = SafeArea(
       child: Padding(padding: padding, child: body),
     );
-
-    if (animateEntrance) {
-      bodyContent = bodyContent
-          .animate()
-          .fadeIn(duration: BatshMotion.slower, curve: BatshMotion.easeOut)
-          .slideY(
-            begin: 0.025,
-            end: 0,
-            duration: BatshMotion.slower,
-            curve: BatshMotion.easeOut,
-          );
-    }
 
     final pageBody = Column(
       children: [
@@ -95,17 +82,22 @@ class BatshScaffold extends StatelessWidget {
       appBar: showAppBar
           ? AppBar(
               title: title != null
-                  ? Text(
-                      title!,
-                      style: isPrimary
-                          ? BatshTypography.titleLg.copyWith(
-                              fontWeight: FontWeight.w600,
-                              color: context.colorScheme.onPrimary,
-                            )
-                          : BatshTypography.titleLg.copyWith(
-                              fontWeight: FontWeight.w600,
-                              color: context.colorScheme.onSurface,
-                            ),
+                  ? Semantics(
+                      header: true,
+                      child: Text(
+                        title!,
+                        style:
+                            titleTextStyle ??
+                            (isPrimary
+                                ? BatshTypography.titleLg.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                    color: context.colorScheme.onPrimary,
+                                  )
+                                : BatshTypography.titleLg.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                    color: context.colorScheme.onSurface,
+                                  )),
+                      ),
                     )
                   : null,
               centerTitle: centerTitle,

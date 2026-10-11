@@ -1,135 +1,42 @@
 import 'package:flutter/material.dart';
 
-import '../theme/batsh_motion.dart';
-
 import 'package:batsh/core/theme/theme_extension.dart';
 
-class BatshSuccessCheckmark extends StatefulWidget {
+class BatshSuccessCheckmark extends StatelessWidget {
   const BatshSuccessCheckmark({super.key, this.size = 80, this.message});
-
   final double size;
   final String? message;
 
   @override
-  State<BatshSuccessCheckmark> createState() => _BatshSuccessCheckmarkState();
-}
-
-class _BatshSuccessCheckmarkState extends State<BatshSuccessCheckmark>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _ctrl = AnimationController(
-    vsync: this,
-    duration: BatshMotion.slower,
-  );
-
-  late final Animation<double> _scale = Tween<double>(begin: 0.0, end: 1.0)
-      .animate(
-        CurvedAnimation(
-          parent: _ctrl,
-          curve: const Interval(0.0, 0.4, curve: BatshMotion.springCelebrate),
-        ),
-      );
-
-  late final Animation<double> _check = Tween<double>(begin: 0.0, end: 1.0)
-      .animate(
-        CurvedAnimation(
-          parent: _ctrl,
-          curve: const Interval(0.3, 0.8, curve: BatshMotion.easeOut),
-        ),
-      );
-
-  @override
-  void initState() {
-    super.initState();
-    if (!MediaQuery.disableAnimationsOf(context)) {
-      _ctrl.forward();
-    } else {
-      _ctrl.value = 1.0;
-    }
-  }
-
-  @override
-  void dispose() {
-    _ctrl.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        AnimatedBuilder(
-          animation: _ctrl,
-          builder: (context, _) => Transform.scale(
-            scale: _scale.value,
-            child: Container(
-              width: widget.size,
-              height: widget.size,
-              decoration: BoxDecoration(
-                color: context.colorScheme.successContainer,
-                shape: BoxShape.circle,
-              ),
-              child: CustomPaint(
-                painter: _CheckPainter(
-                  progress: _check.value,
-                  color: context.colorScheme.success,
-                  strokeWidth: 4,
-                ),
-              ),
-            ),
+  Widget build(BuildContext context) => Column(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      ExcludeSemantics(
+        child: Container(
+          width: size,
+          height: size,
+          decoration: BoxDecoration(
+            color: context.colorScheme.successContainer,
+            shape: BoxShape.circle,
+          ),
+          child: Icon(
+            Icons.check_rounded,
+            size: size * .55,
+            color: context.colorScheme.success,
           ),
         ),
-        if (widget.message != null) ...[
-          const SizedBox(height: 16),
-          Text(
-            widget.message!,
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: context.colorScheme.onSurface,
-            ),
+      ),
+      if (message != null) ...[
+        const SizedBox(height: 16),
+        Semantics(
+          liveRegion: true,
+          child: Text(
+            message!,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.titleMedium,
           ),
-        ],
+        ),
       ],
-    );
-  }
-}
-
-class _CheckPainter extends CustomPainter {
-  const _CheckPainter({
-    required this.progress,
-    required this.color,
-    required this.strokeWidth,
-  });
-
-  final double progress;
-  final Color color;
-  final double strokeWidth;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth
-      ..strokeCap = StrokeCap.round;
-
-    final path = Path();
-    final start = Offset(size.width * 0.25, size.height * 0.5);
-    final mid = Offset(size.width * 0.45, size.height * 0.68);
-    final end = Offset(size.width * 0.75, size.height * 0.32);
-
-    path.moveTo(start.dx, start.dy);
-    path.lineTo(mid.dx, mid.dy);
-    path.lineTo(end.dx, end.dy);
-
-    final metrics = path.computeMetrics();
-    for (final metric in metrics) {
-      final extract = metric.extractPath(0, metric.length * progress);
-      canvas.drawPath(extract, paint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(_CheckPainter old) => old.progress != progress;
+    ],
+  );
 }

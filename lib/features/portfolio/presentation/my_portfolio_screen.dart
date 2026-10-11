@@ -1,3 +1,4 @@
+import '../../../core/widgets/professional_reference_states.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -11,9 +12,6 @@ import '../../../core/theme/batsh_radius.dart';
 import '../../../core/theme/batsh_spacing.dart';
 import '../../../core/theme/batsh_typography.dart';
 import '../../../core/utils/image_url.dart';
-import '../../../core/widgets/batsh_button.dart';
-import '../../../core/widgets/batsh_empty_state.dart';
-import '../../../core/widgets/batsh_error.dart';
 import '../../../core/widgets/batsh_pressable.dart';
 import '../../../core/widgets/batsh_scaffold.dart';
 import '../../../core/widgets/batsh_shimmer.dart';
@@ -22,6 +20,7 @@ import '../domain/portfolio_project.dart';
 import 'providers/my_portfolio_providers.dart';
 import '../../../core/theme/batsh_icon_size.dart';
 import '../../../core/widgets/batsh_snack.dart';
+import '../../../core/theme/professional_reference_theme.dart';
 
 import 'package:batsh/core/theme/theme_extension.dart';
 
@@ -71,10 +70,20 @@ class MyPortfolioScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final projectsAsync = ref.watch(myPortfolioProvider);
+    final referenceSurface =
+        projectsAsync.hasError || projectsAsync.asData?.value.isEmpty == true;
 
-    return BatshScaffold(
+    final scaffold = BatshScaffold(
       title: context.l10n.myPortfolioTitle,
-      headerStyle: BatshHeaderStyle.primary,
+      headerStyle: referenceSurface
+          ? BatshHeaderStyle.normal
+          : BatshHeaderStyle.primary,
+      titleTextStyle: referenceSurface
+          ? ProfessionalReferenceTheme.text(22, weight: FontWeight.w700)
+          : null,
+      backgroundColor: referenceSurface
+          ? ProfessionalReferenceTheme.background
+          : null,
       floatingActionButton: projectsAsync.maybeWhen(
         data: (projects) => projects.isEmpty
             ? null
@@ -99,22 +108,18 @@ class MyPortfolioScreen extends ConsumerWidget {
       ),
       body: projectsAsync.when(
         loading: () => const _PortfolioSkeleton(),
-        error: (e, _) => BatshError(
+        error: (e, _) => ProfessionalReferenceReadError(
           message: ErrorMapper.map(e),
           onRetry: () => ref.invalidate(myPortfolioProvider),
         ),
         data: (projects) {
           if (projects.isEmpty) {
-            return BatshEmptyState(
+            return ProfessionalReferenceState(
               title: context.l10n.portfolioEmptyTitle,
               message: context.l10n.portfolioEmptyMessage,
-              icon: Icons.photo_library_outlined,
-              action: BatshButton(
-                label: context.l10n.addWork,
-                icon: Icons.add,
-                fullWidth: false,
-                onPressed: () => context.push(Routes.contractorPortfolioNew),
-              ),
+              motif: ProfessionalReferenceMotif.portfolio,
+              primaryLabel: context.l10n.addWork,
+              onPrimary: () => context.push(Routes.contractorPortfolioNew),
             );
           }
           return RefreshIndicator(
@@ -160,6 +165,12 @@ class MyPortfolioScreen extends ConsumerWidget {
         },
       ),
     );
+    return referenceSurface
+        ? Theme(
+            data: ProfessionalReferenceTheme.scopedTheme(Theme.of(context)),
+            child: scaffold,
+          )
+        : scaffold;
   }
 }
 

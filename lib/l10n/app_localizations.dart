@@ -5438,6 +5438,18 @@ abstract class AppLocalizations {
   /// **'محترف جديد'**
   String get newProfessional;
 
+  /// No description provided for @referenceDirectoryYearsExperienceCount.
+  ///
+  /// In ar, this message translates to:
+  /// **'{years} سنة خبرة'**
+  String referenceDirectoryYearsExperienceCount(String years);
+
+  /// No description provided for @referenceUnratedLabel.
+  ///
+  /// In ar, this message translates to:
+  /// **'بدون تقييم'**
+  String get referenceUnratedLabel;
+
   /// No description provided for @noRatingsYet.
   ///
   /// In ar, this message translates to:
@@ -7637,7 +7649,7 @@ abstract class AppLocalizations {
   /// No description provided for @homeReferenceServiceFullRenovationLabel.
   ///
   /// In ar, this message translates to:
-  /// **'تشطيب كامل'**
+  /// **'تشطيبات'**
   String get homeReferenceServiceFullRenovationLabel;
 
   /// No description provided for @homeReferenceHeroTagline.
@@ -7727,7 +7739,7 @@ abstract class AppLocalizations {
   /// No description provided for @homeReferenceCommunityTitle.
   ///
   /// In ar, this message translates to:
-  /// **'من مجتمع شطب'**
+  /// **'من المجتمع'**
   String get homeReferenceCommunityTitle;
 
   /// No description provided for @homeReferenceCommunityTip.
@@ -8864,6 +8876,84 @@ abstract class AppLocalizations {
   /// **'سجّل دخولك لاستخدام المساعد الذكي'**
   String get assistantSignInRequired;
 
+  /// No description provided for @assistantErrorQuota.
+  ///
+  /// In ar, this message translates to:
+  /// **'وصلت للحد المتاح من استفسارات المساعد. يمكنك تصفح المحترفين مباشرة.'**
+  String get assistantErrorQuota;
+
+  /// No description provided for @assistantErrorQuotaContractor.
+  ///
+  /// In ar, this message translates to:
+  /// **'وصلت للحد المتاح من استفسارات المساعد. يمكنك متابعة استخدام التطبيق من لوحة التحكم.'**
+  String get assistantErrorQuotaContractor;
+
+  /// No description provided for @assistantQuotaBrowseAction.
+  ///
+  /// In ar, this message translates to:
+  /// **'تصفح المحترفين'**
+  String get assistantQuotaBrowseAction;
+
+  /// No description provided for @assistantQuotaDashboardAction.
+  ///
+  /// In ar, this message translates to:
+  /// **'لوحة التحكم'**
+  String get assistantQuotaDashboardAction;
+
+  /// No description provided for @assistantSignInAgain.
+  ///
+  /// In ar, this message translates to:
+  /// **'سجّل الدخول للحساب نفسه'**
+  String get assistantSignInAgain;
+
+  /// No description provided for @assistantReauthTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'استعادة سؤال المساعد'**
+  String get assistantReauthTitle;
+
+  /// No description provided for @assistantReauthMessage.
+  ///
+  /// In ar, this message translates to:
+  /// **'سجّل الدخول مرة أخرى إلى حسابك لاستعادة السؤال الذي تعذّر إرساله.'**
+  String get assistantReauthMessage;
+
+  /// No description provided for @assistantReauthFailed.
+  ///
+  /// In ar, this message translates to:
+  /// **'تعذّر التحقق من الحساب. راجع بيانات الدخول وحاول مرة أخرى.'**
+  String get assistantReauthFailed;
+
+  /// No description provided for @assistantReauthMismatchMessage.
+  ///
+  /// In ar, this message translates to:
+  /// **'هذا ليس الحساب نفسه الذي أرسل السؤال، أو لم يتم تأكيد نوع الحساب. جرّب بيانات الحساب الأصلي أو احذف السؤال للمتابعة بهذا الحساب.'**
+  String get assistantReauthMismatchMessage;
+
+  /// No description provided for @assistantReauthTryOriginal.
+  ///
+  /// In ar, this message translates to:
+  /// **'إدخال بيانات الحساب الأصلي'**
+  String get assistantReauthTryOriginal;
+
+  /// No description provided for @assistantReauthDiscard.
+  ///
+  /// In ar, this message translates to:
+  /// **'احذف السؤال وتابع بهذا الحساب'**
+  String get assistantReauthDiscard;
+
+  /// No description provided for @assistantRetryQuestion.
+  ///
+  /// In ar, this message translates to:
+  /// **'أعد إرسال السؤال'**
+  String get assistantRetryQuestion;
+
+  /// No description provided for @assistantConversationHiddenMessage.
+  ///
+  /// In ar, this message translates to:
+  /// **'المحادثة مخفية لأن الحساب أو نوعه الحالي لا يطابق الحساب الذي بدأها. احذف السؤال لمتابعة استخدام هذا الحساب.'**
+  String get assistantConversationHiddenMessage;
+
   /// No description provided for @onboardingStepLabel.
   ///
   /// In ar, this message translates to:
@@ -9533,7 +9623,7 @@ abstract class AppLocalizations {
   /// No description provided for @homeownerReferenceSearchHint.
   ///
   /// In ar, this message translates to:
-  /// **'ابحث عن محترف أو خدمة'**
+  /// **'ابحث عن خدمة أو محترف'**
   String get homeownerReferenceSearchHint;
 
   /// No description provided for @homeownerReferenceProfessionalsTitle.
@@ -9577,6 +9667,306 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'{count} عروض'**
   String homeownerReferenceOffers(int count);
+
+  /// No description provided for @stateHomeAction.
+  ///
+  /// In ar, this message translates to:
+  /// **'الرئيسية'**
+  String get stateHomeAction;
+
+  /// No description provided for @stateQuotesRefresh.
+  ///
+  /// In ar, this message translates to:
+  /// **'حدّث العروض'**
+  String get stateQuotesRefresh;
+
+  /// No description provided for @stateProjectsAction.
+  ///
+  /// In ar, this message translates to:
+  /// **'مشاريعي'**
+  String get stateProjectsAction;
+
+  /// No description provided for @stateQuotesMessage.
+  ///
+  /// In ar, this message translates to:
+  /// **'العروض اللي توصلك على الطلب هتظهر هنا. تقدر تحدّث القائمة أو ترجع لمشاريعك.'**
+  String get stateQuotesMessage;
+
+  /// No description provided for @stateSupplyTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'مفيش محترفين ظاهرين دلوقتي'**
+  String get stateSupplyTitle;
+
+  /// No description provided for @stateSupplyMessage.
+  ///
+  /// In ar, this message translates to:
+  /// **'لما تتوفر ملفات محترفين هتظهر هنا. تقدر ترجع للرئيسية.'**
+  String get stateSupplyMessage;
+
+  /// No description provided for @stateClearSearchFilters.
+  ///
+  /// In ar, this message translates to:
+  /// **'امسح البحث والفلاتر'**
+  String get stateClearSearchFilters;
+
+  /// No description provided for @stateProfileAction.
+  ///
+  /// In ar, this message translates to:
+  /// **'الرجوع للملف'**
+  String get stateProfileAction;
+
+  /// No description provided for @stateServicesAction.
+  ///
+  /// In ar, this message translates to:
+  /// **'شوف الخدمات'**
+  String get stateServicesAction;
+
+  /// No description provided for @stateCloseAction.
+  ///
+  /// In ar, this message translates to:
+  /// **'إغلاق'**
+  String get stateCloseAction;
+
+  /// No description provided for @statePublicWorksMessage.
+  ///
+  /// In ar, this message translates to:
+  /// **'الأعمال اللي يضيفها المحترف هتظهر هنا.'**
+  String get statePublicWorksMessage;
+
+  /// No description provided for @stateClientReviewsMessage.
+  ///
+  /// In ar, this message translates to:
+  /// **'التقييمات اللي يشاركها العملاء هتظهر هنا.'**
+  String get stateClientReviewsMessage;
+
+  /// No description provided for @stateFilteredCommunityTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'مفيش منشورات في القسم ده'**
+  String get stateFilteredCommunityTitle;
+
+  /// No description provided for @stateFilteredCommunityMessage.
+  ///
+  /// In ar, this message translates to:
+  /// **'اعرض كل المنشورات عشان تشوف باقي المجتمع.'**
+  String get stateFilteredCommunityMessage;
+
+  /// No description provided for @stateProjectsNoResultsMessage.
+  ///
+  /// In ar, this message translates to:
+  /// **'مفيش مشاريع مطابقة للفلاتر دي. غيّر الفلاتر أو امسحها لعرض مشاريعك.'**
+  String get stateProjectsNoResultsMessage;
+
+  /// No description provided for @statePickerGuidance.
+  ///
+  /// In ar, this message translates to:
+  /// **'تعذّر اختيار الصور. راجع إذن الوصول للصور وحاول تاني؛ الصور اللي اخترتها لسه موجودة.'**
+  String get statePickerGuidance;
+
+  /// No description provided for @stateCommunityAllTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'لسه مفيش منشورات'**
+  String get stateCommunityAllTitle;
+
+  /// No description provided for @stateCommunityAllMessage.
+  ///
+  /// In ar, this message translates to:
+  /// **'المنشورات الجديدة هتظهر هنا لما تتضاف.'**
+  String get stateCommunityAllMessage;
+
+  /// No description provided for @stateNoResultsMessage.
+  ///
+  /// In ar, this message translates to:
+  /// **'جرّب بحث مختلف أو امسح البحث والفلاتر علشان تشوف المتاح.'**
+  String get stateNoResultsMessage;
+
+  /// No description provided for @stateReadErrorTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'تعذّر تحميل البيانات'**
+  String get stateReadErrorTitle;
+
+  /// No description provided for @stateOfflineTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'مفيش اتصال بالشبكة'**
+  String get stateOfflineTitle;
+
+  /// No description provided for @stateSavedEmptyTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'لسه ماحفظتش محترفين'**
+  String get stateSavedEmptyTitle;
+
+  /// No description provided for @stateSearchNoResultsTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'مفيش نتائج مطابقة'**
+  String get stateSearchNoResultsTitle;
+
+  /// No description provided for @homeownerAssistantEntryHint.
+  ///
+  /// In ar, this message translates to:
+  /// **'مش عارف تبدأ منين؟'**
+  String get homeownerAssistantEntryHint;
+
+  /// No description provided for @homeownerAssistantEntryTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'اسأل مساعد شطّب'**
+  String get homeownerAssistantEntryTitle;
+
+  /// No description provided for @homeownerServiceDesignShortLabel.
+  ///
+  /// In ar, this message translates to:
+  /// **'تصميم'**
+  String get homeownerServiceDesignShortLabel;
+
+  /// No description provided for @homeCloneWelcome.
+  ///
+  /// In ar, this message translates to:
+  /// **'أهلاً يا {name}'**
+  String homeCloneWelcome(String name);
+
+  /// No description provided for @homeCloneHeroTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'بيتك يبدأ من هنا'**
+  String get homeCloneHeroTitle;
+
+  /// No description provided for @homeCloneStartTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'عندك مشروع جديد؟'**
+  String get homeCloneStartTitle;
+
+  /// No description provided for @homeCloneStartBody.
+  ///
+  /// In ar, this message translates to:
+  /// **'احكي لنا عن فكرتك واحصل على اقتراحات من محترفين مناسبين لاحتياجاتك.'**
+  String get homeCloneStartBody;
+
+  /// No description provided for @homeCloneAssistant.
+  ///
+  /// In ar, this message translates to:
+  /// **'اسأل مساعد شطب'**
+  String get homeCloneAssistant;
+
+  /// No description provided for @homeCloneServiceAll.
+  ///
+  /// In ar, this message translates to:
+  /// **'الخدمة: الكل'**
+  String get homeCloneServiceAll;
+
+  /// No description provided for @homeCloneFilters.
+  ///
+  /// In ar, this message translates to:
+  /// **'فلترة'**
+  String get homeCloneFilters;
+
+  /// No description provided for @homeCloneFeatured.
+  ///
+  /// In ar, this message translates to:
+  /// **'محترفون مميزون'**
+  String get homeCloneFeatured;
+
+  /// No description provided for @homeCloneFeaturedSubtitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'اكتشف محترفين لمشروعك'**
+  String get homeCloneFeaturedSubtitle;
+
+  /// No description provided for @homeCloneEditorialSubtitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'أعمال مختارة من فريق شطب'**
+  String get homeCloneEditorialSubtitle;
+
+  /// No description provided for @homeCloneNearby.
+  ///
+  /// In ar, this message translates to:
+  /// **'قريبين منك'**
+  String get homeCloneNearby;
+
+  /// No description provided for @homeCloneKitchen.
+  ///
+  /// In ar, this message translates to:
+  /// **'متخصصون في المطابخ'**
+  String get homeCloneKitchen;
+
+  /// No description provided for @homeCloneFinishing.
+  ///
+  /// In ar, this message translates to:
+  /// **'تشطيب من أول خطوة'**
+  String get homeCloneFinishing;
+
+  /// No description provided for @homeCloneStory.
+  ///
+  /// In ar, this message translates to:
+  /// **'من شقة عادية.. لبيت بتحبه'**
+  String get homeCloneStory;
+
+  /// No description provided for @homeCloneStoryBody.
+  ///
+  /// In ar, this message translates to:
+  /// **'حولنا مطبخ تقليدي ومظلم إلى مساحة عملية ومريحة مناسبة لحياة أسرتنا.'**
+  String get homeCloneStoryBody;
+
+  /// No description provided for @homeCloneStoryDetails.
+  ///
+  /// In ar, this message translates to:
+  /// **'شوف تفاصيل المشروع'**
+  String get homeCloneStoryDetails;
+
+  /// No description provided for @homeCloneBefore.
+  ///
+  /// In ar, this message translates to:
+  /// **'قبل'**
+  String get homeCloneBefore;
+
+  /// No description provided for @homeCloneAfter.
+  ///
+  /// In ar, this message translates to:
+  /// **'بعد'**
+  String get homeCloneAfter;
+
+  /// No description provided for @homeCloneCommunity.
+  ///
+  /// In ar, this message translates to:
+  /// **'حكايات من المجتمع'**
+  String get homeCloneCommunity;
+
+  /// No description provided for @homeCloneShare.
+  ///
+  /// In ar, this message translates to:
+  /// **'شارك تجربتك'**
+  String get homeCloneShare;
+
+  /// No description provided for @homeCloneReadStory.
+  ///
+  /// In ar, this message translates to:
+  /// **'اقرأ التجربة'**
+  String get homeCloneReadStory;
+
+  /// No description provided for @homeCloneQuestion.
+  ///
+  /// In ar, this message translates to:
+  /// **'شوف السؤال'**
+  String get homeCloneQuestion;
+
+  /// No description provided for @homeCloneUnrated.
+  ///
+  /// In ar, this message translates to:
+  /// **'جديد · بدون تقييمات'**
+  String get homeCloneUnrated;
+
+  /// No description provided for @homeCloneReviews.
+  ///
+  /// In ar, this message translates to:
+  /// **'{count} تقييمًا'**
+  String homeCloneReviews(int count);
 }
 
 class _AppLocalizationsDelegate

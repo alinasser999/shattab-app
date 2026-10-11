@@ -45,7 +45,7 @@ class HomeownerProfileRepository {
           fileOptions: const FileOptions(
             upsert: true,
             contentType: 'image/jpeg',
-            cacheControl: publicMediaMutableCacheControl,
+            cacheControl: supabasePublicMediaMutableCacheControlSeconds,
           ),
         );
     final url = _client.storage.from('avatars').getPublicUrl(path);

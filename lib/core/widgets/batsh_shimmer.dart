@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../l10n/l10n_extension.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 
-import '../theme/batsh_motion.dart';
 import '../theme/batsh_radius.dart';
 import '../theme/batsh_spacing.dart';
 
@@ -32,19 +30,7 @@ class BatshShimmerBox extends StatelessWidget {
       ),
     );
 
-    final reduceMotion = MediaQuery.disableAnimationsOf(context);
-    return Semantics(
-      label: context.l10n.loading,
-      child: reduceMotion
-          ? box
-          : box
-                .animate(onPlay: (ctrl) => ctrl.repeat(reverse: true))
-                .shimmer(
-                  duration: BatshMotion.slower,
-                  curve: BatshMotion.easeInOut,
-                  color: context.colorScheme.surfaceContainerLowest,
-                ),
-    );
+    return ExcludeSemantics(child: box);
   }
 }
 
@@ -75,7 +61,6 @@ class BatshNotificationSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final reduceMotion = MediaQuery.disableAnimationsOf(context);
     return BatshSkeletonRegion(
       child: ListView.separated(
         padding: const EdgeInsets.fromLTRB(
@@ -90,10 +75,7 @@ class BatshNotificationSkeleton extends StatelessWidget {
         separatorBuilder: (_, _) => const SizedBox(height: BatshSpacing.xs),
         itemBuilder: (_, index) {
           final tile = _NotificationSkeletonTile();
-          if (reduceMotion) return tile;
-          return tile
-              .animate(delay: BatshMotion.staggerClamped(index))
-              .fadeIn(duration: BatshMotion.normal, curve: BatshMotion.easeOut);
+          return tile;
         },
       ),
     );
@@ -181,25 +163,21 @@ class BatshListSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final reduceMotion = MediaQuery.disableAnimationsOf(context);
-    return ListView.separated(
-      padding: const EdgeInsets.all(BatshSpacing.gutter),
-      physics: const NeverScrollableScrollPhysics(),
-      shrinkWrap: true,
-      itemCount: count,
-      separatorBuilder: (_, _) => const SizedBox(height: BatshSpacing.md),
-      itemBuilder: (_, i) {
-        final item = BatshShimmerBox(
-          height: height,
-          borderRadius: BatshRadius.brLg,
-        );
-        if (reduceMotion) return item;
-        return item.animate().fadeIn(
-          duration: BatshMotion.normal,
-          delay: BatshMotion.staggerClamped(i),
-          curve: BatshMotion.easeOut,
-        );
-      },
+    return BatshSkeletonRegion(
+      child: ListView.separated(
+        padding: const EdgeInsets.all(BatshSpacing.gutter),
+        physics: const NeverScrollableScrollPhysics(),
+        shrinkWrap: true,
+        itemCount: count,
+        separatorBuilder: (_, _) => const SizedBox(height: BatshSpacing.md),
+        itemBuilder: (_, i) {
+          final item = BatshShimmerBox(
+            height: height,
+            borderRadius: BatshRadius.brLg,
+          );
+          return item;
+        },
+      ),
     );
   }
 }
@@ -209,87 +187,77 @@ class BatshProfileSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      child: Column(
-        children: [
-          BatshShimmerBox(height: 200, borderRadius: BorderRadius.zero),
-          Transform.translate(
-            offset: const Offset(0, -48),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: BatshSpacing.gutter,
-              ),
-              child: Column(
-                children:
-                    [
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              BatshShimmerBox(
-                                width: 104,
-                                height: 104,
-                                borderRadius: BatshRadius.brFull,
-                              ),
-                              const SizedBox(width: BatshSpacing.gutter),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const SizedBox(height: 52),
-                                    BatshShimmerBox(
-                                      height: 20,
-                                      width: double.infinity,
-                                    ),
-                                    const SizedBox(height: BatshSpacing.xs),
-                                    BatshShimmerBox(height: 14, width: 140),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: BatshSpacing.lg),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: BatshShimmerBox(
-                                  height: 48,
-                                  borderRadius: BatshRadius.brDefault,
-                                ),
-                              ),
-                              const SizedBox(width: BatshSpacing.md),
-                              Expanded(
-                                child: BatshShimmerBox(
-                                  height: 48,
-                                  borderRadius: BatshRadius.brDefault,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: BatshSpacing.lg),
-                          BatshShimmerBox(
-                            height: 60,
-                            borderRadius: BatshRadius.brLg,
-                          ),
-                          const SizedBox(height: BatshSpacing.md),
-                          BatshShimmerBox(
-                            height: 60,
-                            borderRadius: BatshRadius.brLg,
-                          ),
-                          const SizedBox(height: BatshSpacing.md),
-                          BatshShimmerBox(
-                            height: 200,
-                            borderRadius: BatshRadius.brLg,
-                          ),
-                        ]
-                        .animate(interval: BatshMotion.staggerBase)
-                        .fadeIn(
-                          duration: BatshMotion.normal,
-                          curve: BatshMotion.easeOut,
+    return BatshSkeletonRegion(
+      child: SingleChildScrollView(
+        child: Column(
+          children: [
+            BatshShimmerBox(height: 200, borderRadius: BorderRadius.zero),
+            Transform.translate(
+              offset: const Offset(0, -48),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: BatshSpacing.gutter,
+                ),
+                child: Column(
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        BatshShimmerBox(
+                          width: 104,
+                          height: 104,
+                          borderRadius: BatshRadius.brFull,
                         ),
+                        const SizedBox(width: BatshSpacing.gutter),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const SizedBox(height: 52),
+                              BatshShimmerBox(
+                                height: 20,
+                                width: double.infinity,
+                              ),
+                              const SizedBox(height: BatshSpacing.xs),
+                              BatshShimmerBox(height: 14, width: 140),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: BatshSpacing.lg),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: BatshShimmerBox(
+                            height: 48,
+                            borderRadius: BatshRadius.brDefault,
+                          ),
+                        ),
+                        const SizedBox(width: BatshSpacing.md),
+                        Expanded(
+                          child: BatshShimmerBox(
+                            height: 48,
+                            borderRadius: BatshRadius.brDefault,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: BatshSpacing.lg),
+                    BatshShimmerBox(height: 60, borderRadius: BatshRadius.brLg),
+                    const SizedBox(height: BatshSpacing.md),
+                    BatshShimmerBox(height: 60, borderRadius: BatshRadius.brLg),
+                    const SizedBox(height: BatshSpacing.md),
+                    BatshShimmerBox(
+                      height: 200,
+                      borderRadius: BatshRadius.brLg,
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -306,39 +274,37 @@ class BatshCommentsSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        for (var i = 0; i < count; i++)
-          Padding(
-            padding: const EdgeInsets.only(bottom: BatshSpacing.md),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                BatshShimmerBox(
-                  width: 32,
-                  height: 32,
-                  borderRadius: BatshRadius.brFull,
-                ),
-                const SizedBox(width: BatshSpacing.sm),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      BatshShimmerBox(height: 12, width: 110),
-                      const SizedBox(height: BatshSpacing.xs),
-                      BatshShimmerBox(height: 12, width: double.infinity),
-                    ],
+    return BatshSkeletonRegion(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          for (var i = 0; i < count; i++)
+            Padding(
+              padding: const EdgeInsets.only(bottom: BatshSpacing.md),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  BatshShimmerBox(
+                    width: 32,
+                    height: 32,
+                    borderRadius: BatshRadius.brFull,
                   ),
-                ),
-              ],
+                  const SizedBox(width: BatshSpacing.sm),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        BatshShimmerBox(height: 12, width: 110),
+                        const SizedBox(height: BatshSpacing.xs),
+                        BatshShimmerBox(height: 12, width: double.infinity),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ).animate().fadeIn(
-            duration: BatshMotion.normal,
-            delay: BatshMotion.staggerClamped(i),
-            curve: BatshMotion.easeOut,
-          ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -355,51 +321,44 @@ class BatshPostSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(BatshSpacing.gutter),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children:
-            [
-                  Row(
+    return BatshSkeletonRegion(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(BatshSpacing.gutter),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                BatshShimmerBox(
+                  width: 44,
+                  height: 44,
+                  borderRadius: BatshRadius.brFull,
+                ),
+                const SizedBox(width: BatshSpacing.sm),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      BatshShimmerBox(
-                        width: 44,
-                        height: 44,
-                        borderRadius: BatshRadius.brFull,
-                      ),
-                      const SizedBox(width: BatshSpacing.sm),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            BatshShimmerBox(height: 14, width: 150),
-                            const SizedBox(height: BatshSpacing.xs),
-                            BatshShimmerBox(height: 12, width: 90),
-                          ],
-                        ),
-                      ),
+                      BatshShimmerBox(height: 14, width: 150),
+                      const SizedBox(height: BatshSpacing.xs),
+                      BatshShimmerBox(height: 12, width: 90),
                     ],
                   ),
-                  const SizedBox(height: BatshSpacing.gutter),
-                  BatshShimmerBox(height: 14, width: double.infinity),
-                  const SizedBox(height: BatshSpacing.xs),
-                  BatshShimmerBox(height: 14, width: 220),
-                  const SizedBox(height: BatshSpacing.gutter),
-                  BatshShimmerBox(
-                    height: 300,
-                    borderRadius: BatshRadius.brImage,
-                  ),
-                  const SizedBox(height: BatshSpacing.gutter),
-                  BatshShimmerBox(height: 12, width: 120),
-                  const SizedBox(height: BatshSpacing.md),
-                  const BatshCommentsSkeleton(),
-                ]
-                .animate(interval: BatshMotion.staggerBase)
-                .fadeIn(
-                  duration: BatshMotion.normal,
-                  curve: BatshMotion.easeOut,
                 ),
+              ],
+            ),
+            const SizedBox(height: BatshSpacing.gutter),
+            BatshShimmerBox(height: 14, width: double.infinity),
+            const SizedBox(height: BatshSpacing.xs),
+            BatshShimmerBox(height: 14, width: 220),
+            const SizedBox(height: BatshSpacing.gutter),
+            BatshShimmerBox(height: 300, borderRadius: BatshRadius.brImage),
+            const SizedBox(height: BatshSpacing.gutter),
+            BatshShimmerBox(height: 12, width: 120),
+            const SizedBox(height: BatshSpacing.md),
+            const BatshCommentsSkeleton(),
+          ],
+        ),
       ),
     );
   }
@@ -413,38 +372,34 @@ class BatshHeroDetailSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      physics: const NeverScrollableScrollPhysics(),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          BatshShimmerBox(height: 320, borderRadius: BorderRadius.zero),
-          Padding(
-            padding: const EdgeInsets.all(BatshSpacing.marginMobile),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children:
-                  [
-                        BatshShimmerBox(height: 11, width: 80),
-                        const SizedBox(height: BatshSpacing.sm),
-                        BatshShimmerBox(height: 24, width: 240),
-                        const SizedBox(height: BatshSpacing.md),
-                        BatshShimmerBox(height: 13, width: 160),
-                        const SizedBox(height: BatshSpacing.gutter),
-                        BatshShimmerBox(height: 13, width: double.infinity),
-                        const SizedBox(height: BatshSpacing.xs),
-                        BatshShimmerBox(height: 13, width: double.infinity),
-                        const SizedBox(height: BatshSpacing.xs),
-                        BatshShimmerBox(height: 13, width: 200),
-                      ]
-                      .animate(interval: BatshMotion.staggerBase)
-                      .fadeIn(
-                        duration: BatshMotion.normal,
-                        curve: BatshMotion.easeOut,
-                      ),
+    return BatshSkeletonRegion(
+      child: SingleChildScrollView(
+        physics: const NeverScrollableScrollPhysics(),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            BatshShimmerBox(height: 320, borderRadius: BorderRadius.zero),
+            Padding(
+              padding: const EdgeInsets.all(BatshSpacing.marginMobile),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  BatshShimmerBox(height: 11, width: 80),
+                  const SizedBox(height: BatshSpacing.sm),
+                  BatshShimmerBox(height: 24, width: 240),
+                  const SizedBox(height: BatshSpacing.md),
+                  BatshShimmerBox(height: 13, width: 160),
+                  const SizedBox(height: BatshSpacing.gutter),
+                  BatshShimmerBox(height: 13, width: double.infinity),
+                  const SizedBox(height: BatshSpacing.xs),
+                  BatshShimmerBox(height: 13, width: double.infinity),
+                  const SizedBox(height: BatshSpacing.xs),
+                  BatshShimmerBox(height: 13, width: 200),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

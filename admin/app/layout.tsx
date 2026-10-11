@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { Inter, Noto_Sans_Arabic } from 'next/font/google';
+import { getAdminLocale } from '@/lib/locale';
+import { t } from '@/lib/i18n';
 import './globals.css';
 
 // One family carries headings, labels, data and buttons — product UI does not
@@ -18,19 +20,23 @@ const arabic = Noto_Sans_Arabic({
   display: 'swap',
 });
 
-export const metadata: Metadata = {
-  title: 'Shattab Admin',
-  description: 'Operations console for Shattab.',
-  icons: { icon: '/icon.png' },
-  // A privileged surface has no business in a search index.
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getAdminLocale();
+  return {
+    title: t(locale, 'Shattab Admin'),
+    description: t(locale, 'Operations console for Shattab.'),
+    icons: { icon: '/icon.png' },
+    // A privileged surface has no business in a search index.
+    robots: { index: false, follow: false },
+  };
+}
 
 export const viewport: Viewport = { themeColor: '#2b201a' };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const locale = await getAdminLocale();
   return (
-    <html lang="en" className={`${inter.variable} ${arabic.variable}`}>
+    <html lang={locale} dir={locale === 'ar' ? 'rtl' : 'ltr'} className={`${inter.variable} ${arabic.variable}`}>
       <body>{children}</body>
     </html>
   );

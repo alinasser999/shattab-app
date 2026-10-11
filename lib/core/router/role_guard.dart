@@ -3,6 +3,8 @@ import 'package:go_router/go_router.dart';
 
 import '../debug/debug_role_override.dart';
 import '../../features/auth/domain/profile.dart';
+import '../../features/auth/domain/assistant_reauthentication_request.dart';
+import '../../features/auth/presentation/pending_protected_action.dart';
 import '../../features/auth/presentation/providers/auth_provider.dart';
 import '../../features/onboarding/presentation/providers/onboarding_provider.dart';
 import 'routes.dart';
@@ -12,11 +14,28 @@ import 'routes.dart';
 String? roleGuard(Ref ref, GoRouterState state) {
   final path = state.matchedLocation;
 
+  // The opaque assistant recovery route is reachable only via the exact
+  // in-memory challenge created by the assistant screen. It must be checked
+  // before normal session/profile/portal redirects so a stale session can be
+  // replaced without weakening generic login or portal guards.
+  if (path == Routes.assistantReauthentication) {
+    return AssistantReauthenticationChallenges.isActive(state.extra)
+        ? null
+        : Routes.splash;
+  }
+
   final session = ref.read(currentSessionProvider);
+  final pendingActions = ref.read(pendingProtectedActionCoordinatorProvider);
+  pendingActions.observeSession(session?.user.id);
 
   if (session == null) {
     if (path == Routes.notifications) return Routes.login;
     if (path.startsWith('/login')) return null;
+    // The composer silently ignores guest submits and cannot safely retain
+    // photos before auth. Keep direct guest links on the public Explore feed.
+    if (path == Routes.homeownerExploreCreatePost) {
+      return Routes.homeownerExplore;
+    }
     // Guests may browse the homeowner shell (Discover, contractor profiles,
     // portfolios) freely — sign-in is gated at the point of a write action
     // (save / send request / create post), not at the app door.
@@ -55,6 +74,7 @@ String? roleGuard(Ref ref, GoRouterState state) {
     profileAsync.value,
     ref.read(debugRoleOverrideProvider),
   );
+  pendingActions.observeProfile(profile, sessionUserId: session.user.id);
   if (profile == null) {
     return path == Routes.onboardingRoleSelect
         ? null
@@ -95,6 +115,13 @@ String? roleGuard(Ref ref, GoRouterState state) {
     }
     return nextStep;
   }
+
+  final pendingActionRoute = pendingActions.redirectForReadyHomeowner(
+    path,
+    sessionUserId: session.user.id,
+    profile: profile,
+  );
+  if (pendingActionRoute != null) return pendingActionRoute;
 
   // Onboarded — bounce to the right portal if user lands in the wrong place.
   final homeRoot = profile.role == UserRole.homeowner

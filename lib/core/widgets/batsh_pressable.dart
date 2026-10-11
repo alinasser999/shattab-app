@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../theme/batsh_motion.dart';
 
@@ -48,6 +49,8 @@ class _BatshPressableState extends State<BatshPressable>
     value: 0.0,
   );
 
+  bool _focused = false;
+
   bool get _reduced => MediaQuery.disableAnimationsOf(context);
   bool get _interactive => widget.onTap != null || widget.onLongPress != null;
 
@@ -76,11 +79,29 @@ class _BatshPressableState extends State<BatshPressable>
         final scale = _reduced ? 1.0 : 1.0 - (1.0 - widget.pressedScale) * t;
         return Transform.scale(scale: scale, child: child);
       },
-      child: widget.child,
+      child: ConstrainedBox(
+        constraints: _interactive
+            ? const BoxConstraints(minWidth: 48, minHeight: 48)
+            : const BoxConstraints(),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            border: _focused
+                ? Border.all(
+                    color: Theme.of(context).colorScheme.primary,
+                    width: 2,
+                  )
+                : null,
+          ),
+          child: widget.child,
+        ),
+      ),
     );
 
     if (_interactive) {
       result = GestureDetector(
+        excludeFromSemantics: true,
+        behavior: HitTestBehavior.opaque,
         onTapDown: _onTapDown,
         onTapUp: (_) => _release(BatshMotion.springTap),
         onTapCancel: () => _release(BatshMotion.easeOut),
@@ -90,10 +111,32 @@ class _BatshPressableState extends State<BatshPressable>
       );
     }
 
-    return Semantics(
-      button: _interactive,
-      label: widget.semanticLabel,
-      child: result,
+    if (!_interactive) return result;
+    return FocusableActionDetector(
+      mouseCursor: SystemMouseCursors.click,
+      onShowFocusHighlight: (value) => setState(() => _focused = value),
+      shortcuts: const {
+        SingleActivator(LogicalKeyboardKey.enter): ActivateIntent(),
+        SingleActivator(LogicalKeyboardKey.space): ActivateIntent(),
+      },
+      actions: {
+        ActivateIntent: CallbackAction<ActivateIntent>(
+          onInvoke: (_) {
+            widget.onTap?.call();
+            return null;
+          },
+        ),
+      },
+      child: Semantics(
+        button: widget.onTap != null,
+        enabled: true,
+        label: widget.semanticLabel,
+        onTap: widget.onTap,
+        onLongPress: widget.onLongPress,
+        // Independent buttons inside a card remain their own semantic nodes.
+        explicitChildNodes: widget.semanticLabel != null,
+        child: result,
+      ),
     );
   }
 }

@@ -1,3 +1,4 @@
+import '../../../../core/widgets/professional_reference_states.dart';
 import '../../../../core/widgets/professional_reference_primitives.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -13,7 +14,6 @@ import '../../../../core/theme/professional_reference_theme.dart';
 import '../../../../core/theme/theme_extension.dart';
 import '../../../../core/utils/error_mapper.dart';
 import '../../../../core/widgets/batsh_card.dart';
-import '../../../../core/widgets/batsh_error.dart';
 import '../../../../core/widgets/batsh_scaffold.dart';
 import '../../../../core/widgets/batsh_shimmer.dart';
 import '../../domain/onboarding_models.dart';
@@ -168,7 +168,7 @@ class _HomeownerDetailsScreenState
       child: Builder(
         builder: (referenceContext) {
           final stepBody = homeownerAsync.hasError
-              ? BatshError(
+              ? ProfessionalReferenceReadError(
                   message: ErrorMapper.map(homeownerAsync.error!),
                   onRetry: () => ref.invalidate(homeownerProfileProvider),
                 )
@@ -291,12 +291,10 @@ class _HomeownerDetailsScreenState
   Widget _form(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
-      Text(
-        context.l10n.homeownerDetailsHint,
-        style: ProfessionalReferenceTheme.text(
-          16,
-          color: ProfessionalReferenceTheme.muted,
-        ),
+      ProfessionalReferenceWelcome(
+        title: context.l10n.yourData,
+        message: context.l10n.homeownerDetailsHint,
+        motif: ProfessionalReferenceMotif.house,
       ),
       const SizedBox(height: BatshSpacing.md),
       _ReferenceSectionHeader(title: context.l10n.apartmentType),
@@ -366,7 +364,11 @@ class _HomeownerDetailsScreenState
       ],
       if (_saveError != null) ...[
         const SizedBox(height: BatshSpacing.md),
-        _InlineError(message: _saveError!),
+        ProfessionalReferenceInlineStatus(
+          message: _saveError!,
+          retryLabel: context.l10n.tryAgain,
+          onRetry: _busy ? null : _next,
+        ),
       ],
       if (_busy) ...[
         const SizedBox(height: BatshSpacing.md),
@@ -396,7 +398,7 @@ class _InlineError extends StatelessWidget {
     child: Text(
       message,
       style: ProfessionalReferenceTheme.text(
-        14,
+        16,
         color: context.colorScheme.error,
         weight: FontWeight.w600,
       ),

@@ -1,4 +1,6 @@
 import { Badge } from './ui';
+import { outcomeKey, t, type AdminLocale } from '@/lib/i18n';
+import { fmtNum } from '@/lib/format';
 
 /**
  * Outcome banner for the ?done= / ?error= convention the server actions use.
@@ -6,9 +8,13 @@ import { Badge } from './ui';
  * persists until the next navigation, which is what an operator wants after
  * suspending an account.
  */
-export function OutcomeBanner({ done, error }: { done?: string; error?: string }) {
+export function OutcomeBanner({ done, error, days, max, locale = 'en' }: { done?: string; error?: string; days?: string; max?: string; locale?: AdminLocale }) {
   if (!done && !error) return null;
   const isError = Boolean(error);
+  const params = {
+    ...(days && Number.isFinite(Number(days)) ? { days: fmtNum(Number(days), locale) } : {}),
+    ...(max && Number.isFinite(Number(max)) ? { max: fmtNum(Number(max), locale) } : {}),
+  };
 
   return (
     <div
@@ -21,8 +27,12 @@ export function OutcomeBanner({ done, error }: { done?: string; error?: string }
           : 'border-ok-dim bg-ok-dim/40 text-ink'
       }`}
     >
-      <Badge tone={isError ? 'danger' : 'ok'}>{isError ? 'Failed' : 'Done'}</Badge>
-      <p className="min-w-0 flex-1">{error ?? done}</p>
+      <Badge tone={isError ? 'danger' : 'ok'}>{isError ? t(locale, 'Failed') : t(locale, 'Done')}</Badge>
+      <p className="min-w-0 flex-1">
+        {isError
+          ? t(locale, outcomeKey('error', error ?? ''), params)
+          : t(locale, outcomeKey('done', done ?? ''), params)}
+      </p>
     </div>
   );
 }

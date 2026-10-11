@@ -3,6 +3,8 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cx } from './ui';
+import { t, type AdminLocale } from '@/lib/i18n';
+import { fmtNum } from '@/lib/format';
 
 /**
  * Side navigation. The only client component on the authenticated surface — it
@@ -19,7 +21,7 @@ const ITEMS = [
   { href: '/activity', label: 'Activity' },
 ] as const;
 
-export function Nav({ queues }: { queues: { verification: number; payment: number; reports: number } }) {
+export function Nav({ queues, locale }: { queues: { verification: number; payment: number; reports: number }; locale: AdminLocale }) {
   const path = usePathname();
 
   const count: Record<string, number> = {
@@ -29,7 +31,7 @@ export function Nav({ queues }: { queues: { verification: number; payment: numbe
   };
 
   return (
-    <nav aria-label="Console sections" className="flex flex-col gap-0.5">
+    <nav aria-label={t(locale, 'Console sections')} className="flex flex-col gap-0.5">
       {ITEMS.map(({ href, label }) => {
         // Exact match for the root, prefix match elsewhere, so /users?user=… stays
         // highlighted while the drawer is open.
@@ -59,12 +61,12 @@ export function Nav({ queues }: { queues: { verification: number; payment: numbe
                   active ? 'bg-accent' : 'bg-transparent',
                 )}
               />
-              <span className="truncate">{label}</span>
+              <span className="truncate">{t(locale, label)}</span>
             </span>
 
             {pending > 0 ? (
               <span
-                title={`${pending} waiting`}
+                title={t(locale, '{count} waiting', { count: fmtNum(pending, locale) })}
                 className="rounded-sm border border-warn-dim bg-warn-dim/50 px-1 text-2xs font-medium text-warn"
               >
                 {pending}

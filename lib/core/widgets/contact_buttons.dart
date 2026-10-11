@@ -8,7 +8,7 @@ import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../theme/batsh_colors.dart';
-import '../theme/batsh_radius.dart';
+import 'batsh_button.dart';
 import '../theme/batsh_spacing.dart';
 import '../theme/batsh_typography.dart';
 import '../theme/batsh_icon_size.dart';
@@ -106,17 +106,16 @@ class WhatsAppButton extends StatelessWidget {
     // The label stays visible in both emphases. An icon-only contact button
     // would be smaller and quieter, but a bare glyph is the one form users
     // reliably fail to decode, and it costs screen-reader users the action.
+    final button = switch (emphasis) {
+      ContactEmphasis.brand => _filled(context, BatshColors.whatsApp),
+      ContactEmphasis.primary => _filled(context, context.colorScheme.primary),
+      ContactEmphasis.subdued => _subdued(context),
+    };
     return Semantics(
-      button: true,
       label: context.l10n.contactViaWhatsApp,
-      child: switch (emphasis) {
-        ContactEmphasis.brand => _filled(context, BatshColors.whatsApp),
-        ContactEmphasis.primary => _filled(
-          context,
-          context.colorScheme.primary,
-        ),
-        ContactEmphasis.subdued => _subdued(context),
-      },
+      button: true,
+      enabled: isValidContactPhone(phone),
+      child: button,
     );
   }
 
@@ -146,50 +145,16 @@ class WhatsAppButton extends StatelessWidget {
     );
   }
 
-  /// The filled form, in whichever colour the emphasis asked for. White ink
-  /// and a white glyph clear 4.5:1 on both `#25D366` and terracotta, so the
-  /// two variants differ only in the fill.
-  Widget _filled(BuildContext context, Color fill) {
-    return Material(
-      color: fill,
-      borderRadius: BatshRadius.brFull,
-      child: InkWell(
-        borderRadius: BatshRadius.brFull,
-        onTap: isValidContactPhone(phone) ? () => _open(context) : null,
-        child: Container(
-          height: BatshSpacing.minHitArea,
-          alignment: Alignment.center,
-          padding: const EdgeInsets.symmetric(horizontal: BatshSpacing.sm),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(
-                Icons.chat_bubble_outline,
-                color: Colors.white,
-                size: BatshIconSize.md,
-              ),
-              const SizedBox(width: BatshSpacing.xs),
-              // Shrinks rather than clips: this button is used inside a
-              // half-width card column as well as across a full-width sheet,
-              // and a truncated contact label is worse than a small one.
-              Flexible(
-                child: Text(
-                  label ?? context.l10n.contactViaWhatsApp,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: BatshTypography.labelMd.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
+  /// Dark green ink on WhatsApp green; the terracotta variant uses onPrimary.
+  Widget _filled(BuildContext context, Color fill) => BatshButton(
+    label: label ?? context.l10n.contactViaWhatsApp,
+    onPressed: isValidContactPhone(phone) ? () => _open(context) : null,
+    icon: Icons.chat_bubble_outline,
+    backgroundColor: fill,
+    foregroundColor: emphasis == ContactEmphasis.brand
+        ? const Color(0xFF103B21)
+        : context.colorScheme.onPrimary,
+  );
 }
 
 /// Secondary call button. Opens tel:
@@ -224,18 +189,14 @@ class CallButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Semantics(
-      button: true,
-      label: context.l10n.call,
-      child: OutlinedButton.icon(
-        onPressed: isValidContactPhone(phone) ? () => _open(context) : null,
-        icon: const Icon(Icons.call_outlined, size: BatshIconSize.md),
-        label: Text(context.l10n.call),
-        style: OutlinedButton.styleFrom(
-          foregroundColor: context.colorScheme.primary,
-          side: BorderSide(color: context.colorScheme.outline),
-          minimumSize: const Size.fromHeight(BatshSpacing.minHitArea),
-        ),
+    return OutlinedButton.icon(
+      onPressed: isValidContactPhone(phone) ? () => _open(context) : null,
+      icon: const Icon(Icons.call_outlined, size: BatshIconSize.md),
+      label: Text(context.l10n.call),
+      style: OutlinedButton.styleFrom(
+        foregroundColor: context.colorScheme.primary,
+        side: BorderSide(color: context.colorScheme.outline),
+        minimumSize: const Size.fromHeight(BatshSpacing.minHitArea),
       ),
     );
   }

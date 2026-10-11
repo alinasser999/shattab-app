@@ -4,7 +4,8 @@ import { setPlan, setVerified, suspendUser, unsuspendUser } from '@/lib/actions'
 import {
   Avatar, Badge, Button, ErrorState, Input, Label, Panel, Select, Textarea,
 } from '@/components/ui';
-import { formatSpecialties, PROVIDER_KIND_LABEL, fmtAgo, fmtDateTime, fmtNum, fmtPhone } from '@/lib/format';
+import { formatApartmentType, formatSpecialties, formatProviderKind, fmtAgo, fmtDateTime, fmtNum, fmtPhone } from '@/lib/format';
+import { t, type AdminLocale } from '@/lib/i18n';
 
 /**
  * Detail panel for one account.
@@ -35,14 +36,13 @@ type Detail = {
   }>;
 };
 
-export async function UserDrawer({ userId, backHref }: { userId?: string; backHref: string }) {
+export async function UserDrawer({ userId, backHref, locale }: { userId?: string; backHref: string; locale: AdminLocale }) {
   if (!userId) {
     return (
       <Panel className="hidden h-fit p-5 xl:block">
-        <p className="text-sm font-medium text-ink">No account selected</p>
+        <p className="text-sm font-medium text-ink">{t(locale, 'No account selected')}</p>
         <p className="mt-1 text-sm text-ink-3">
-          Select a row to see its full history, its activity, and the controls for suspending or
-          verifying it.
+          {t(locale, 'Select a row to see its full history, its activity, and the controls for suspending or verifying it.')}
         </p>
       </Panel>
     );
@@ -54,7 +54,7 @@ export async function UserDrawer({ userId, backHref }: { userId?: string; backHr
   if (error || !data) {
     return (
       <Panel className="h-fit">
-        <ErrorState what="Could not load this account." />
+        <ErrorState what={t(locale, 'Could not load this account.')} locale={locale} />
       </Panel>
     );
   }
@@ -71,27 +71,27 @@ export async function UserDrawer({ userId, backHref }: { userId?: string; backHr
   return (
     <Panel className="enter h-fit">
       <header className="flex items-start gap-3 border-b border-line px-4 py-4">
-        <Avatar name={p.full_name} size={38} />
+        <Avatar name={p.full_name} size={38} locale={locale} />
         <div className="min-w-0 flex-1">
           <h2 dir="auto" className="truncate text-md font-semibold text-ink">
-            {p.full_name?.trim() || 'Unnamed account'}
+            {p.full_name?.trim() || t(locale, 'Unnamed account')}
           </h2>
           <p className="text-xs text-ink-3" dir="ltr">
             {fmtPhone(p.phone)}
           </p>
           <div className="mt-1.5 flex flex-wrap gap-1.5">
             <Badge tone={p.role === 'contractor' ? 'accent' : 'info'}>
-              {p.role === 'contractor' ? 'Professional' : 'Homeowner'}
+              {p.role === 'contractor' ? t(locale, 'Professional') : t(locale, 'Homeowner')}
             </Badge>
-            {suspended ? <Badge tone="danger">Suspended</Badge> : <Badge tone="ok">Active</Badge>}
-            {d.contractor?.verified ? <Badge tone="ok">Verified</Badge> : null}
-            {isPro ? <Badge tone="warn">Pro</Badge> : null}
-            {!p.onboarding_complete ? <Badge tone="warn">Onboarding incomplete</Badge> : null}
+            {suspended ? <Badge tone="danger">{t(locale, 'Suspended')}</Badge> : <Badge tone="ok">{t(locale, 'Active')}</Badge>}
+            {d.contractor?.verified ? <Badge tone="ok">{t(locale, 'Verified')}</Badge> : null}
+            {isPro ? <Badge tone="warn">{t(locale, 'Pro')}</Badge> : null}
+            {!p.onboarding_complete ? <Badge tone="warn">{t(locale, 'Onboarding incomplete')}</Badge> : null}
           </div>
         </div>
         <Link
           href={backHref}
-          aria-label="Close account details"
+          aria-label={t(locale, 'Close account details')}
           className="rounded-sm px-1.5 text-ink-3 transition-colors duration-150 hover:text-ink"
         >
           ✕
@@ -99,68 +99,70 @@ export async function UserDrawer({ userId, backHref }: { userId?: string; backHr
       </header>
 
       <dl className="grid grid-cols-2 gap-x-4 gap-y-2.5 border-b border-line px-4 py-3.5 text-sm">
-        <Row label="Joined" value={fmtDateTime(p.created_at)} />
+        <Row label={t(locale, 'Joined')} value={fmtDateTime(p.created_at, locale)} />
         <Row
-          label="Last sign-in"
-          value={d.auth?.last_sign_in_at ? fmtAgo(d.auth.last_sign_in_at) : 'never'}
-          title={d.auth?.last_sign_in_at ? fmtDateTime(d.auth.last_sign_in_at) : undefined}
+          label={t(locale, 'Last sign-in')}
+          value={d.auth?.last_sign_in_at ? fmtAgo(d.auth.last_sign_in_at, locale) : t(locale, 'never')}
+          title={d.auth?.last_sign_in_at ? fmtDateTime(d.auth.last_sign_in_at, locale) : undefined}
         />
-        <Row label="Phone confirmed" value={d.auth?.phone_confirmed_at ? 'yes' : 'no'} />
-        <Row label="Account id" value={p.id} mono />
+        <Row label={t(locale, 'Phone confirmed')} value={d.auth?.phone_confirmed_at ? t(locale, 'yes') : t(locale, 'no')} />
+        <Row label={t(locale, 'Account id')} value={p.id} mono />
       </dl>
 
       {d.contractor ? (
         <dl className="grid grid-cols-2 gap-x-4 gap-y-2.5 border-b border-line px-4 py-3.5 text-sm">
-          <Row label="Business" value={d.contractor.business_name || '—'} rtl />
+          <Row label={t(locale, 'Business')} value={d.contractor.business_name || '—'} rtl />
           <Row
-            label="Calls itself"
-            value={PROVIDER_KIND_LABEL[d.contractor.provider_kind] ?? d.contractor.provider_kind}
+            label={t(locale, 'Calls itself')}
+            value={formatProviderKind(d.contractor.provider_kind, locale)}
           />
           <Row
-            label="Rating"
+            label={t(locale, 'Rating')}
             value={
               d.contractor.rating_count > 0
-                ? `${d.contractor.rating_avg} from ${d.contractor.rating_count}`
-                : 'no reviews yet'
+                ? t(locale, '{rating} from {count}', { rating: fmtNum(d.contractor.rating_avg, locale), count: fmtNum(d.contractor.rating_count, locale) })
+                : t(locale, 'no reviews yet')
             }
           />
-          <Row label="Jobs completed" value={fmtNum(d.contractor.projects_completed)} />
+          <Row label={t(locale, 'Jobs completed')} value={fmtNum(d.contractor.projects_completed, locale)} />
           <Row
-            label="Plan"
+            label={t(locale, 'Plan')}
             value={
               isPro
-                ? `Pro until ${fmtDateTime(d.contractor.plan_expires_at)}`
+                ? t(locale, 'Pro until {date}', { date: fmtDateTime(d.contractor.plan_expires_at, locale) })
                 : d.contractor.plan === 'pro'
-                  ? 'Pro, expired'
-                  : 'Free'
+                  ? t(locale, 'Pro, expired')
+                  : d.contractor.plan === 'free'
+                    ? t(locale, 'Free')
+                    : d.contractor.plan
             }
           />
-          <Row label="Specialties" value={formatSpecialties(d.contractor.specialties)} rtl />
-          <Row label="Areas" value={(d.contractor.service_areas ?? []).join(', ') || '—'} rtl />
+          <Row label={t(locale, 'Specialties')} value={formatSpecialties(d.contractor.specialties, locale)} rtl />
+          <Row label={t(locale, 'Areas')} value={(d.contractor.service_areas ?? []).join(locale === 'ar' ? '، ' : ', ') || '—'} rtl />
         </dl>
       ) : null}
 
       {d.homeowner ? (
         <dl className="grid grid-cols-2 gap-x-4 gap-y-2.5 border-b border-line px-4 py-3.5 text-sm">
-          <Row label="City" value={d.homeowner.city || '—'} rtl />
-          <Row label="District" value={d.homeowner.district || '—'} rtl />
-          <Row label="Home type" value={d.homeowner.apartment_type || '—'} />
+          <Row label={t(locale, 'City')} value={d.homeowner.city || '—'} rtl />
+          <Row label={t(locale, 'District')} value={d.homeowner.district || '—'} rtl />
+          <Row label={t(locale, 'Home type')} value={formatApartmentType(d.homeowner.apartment_type, locale)} />
         </dl>
       ) : null}
 
       <div className="border-b border-line px-4 py-3.5">
-        <p className="mb-2 text-xs font-medium text-ink-2">Activity</p>
+        <p className="mb-2 text-xs font-medium text-ink-2">{t(locale, 'Activity')}</p>
         <dl className="grid grid-cols-3 gap-x-3 gap-y-2.5 text-sm">
-          <Stat label="Briefs" value={d.stats.briefs} />
-          <Stat label="Quotes" value={d.stats.quotes} />
-          <Stat label="Posts" value={d.stats.posts} />
-          <Stat label="Comments" value={d.stats.comments} />
-          <Stat label="Reviews given" value={d.stats.reviews_written} />
-          <Stat label="Reviews got" value={d.stats.reviews_received} />
+          <Stat label={t(locale, 'Briefs')} value={d.stats.briefs} locale={locale} />
+          <Stat label={t(locale, 'Quotes')} value={d.stats.quotes} locale={locale} />
+          <Stat label={t(locale, 'Posts')} value={d.stats.posts} locale={locale} />
+          <Stat label={t(locale, 'Comments')} value={d.stats.comments} locale={locale} />
+          <Stat label={t(locale, 'Reviews given')} value={d.stats.reviews_written} locale={locale} />
+          <Stat label={t(locale, 'Reviews got')} value={d.stats.reviews_received} locale={locale} />
           {/* Two signals worth reading together: reports filed against this
               account, and how many people blocked it independently. */}
-          <Stat label="Reported" value={d.stats.reports_against} warnAbove={0} />
-          <Stat label="Blocked by" value={d.stats.blocked_by} warnAbove={2} />
+          <Stat label={t(locale, 'Reported')} value={d.stats.reports_against} warnAbove={0} locale={locale} />
+          <Stat label={t(locale, 'Blocked by')} value={d.stats.blocked_by} warnAbove={2} locale={locale} />
         </dl>
       </div>
 
@@ -168,13 +170,13 @@ export async function UserDrawer({ userId, backHref }: { userId?: string; backHr
       <div className="flex flex-col gap-4 px-4 py-4">
         {suspended ? (
           <div>
-            <p className="text-xs font-medium text-ink-2">Suspension</p>
+            <p className="text-xs font-medium text-ink-2">{t(locale, 'Suspension')}</p>
             <p className="mt-1 text-sm text-ink-3">
-              Since {fmtDateTime(p.suspended_at)}.
+              {t(locale, 'Since {date}.', { date: fmtDateTime(p.suspended_at, locale) })}
               {p.suspended_reason ? (
                 <>
                   {' '}
-                  Reason: <span className="text-ink-2">{p.suspended_reason}</span>
+                  {t(locale, 'Reason:')} <span className="text-ink-2" dir="auto">{p.suspended_reason}</span>
                 </>
               ) : null}
             </p>
@@ -182,7 +184,7 @@ export async function UserDrawer({ userId, backHref }: { userId?: string; backHr
               <input type="hidden" name="user_id" value={p.id} />
               <input type="hidden" name="path" value="/users" />
               <Button type="submit" variant="secondary" size="sm">
-                Lift suspension
+                {t(locale, 'Lift suspension')}
               </Button>
             </form>
           </div>
@@ -190,20 +192,21 @@ export async function UserDrawer({ userId, backHref }: { userId?: string; backHr
           <form action={suspendUser}>
             <input type="hidden" name="user_id" value={p.id} />
             <input type="hidden" name="path" value="/users" />
-            <Label htmlFor="suspend-reason">Suspend this account</Label>
+            <Label htmlFor="suspend-reason">{t(locale, 'Suspend this account')}</Label>
             <Textarea
               id="suspend-reason"
               name="reason"
               rows={2}
               required
-              placeholder="Why. Recorded in the audit log and shown here afterwards."
+              placeholder={t(locale, 'Why. Recorded in the audit log and shown here afterwards.')}
               className="text-sm"
+              dir="auto"
             />
             <p className="mt-1 text-xs text-ink-3">
-              Blocks new briefs, quotes, posts, comments and reviews. Existing content stays up.
+              {t(locale, 'Blocks new briefs, quotes, posts, comments and reviews. Existing content stays up.')}
             </p>
             <Button type="submit" variant="danger" size="sm" className="mt-2">
-              Suspend account
+              {t(locale, 'Suspend account')}
             </Button>
           </form>
         )}
@@ -215,12 +218,13 @@ export async function UserDrawer({ userId, backHref }: { userId?: string; backHr
               <input type="hidden" name="path" value="/users" />
               <input type="hidden" name="verified" value={String(!d.contractor.verified)} />
               <Label htmlFor="verify-reason">
-                {d.contractor.verified ? 'Remove the verified badge' : 'Grant the verified badge'}
+                {d.contractor.verified ? t(locale, 'Remove the verified badge') : t(locale, 'Grant the verified badge')}
               </Label>
               <Input
                 id="verify-reason"
                 name="reason"
-                placeholder="Note for the audit log (optional)"
+                placeholder={t(locale, 'Note for the audit log (optional)')}
+                dir="auto"
               />
               <Button
                 type="submit"
@@ -228,7 +232,7 @@ export async function UserDrawer({ userId, backHref }: { userId?: string; backHr
                 size="sm"
                 className="mt-2"
               >
-                {d.contractor.verified ? 'Remove verification' : 'Verify this professional'}
+                {d.contractor.verified ? t(locale, 'Remove verification') : t(locale, 'Verify this professional')}
               </Button>
             </form>
 
@@ -236,11 +240,11 @@ export async function UserDrawer({ userId, backHref }: { userId?: string; backHr
               <form action={setPlan} className="border-t border-line pt-4">
                 <input type="hidden" name="contractor_id" value={p.id} />
                 <input type="hidden" name="path" value="/users" />
-                <Label htmlFor="plan">Plan</Label>
+                <Label htmlFor="plan">{t(locale, 'Plan')}</Label>
                 <div className="flex gap-2">
                   <Select id="plan" name="plan" defaultValue={d.contractor.plan}>
-                    <option value="free">Free</option>
-                    <option value="pro">Pro</option>
+                    <option value="free">{t(locale, 'Free')}</option>
+                    <option value="pro">{t(locale, 'Pro')}</option>
                   </Select>
                   <Input
                     name="days"
@@ -248,22 +252,21 @@ export async function UserDrawer({ userId, backHref }: { userId?: string; backHr
                     min={0}
                     max={3650}
                     defaultValue={30}
-                    aria-label="Days of Pro access"
+                    aria-label={t(locale, 'Days of Pro access')}
                     className="w-20"
                   />
                   <Button type="submit" variant="secondary" size="sm">
-                    Apply
+                    {t(locale, 'Apply')}
                   </Button>
                 </div>
                 <p className="mt-1 text-xs text-ink-3">
-                  Grants Pro without a payment, for comped accounts or a transfer that arrived outside
-                  the app. Days are ignored on the free plan.
+                    {t(locale, 'Grants Pro without a payment, for comped accounts or a transfer that arrived outside the app. Days are ignored on the free plan.')}
                 </p>
               </form>
             ) : (
               <p className="border-t border-line pt-4 text-xs text-ink-3">
-                <Badge>Owner access required</Badge>{' '}
-                Plan changes are reserved for owner accounts.
+                <Badge>{t(locale, 'Owner access required')}</Badge>{' '}
+                {t(locale, 'Plan changes are reserved for owner accounts.')}
               </p>
             )}
           </>
@@ -272,13 +275,13 @@ export async function UserDrawer({ userId, backHref }: { userId?: string; backHr
 
       {d.audit.length > 0 ? (
         <div className="border-t border-line px-4 py-3.5">
-          <p className="mb-2 text-xs font-medium text-ink-2">Admin history</p>
+          <p className="mb-2 text-xs font-medium text-ink-2">{t(locale, 'Admin history')}</p>
           <ol className="flex flex-col gap-1.5 text-xs">
             {d.audit.map((entry) => (
               <li key={entry.id} className="flex items-baseline justify-between gap-3">
-                <span className="font-mono text-ink-2">{entry.action}</span>
-                <span className="shrink-0 text-ink-3" title={fmtDateTime(entry.created_at)}>
-                  {fmtAgo(entry.created_at)}
+                <span className="font-mono text-ink-2"><bdi dir="ltr">{entry.action}</bdi></span>
+                <span className="shrink-0 text-ink-3" title={fmtDateTime(entry.created_at, locale)}>
+                  {fmtAgo(entry.created_at, locale)}
                 </span>
               </li>
             ))}
@@ -310,7 +313,7 @@ function Row({
         dir={rtl ? 'auto' : undefined}
         className={`truncate text-ink-2 ${mono ? 'font-mono text-xs' : ''}`}
       >
-        {value}
+        <bdi dir={mono ? 'ltr' : 'auto'}>{value}</bdi>
       </dd>
     </div>
   );
@@ -320,10 +323,12 @@ function Stat({
   label,
   value,
   warnAbove,
+  locale,
 }: {
   label: string;
   value: number | undefined;
   warnAbove?: number;
+  locale: AdminLocale;
 }) {
   const n = value ?? 0;
   // Only coloured when there is something to notice. Heavy colour on a zero or
@@ -332,7 +337,7 @@ function Stat({
   return (
     <div>
       <dt className="text-xs text-ink-3">{label}</dt>
-      <dd className={`font-medium ${hot ? 'text-warn' : 'text-ink'}`}>{fmtNum(n)}</dd>
+      <dd className={`font-medium ${hot ? 'text-warn' : 'text-ink'}`}>{fmtNum(n, locale)}</dd>
     </div>
   );
 }

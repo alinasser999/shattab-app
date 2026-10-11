@@ -1,6 +1,5 @@
 import 'package:batsh/features/saved/presentation/providers/saved_providers.dart';
 import 'package:go_router/go_router.dart';
-import 'package:batsh/core/widgets/professional_reference_primitives.dart';
 import 'package:batsh/features/discovery/presentation/professional_directory_screen.dart';
 import 'package:batsh/features/discovery/presentation/providers/discovery_providers.dart';
 import 'package:batsh/features/home/domain/reference_home_data.dart';
@@ -35,13 +34,10 @@ void main() {
     },
   );
   testWidgets(
-    'standalone search retains query in real discovery destination and external updates',
+    'hero search retains query in real discovery destination and external updates',
     (tester) async {
       final container = await pumpHomeownerReference(tester);
-      final field = find.descendant(
-        of: find.byType(ProfessionalReferenceSearch),
-        matching: find.byType(TextField),
-      );
+      final field = find.byType(TextField).first;
       await tester.enterText(field, 'نور');
       await tester.testTextInput.receiveAction(TextInputAction.search);
       await tester.pumpAndSettle();
@@ -76,10 +72,7 @@ void main() {
     container
         .read(discoveryFiltersControllerProvider.notifier)
         .setSearch('نور');
-    final design = find.widgetWithText(
-      ProfessionalReferenceCategory,
-      'تصميم داخلي',
-    );
+    final design = find.text('تصميم');
     await Scrollable.ensureVisible(tester.element(design), alignment: 0.5);
     await tester.pumpAndSettle();
     await tester.tap(design);
@@ -107,7 +100,11 @@ void main() {
     );
     final id = experience.featuredProfessionals.first.id;
     final save = find
-        .byWidgetPredicate((w) => w is IconButton && w.tooltip == 'حفظ المحترف')
+        .byWidgetPredicate(
+          (w) =>
+              w is IconButton &&
+              (w.tooltip?.startsWith('حفظ المحترف:') ?? false),
+        )
         .first;
     await Scrollable.ensureVisible(tester.element(save), alignment: 0.5);
     await tester.pumpAndSettle();

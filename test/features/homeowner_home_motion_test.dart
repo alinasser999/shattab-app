@@ -32,7 +32,9 @@ void main() {
         expect(tester.getSize(notification).width, greaterThanOrEqualTo(48));
         expect(tester.getSize(notification).height, greaterThanOrEqualTo(48));
         final saves = find.byWidgetPredicate(
-          (w) => w is IconButton && w.tooltip == 'حفظ المحترف',
+          (w) =>
+              w is IconButton &&
+              (w.tooltip?.startsWith('حفظ المحترف:') ?? false),
         );
         expect(saves, findsWidgets);
         for (final save in saves.evaluate()) {

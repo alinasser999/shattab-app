@@ -2766,6 +2766,14 @@ class AppLocalizationsAr extends AppLocalizations {
   String get newProfessional => 'محترف جديد';
 
   @override
+  String referenceDirectoryYearsExperienceCount(String years) {
+    return '$years سنة خبرة';
+  }
+
+  @override
+  String get referenceUnratedLabel => 'بدون تقييم';
+
+  @override
   String get noRatingsYet => 'لسه مفيش تقييمات';
 
   @override
@@ -3959,7 +3967,7 @@ class AppLocalizationsAr extends AppLocalizations {
       'محترفون موثوقين لمساعدتك في كل خطوة من التخطيط والتصميم وحتى التنفيذ.';
 
   @override
-  String get homeReferenceServiceFullRenovationLabel => 'تشطيب كامل';
+  String get homeReferenceServiceFullRenovationLabel => 'تشطيبات';
 
   @override
   String get homeReferenceHeroTagline => 'كل بيت\nليه حكاية';
@@ -4009,7 +4017,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get homeReferenceCaseQuote => 'النتيجة مبهرة جداً وفوق توقعاتي';
 
   @override
-  String get homeReferenceCommunityTitle => 'من مجتمع شطب';
+  String get homeReferenceCommunityTitle => 'من المجتمع';
 
   @override
   String get homeReferenceCommunityTip => 'نصيحة من واقع التجربة';
@@ -4605,6 +4613,51 @@ class AppLocalizationsAr extends AppLocalizations {
   String get assistantSignInRequired => 'سجّل دخولك لاستخدام المساعد الذكي';
 
   @override
+  String get assistantErrorQuota =>
+      'وصلت للحد المتاح من استفسارات المساعد. يمكنك تصفح المحترفين مباشرة.';
+
+  @override
+  String get assistantErrorQuotaContractor =>
+      'وصلت للحد المتاح من استفسارات المساعد. يمكنك متابعة استخدام التطبيق من لوحة التحكم.';
+
+  @override
+  String get assistantQuotaBrowseAction => 'تصفح المحترفين';
+
+  @override
+  String get assistantQuotaDashboardAction => 'لوحة التحكم';
+
+  @override
+  String get assistantSignInAgain => 'سجّل الدخول للحساب نفسه';
+
+  @override
+  String get assistantReauthTitle => 'استعادة سؤال المساعد';
+
+  @override
+  String get assistantReauthMessage =>
+      'سجّل الدخول مرة أخرى إلى حسابك لاستعادة السؤال الذي تعذّر إرساله.';
+
+  @override
+  String get assistantReauthFailed =>
+      'تعذّر التحقق من الحساب. راجع بيانات الدخول وحاول مرة أخرى.';
+
+  @override
+  String get assistantReauthMismatchMessage =>
+      'هذا ليس الحساب نفسه الذي أرسل السؤال، أو لم يتم تأكيد نوع الحساب. جرّب بيانات الحساب الأصلي أو احذف السؤال للمتابعة بهذا الحساب.';
+
+  @override
+  String get assistantReauthTryOriginal => 'إدخال بيانات الحساب الأصلي';
+
+  @override
+  String get assistantReauthDiscard => 'احذف السؤال وتابع بهذا الحساب';
+
+  @override
+  String get assistantRetryQuestion => 'أعد إرسال السؤال';
+
+  @override
+  String get assistantConversationHiddenMessage =>
+      'المحادثة مخفية لأن الحساب أو نوعه الحالي لا يطابق الحساب الذي بدأها. احذف السؤال لمتابعة استخدام هذا الحساب.';
+
+  @override
   String onboardingStepLabel(int step, int total) {
     return 'الخطوة $step من $total';
   }
@@ -4971,7 +5024,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get homeownerLocationHint => 'حدد المدينة والحي اللي يقع فيه البيت.';
 
   @override
-  String get homeownerReferenceSearchHint => 'ابحث عن محترف أو خدمة';
+  String get homeownerReferenceSearchHint => 'ابحث عن خدمة أو محترف';
 
   @override
   String get homeownerReferenceProfessionalsTitle => 'محترفون لمشروعك';
@@ -4996,5 +5049,170 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String homeownerReferenceOffers(int count) {
     return '$count عروض';
+  }
+
+  @override
+  String get stateHomeAction => 'الرئيسية';
+
+  @override
+  String get stateQuotesRefresh => 'حدّث العروض';
+
+  @override
+  String get stateProjectsAction => 'مشاريعي';
+
+  @override
+  String get stateQuotesMessage =>
+      'العروض اللي توصلك على الطلب هتظهر هنا. تقدر تحدّث القائمة أو ترجع لمشاريعك.';
+
+  @override
+  String get stateSupplyTitle => 'مفيش محترفين ظاهرين دلوقتي';
+
+  @override
+  String get stateSupplyMessage =>
+      'لما تتوفر ملفات محترفين هتظهر هنا. تقدر ترجع للرئيسية.';
+
+  @override
+  String get stateClearSearchFilters => 'امسح البحث والفلاتر';
+
+  @override
+  String get stateProfileAction => 'الرجوع للملف';
+
+  @override
+  String get stateServicesAction => 'شوف الخدمات';
+
+  @override
+  String get stateCloseAction => 'إغلاق';
+
+  @override
+  String get statePublicWorksMessage =>
+      'الأعمال اللي يضيفها المحترف هتظهر هنا.';
+
+  @override
+  String get stateClientReviewsMessage =>
+      'التقييمات اللي يشاركها العملاء هتظهر هنا.';
+
+  @override
+  String get stateFilteredCommunityTitle => 'مفيش منشورات في القسم ده';
+
+  @override
+  String get stateFilteredCommunityMessage =>
+      'اعرض كل المنشورات عشان تشوف باقي المجتمع.';
+
+  @override
+  String get stateProjectsNoResultsMessage =>
+      'مفيش مشاريع مطابقة للفلاتر دي. غيّر الفلاتر أو امسحها لعرض مشاريعك.';
+
+  @override
+  String get statePickerGuidance =>
+      'تعذّر اختيار الصور. راجع إذن الوصول للصور وحاول تاني؛ الصور اللي اخترتها لسه موجودة.';
+
+  @override
+  String get stateCommunityAllTitle => 'لسه مفيش منشورات';
+
+  @override
+  String get stateCommunityAllMessage =>
+      'المنشورات الجديدة هتظهر هنا لما تتضاف.';
+
+  @override
+  String get stateNoResultsMessage =>
+      'جرّب بحث مختلف أو امسح البحث والفلاتر علشان تشوف المتاح.';
+
+  @override
+  String get stateReadErrorTitle => 'تعذّر تحميل البيانات';
+
+  @override
+  String get stateOfflineTitle => 'مفيش اتصال بالشبكة';
+
+  @override
+  String get stateSavedEmptyTitle => 'لسه ماحفظتش محترفين';
+
+  @override
+  String get stateSearchNoResultsTitle => 'مفيش نتائج مطابقة';
+
+  @override
+  String get homeownerAssistantEntryHint => 'مش عارف تبدأ منين؟';
+
+  @override
+  String get homeownerAssistantEntryTitle => 'اسأل مساعد شطّب';
+
+  @override
+  String get homeownerServiceDesignShortLabel => 'تصميم';
+
+  @override
+  String homeCloneWelcome(String name) {
+    return 'أهلاً يا $name';
+  }
+
+  @override
+  String get homeCloneHeroTitle => 'بيتك يبدأ من هنا';
+
+  @override
+  String get homeCloneStartTitle => 'عندك مشروع جديد؟';
+
+  @override
+  String get homeCloneStartBody =>
+      'احكي لنا عن فكرتك واحصل على اقتراحات من محترفين مناسبين لاحتياجاتك.';
+
+  @override
+  String get homeCloneAssistant => 'اسأل مساعد شطب';
+
+  @override
+  String get homeCloneServiceAll => 'الخدمة: الكل';
+
+  @override
+  String get homeCloneFilters => 'فلترة';
+
+  @override
+  String get homeCloneFeatured => 'محترفون مميزون';
+
+  @override
+  String get homeCloneFeaturedSubtitle => 'اكتشف محترفين لمشروعك';
+
+  @override
+  String get homeCloneEditorialSubtitle => 'أعمال مختارة من فريق شطب';
+
+  @override
+  String get homeCloneNearby => 'قريبين منك';
+
+  @override
+  String get homeCloneKitchen => 'متخصصون في المطابخ';
+
+  @override
+  String get homeCloneFinishing => 'تشطيب من أول خطوة';
+
+  @override
+  String get homeCloneStory => 'من شقة عادية.. لبيت بتحبه';
+
+  @override
+  String get homeCloneStoryBody =>
+      'حولنا مطبخ تقليدي ومظلم إلى مساحة عملية ومريحة مناسبة لحياة أسرتنا.';
+
+  @override
+  String get homeCloneStoryDetails => 'شوف تفاصيل المشروع';
+
+  @override
+  String get homeCloneBefore => 'قبل';
+
+  @override
+  String get homeCloneAfter => 'بعد';
+
+  @override
+  String get homeCloneCommunity => 'حكايات من المجتمع';
+
+  @override
+  String get homeCloneShare => 'شارك تجربتك';
+
+  @override
+  String get homeCloneReadStory => 'اقرأ التجربة';
+
+  @override
+  String get homeCloneQuestion => 'شوف السؤال';
+
+  @override
+  String get homeCloneUnrated => 'جديد · بدون تقييمات';
+
+  @override
+  String homeCloneReviews(int count) {
+    return '$count تقييمًا';
   }
 }

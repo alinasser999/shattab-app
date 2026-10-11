@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/l10n_extension.dart';
 import '../theme/batsh_radius.dart';
 import '../theme/batsh_spacing.dart';
 
@@ -33,6 +34,7 @@ class BatshSheet {
     bool isDismissible = true,
     bool enableDrag = true,
     bool useRootNavigator = false,
+    bool ownsKeyboardInset = true,
   }) {
     return showModalBottomSheet<T>(
       context: context,
@@ -43,46 +45,93 @@ class BatshSheet {
       enableDrag: enableDrag,
       builder: (ctx) => _BatshSheetChrome(
         contentPadding: contentPadding,
-        child: builder(ctx),
+        ownsKeyboardInset: ownsKeyboardInset,
+        canClose: isDismissible,
+        child: ownsKeyboardInset
+            ? MediaQuery.removeViewInsets(
+                context: ctx,
+                removeBottom: true,
+                child: Builder(builder: builder),
+              )
+            : Builder(builder: builder),
       ),
     );
   }
 }
 
 class _BatshSheetChrome extends StatelessWidget {
-  const _BatshSheetChrome({required this.child, required this.contentPadding});
+  const _BatshSheetChrome({
+    required this.child,
+    required this.contentPadding,
+    required this.ownsKeyboardInset,
+    required this.canClose,
+  });
 
   final Widget child;
+  final bool ownsKeyboardInset;
+  final bool canClose;
   final EdgeInsetsGeometry? contentPadding;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: context.colorScheme.surface,
-        borderRadius: BorderRadius.vertical(
-          top: Radius.circular(BatshRadius.xxl),
+    final keyboard = ownsKeyboardInset
+        ? MediaQuery.viewInsetsOf(context).bottom
+        : 0.0;
+    return Padding(
+      padding: EdgeInsets.only(bottom: keyboard),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight:
+              (MediaQuery.sizeOf(context).height -
+                      keyboard -
+                      MediaQuery.paddingOf(context).top -
+                      24)
+                  .clamp(0.0, double.infinity),
         ),
-      ),
-      child: SafeArea(
-        top: false,
-        child: Padding(
-          padding: contentPadding ?? EdgeInsets.zero,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const SizedBox(height: BatshSpacing.xs),
-              Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: context.colorScheme.outlineVariant,
-                  borderRadius: BatshRadius.brFull,
-                ),
+        child: Container(
+          decoration: BoxDecoration(
+            color: context.colorScheme.surface,
+            borderRadius: BorderRadius.vertical(
+              top: Radius.circular(BatshRadius.xxl),
+            ),
+          ),
+          child: SafeArea(
+            top: false,
+            child: Padding(
+              padding: contentPadding ?? EdgeInsets.zero,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    children: [
+                      if (canClose) const SizedBox(width: 48),
+                      Expanded(
+                        child: Center(
+                          child: ExcludeSemantics(
+                            child: Container(
+                              width: 40,
+                              height: 4,
+                              decoration: BoxDecoration(
+                                color: context.colorScheme.outlineVariant,
+                                borderRadius: BatshRadius.brFull,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      if (canClose)
+                        IconButton(
+                          tooltip: context.l10n.closeSheet,
+                          onPressed: () => Navigator.of(context).maybePop(),
+                          icon: const Icon(Icons.close_rounded),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: BatshSpacing.sm),
+                  Flexible(child: child),
+                ],
               ),
-              const SizedBox(height: BatshSpacing.sm),
-              Flexible(child: child),
-            ],
+            ),
           ),
         ),
       ),

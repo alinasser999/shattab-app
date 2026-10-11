@@ -19,6 +19,8 @@ import '../../../core/widgets/batsh_dialog.dart';
 import '../../../core/widgets/batsh_snack.dart';
 import '../../../core/widgets/batsh_shimmer.dart';
 import '../../auth/presentation/providers/auth_provider.dart';
+import '../../auth/domain/profile.dart';
+import '../../auth/presentation/pending_protected_action.dart';
 import '../../auth/presentation/sign_in_sheet.dart';
 import '../domain/post.dart';
 import 'providers/explore_providers.dart';
@@ -28,7 +30,11 @@ import 'widgets/post_card.dart';
 import 'package:batsh/core/theme/theme_extension.dart';
 
 class ExploreScreen extends ConsumerStatefulWidget {
-  const ExploreScreen({super.key});
+  const ExploreScreen({
+    super.key,
+    this.initialFilter = CommunityFeedFilter.all,
+  });
+  final CommunityFeedFilter initialFilter;
 
   @override
   ConsumerState<ExploreScreen> createState() => _ExploreScreenState();
@@ -37,10 +43,13 @@ class ExploreScreen extends ConsumerStatefulWidget {
 class _ExploreScreenState extends ConsumerState<ExploreScreen> {
   final _scrollController = ScrollController();
   CommunityFeedFilter _selectedFilter = CommunityFeedFilter.all;
+  bool _resumeFeedScheduled = false;
+  bool _resumeComposerChooserScheduled = false;
 
   @override
   void initState() {
     super.initState();
+    _selectedFilter = widget.initialFilter;
     _scrollController.addListener(_onScroll);
   }
 
@@ -81,27 +90,181 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
   }
 
   void _openCreatePost() {
-    _ensureAuth(context, () {
-      _chooseCreatePostType();
-    });
+    unawaited(_requestPostComposer());
+  }
+
+  Future<void> _requestPostComposer({CommunityPostKind? kind}) async {
+    final coordinator = ref.read(pendingProtectedActionCoordinatorProvider);
+    final action = ExplorePostLaunchAction(kindRouteValue: kind?.routeValue);
+    final session = ref.read(currentSessionProvider);
+    final profile = ref.read(currentProfileProvider).asData?.value;
+
+    if (session == null) {
+      final actionId = await beginProtectedActionSignIn(
+        context,
+        ref,
+        reason: context.l10n.signInToPost,
+        action: action,
+      );
+      if (actionId == null) return;
+      if (!mounted) {
+        coordinator.release(actionId);
+        return;
+      }
+      final activeSession = ref.read(currentSessionProvider);
+      final activeProfile = ref.read(currentProfileProvider).asData?.value;
+      if (activeSession == null ||
+          !coordinator.isClaimed(actionId) ||
+          !coordinator.isEligibleHomeowner(
+            activeProfile,
+            userId: activeSession.user.id,
+          )) {
+        coordinator.release(actionId);
+        return;
+      }
+      if (kind == null) {
+        coordinator.complete(actionId);
+        await _chooseCreatePostType();
+      } else {
+        coordinator.release(actionId);
+        context.push(action.redirectLocation);
+      }
+      return;
+    }
+
+    final profileIsReady =
+        profile != null &&
+        profile.id == session.user.id &&
+        profile.roleSelectionLocked &&
+        profile.onboardingComplete &&
+        profile.fullName.trim().length >= 2;
+    if (profileIsReady) {
+      if (kind == null) {
+        await _chooseCreatePostType();
+      } else {
+        context.push('${_explorePrefix()}/new?type=${kind.routeValue}');
+      }
+      return;
+    }
+
+    if (profile?.role == UserRole.contractor) {
+      if (mounted) context.go(Routes.splash);
+      return;
+    }
+
+    final capturedAction = coordinator.capture(action);
+    if (capturedAction == null) return;
+    final actionId = capturedAction.id;
+    // Preserve the explicit same-user action from an already-signed-in
+    // account that still needs onboarding. This is distinct from dismissing
+    // the OTP sheet or releasing an action after an operation failure.
+    coordinator.markSignedInAwaitingOnboarding(actionId, session.user.id);
+    coordinator.observeSession(session.user.id);
+    coordinator.observeProfile(profile, sessionUserId: session.user.id);
+    if (mounted) context.go(Routes.splash);
   }
 
   Future<void> _signInForFeed() async {
-    final completed = await showSignInSheet(
+    final pendingActionId = await beginProtectedActionSignIn(
       context,
+      ref,
       reason: context.l10n.signInToInteract,
+      action: ExploreFeedRefreshAction(filter: _selectedFilter.name),
     );
-    if (!completed || !mounted || ref.read(currentSessionProvider) == null) {
+    if (pendingActionId == null) return;
+    if (!mounted) {
+      ref
+          .read(pendingProtectedActionCoordinatorProvider)
+          .release(pendingActionId);
+      return;
+    }
+    final session = ref.read(currentSessionProvider);
+    final profile = ref.read(currentProfileProvider).asData?.value;
+    final coordinator = ref.read(pendingProtectedActionCoordinatorProvider);
+    if (session == null ||
+        !coordinator.isEligibleHomeowner(profile, userId: session.user.id)) {
+      coordinator.release(pendingActionId);
+      return;
+    }
+    if (!coordinator.isClaimed(pendingActionId) &&
+        !coordinator.claim(
+          pendingActionId,
+          sessionUserId: session.user.id,
+          profile: profile,
+        )) {
       return;
     }
     ref.invalidate(exploreFeedProvider);
+    coordinator.complete(pendingActionId);
+  }
+
+  void _schedulePendingFeedResume({
+    required String? userId,
+    required Profile? profile,
+  }) {
+    if (_resumeFeedScheduled) return;
+    final coordinator = ref.read(pendingProtectedActionCoordinatorProvider);
+    final pending = coordinator.resumable<ExploreFeedRefreshAction>(
+      Routes.homeownerExplore,
+      sessionUserId: userId,
+      profile: profile,
+    );
+    if (pending == null) return;
+    _resumeFeedScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _resumeFeedScheduled = false;
+      if (!mounted) return;
+      final session = ref.read(currentSessionProvider);
+      final currentProfile = ref.read(currentProfileProvider).asData?.value;
+      if (!coordinator.claim(
+        pending.id,
+        sessionUserId: session?.user.id,
+        profile: currentProfile,
+      )) {
+        return;
+      }
+      final filter = CommunityFeedFilter.values.where(
+        (value) => value.name == pending.filter,
+      );
+      if (filter.isNotEmpty) setState(() => _selectedFilter = filter.first);
+      ref.invalidate(exploreFeedProvider);
+      coordinator.complete(pending.id);
+    });
   }
 
   void _openTypedCreatePost(CommunityPostKind kind) {
-    _ensureAuth(
-      context,
-      () => context.push('${_explorePrefix()}/new?type=${kind.routeValue}'),
+    unawaited(_requestPostComposer(kind: kind));
+  }
+
+  void _schedulePendingComposerChooserResume({
+    required String? userId,
+    required Profile? profile,
+  }) {
+    if (_resumeComposerChooserScheduled) return;
+    final coordinator = ref.read(pendingProtectedActionCoordinatorProvider);
+    final pending = coordinator.resumable<ExplorePostLaunchAction>(
+      Routes.homeownerExplore,
+      sessionUserId: userId,
+      profile: profile,
     );
+    if (pending == null || !pending.opensTypeChooser) return;
+
+    _resumeComposerChooserScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _resumeComposerChooserScheduled = false;
+      if (!mounted) return;
+      final session = ref.read(currentSessionProvider);
+      final currentProfile = ref.read(currentProfileProvider).asData?.value;
+      if (!coordinator.claim(
+        pending.id,
+        sessionUserId: session?.user.id,
+        profile: currentProfile,
+      )) {
+        return;
+      }
+      coordinator.complete(pending.id);
+      unawaited(_chooseCreatePostType());
+    });
   }
 
   void _openPostAuthor(Post post) {
@@ -150,7 +313,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
       builder: (_) => const CommunityPostTypeSheet(),
     );
     if (!mounted || kind == null) return;
-    context.push('${_explorePrefix()}/new?type=${kind.routeValue}');
+    _openTypedCreatePost(kind);
   }
 
   Future<void> _openFilterSheet() async {
@@ -217,6 +380,11 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
     final feed = ref.watch(exploreFeedProvider);
     final profile = ref.watch(currentProfileProvider).value;
     final session = ref.watch(currentSessionProvider);
+    _schedulePendingFeedResume(userId: session?.user.id, profile: profile);
+    _schedulePendingComposerChooserResume(
+      userId: session?.user.id,
+      profile: profile,
+    );
     final content = RefreshIndicator(
       color: context.colorScheme.primary,
       backgroundColor: context.colorScheme.surfaceContainerLowest,
@@ -267,6 +435,14 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
               final visiblePosts = _filterPosts(posts);
               if (visiblePosts.isEmpty) {
                 return CommunityEmptyState(
+                  filtered: _selectedFilter != CommunityFeedFilter.all,
+                  onHome: () => context.go(
+                    profile?.role == UserRole.contractor
+                        ? Routes.contractorDashboard
+                        : profile?.role == UserRole.homeowner || session == null
+                        ? Routes.homeownerHome
+                        : Routes.splash,
+                  ),
                   onClear: () =>
                       setState(() => _selectedFilter = CommunityFeedFilter.all),
                 );

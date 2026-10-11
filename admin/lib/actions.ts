@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { currentAdmin, supabaseServer } from './supabase/server';
+import type { DoneCode, ErrorCode } from './i18n';
 
 /**
  * Every privileged mutation in the console.
@@ -17,7 +18,7 @@ import { currentAdmin, supabaseServer } from './supabase/server';
  * the whole authenticated surface free of client-side JavaScript.
  */
 
-type Result = { ok: true } | { ok: false; message: string };
+type Result = { ok: true } | { ok: false; code: ErrorCode };
 
 const RETURN_PATHS = new Set(['/users', '/contractors', '/payments', '/moderation']);
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -28,32 +29,32 @@ async function callRpc(fn: string, args: Record<string, unknown>): Promise<Resul
   // rendered; a form posted twenty minutes later from a stale tab has to be
   // checked again, because admin rights may have been revoked in between.
   const admin = await currentAdmin();
-  if (!admin) return { ok: false, message: 'Your admin session has expired. Sign in again.' };
+  if (!admin) return { ok: false, code: 'session_expired' };
 
   const supabase = await supabaseServer();
   const { error } = await supabase.rpc(fn, args);
   if (!error) return { ok: true };
-  return { ok: false, message: humanise(error.message) };
+  return { ok: false, code: humanise(error.message) };
 }
 
 /** The database raises short machine codes; operators need sentences. */
-function humanise(raw: string): string {
-  if (raw.includes('not_authorized')) return 'You are not an admin, or your session has expired.';
-  if (raw.includes('not_allowed')) return 'Your admin level is not allowed to perform this action.';
-  if (raw.includes('cannot_suspend_admin')) return 'Admins cannot be suspended from the console.';
-  if (raw.includes('already approved')) return 'Already approved by someone else. Reload the page.';
-  if (raw.includes('already rejected')) return 'Already rejected by someone else. Reload the page.';
-  if (raw.includes('not found')) return 'That record no longer exists. Reload the page.';
-  if (raw.includes('reason_required')) return 'A reason is required for this action.';
-  if (raw.includes('reason_too_long')) return 'The reason is too long. Keep it under 2,000 characters.';
-  if (raw.includes('invalid plan days')) return 'Pro access must be between 1 and 3,650 days.';
+function humanise(raw: string): ErrorCode {
+  if (raw.includes('not_authorized')) return 'not_authorized';
+  if (raw.includes('not_allowed')) return 'not_allowed';
+  if (raw.includes('cannot_suspend_admin')) return 'cannot_suspend_admin';
+  if (raw.includes('already approved')) return 'already_approved';
+  if (raw.includes('already rejected')) return 'already_rejected';
+  if (raw.includes('not found')) return 'not_found';
+  if (raw.includes('reason_required')) return 'reason_required';
+  if (raw.includes('reason_too_long')) return 'reason_too_long';
+  if (raw.includes('invalid plan days')) return 'invalid_plan_days';
   if (raw.includes('unsupported_report_target')) {
-    return 'This report type needs a review workflow that is not available yet.';
+    return 'unsupported_report_target';
   }
   if (raw.includes('billing fields are not user-writable')) {
-    return 'Blocked by the billing guard, which means this account is missing admin rights in the database.';
+    return 'billing_guard';
   }
-  return 'The operation could not be completed. Reload the page and try again.';
+  return 'generic';
 }
 
 /**
@@ -67,12 +68,12 @@ function returnPath(raw: string, fallback: string): string {
   return RETURN_PATHS.has(raw) ? raw : fallback;
 }
 
-function finish(path: string, result: Result, done: string): never {
+function finish(path: string, result: Result, done: DoneCode, params?: { days?: number }): never {
   const safePath = returnPath(path, '/users');
   revalidatePath(safePath);
   const query = result.ok
-    ? `?done=${encodeURIComponent(done)}`
-    : `?error=${encodeURIComponent(result.message)}`;
+    ? `?done=${encodeURIComponent(done)}${params?.days === undefined ? '' : `&days=${params.days}`}`
+    : `?error=${encodeURIComponent(result.code)}`;
   redirect(`${safePath}${query}`);
 }
 
@@ -83,20 +84,20 @@ function str(form: FormData, key: string): string {
 
 function uuid(form: FormData, key: string, path: string): string {
   const value = str(form, key);
-  if (!UUID.test(value)) fail(path, 'That record identifier is invalid. Reload the page and try again.');
+  if (!UUID.test(value)) fail(path, 'invalid_id');
   return value;
 }
 
 function boundedReason(form: FormData, key: string, path: string): string {
   const value = str(form, key);
   if (value.length > MAX_REASON_LENGTH) {
-    fail(path, `Reason must be ${MAX_REASON_LENGTH} characters or fewer.`);
+    fail(path, 'reason_length');
   }
   return value;
 }
 
-function fail(path: string, message: string): never {
-  redirect(`${returnPath(path, '/users')}?error=${encodeURIComponent(message)}`);
+function fail(path: string, code: ErrorCode): never {
+  redirect(`${returnPath(path, '/users')}?error=${encodeURIComponent(code)}${code === 'reason_length' ? `&max=${MAX_REASON_LENGTH}` : ''}`);
 }
 
 /* ── users ────────────────────────────────────────────────── */
@@ -108,7 +109,7 @@ export async function suspendUser(form: FormData) {
   // A suspension with no stated reason is unreviewable later, by you or by the
   // person appealing it. Required here rather than in the database so the
   // message can be a sentence instead of a constraint violation.
-  if (!reason) fail(path, 'Give a reason before suspending an account.');
+  if (!reason) fail(path, 'give_suspend_reason');
 
   finish(
     path,
@@ -117,7 +118,7 @@ export async function suspendUser(form: FormData) {
       p_suspended: true,
       p_reason: reason,
     }),
-    'Account suspended.',
+    'user_suspended',
   );
 }
 
@@ -130,7 +131,7 @@ export async function unsuspendUser(form: FormData) {
       p_suspended: false,
       p_reason: null,
     }),
-    'Suspension lifted.',
+    'user_unsuspended',
   );
 }
 
@@ -146,7 +147,7 @@ export async function setVerified(form: FormData) {
       p_verified: verified,
       p_reason: boundedReason(form, 'reason', path) || null,
     }),
-    verified ? 'Verified badge granted.' : 'Verified badge removed.',
+    verified ? 'verified' : 'unverified',
   );
 }
 
@@ -155,9 +156,9 @@ export async function setPlan(form: FormData) {
   const plan = str(form, 'plan');
   const days = Number.parseInt(str(form, 'days') || '30', 10);
 
-  if (plan !== 'free' && plan !== 'pro') fail(path, 'Plan must be free or pro.');
+  if (plan !== 'free' && plan !== 'pro') fail(path, 'invalid_plan');
   if (!Number.isFinite(days) || days < 0 || days > 3650) {
-    fail(path, 'Days must be between 0 and 3650.');
+    fail(path, 'days_range');
   }
 
   finish(
@@ -167,7 +168,8 @@ export async function setPlan(form: FormData) {
       p_plan: plan,
       p_days: days,
     }),
-    plan === 'pro' ? `Pro granted for ${days} days.` : 'Moved to the free plan.',
+    plan === 'pro' ? 'plan_pro' : 'plan_free',
+    plan === 'pro' ? { days } : undefined,
   );
 }
 
@@ -177,7 +179,7 @@ export async function reviewVerification(form: FormData) {
   const reason = boundedReason(form, 'reason', path);
 
   // A rejection the contractor cannot understand becomes a support ticket.
-  if (!approve && !reason) fail(path, 'Give a reason when rejecting a verification.');
+  if (!approve && !reason) fail(path, 'give_verification_reason');
 
   finish(
     path,
@@ -186,7 +188,7 @@ export async function reviewVerification(form: FormData) {
       p_approve: approve,
       p_reason: reason || null,
     }),
-    approve ? 'Verification approved.' : 'Verification rejected.',
+    approve ? 'verification_approved' : 'verification_rejected',
   );
 }
 
@@ -197,7 +199,7 @@ export async function reviewPayment(form: FormData) {
   const approve = str(form, 'approve') === 'true';
   const reason = boundedReason(form, 'reason', path);
 
-  if (!approve && !reason) fail(path, 'Give a reason when rejecting a payment.');
+  if (!approve && !reason) fail(path, 'give_payment_reason');
 
   finish(
     path,
@@ -206,7 +208,7 @@ export async function reviewPayment(form: FormData) {
       p_approve: approve,
       p_reason: reason || null,
     }),
-    approve ? 'Payment approved and the plan applied.' : 'Payment rejected.',
+    approve ? 'payment_approved' : 'payment_rejected',
   );
 }
 
@@ -218,10 +220,10 @@ export async function resolveReport(form: FormData) {
   const note = boundedReason(form, 'note', path);
 
   if (!['dismiss', 'remove_content', 'suspend_author'].includes(action)) {
-    fail(path, 'Unknown moderation action.');
+    fail(path, 'unknown_moderation');
   }
   if (action !== 'dismiss' && !note) {
-    fail(path, 'Give a decision note before taking action on reported content.');
+    fail(path, 'give_decision_note');
   }
 
   finish(
@@ -232,10 +234,10 @@ export async function resolveReport(form: FormData) {
       p_note: note || null,
     }),
     action === 'dismiss'
-      ? 'Report dismissed.'
+      ? 'report_dismissed'
       : action === 'remove_content'
-        ? 'Content removed.'
-        : 'Content removed and the author suspended.',
+        ? 'content_removed'
+        : 'content_removed_suspended',
   );
 }
 
@@ -243,11 +245,11 @@ export async function deletePost(form: FormData) {
   const path = str(form, 'path') || '/moderation';
   const reason = boundedReason(form, 'reason', path);
 
-  if (!reason) fail(path, 'Give a reason before removing a post.');
+  if (!reason) fail(path, 'give_post_reason');
 
   finish(
     path,
     await callRpc('admin_delete_post', { p_post: uuid(form, 'post_id', path), p_reason: reason }),
-    'Post removed.',
+    'post_removed',
   );
 }

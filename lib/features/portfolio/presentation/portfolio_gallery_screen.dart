@@ -1,3 +1,4 @@
+import '../../../core/widgets/professional_reference_states.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -9,8 +10,6 @@ import '../../../core/theme/batsh_radius.dart';
 import '../../../core/theme/batsh_shadows.dart';
 import '../../../core/theme/batsh_spacing.dart';
 import '../../../core/theme/batsh_typography.dart';
-import '../../../core/widgets/batsh_empty_state.dart';
-import '../../../core/widgets/batsh_error.dart';
 import '../../../core/widgets/batsh_scaffold.dart';
 import '../../../core/widgets/batsh_shimmer.dart';
 import '../../discovery/presentation/providers/discovery_providers.dart';
@@ -38,7 +37,7 @@ class PortfolioGalleryScreen extends ConsumerWidget {
       title: context.l10n.portfolioGalleryTitle,
       body: projectsAsync.when(
         loading: () => const _GallerySkeleton(),
-        error: (e, _) => BatshError(
+        error: (e, _) => ProfessionalReferenceReadError(
           message: ErrorMapper.map(e),
           onRetry: () =>
               ref.invalidate(portfolioForContractorProvider(contractorId)),
@@ -50,10 +49,14 @@ class PortfolioGalleryScreen extends ConsumerWidget {
             child: projects.isEmpty
                 ? ListView(
                     children: [
-                      BatshEmptyState(
+                      ProfessionalReferenceState(
                         title: context.l10n.noWorksTitle,
-                        message: context.l10n.noWorksMessage,
-                        icon: Icons.photo_library_outlined,
+                        message: context.l10n.statePublicWorksMessage,
+                        motif: ProfessionalReferenceMotif.publicPortfolio,
+                        primaryLabel: context.l10n.stateProfileAction,
+                        onPrimary: () => context.go(
+                          Routes.homeownerContractorProfilePath(contractorId),
+                        ),
                       ),
                     ],
                   )

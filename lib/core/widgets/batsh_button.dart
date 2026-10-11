@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../theme/batsh_motion.dart';
+import '../l10n/l10n_extension.dart';
 import '../theme/batsh_radius.dart';
 import '../theme/batsh_spacing.dart';
 import '../theme/batsh_typography.dart';
@@ -41,38 +41,53 @@ class BatshButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final disabled = onPressed == null || isLoading;
 
-    final child = isLoading
-        ? SizedBox(
-            height: 20,
-            width: 20,
-            child: CircularProgressIndicator(
-              strokeWidth: 2.5,
-              color: switch (style) {
-                BatshButtonStyle.primary => context.colorScheme.onPrimary,
-                BatshButtonStyle.secondary => context.colorScheme.primary,
-                BatshButtonStyle.ghost => context.colorScheme.onSurfaceVariant,
-              },
+    final ink =
+        foregroundColor ??
+        switch (style) {
+          BatshButtonStyle.primary => context.colorScheme.onPrimary,
+          BatshButtonStyle.secondary => context.colorScheme.primary,
+          BatshButtonStyle.ghost => context.colorScheme.onSurfaceVariant,
+        };
+    final child = Row(
+      mainAxisSize: MainAxisSize.min,
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        if (isLoading || icon != null) ...[
+          ExcludeSemantics(
+            child: isLoading
+                ? SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: MediaQuery.disableAnimationsOf(context)
+                        ? Icon(
+                            Icons.hourglass_top_rounded,
+                            size: 20,
+                            color: ink,
+                          )
+                        : CircularProgressIndicator(
+                            strokeWidth: 2.5,
+                            color: ink,
+                          ),
+                  )
+                : Icon(icon, size: BatshIconSize.md),
+          ),
+          const SizedBox(width: BatshSpacing.sm),
+        ],
+        Flexible(
+          child: Semantics(
+            value: isLoading ? context.l10n.loading : null,
+            liveRegion: isLoading,
+            child: Text(
+              label,
+              textAlign: TextAlign.center,
+              style: BatshTypography.labelLg.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
             ),
-          )
-        : FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                if (icon != null) ...[
-                  Icon(icon, size: BatshIconSize.md),
-                  const SizedBox(width: BatshSpacing.sm),
-                ],
-                Text(
-                  label,
-                  style: BatshTypography.labelLg.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
-            ),
-          );
+          ),
+        ),
+      ],
+    );
 
     Widget button = switch (style) {
       BatshButtonStyle.primary => ElevatedButton(
@@ -87,10 +102,10 @@ class BatshButton extends StatelessWidget {
           foregroundColor: foregroundColor ?? context.colorScheme.onPrimary,
           disabledBackgroundColor: context.colorScheme.surfaceContainerHigh,
           disabledForegroundColor: context.colorScheme.onSurfaceVariant,
-          minimumSize: const Size.fromHeight(56),
+          minimumSize: const Size(48, 56),
           padding: const EdgeInsets.symmetric(
             horizontal: BatshSpacing.lg,
-            vertical: BatshSpacing.gutter,
+            vertical: BatshSpacing.sm,
           ),
           elevation: 0,
           shadowColor: Colors.transparent,
@@ -115,10 +130,10 @@ class BatshButton extends StatelessWidget {
           ),
           disabledBackgroundColor: context.colorScheme.surfaceContainerHigh,
           disabledForegroundColor: context.colorScheme.onSurfaceVariant,
-          minimumSize: const Size.fromHeight(56),
+          minimumSize: const Size(48, 56),
           padding: const EdgeInsets.symmetric(
             horizontal: BatshSpacing.lg,
-            vertical: BatshSpacing.gutter,
+            vertical: BatshSpacing.sm,
           ),
           shape: RoundedRectangleBorder(borderRadius: BatshRadius.brDefault),
         ),
@@ -134,7 +149,7 @@ class BatshButton extends StatelessWidget {
         style: TextButton.styleFrom(
           foregroundColor:
               foregroundColor ?? context.colorScheme.onSurfaceVariant,
-          minimumSize: const Size(0, 48),
+          minimumSize: const Size(48, 48),
           padding: const EdgeInsets.symmetric(
             horizontal: BatshSpacing.gutter,
             vertical: BatshSpacing.sm,
@@ -149,17 +164,7 @@ class BatshButton extends StatelessWidget {
       button = SizedBox(width: double.infinity, child: button);
     }
 
-    if (animate && !MediaQuery.disableAnimationsOf(context)) {
-      button = TweenAnimationBuilder<double>(
-        tween: Tween(begin: 0.96, end: 1.0),
-        duration: BatshMotion.normal,
-        curve: BatshMotion.easeOut,
-        builder: (context, scale, child) =>
-            Transform.scale(scale: scale, child: child),
-        child: button,
-      );
-    }
-
-    return Semantics(button: true, label: label, child: button);
+    // Native Material button semantics retain one name and keyboard activation.
+    return button;
   }
 }

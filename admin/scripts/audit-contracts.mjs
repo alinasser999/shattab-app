@@ -20,6 +20,7 @@ const userDrawer = await readFile(
   'utf8',
 );
 const flutterModeration = await text('lib/features/moderation/data/moderation_repository.dart');
+const adminFormat = await readFile(path.join(adminRoot, 'lib', 'format.ts'), 'utf8');
 const hardeningMigration = await readFile(
   path.join(repoRoot, 'supabase', 'migrations', '20260803035018_admin_hardening_report_contract.sql'),
   'utf8',
@@ -36,9 +37,13 @@ for (const source of sourceFiles) {
   assert(!source.includes('SUPABASE_SERVICE_ROLE_KEY'), 'Admin source must never use a service-role env var.');
 }
 
+assert(flutterModeration.includes('enum ReportTarget { post, comment, profile, brief, review }'));
+const targetLabels = adminFormat.match(/const TARGET_MESSAGE: Record<string, MessageKey> = \{([^}]+)\};/s)?.[1] ?? '';
 for (const value of ['post', 'comment', 'profile', 'brief', 'review']) {
-  assert(flutterModeration.includes(`enum ReportTarget { post, comment, profile, brief, review }`));
-  assert(moderationPage.includes(`${value}:`), `Admin moderation labels are missing ${value}.`);
+  assert(
+    targetLabels.includes(`${value}:`),
+    `Admin moderation labels are missing ${value}.`,
+  );
 }
 
 for (const value of ['spam', 'scam', 'offensive', 'sexual', 'violence', 'impersonation', 'other']) {

@@ -9,11 +9,15 @@ class ProfessionalReferenceNavigation extends StatelessWidget {
     this.index = 1,
     this.labels,
     this.readable = false,
+    this.compactHome = false,
   });
   final ValueChanged<int> onTap;
   final int index;
   final List<String>? labels;
   final bool readable;
+
+  /// Opt-in homepage geometry; existing discovery/navigation defaults stay intact.
+  final bool compactHome;
   @override
   Widget build(BuildContext context) => SafeArea(
     top: false,
@@ -31,6 +35,7 @@ class ProfessionalReferenceNavigation extends StatelessWidget {
         final scaler = MediaQuery.textScalerOf(context);
         final equalSlotWidth = constraints.maxWidth / 5 - 8;
         final compact =
+            !compactHome &&
             readable &&
             tabLabels.any((label) {
               final painter = TextPainter(
@@ -49,15 +54,40 @@ class ProfessionalReferenceNavigation extends StatelessWidget {
               painter.dispose();
               return !fits;
             });
-        final minimumWidth = compact ? 288.0 : 240.0;
+        double homeHeight = 64;
+        if (compactHome) {
+          for (final label in tabLabels) {
+            final painter = TextPainter(
+              text: TextSpan(
+                text: label,
+                style: ProfessionalReferenceTheme.text(
+                  12,
+                  weight: FontWeight.w700,
+                ),
+              ),
+              textDirection: Directionality.of(context),
+              textScaler: scaler,
+              locale: Localizations.localeOf(context),
+            )..layout(maxWidth: constraints.maxWidth / 5 - 8);
+            final needed = painter.height + 38;
+            if (needed > homeHeight) homeHeight = needed;
+            painter.dispose();
+          }
+        }
+        final minimumWidth = compactHome
+            ? constraints.maxWidth
+            : compact
+            ? 288.0
+            : 240.0;
         final barWidth = constraints.maxWidth < minimumWidth
             ? minimumWidth
             : constraints.maxWidth;
         final bar = Container(
           width: barWidth,
-          height:
-              (readable ? 74.0 : 53.0) *
-              scaler.scale(1).clamp(1.0, double.infinity),
+          height: compactHome
+              ? homeHeight
+              : (readable ? 74.0 : 53.0) *
+                    scaler.scale(1).clamp(1.0, double.infinity),
           decoration: const BoxDecoration(
             color: Colors.white,
             border: Border(
@@ -84,13 +114,15 @@ class ProfessionalReferenceNavigation extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           SizedBox(
-                            width: 23,
-                            height: 23,
+                            width: compactHome ? 24 : 23,
+                            height: compactHome ? 24 : 23,
                             child: CustomPaint(
                               painter: _ReferenceNavPainter(
                                 i,
                                 selected
                                     ? ProfessionalReferenceTheme.orange
+                                    : compactHome
+                                    ? const Color(0xff667393)
                                     : const Color(0xff76767c),
                               ),
                             ),
@@ -103,15 +135,26 @@ class ProfessionalReferenceNavigation extends StatelessWidget {
                               ),
                               child: Text(
                                 tabLabels[i],
-                                maxLines: 1,
-                                softWrap: false,
-                                overflow: TextOverflow.ellipsis,
+                                maxLines: compactHome ? null : 1,
+                                softWrap: compactHome,
+                                textAlign: TextAlign.center,
+                                overflow: compactHome
+                                    ? TextOverflow.visible
+                                    : TextOverflow.ellipsis,
                                 style: ProfessionalReferenceTheme.text(
-                                  readable ? 14 : 10,
+                                  compactHome
+                                      ? 12
+                                      : readable
+                                      ? 14
+                                      : 10,
                                   color: selected
-                                      ? (readable
+                                      ? (compactHome
+                                            ? const Color(0xffb93417)
+                                            : readable
                                             ? ProfessionalReferenceTheme.action
                                             : ProfessionalReferenceTheme.orange)
+                                      : compactHome
+                                      ? const Color(0xff152552)
                                       : const Color(0xff343438),
                                   weight: selected
                                       ? FontWeight.w700

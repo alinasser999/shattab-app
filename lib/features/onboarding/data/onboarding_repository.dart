@@ -136,7 +136,7 @@ class OnboardingRepository {
           fileOptions: const FileOptions(
             upsert: true,
             contentType: 'image/jpeg',
-            cacheControl: publicMediaMutableCacheControl,
+            cacheControl: supabasePublicMediaMutableCacheControlSeconds,
           ),
         );
     return _client.storage.from('contractor-logos').getPublicUrl(path);
@@ -168,7 +168,7 @@ class OnboardingRepository {
           fileOptions: const FileOptions(
             upsert: true,
             contentType: 'image/jpeg',
-            cacheControl: publicMediaMutableCacheControl,
+            cacheControl: supabasePublicMediaMutableCacheControlSeconds,
           ),
         );
     // Cache-bust so a re-upload to the same path refreshes in CachedNetworkImage.

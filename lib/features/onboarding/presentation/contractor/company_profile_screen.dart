@@ -1,6 +1,8 @@
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -11,22 +13,30 @@ import '../../../../core/router/routes.dart';
 import '../../../../core/theme/batsh_icon_size.dart';
 import '../../../../core/theme/batsh_radius.dart';
 import '../../../../core/theme/batsh_spacing.dart';
-import '../../../../core/theme/batsh_typography.dart';
+import '../../../../core/theme/professional_reference_theme.dart';
 import '../../../../core/theme/theme_extension.dart';
 import '../../../../core/utils/error_mapper.dart';
-import '../../../../core/widgets/batsh_button.dart';
-import '../../../../core/widgets/batsh_chip.dart';
-import '../../../../core/widgets/batsh_error.dart';
 import '../../../../core/widgets/batsh_scaffold.dart';
-import '../../../../core/widgets/batsh_section_header.dart';
 import '../../../../core/widgets/batsh_shimmer.dart';
-import '../../../../core/widgets/batsh_text_field.dart';
+import '../../../../core/widgets/professional_reference_primitives.dart';
+import '../../../../core/widgets/professional_reference_states.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../discovery/domain/contractor_listing.dart';
 import '../../domain/onboarding_models.dart';
 import '../providers/onboarding_draft_provider.dart';
 import '../providers/onboarding_provider.dart';
 import '../widgets/onboarding_progress_header.dart';
+
+typedef CompanyLogoPicker = Future<XFile?> Function();
+
+final companyLogoPickerProvider = Provider<CompanyLogoPicker>((ref) {
+  return () => ImagePicker().pickImage(
+    source: ImageSource.gallery,
+    maxWidth: 1024,
+    maxHeight: 1024,
+    imageQuality: 85,
+  );
+});
 
 class CompanyProfileScreen extends ConsumerStatefulWidget {
   const CompanyProfileScreen({super.key});
@@ -39,6 +49,7 @@ class CompanyProfileScreen extends ConsumerStatefulWidget {
 class _CompanyProfileScreenState extends ConsumerState<CompanyProfileScreen> {
   final TextEditingController _businessController = TextEditingController();
   File? _logo;
+  Uint8List? _logoBytes;
   bool _hydrated = false;
   bool _busy = false;
   bool _identitySaved = false;
@@ -60,16 +71,14 @@ class _CompanyProfileScreenState extends ConsumerState<CompanyProfileScreen> {
 
   Future<void> _pickLogo() async {
     try {
-      final result = await ImagePicker().pickImage(
-        source: ImageSource.gallery,
-        maxWidth: 1024,
-        maxHeight: 1024,
-        imageQuality: 85,
-      );
+      final result = await ref.read(companyLogoPickerProvider)();
       if (result == null || !mounted) return;
       final file = File(result.path);
+      final previewBytes = kIsWeb ? await result.readAsBytes() : null;
+      if (!mounted) return;
       setState(() {
         _logo = file;
+        _logoBytes = previewBytes;
         _logoError = null;
         _logoPickerError = null;
       });
@@ -227,7 +236,7 @@ class _CompanyProfileScreenState extends ConsumerState<CompanyProfileScreen> {
         : null;
     final loading = contractorAsync.isLoading || profileAsync.isLoading;
     final content = loadError != null
-        ? BatshError(
+        ? ProfessionalReferenceReadError(
             message: ErrorMapper.map(loadError),
             onRetry: () {
               ref.invalidate(contractorProfileProvider);
@@ -245,21 +254,30 @@ class _CompanyProfileScreenState extends ConsumerState<CompanyProfileScreen> {
       onPopInvokedWithResult: (didPop, _) {
         if (!didPop) _back();
       },
-      child: BatshScaffold(
-        title: context.l10n.businessNameTitle,
-        animateEntrance: false,
-        body: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              OnboardingProgressHeader(
-                step: 2,
-                stepLabel: context.l10n.onboardingStepContractorIdentity,
-                onBack: _back,
-              ),
-              const SizedBox(height: BatshSpacing.lg),
-              content,
-            ],
+      child: Theme(
+        data: ProfessionalReferenceTheme.scopedTheme(Theme.of(context)),
+        child: BatshScaffold(
+          title: context.l10n.businessNameTitle,
+          animateEntrance: false,
+          body: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                OnboardingProgressHeader(
+                  step: 2,
+                  stepLabel: context.l10n.onboardingStepContractorIdentity,
+                  onBack: _back,
+                  referenceStyle: true,
+                ),
+                const SizedBox(height: BatshSpacing.lg),
+                ProfessionalReferenceWelcome(
+                  title: context.l10n.companyData,
+                  message: context.l10n.providerKindHelp,
+                  motif: ProfessionalReferenceMotif.identity,
+                ),
+                content,
+              ],
+            ),
           ),
         ),
       ),
@@ -269,20 +287,11 @@ class _CompanyProfileScreenState extends ConsumerState<CompanyProfileScreen> {
   Widget _form(BuildContext context, String? existingLogo) => Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
-      BatshSectionHeader(title: context.l10n.companyData),
-      const SizedBox(height: BatshSpacing.sm),
       Align(
         alignment: AlignmentDirectional.centerStart,
         child: Text(
           context.l10n.providerKindQuestion,
-          style: BatshTypography.labelLg,
-        ),
-      ),
-      const SizedBox(height: BatshSpacing.xs),
-      Text(
-        context.l10n.providerKindHelp,
-        style: BatshTypography.bodySm.copyWith(
-          color: context.colorScheme.onSurfaceVariant,
+          style: ProfessionalReferenceTheme.text(16, weight: FontWeight.w700),
         ),
       ),
       const SizedBox(height: BatshSpacing.sm),
@@ -294,7 +303,7 @@ class _CompanyProfileScreenState extends ConsumerState<CompanyProfileScreen> {
           runSpacing: BatshSpacing.xs,
           children: [
             for (final kind in ProviderKind.values)
-              BatshChip(
+              ProfessionalReferenceChoice(
                 label: kind.label(context),
                 icon: kind.icon,
                 selected: _kind == kind,
@@ -330,7 +339,9 @@ class _CompanyProfileScreenState extends ConsumerState<CompanyProfileScreen> {
                 ),
                 child: ClipRRect(
                   borderRadius: BatshRadius.brXl,
-                  child: _logo != null
+                  child: _logo != null && kIsWeb && _logoBytes != null
+                      ? Image.memory(_logoBytes!, fit: BoxFit.cover)
+                      : _logo != null && !kIsWeb
                       ? Image.file(_logo!, fit: BoxFit.cover)
                       : existingLogo != null
                       ? CachedNetworkImage(
@@ -348,8 +359,9 @@ class _CompanyProfileScreenState extends ConsumerState<CompanyProfileScreen> {
                             const SizedBox(height: BatshSpacing.xs),
                             Text(
                               context.l10n.chooseImage,
-                              style: BatshTypography.bodySm.copyWith(
-                                color: context.colorScheme.onSurfaceVariant,
+                              style: ProfessionalReferenceTheme.text(
+                                16,
+                                color: ProfessionalReferenceTheme.muted,
                               ),
                             ),
                           ],
@@ -364,69 +376,67 @@ class _CompanyProfileScreenState extends ConsumerState<CompanyProfileScreen> {
       Text(
         '${context.l10n.onboardingContractorLogoTitle} ${context.l10n.optional}',
         textAlign: TextAlign.center,
-        style: BatshTypography.labelMd.copyWith(
-          color: context.colorScheme.onSurfaceVariant,
+        style: ProfessionalReferenceTheme.text(
+          16,
+          color: ProfessionalReferenceTheme.muted,
         ),
       ),
       const SizedBox(height: BatshSpacing.xs),
       Text(
         context.l10n.onboardingContractorLogoHint,
         textAlign: TextAlign.center,
-        style: BatshTypography.bodySm.copyWith(
-          color: context.colorScheme.onSurfaceVariant,
+        style: ProfessionalReferenceTheme.text(
+          16,
+          color: ProfessionalReferenceTheme.muted,
         ),
       ),
       if (_logoPickerError != null) ...[
         const SizedBox(height: BatshSpacing.sm),
-        _InlineError(message: _logoPickerError!),
-      ],
-      Focus(
-        focusNode: _businessFocus,
-        child: BatshTextField(
-          controller: _businessController,
-          label: context.l10n.businessNameTitle,
-          hint: _kind.requiresBusinessName
-              ? context.l10n.businessNameHint
-              : context.l10n.businessNameOptionalHint,
-          helperText: _kind.requiresBusinessName
-              ? context.l10n.required
-              : context.l10n.optional,
-          errorText: _businessError,
-          enabled: !_busy,
-          onChanged: (_) {
-            setState(() {
-              _identitySaved = false;
-              _logoError = null;
-              _logoPickerError = null;
-              _businessError = null;
-              _saveError = null;
-            });
-            _updateIdentityDraft();
-          },
+        ProfessionalReferenceInlineStatus(
+          message: _logoPickerError!,
+          retryLabel: context.l10n.retry,
+          onRetry: _pickLogo,
         ),
+      ],
+      ProfessionalReferenceTextField(
+        controller: _businessController,
+        focusNode: _businessFocus,
+        label: context.l10n.businessNameTitle,
+        hint: _kind.requiresBusinessName
+            ? context.l10n.businessNameHint
+            : context.l10n.businessNameOptionalHint,
+        helperText: _kind.requiresBusinessName
+            ? context.l10n.required
+            : context.l10n.optional,
+        errorText: _businessError,
+        enabled: !_busy,
+        onChanged: (_) {
+          setState(() {
+            _identitySaved = false;
+            _logoError = null;
+            _logoPickerError = null;
+            _businessError = null;
+            _saveError = null;
+          });
+          _updateIdentityDraft();
+        },
       ),
       if (_saveError != null) ...[
         const SizedBox(height: BatshSpacing.md),
-        _InlineError(message: _saveError!),
+        ProfessionalReferenceInlineStatus(
+          message: '${context.l10n.onboardingSaveFailed} $_saveError',
+          retryLabel: context.l10n.onboardingRetrySave,
+          onRetry: _next,
+        ),
       ],
       if (_logoError != null) ...[
         const SizedBox(height: BatshSpacing.md),
-        _InlineError(
+        ProfessionalReferenceInlineStatus(
           message: '${context.l10n.onboardingLogoUploadFailed} $_logoError',
-        ),
-        const SizedBox(height: BatshSpacing.sm),
-        BatshButton(
-          label: context.l10n.onboardingRetryLogo,
-          onPressed: _busy ? null : _retryLogo,
-          isLoading: _busy,
-          animate: false,
-        ),
-        const SizedBox(height: BatshSpacing.xs),
-        BatshButton(
-          label: context.l10n.onboardingContinueWithoutLogo,
-          style: BatshButtonStyle.secondary,
-          onPressed: _busy ? null : _continueWithoutLogo,
-          animate: false,
+          retryLabel: context.l10n.onboardingRetryLogo,
+          onRetry: _busy ? null : _retryLogo,
+          secondaryLabel: context.l10n.onboardingContinueWithoutLogo,
+          onSecondary: _busy ? null : _continueWithoutLogo,
         ),
       ] else if (_busy) ...[
         const SizedBox(height: BatshSpacing.md),
@@ -434,36 +444,21 @@ class _CompanyProfileScreenState extends ConsumerState<CompanyProfileScreen> {
           liveRegion: true,
           child: Text(
             context.l10n.onboardingSaving,
-            style: BatshTypography.bodySm.copyWith(
-              color: context.colorScheme.onSurfaceVariant,
+            style: ProfessionalReferenceTheme.text(
+              16,
+              color: ProfessionalReferenceTheme.muted,
             ),
           ),
         ),
       ],
       const SizedBox(height: BatshSpacing.xl),
       if (_logoError == null)
-        BatshButton(
+        ProfessionalReferencePrimaryButton(
           label: context.l10n.next,
           onPressed: _busy ? null : _next,
           isLoading: _busy,
-          animate: false,
         ),
       const SizedBox(height: BatshSpacing.lg),
     ],
-  );
-}
-
-class _InlineError extends StatelessWidget {
-  const _InlineError({required this.message});
-
-  final String message;
-
-  @override
-  Widget build(BuildContext context) => Semantics(
-    liveRegion: true,
-    child: Text(
-      message,
-      style: BatshTypography.bodySm.copyWith(color: context.colorScheme.error),
-    ),
   );
 }

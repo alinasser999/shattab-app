@@ -1,4 +1,7 @@
 import 'dart:async';
+import 'dart:math' as math;
+
+import '../../../core/widgets/professional_reference_states.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -6,6 +9,7 @@ import 'package:batsh/core/l10n/l10n_extension.dart';
 import '../../../core/l10n/catalog_labels.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/batsh_radius.dart';
+import '../../../core/theme/professional_reference_theme.dart';
 import '../../../core/theme/batsh_spacing.dart';
 import '../../../core/theme/batsh_typography.dart';
 import '../../../core/theme/theme_extension.dart';
@@ -249,9 +253,9 @@ class _ProfessionalDirectoryScreenState
               ),
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Container(
-                    height: 30,
+                    constraints: const BoxConstraints(minHeight: 44),
                     decoration: BoxDecoration(
                       color: const Color(0xfff4f4f8),
                       borderRadius: BorderRadius.circular(12),
@@ -261,7 +265,7 @@ class _ProfessionalDirectoryScreenState
                         const SizedBox(width: 10),
                         const Icon(
                           Icons.search,
-                          size: 19,
+                          size: 24,
                           color: Color(0xff24262c),
                         ),
                         const SizedBox(width: 8),
@@ -269,19 +273,21 @@ class _ProfessionalDirectoryScreenState
                           child: TextField(
                             controller: _searchController,
                             onChanged: _setSearch,
-                            style: referenceText(11.5),
+                            style: referenceText(14),
                             decoration: InputDecoration(
                               filled: false,
                               fillColor: Colors.transparent,
                               hintText: context.l10n.referenceSearchHint,
                               hintStyle: referenceText(
-                                11.5,
-                                color: referenceMuted,
+                                14,
+                                color: ProfessionalReferenceTheme.muted,
                               ),
                               border: InputBorder.none,
                               enabledBorder: InputBorder.none,
                               focusedBorder: InputBorder.none,
-                              contentPadding: const EdgeInsets.only(bottom: 8),
+                              contentPadding: const EdgeInsets.symmetric(
+                                vertical: 12,
+                              ),
                               isDense: true,
                             ),
                           ),
@@ -291,8 +297,8 @@ class _ProfessionalDirectoryScreenState
                             iconSize: 16,
                             padding: EdgeInsets.zero,
                             constraints: const BoxConstraints(
-                              minWidth: 32,
-                              minHeight: 30,
+                              minWidth: 44,
+                              minHeight: 44,
                             ),
                             onPressed: () {
                               _searchController.clear();
@@ -304,7 +310,7 @@ class _ProfessionalDirectoryScreenState
                             },
                             icon: const Icon(
                               Icons.close,
-                              color: referenceMuted,
+                              color: ProfessionalReferenceTheme.muted,
                             ),
                           ),
                       ],
@@ -314,7 +320,7 @@ class _ProfessionalDirectoryScreenState
               ),
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.only(top: 2),
+                  padding: const EdgeInsets.only(top: 12),
                   child: _ReferenceCategoryRail(
                     selected: filters.specialty,
                     onSelected: (key) => ref
@@ -325,12 +331,15 @@ class _ProfessionalDirectoryScreenState
               ),
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 10),
-                  child: SizedBox(
-                    height: 34,
-                    child: Row(
-                      children: [
-                        Text(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(minHeight: 48),
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        final adaptive =
+                            constraints.maxWidth < 340 ||
+                            MediaQuery.textScalerOf(context).scale(1) > 1.2;
+                        final countLabel = Text(
                           !professionalReferenceEnabled &&
                                   ref
                                       .read(
@@ -340,49 +349,63 @@ class _ProfessionalDirectoryScreenState
                               ? context.l10n
                                     .referenceDisplayedProfessionalsCount(count)
                               : context.l10n.referenceProfessionalsCount(count),
-                          style: referenceText(11.5),
-                        ),
-                        const Spacer(),
-                        InkWell(
-                          onTap: _showSort,
-                          child: SizedBox(
-                            height: 34,
-                            child: Row(
-                              children: [
-                                Text(
-                                  context.l10n.referenceSort,
-                                  style: referenceText(
-                                    10.5,
-                                    color: referenceMuted,
-                                  ),
-                                ),
-                                Text(
-                                  switch (filters.sort) {
-                                    DiscoverySort.name =>
-                                      hasQuery
-                                          ? context.l10n.referenceRelevant
-                                          : context.l10n.referenceCompatible,
-                                    DiscoverySort.rating =>
-                                      context.l10n.topRated,
-                                    DiscoverySort.projects =>
-                                      context.l10n.referenceMostProjects,
-                                  },
-                                  style: referenceText(
-                                    10.5,
-                                    weight: FontWeight.w700,
-                                  ),
-                                ),
-                                const SizedBox(width: 3),
-                                const Icon(
-                                  Icons.expand_more,
-                                  size: 16,
-                                  color: referenceNavy,
-                                ),
-                              ],
+                          style: referenceText(14),
+                        );
+                        final sortContents = <Widget>[
+                          Text(
+                            context.l10n.referenceSort,
+                            style: referenceText(
+                              14,
+                              color: ProfessionalReferenceTheme.muted,
                             ),
                           ),
-                        ),
-                      ],
+                          Text(switch (filters.sort) {
+                            DiscoverySort.name =>
+                              hasQuery
+                                  ? context.l10n.referenceRelevant
+                                  : context.l10n.referenceCompatible,
+                            DiscoverySort.rating => context.l10n.topRated,
+                            DiscoverySort.projects =>
+                              context.l10n.referenceMostProjects,
+                          }, style: referenceText(14, weight: FontWeight.w700)),
+                          const SizedBox(width: 3),
+                          const Icon(
+                            Icons.expand_more,
+                            size: 16,
+                            color: referenceNavy,
+                          ),
+                        ];
+                        final sortAction = InkWell(
+                          onTap: _showSort,
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(minHeight: 48),
+                            child: adaptive
+                                ? Wrap(
+                                    crossAxisAlignment:
+                                        WrapCrossAlignment.center,
+                                    children: sortContents,
+                                  )
+                                : Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: sortContents,
+                                  ),
+                          ),
+                        );
+                        return adaptive
+                            ? Wrap(
+                                alignment: WrapAlignment.spaceBetween,
+                                crossAxisAlignment: WrapCrossAlignment.center,
+                                spacing: 8,
+                                children: [countLabel, sortAction],
+                              )
+                            : Row(
+                                children: [
+                                  Expanded(child: countLabel),
+                                  const SizedBox(width: 8),
+                                  sortAction,
+                                ],
+                              );
+                      },
                     ),
                   ),
                 ),
@@ -419,39 +442,32 @@ class _ProfessionalDirectoryScreenState
                 )
               else if (contractors.hasError && items.isEmpty)
                 SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.all(24),
-                    child: Column(
-                      children: [
-                        Text(
-                          ErrorMapper.map(contractors.error!),
-                          style: referenceText(14),
-                        ),
-                        TextButton(
-                          onPressed: () =>
-                              ref.invalidate(discoverContractorsProvider),
-                          child: Text(context.l10n.tryAgain),
-                        ),
-                      ],
-                    ),
+                  child: ProfessionalReferenceReadError(
+                    message: ErrorMapper.map(contractors.error!),
+                    onRetry: () => ref.invalidate(discoverContractorsProvider),
                   ),
                 )
               else if (items.isEmpty)
                 SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.all(24),
-                    child: Column(
-                      children: [
-                        Text(
-                          context.l10n.noResultsFound,
-                          style: referenceText(14),
-                        ),
-                        TextButton(
-                          onPressed: _clearAll,
-                          child: Text(context.l10n.clearFilters),
-                        ),
-                      ],
-                    ),
+                  child: ProfessionalReferenceState(
+                    kind: filters.isEmpty
+                        ? ProfessionalReferenceStateKind.empty
+                        : ProfessionalReferenceStateKind.noResults,
+                    motif: filters.isEmpty
+                        ? ProfessionalReferenceMotif.people
+                        : ProfessionalReferenceMotif.search,
+                    title: filters.isEmpty
+                        ? context.l10n.stateSupplyTitle
+                        : context.l10n.stateSearchNoResultsTitle,
+                    message: filters.isEmpty
+                        ? context.l10n.stateSupplyMessage
+                        : context.l10n.stateNoResultsMessage,
+                    primaryLabel: filters.isEmpty
+                        ? context.l10n.stateHomeAction
+                        : context.l10n.stateClearSearchFilters,
+                    onPrimary: filters.isEmpty
+                        ? () => context.go(Routes.homeownerHome)
+                        : _clearAll,
                   ),
                 )
               else
@@ -594,112 +610,239 @@ class _ReferenceDirectoryHeader extends StatelessWidget {
   final VoidCallback onLocation, onFilters;
   final int activeFilterCount;
   @override
-  Widget build(BuildContext context) => SizedBox(
-    height: 47,
-    child: Stack(
-      alignment: Alignment.center,
-      children: [
-        Positioned(
-          left: 18,
-          top: 8,
-          child: Row(
-            textDirection: TextDirection.ltr,
-            crossAxisAlignment: CrossAxisAlignment.center,
+  Widget build(BuildContext context) {
+    final width = MediaQuery.sizeOf(context).width;
+    final textScale = MediaQuery.textScalerOf(context).scale(1);
+    if (width < 380 || textScale > 1.1) {
+      return _buildResponsive(context, textScale);
+    }
+
+    return SizedBox(
+      height: 80,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Positioned(
+            left: 18,
+            top: 22,
+            child: Row(
+              textDirection: TextDirection.ltr,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Column(
+                  children: [
+                    Text(
+                      'شطّب',
+                      style: referenceText(
+                        24,
+                        color: referenceOrange,
+                        weight: FontWeight.w800,
+                        height: 1,
+                      ),
+                    ),
+                    Text(
+                      'S H A T B',
+                      style: referenceText(
+                        7.5,
+                        color: referenceOrange,
+                        weight: FontWeight.w800,
+                        height: 1,
+                      ),
+                    ),
+                  ],
+                ),
+                const Icon(
+                  Icons.home_rounded,
+                  color: referenceOrange,
+                  size: 22,
+                ),
+              ],
+            ),
+          ),
+          Column(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Column(
-                children: [
-                  Text(
-                    'شطّب',
-                    style: referenceText(
-                      24,
-                      color: referenceOrange,
-                      weight: FontWeight.w800,
-                      height: 1,
-                    ),
+              Text(
+                context.l10n.referenceProfessionalsTitle,
+                style: referenceText(20, weight: FontWeight.w800),
+              ),
+              InkWell(
+                onTap: onLocation,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.location_on_outlined,
+                        size: 16,
+                        color: ProfessionalReferenceTheme.muted,
+                      ),
+                      const SizedBox(width: 3),
+                      Text(
+                        location,
+                        style: referenceText(
+                          13,
+                          color: ProfessionalReferenceTheme.muted,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      const Icon(
+                        Icons.expand_more,
+                        size: 16,
+                        color: referenceNavy,
+                      ),
+                    ],
                   ),
-                  Text(
-                    'S H A T B',
-                    style: referenceText(
-                      7.5,
-                      color: referenceOrange,
-                      weight: FontWeight.w800,
-                      height: 1,
-                    ),
+                ),
+              ),
+            ],
+          ),
+          Positioned(right: 5, child: _filterButton()),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildResponsive(BuildContext context, double textScale) {
+    final largeText = textScale > 1.2;
+    return ConstrainedBox(
+      constraints: const BoxConstraints(minHeight: 80),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 5),
+        child: Directionality(
+          textDirection: TextDirection.ltr,
+          child: Row(
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'شطّب',
+                        style: referenceText(
+                          largeText ? 20 : 22,
+                          color: referenceOrange,
+                          weight: FontWeight.w800,
+                          height: 1,
+                        ),
+                      ),
+                      Text(
+                        'S H A T B',
+                        style: referenceText(
+                          7.5,
+                          color: referenceOrange,
+                          weight: FontWeight.w800,
+                          height: 1,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const Icon(
+                    Icons.home_rounded,
+                    color: referenceOrange,
+                    size: 20,
                   ),
                 ],
               ),
-              const Icon(Icons.home_rounded, color: referenceOrange, size: 22),
-            ],
-          ),
-        ),
-        Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              context.l10n.referenceProfessionalsTitle,
-              style: referenceText(16, weight: FontWeight.w800),
-            ),
-            InkWell(
-              onTap: onLocation,
-              child: Padding(
-                padding: const EdgeInsets.only(top: 2),
-                child: Row(
+              const SizedBox(width: 4),
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(
-                      Icons.location_on_outlined,
-                      size: 13,
-                      color: referenceMuted,
-                    ),
-                    const SizedBox(width: 3),
                     Text(
-                      location,
-                      style: referenceText(10, color: referenceMuted),
+                      context.l10n.referenceProfessionalsTitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
+                      style: referenceText(
+                        largeText ? 16 : 20,
+                        weight: FontWeight.w800,
+                      ),
                     ),
-                    const SizedBox(width: 4),
-                    const Icon(
-                      Icons.expand_more,
-                      size: 13,
-                      color: referenceNavy,
+                    InkWell(
+                      onTap: onLocation,
+                      borderRadius: BorderRadius.circular(8),
+                      child: SizedBox(
+                        width: double.infinity,
+                        height: 48,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 2),
+                          child: Directionality(
+                            textDirection: TextDirection.rtl,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(
+                                  Icons.location_on_outlined,
+                                  size: 16,
+                                  color: ProfessionalReferenceTheme.muted,
+                                ),
+                                const SizedBox(width: 3),
+                                Flexible(
+                                  child: Text(
+                                    location,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: referenceText(
+                                      13,
+                                      color: ProfessionalReferenceTheme.muted,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 4),
+                                const Icon(
+                                  Icons.expand_more,
+                                  size: 16,
+                                  color: referenceNavy,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
                   ],
                 ),
               ),
-            ),
-          ],
-        ),
-        Positioned(
-          right: 5,
-          child: Stack(
-            children: [
-              ReferenceIconButton(
-                icon: Icons.tune,
-                label: 'الفلاتر',
-                onTap: onFilters,
-                size: 20,
-                color: const Color(0xff44454e),
-              ),
-              if (activeFilterCount > 0)
-                Positioned(
-                  right: 4,
-                  top: 4,
-                  child: Container(
-                    width: 13,
-                    height: 13,
-                    decoration: const BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: referenceOrange,
-                    ),
-                    alignment: Alignment.center,
-                    child: Text(
-                      '$activeFilterCount',
-                      style: referenceText(8, color: Colors.white),
-                    ),
-                  ),
-                ),
+              _filterButton(),
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _filterButton() => IconButton(
+    tooltip: 'الفلاتر',
+    onPressed: onFilters,
+    constraints: const BoxConstraints.tightFor(width: 48, height: 48),
+    padding: EdgeInsets.zero,
+    icon: Stack(
+      clipBehavior: Clip.none,
+      children: [
+        const Icon(Icons.tune, size: 24, color: Color(0xff44454e)),
+        if (activeFilterCount > 0)
+          Positioned(
+            right: -4,
+            top: -4,
+            child: Container(
+              width: 13,
+              height: 13,
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                color: referenceOrange,
+              ),
+              alignment: Alignment.center,
+              child: Text(
+                '$activeFilterCount',
+                style: referenceText(8, color: Colors.white),
+              ),
+            ),
+          ),
       ],
     ),
   );
@@ -730,6 +873,17 @@ class _ReferenceCategoryRail extends StatelessWidget {
       context.l10n.referenceFinishing,
       context.l10n.referenceKitchen,
     ];
+    final textScale = MediaQuery.textScalerOf(context);
+    const labelFontSize = 13.0;
+    final labelSizes = [
+      for (final label in labels)
+        TextPainter(
+          text: TextSpan(text: label, style: referenceText(labelFontSize)),
+          textDirection: Directionality.of(context),
+          textScaler: textScale,
+          maxLines: 1,
+        )..layout(),
+    ];
     const icons = [
       Icons.grid_view_outlined,
       Icons.chair_outlined,
@@ -738,17 +892,30 @@ class _ReferenceCategoryRail extends StatelessWidget {
       Icons.format_paint_outlined,
       Icons.kitchen_outlined,
     ];
+    final railHeight =
+        labelSizes.fold<double>(
+          60,
+          (height, size) => math.max(height, 38.0 + size.height).toDouble(),
+        ) +
+        4;
     return Directionality(
       textDirection: TextDirection.ltr,
       child: SizedBox(
-        height: 44,
+        height: railHeight,
         child: ListView.separated(
           scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 16),
           itemCount: keys.length,
           separatorBuilder: (_, _) => const SizedBox(width: 6),
           itemBuilder: (_, i) {
             final active = keys[i] == selected;
+            final size = labelSizes[i];
+            final tileHeight = math.max(60.0, 38.0 + size.height).toDouble();
+            final tileWidth = math.max(56.0, size.width + 20).toDouble();
+            final labelStyle = referenceText(
+              labelFontSize,
+              color: active ? Colors.white : referenceNavy,
+            );
             return Semantics(
               button: true,
               selected: active,
@@ -761,12 +928,8 @@ class _ReferenceCategoryRail extends StatelessWidget {
                 child: Align(
                   alignment: Alignment.bottomCenter,
                   child: Container(
-                    height: 40,
-                    width: i == 0
-                        ? 43
-                        : i == 1
-                        ? 64
-                        : 48,
+                    height: tileHeight,
+                    width: tileWidth,
                     decoration: BoxDecoration(
                       color: active ? referenceOrange : Colors.white,
                       borderRadius: BorderRadius.circular(9),
@@ -783,16 +946,15 @@ class _ReferenceCategoryRail extends StatelessWidget {
                       children: [
                         Icon(
                           icons[i],
-                          size: 18,
+                          size: 24,
                           color: active ? Colors.white : referenceOrange,
                         ),
-                        const SizedBox(height: 2),
+                        const SizedBox(height: 4),
                         Text(
                           labels[i],
-                          style: referenceText(
-                            10,
-                            color: active ? Colors.white : referenceNavy,
-                          ),
+                          maxLines: 1,
+                          softWrap: false,
+                          style: labelStyle,
                         ),
                       ],
                     ),

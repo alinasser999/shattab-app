@@ -1,3 +1,4 @@
+import '../../../../core/widgets/professional_reference_states.dart';
 import 'package:flutter/material.dart';
 
 import 'package:batsh/core/l10n/l10n_extension.dart';
@@ -913,51 +914,31 @@ class _ComposerDivider extends StatelessWidget {
 }
 
 class CommunityEmptyState extends StatelessWidget {
-  const CommunityEmptyState({super.key, required this.onClear});
-
-  final VoidCallback onClear;
-
+  const CommunityEmptyState({
+    super.key,
+    required this.onClear,
+    required this.onHome,
+    this.filtered = true,
+  });
+  final VoidCallback onClear, onHome;
+  final bool filtered;
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: BatshSpacing.lg,
-        vertical: BatshSpacing.xl,
-      ),
-      decoration: BoxDecoration(
-        color: context.colorScheme.surface.withValues(alpha: 0.86),
-        borderRadius: BatshRadius.brXl,
-        border: Border.all(color: context.colorScheme.outlineVariant),
-      ),
-      child: Column(
-        children: [
-          Icon(
-            Icons.forum_outlined,
-            size: 42,
-            color: context.colorScheme.primary.withValues(alpha: 0.8),
-          ),
-          const SizedBox(height: BatshSpacing.md),
-          Text(
-            context.l10n.communityNoPostsTitle,
-            textAlign: TextAlign.center,
-            style: BatshTypography.titleMd,
-          ),
-          const SizedBox(height: BatshSpacing.xs),
-          Text(
-            context.l10n.communityNoPostsMessage,
-            textAlign: TextAlign.center,
-            style: BatshTypography.bodySm.copyWith(
-              color: context.colorScheme.onSurfaceVariant,
-            ),
-          ),
-          const SizedBox(height: BatshSpacing.md),
-          TextButton.icon(
-            onPressed: onClear,
-            icon: const Icon(Icons.refresh_rounded, size: 18),
-            label: Text(context.l10n.communityClearFilter),
-          ),
-        ],
-      ),
-    );
-  }
+  Widget build(BuildContext context) => ProfessionalReferenceState(
+    kind: filtered
+        ? ProfessionalReferenceStateKind.noResults
+        : ProfessionalReferenceStateKind.empty,
+    motif: ProfessionalReferenceMotif.community,
+    title: filtered
+        ? context.l10n.stateFilteredCommunityTitle
+        : context.l10n.stateCommunityAllTitle,
+    message: filtered
+        ? context.l10n.stateFilteredCommunityMessage
+        : context.l10n.stateCommunityAllMessage,
+    primaryLabel: filtered
+        ? context.l10n.communityClearFilter
+        : context.l10n.stateHomeAction,
+    onPrimary: filtered ? onClear : onHome,
+    secondaryLabel: filtered ? context.l10n.stateHomeAction : null,
+    onSecondary: filtered ? onHome : null,
+  );
 }

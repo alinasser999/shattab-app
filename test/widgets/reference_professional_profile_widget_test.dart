@@ -31,9 +31,9 @@ void main() {
     skip: !professionalReferenceEnabled,
     () {
       testWidgets(
-        'mounts every section, keeps actions fixed, and fits at 426px',
+        'mounts every section, keeps actions fixed, and fits at 390x844',
         (tester) async {
-          await _setViewport(tester, const Size(426, 820));
+          await _setViewport(tester, const Size(390, 844));
           final l10n = await AppLocalizations.delegate.load(const Locale('ar'));
 
           await tester.pumpWidget(_profileApp());
@@ -46,7 +46,7 @@ void main() {
 
           final quoteButton = _actionButton(tester, l10n.referenceRequestQuote);
           final fixedTop = tester.getTopLeft(quoteButton).dy;
-          expect(tester.getSize(quoteButton).height, greaterThanOrEqualTo(44));
+          expect(tester.getSize(quoteButton).height, greaterThanOrEqualTo(48));
 
           await tester.drag(
             find.byType(SingleChildScrollView),
@@ -65,10 +65,23 @@ void main() {
         },
       );
 
+      testWidgets('fits a narrow 320px viewport at the default text scale', (
+        tester,
+      ) async {
+        await _setViewport(tester, const Size(320, 844));
+        final l10n = await AppLocalizations.delegate.load(const Locale('ar'));
+
+        await tester.pumpWidget(_profileApp());
+        await tester.pumpAndSettle();
+
+        _expectAllSections(tester, l10n);
+        expect(tester.takeException(), isNull);
+      });
+
       testWidgets('supports 320px at 1.3 text scale without overflow', (
         tester,
       ) async {
-        await _setViewport(tester, const Size(320, 820));
+        await _setViewport(tester, const Size(320, 844));
         final l10n = await AppLocalizations.delegate.load(const Locale('ar'));
 
         await tester.pumpWidget(_profileApp(textScale: 1.3));
@@ -79,14 +92,14 @@ void main() {
         expect(find.text(l10n.referenceMessageProfessional), findsOneWidget);
         expect(tester.takeException(), isNull);
 
-        final saveButton = find.byType(ReferenceIconButton).last;
-        expect(tester.getSize(saveButton).width, greaterThanOrEqualTo(44));
-        expect(tester.getSize(saveButton).height, greaterThanOrEqualTo(44));
+        final saveButton = _iconButton(Icons.favorite_border);
+        expect(tester.getSize(saveButton).width, greaterThanOrEqualTo(48));
+        expect(tester.getSize(saveButton).height, greaterThanOrEqualTo(48));
         final servicesAnchor = find.text(l10n.referenceServices).first;
         final anchorButton = find
             .ancestor(of: servicesAnchor, matching: find.byType(InkWell))
             .first;
-        expect(tester.getSize(anchorButton).height, greaterThanOrEqualTo(44));
+        expect(tester.getSize(anchorButton).height, greaterThanOrEqualTo(48));
       });
 
       testWidgets('each section anchor scrolls within the continuous page', (
@@ -209,6 +222,9 @@ void _expectAllSections(WidgetTester tester, AppLocalizations l10n) {
 
 Finder _actionButton(WidgetTester tester, String label) =>
     find.ancestor(of: find.text(label), matching: find.byType(InkWell)).first;
+
+Finder _iconButton(IconData icon) =>
+    find.ancestor(of: find.byIcon(icon), matching: find.byType(InkWell)).first;
 
 List<Color?> _galleryDotColors(WidgetTester tester, Finder gallery) => tester
     .widgetList<Container>(

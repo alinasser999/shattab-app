@@ -1045,6 +1045,13 @@
   "contactPrivacyShareHint": "ابدأ التواصل بأمان من خلال شطّب.",
   "worksIn": "بيشتغل في",
   "newProfessional": "محترف جديد",
+  "referenceDirectoryYearsExperienceCount": "{years} سنة خبرة",
+  "@referenceDirectoryYearsExperienceCount": {
+    "placeholders": {
+      "years": {"type": "String"}
+    }
+  },
+  "referenceUnratedLabel": "بدون تقييم",
   "noRatingsYet": "لسه مفيش تقييمات",
   "responseRate": "معدل الرد",
   "projectsCompleted": "المشاريع المنجزة",
@@ -1529,7 +1536,7 @@
   "homeReferenceHeroTitleLineOne": "من الفكرة",
   "homeReferenceHeroTitleLineTwo": "إلى البيت اللي تحبه",
   "homeReferenceHeroSupportBody": "محترفون موثوقين لمساعدتك في كل خطوة من التخطيط والتصميم وحتى التنفيذ.",
-  "homeReferenceServiceFullRenovationLabel": "تشطيب كامل",
+  "homeReferenceServiceFullRenovationLabel": "تشطيبات",
   "homeReferenceHeroTagline": "كل بيت\nليه حكاية",
   "homeReferenceProjectStatus": "مشروعي الحالي",
   "homeReferenceProjectTitle": "تجديد شقة المعادي",
@@ -1544,7 +1551,7 @@
   "homeReferenceRealWorkSubtitle": "شوف الفرق قبل وبعد التنفيذ",
   "homeReferenceCaseDetails": "عرض التفاصيل",
   "homeReferenceCaseQuote": "النتيجة مبهرة جداً وفوق توقعاتي",
-  "homeReferenceCommunityTitle": "من مجتمع شطب",
+  "homeReferenceCommunityTitle": "من المجتمع",
   "homeReferenceCommunityTip": "نصيحة من واقع التجربة",
   "homeReferenceCommunityExperience": "تجربتي",
   "homeReferenceCommunityInviteTitle": "شارك تجربتك مع شطب",
@@ -1742,6 +1749,19 @@
   "assistantActionPricing": "أسعار واشتراكات برو",
   "assistantActionSupport": "تواصل مع الدعم",
   "assistantSignInRequired": "سجّل دخولك لاستخدام المساعد الذكي",
+  "assistantErrorQuota": "وصلت للحد المتاح من استفسارات المساعد. يمكنك تصفح المحترفين مباشرة.",
+  "assistantErrorQuotaContractor": "وصلت للحد المتاح من استفسارات المساعد. يمكنك متابعة استخدام التطبيق من لوحة التحكم.",
+  "assistantQuotaBrowseAction": "تصفح المحترفين",
+  "assistantQuotaDashboardAction": "لوحة التحكم",
+  "assistantSignInAgain": "سجّل الدخول للحساب نفسه",
+  "assistantReauthTitle": "استعادة سؤال المساعد",
+  "assistantReauthMessage": "سجّل الدخول مرة أخرى إلى حسابك لاستعادة السؤال الذي تعذّر إرساله.",
+  "assistantReauthFailed": "تعذّر التحقق من الحساب. راجع بيانات الدخول وحاول مرة أخرى.",
+  "assistantReauthMismatchMessage": "هذا ليس الحساب نفسه الذي أرسل السؤال، أو لم يتم تأكيد نوع الحساب. جرّب بيانات الحساب الأصلي أو احذف السؤال للمتابعة بهذا الحساب.",
+  "assistantReauthTryOriginal": "إدخال بيانات الحساب الأصلي",
+  "assistantReauthDiscard": "احذف السؤال وتابع بهذا الحساب",
+  "assistantRetryQuestion": "أعد إرسال السؤال",
+  "assistantConversationHiddenMessage": "المحادثة مخفية لأن الحساب أو نوعه الحالي لا يطابق الحساب الذي بدأها. احذف السؤال لمتابعة استخدام هذا الحساب.",
   "onboardingStepLabel": "الخطوة {step} من {total}",
   "@onboardingStepLabel": {
     "placeholders": {
@@ -1927,7 +1947,7 @@
   "professionalContactReviewFormIntro": "شاركنا تقييمك لتجربتك. التقييم بحسب إفادتك، ومش تأكيد مستقل على إتمام الشغل.",
   "professionalContactReviewAttribution": "تجربة بحسب إفادة صاحب البيت؛ بدأ التواصل من خلال شطّب.",
   "homeownerLocationHint": "حدد المدينة والحي اللي يقع فيه البيت.",
-  "homeownerReferenceSearchHint": "ابحث عن محترف أو خدمة",
+  "homeownerReferenceSearchHint": "ابحث عن خدمة أو محترف",
   "homeownerReferenceProfessionalsTitle": "محترفون لمشروعك",
   "homeownerReferenceWorkTitle": "أعمال تلهمك",
   "homeownerReferenceStartTitle": "ابدأ مشروع بيتك",
@@ -1935,5 +1955,69 @@
   "homeownerReferenceStartSteps": "حدد احتياجك ← استقبل عروضًا ← اختر المحترف المناسب",
   "homeownerReferencePhotoUnavailable": "صورة العمل غير متاحة",
   "homeownerReferenceOffers": "{count} عروض",
-  "@homeownerReferenceOffers": {"placeholders": {"count": {"type": "int"}}}
+  "@homeownerReferenceOffers": {"placeholders": {"count": {"type": "int"}}},
+  "stateHomeAction": "الرئيسية",
+  "stateQuotesRefresh": "حدّث العروض",
+  "stateProjectsAction": "مشاريعي",
+  "stateQuotesMessage": "العروض اللي توصلك على الطلب هتظهر هنا. تقدر تحدّث القائمة أو ترجع لمشاريعك.",
+  "stateSupplyTitle": "مفيش محترفين ظاهرين دلوقتي",
+  "stateSupplyMessage": "لما تتوفر ملفات محترفين هتظهر هنا. تقدر ترجع للرئيسية.",
+  "stateClearSearchFilters": "امسح البحث والفلاتر",
+  "stateProfileAction": "الرجوع للملف",
+  "stateServicesAction": "شوف الخدمات",
+  "stateCloseAction": "إغلاق",
+  "statePublicWorksMessage": "الأعمال اللي يضيفها المحترف هتظهر هنا.",
+  "stateClientReviewsMessage": "التقييمات اللي يشاركها العملاء هتظهر هنا.",
+  "stateFilteredCommunityTitle": "مفيش منشورات في القسم ده",
+  "stateFilteredCommunityMessage": "اعرض كل المنشورات عشان تشوف باقي المجتمع.",
+  "stateProjectsNoResultsMessage": "مفيش مشاريع مطابقة للفلاتر دي. غيّر الفلاتر أو امسحها لعرض مشاريعك.",
+  "statePickerGuidance": "تعذّر اختيار الصور. راجع إذن الوصول للصور وحاول تاني؛ الصور اللي اخترتها لسه موجودة.",
+  "stateCommunityAllTitle": "لسه مفيش منشورات",
+  "stateCommunityAllMessage": "المنشورات الجديدة هتظهر هنا لما تتضاف.",
+  "stateNoResultsMessage": "جرّب بحث مختلف أو امسح البحث والفلاتر علشان تشوف المتاح.",
+  "stateReadErrorTitle": "تعذّر تحميل البيانات",
+  "stateOfflineTitle": "مفيش اتصال بالشبكة",
+  "stateSavedEmptyTitle": "لسه ماحفظتش محترفين",
+  "stateSearchNoResultsTitle": "مفيش نتائج مطابقة",
+  "homeownerAssistantEntryHint": "مش عارف تبدأ منين؟",
+  "homeownerAssistantEntryTitle": "اسأل مساعد شطّب",
+  "homeownerServiceDesignShortLabel": "تصميم",
+  "homeCloneWelcome": "أهلاً يا {name}",
+  "@homeCloneWelcome": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "homeCloneHeroTitle": "بيتك يبدأ من هنا",
+  "homeCloneStartTitle": "عندك مشروع جديد؟",
+  "homeCloneStartBody": "احكي لنا عن فكرتك واحصل على اقتراحات من محترفين مناسبين لاحتياجاتك.",
+  "homeCloneAssistant": "اسأل مساعد شطب",
+  "homeCloneServiceAll": "الخدمة: الكل",
+  "homeCloneFilters": "فلترة",
+  "homeCloneFeatured": "محترفون مميزون",
+  "homeCloneFeaturedSubtitle": "اكتشف محترفين لمشروعك",
+  "homeCloneEditorialSubtitle": "أعمال مختارة من فريق شطب",
+  "homeCloneNearby": "قريبين منك",
+  "homeCloneKitchen": "متخصصون في المطابخ",
+  "homeCloneFinishing": "تشطيب من أول خطوة",
+  "homeCloneStory": "من شقة عادية.. لبيت بتحبه",
+  "homeCloneStoryBody": "حولنا مطبخ تقليدي ومظلم إلى مساحة عملية ومريحة مناسبة لحياة أسرتنا.",
+  "homeCloneStoryDetails": "شوف تفاصيل المشروع",
+  "homeCloneBefore": "قبل",
+  "homeCloneAfter": "بعد",
+  "homeCloneCommunity": "حكايات من المجتمع",
+  "homeCloneShare": "شارك تجربتك",
+  "homeCloneReadStory": "اقرأ التجربة",
+  "homeCloneQuestion": "شوف السؤال",
+  "homeCloneUnrated": "جديد · بدون تقييمات",
+  "homeCloneReviews": "{count} تقييمًا",
+  "@homeCloneReviews": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }

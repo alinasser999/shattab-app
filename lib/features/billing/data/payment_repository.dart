@@ -72,7 +72,7 @@ class PaymentRepository {
               // requiring UPDATE permission on private payment evidence.
               upsert: false,
               contentType: 'image/jpeg',
-              cacheControl: privateMediaCacheControl,
+              cacheControl: supabasePrivateMediaCacheControlSeconds,
             ),
           )
           .timeout(const Duration(seconds: 30));

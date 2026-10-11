@@ -4,6 +4,16 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabaseBrowser } from '@/lib/supabase/client';
 import { Button, Input, Label, Panel } from '@/components/ui';
+import { LanguageSwitcher } from '@/components/language-switcher';
+import { t, type AdminLocale, type MessageKey } from '@/lib/i18n';
+
+type LoginErrorKey = Extract<
+  MessageKey,
+  | 'Enter your email address.'
+  | 'Enter a valid email address.'
+  | 'Enter your password.'
+  | 'Sign in failed. Check your credentials and try again.'
+>;
 
 /**
  * Email and password sign-in for the console.
@@ -18,16 +28,31 @@ import { Button, Input, Label, Panel } from '@/components/ui';
  * database decides what that is worth. Signing in with an ordinary account
  * succeeds and then shows nothing, which is the correct outcome.
  */
-export function LoginForm({ next, denied = false }: { next: string; denied?: boolean }) {
+export function LoginForm({ next, denied = false, locale }: { next: string; denied?: boolean; locale: AdminLocale }) {
   const router = useRouter();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<LoginErrorKey | null>(null);
 
-  async function signIn(event: React.FormEvent) {
+  async function signIn(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const form = event.currentTarget;
+    const emailField = form.elements.namedItem('email');
+    const passwordField = form.elements.namedItem('password');
+    if (emailField instanceof HTMLInputElement && !emailField.value.trim()) {
+      setError('Enter your email address.');
+      return;
+    }
+    if (emailField instanceof HTMLInputElement && emailField.validity.typeMismatch) {
+      setError('Enter a valid email address.');
+      return;
+    }
+    if (passwordField instanceof HTMLInputElement && !passwordField.value) {
+      setError('Enter your password.');
+      return;
+    }
     setBusy(true);
     setError(null);
 
@@ -55,38 +80,42 @@ export function LoginForm({ next, denied = false }: { next: string; denied?: boo
   return (
     <main className="grid min-h-dvh place-items-center px-5 py-12">
       <div className="w-full max-w-[23rem]">
+        <div className="mb-4 flex justify-end">
+          <LanguageSwitcher locale={locale} />
+        </div>
         <div className="mb-7 flex items-baseline gap-2.5">
           <span className="text-lg font-semibold tracking-tight text-ink">Shattab</span>
-          <span className="text-sm text-accent-ink">Admin</span>
+          <span className="text-sm text-accent-ink">{t(locale, 'Admin')}</span>
         </div>
 
         <Panel className="p-5">
-          <h1 className="text-md font-semibold text-ink">Sign in</h1>
+          <h1 className="text-md font-semibold text-ink">{t(locale, 'Sign in')}</h1>
           <p className="mt-1 text-sm text-ink-3">
-            Operator accounts use email and password. Separate from the app, which signs in by phone.
+            {t(locale, 'Operator accounts use email and password. Separate from the app, which signs in by phone.')}
           </p>
 
           {denied ? (
             <div role="alert" className="mt-4 rounded-md border border-line-strong bg-raised px-3 py-2.5">
-              <p className="text-sm font-medium text-ink">This account is not an admin.</p>
+              <p className="text-sm font-medium text-ink">{t(locale, 'This account is not an admin.')}</p>
               <p className="mt-0.5 text-xs text-ink-2">
-                Sign out, then use an operator account to enter the console.
+                {t(locale, 'Sign out, then use an operator account to enter the console.')}
               </p>
               <form action="/api/signout" method="post" className="mt-2">
-                <Button type="submit" variant="secondary" size="sm">Sign out</Button>
+                <Button type="submit" variant="secondary" size="sm">{t(locale, 'Sign out')}</Button>
               </form>
             </div>
           ) : null}
 
-          <form onSubmit={signIn} className="mt-5">
-            <Label htmlFor="email">Email</Label>
+          <form onSubmit={signIn} noValidate className="mt-5">
+            <Label htmlFor="email">{t(locale, 'Email')}</Label>
             <Input
               id="email"
               name="email"
               type="email"
               autoComplete="username"
               dir="ltr"
-              placeholder="you@example.com"
+              aria-describedby={error ? 'login-error' : undefined}
+              placeholder={t(locale, 'you@example.com')}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -94,13 +123,14 @@ export function LoginForm({ next, denied = false }: { next: string; denied?: boo
             />
 
             <div className="mt-3">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">{t(locale, 'Password')}</Label>
               <Input
                 id="password"
                 name="password"
                 type="password"
                 autoComplete="current-password"
                 dir="ltr"
+                aria-describedby={error ? 'login-error' : undefined}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
@@ -109,20 +139,19 @@ export function LoginForm({ next, denied = false }: { next: string; denied?: boo
 
             {error ? (
               // role=alert so a failure is announced, not merely recoloured.
-              <p role="alert" className="mt-2 text-xs text-danger">
-                {error}
+              <p id="login-error" role="alert" className="mt-2 text-xs text-danger">
+                {t(locale, error)}
               </p>
             ) : null}
 
             <Button type="submit" variant="primary" loading={busy} className="mt-4 w-full">
-              Sign in
+              {busy ? t(locale, 'Signing in…') : t(locale, 'Sign in')}
             </Button>
           </form>
         </Panel>
 
         <p className="mt-4 text-xs text-ink-3">
-          Admin access is granted per account in the database. Signing in does not grant it. Lost the
-          password? Reset it from the Supabase dashboard.
+          {t(locale, 'Admin access is granted per account in the database. Signing in does not grant it. Lost the password? Reset it from the Supabase dashboard.')}
         </p>
       </div>
     </main>

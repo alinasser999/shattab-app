@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -30,6 +31,18 @@ class BriefCursor {
 
   final DateTime createdAt;
   final String id;
+}
+
+class BriefCreateResult {
+  const BriefCreateResult({
+    required this.brief,
+    required this.expectedPayload,
+    required this.wasExisting,
+  });
+
+  final Brief brief;
+  final Map<String, dynamic> expectedPayload;
+  final bool wasExisting;
 }
 
 class BriefsRepository {
@@ -328,7 +341,7 @@ class BriefsRepository {
     return rows.map(Brief.fromJson).toList();
   }
 
-  Future<Brief> createBrief({
+  Future<BriefCreateResult> createBrief({
     required String homeownerId,
     String? targetContractorId,
     required ApartmentType apartmentType,
@@ -339,10 +352,17 @@ class BriefsRepository {
     required List<String> targetSpecialties,
     String? projectTitle,
     int? estimatedArea,
-    String? budgetNote,
     String? startTiming,
     String? publishKey,
+    String? publishPayloadFingerprint,
   }) async {
+    if ((publishKey == null) != (publishPayloadFingerprint == null) ||
+        (publishPayloadFingerprint != null &&
+            !RegExp(r'^[0-9a-f]{64}$').hasMatch(publishPayloadFingerprint))) {
+      throw ArgumentError(
+        'A publish key requires its public SHA-256 fingerprint.',
+      );
+    }
     final payload = <String, dynamic>{
       'homeowner_id': homeownerId,
       'target_contractor_id': targetContractorId,
@@ -355,24 +375,24 @@ class BriefsRepository {
         targetSpecialties,
       ),
     };
-    // Keep the original insert shape for existing callers and staged
-    // environments. The extra publish-flow fields are sent only when the
-    // forward migration is present; a missing migration then fails visibly
-    // instead of making a successful-but-incomplete record.
+    // Keep private budget text out of the contractor-readable public row.
     if (projectTitle != null ||
         estimatedArea != null ||
-        budgetNote != null ||
         startTiming != null ||
         publishKey != null) {
       payload.addAll({
         'project_title': projectTitle,
         'estimated_area': estimatedArea,
-        'budget_note': budgetNote,
         'start_timing': startTiming,
         'publish_key': publishKey,
+        'publish_payload_fingerprint': publishPayloadFingerprint,
       });
     }
+    final immutablePayload = Map<String, dynamic>.unmodifiable(
+      Map<String, dynamic>.from(payload)..remove('photo_urls'),
+    );
     Map<String, dynamic> row;
+    var wasExisting = false;
     try {
       row = await _client
           .from('briefs')
@@ -389,11 +409,13 @@ class BriefsRepository {
           .eq('publish_key', publishKey)
           .maybeSingle()
           .timeout(_readTimeout);
-      // Another uniqueness conflict is not a successful retry. Only return
-      // the row owned by this homeowner and bearing this exact logical key.
+      // Another uniqueness conflict is not a successful retry. Verify every
+      // immutable public field and fingerprint before accepting the row.
       if (existing == null) rethrow;
-      return Brief.fromJson(existing);
+      row = existing;
+      wasExisting = true;
     }
+    _verifyCreatePayload(row, wasExisting ? immutablePayload : payload);
 
     // Supply side of the marketplace: every quote, hire and review descends
     // from a brief, so this is the denominator the rest of the funnel gets
@@ -415,7 +437,86 @@ class BriefsRepository {
       ),
     );
 
+    return BriefCreateResult(
+      brief: Brief.fromJson(row),
+      expectedPayload: Map<String, dynamic>.unmodifiable(payload),
+      wasExisting: wasExisting,
+    );
+  }
+
+  Future<Brief> confirmBriefCreateReadback({
+    required String briefId,
+    required String homeownerId,
+    required Map<String, dynamic> expectedPayload,
+    required List<String> photoUrls,
+  }) async {
+    final row = await _client
+        .from('briefs')
+        .select()
+        .eq('id', briefId)
+        .eq('homeowner_id', homeownerId)
+        .maybeSingle()
+        .timeout(_readTimeout);
+    if (row == null) throw StateError('brief_publish_readback_unavailable');
+    _verifyCreatePayload(row, {...expectedPayload, 'photo_urls': photoUrls});
     return Brief.fromJson(row);
+  }
+
+  void _verifyCreatePayload(
+    Map<String, dynamic> row,
+    Map<String, dynamic> expected,
+  ) {
+    for (final entry in expected.entries) {
+      final actual = row[entry.key];
+      final wanted = entry.value;
+      final matches = actual is List && wanted is List
+          ? jsonEncode(actual) == jsonEncode(wanted)
+          : actual == wanted;
+      if (!matches) {
+        throw StateError('brief_publish_idempotency_mismatch');
+      }
+    }
+  }
+
+  Future<void> saveHomeownerBudgetNote({
+    required String briefId,
+    required String budgetNote,
+    required String? privatePublishFingerprint,
+  }) async {
+    if (privatePublishFingerprint == null ||
+        !RegExp(r'^[0-9a-f]{64}$').hasMatch(privatePublishFingerprint)) {
+      throw StateError('brief_private_fingerprint_missing');
+    }
+    final expectedNote = budgetNote.trim();
+    final savedBriefId = await _client
+        .rpc(
+          'save_homeowner_brief_private_fields_for_publish',
+          params: {
+            'p_brief_id': briefId,
+            'p_budget_note': expectedNote,
+            'p_publish_fingerprint': privatePublishFingerprint,
+          },
+        )
+        .timeout(_writeTimeout);
+    if (savedBriefId != briefId) {
+      throw StateError('brief_private_fields_not_confirmed');
+    }
+    final savedNote = await getHomeownerBudgetNote(briefId);
+    if (savedNote != expectedNote) {
+      throw StateError('brief_private_fields_readback_mismatch');
+    }
+  }
+
+  Future<String?> getHomeownerBudgetNote(String briefId) async {
+    final rows = await _client
+        .rpc(
+          'get_homeowner_brief_private_fields',
+          params: {'p_brief_id': briefId},
+        )
+        .timeout(_readTimeout);
+    if (rows is! List || rows.isEmpty || rows.first is! Map) return null;
+    final row = Map<String, dynamic>.from(rows.first as Map);
+    return row['budget_note'] as String?;
   }
 
   Future<void> cancelBrief(String briefId) async {
@@ -520,7 +621,7 @@ class BriefsRepository {
           fileOptions: const FileOptions(
             upsert: true,
             contentType: 'image/jpeg',
-            cacheControl: privateMediaCacheControl,
+            cacheControl: supabasePrivateMediaCacheControlSeconds,
           ),
         )
         .timeout(const Duration(seconds: 30));

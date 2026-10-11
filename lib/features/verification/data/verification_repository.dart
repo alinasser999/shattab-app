@@ -66,7 +66,7 @@ class VerificationRepository {
           // risk without enabling a real verification workflow.
           upsert: false,
           contentType: 'image/jpeg',
-          cacheControl: privateMediaCacheControl,
+          cacheControl: supabasePrivateMediaCacheControlSeconds,
         ),
       );
       paths.add(name);

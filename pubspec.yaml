@@ -60,6 +60,7 @@ dependencies:
   # signal comes back instead of waiting for the user to keep tapping.
   connectivity_plus: ^6.1.0
   web: ^1.1.1
+  crypto: 3.0.7
 
 dev_dependencies:
   flutter_test:

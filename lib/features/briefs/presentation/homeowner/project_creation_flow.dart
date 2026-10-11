@@ -1,7 +1,10 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:math' as math;
+import 'dart:typed_data';
 
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -25,6 +28,7 @@ import '../../../../core/widgets/batsh_scaffold.dart';
 import '../../../../core/widgets/batsh_text_field.dart';
 import '../../../../core/widgets/photo_picker.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../auth/presentation/pending_protected_action.dart';
 import '../../../auth/presentation/sign_in_sheet.dart';
 import '../../../onboarding/domain/onboarding_models.dart';
 import '../../../onboarding/presentation/providers/onboarding_provider.dart';
@@ -55,6 +59,7 @@ class _ProjectCreationFlowState extends ConsumerState<ProjectCreationFlow> {
   String? _activeDraftKey;
   String? _draftOwnerId;
   String? _publishKey;
+  String? _publishFingerprint;
   Future<void> _draftWriteTail = Future<void>.value();
   int _step = 0;
   String? _selectedService;
@@ -67,6 +72,7 @@ class _ProjectCreationFlowState extends ConsumerState<ProjectCreationFlow> {
   bool _hydrated = false;
   bool _busy = false;
   String? _error;
+  String? _resumePublishActionId;
 
   String get _draftKey {
     return _activeDraftKey ??
@@ -82,6 +88,82 @@ class _ProjectCreationFlowState extends ConsumerState<ProjectCreationFlow> {
       (_) => _publishKeyRandom.nextInt(16).toRadixString(16),
     ).join();
     return 'flow-${DateTime.now().toUtc().microsecondsSinceEpoch}-$suffix';
+  }
+
+  Future<_ProjectPublishSnapshot> _capturePublishSnapshot({
+    required String homeownerId,
+    required String publishKey,
+    required String budgetNote,
+  }) async {
+    final title = _titleController.text.trim();
+    final description = _descriptionController.text.trim();
+    final estimatedArea = int.tryParse(_areaController.text.trim());
+    final apartmentType = _apartmentType!;
+    final city = _city!;
+    final district = _district;
+    final service = _selectedService!;
+    final startTiming = _startTiming;
+    final targetSpecialties = SpecialtyCatalog.normalizeSelection([service]);
+    final sourcePhotos = List<DraftPhoto>.of(_photos);
+    final publishPhotos = <DraftPhoto>[];
+    final photoFingerprints = <String>[];
+
+    for (final photo in sourcePhotos) {
+      final bytes =
+          photo.bytes ??
+          (photo.file == null ? null : await photo.file!.readAsBytes());
+      if (bytes == null || bytes.isEmpty) {
+        throw StateError('publish_media_unavailable');
+      }
+      final immutableBytes = Uint8List.fromList(bytes);
+      publishPhotos.add(DraftPhoto(bytes: immutableBytes));
+      photoFingerprints.add(sha256.convert(immutableBytes).toString());
+    }
+
+    final publicPayload = <String, Object?>{
+      'version': 1,
+      'homeowner_id': homeownerId,
+      'target_contractor_id': null,
+      'apartment_type': apartmentType.dbValue,
+      'city': city,
+      'district': district,
+      'work_description': description,
+      'photo_sha256': photoFingerprints,
+      'target_specialties': targetSpecialties,
+      'project_title': title,
+      'estimated_area': estimatedArea,
+      'start_timing': startTiming,
+      'publish_key': publishKey,
+    };
+    final publicFingerprint = sha256
+        .convert(utf8.encode(jsonEncode(publicPayload)))
+        .toString();
+    final privateFingerprint = sha256
+        .convert(
+          utf8.encode(
+            jsonEncode({
+              'version': 1,
+              'public_fingerprint': publicFingerprint,
+              'budget_note': budgetNote,
+            }),
+          ),
+        )
+        .toString();
+
+    return _ProjectPublishSnapshot(
+      title: title,
+      description: description,
+      estimatedArea: estimatedArea,
+      apartmentType: apartmentType,
+      city: city,
+      district: district,
+      targetSpecialties: targetSpecialties,
+      startTiming: startTiming,
+      budgetNote: budgetNote,
+      photos: publishPhotos,
+      publicFingerprint: publicFingerprint,
+      privateFingerprint: privateFingerprint,
+    );
   }
 
   @override
@@ -104,8 +186,26 @@ class _ProjectCreationFlowState extends ConsumerState<ProjectCreationFlow> {
     final sessionUserId = ref.read(currentSessionProvider)?.user.id;
     final userDraftKey = _keyForUser(sessionUserId);
     var activeDraftKey = userDraftKey;
-    var draft = await FormDraftStore.read(userDraftKey);
-    if (sessionUserId != null) {
+    Map<String, dynamic>? draft;
+    final coordinator = ref.read(pendingProtectedActionCoordinatorProvider);
+    final pendingAction = sessionUserId == null
+        ? null
+        : coordinator.resumable<ProjectPublishAction>(
+            Routes.homeownerNewPost,
+            sessionUserId: sessionUserId,
+            profile: ref.read(currentProfileProvider).asData?.value,
+          );
+    if (pendingAction != null) {
+      _resumePublishActionId = pendingAction.id;
+      _photos = pendingAction.draft.photos;
+      _step = pendingAction.draft.step.clamp(0, 2).toInt();
+      draft = pendingAction.draft.toStore(ownerId: sessionUserId!);
+      await FormDraftStore.write(userDraftKey, draft);
+      await FormDraftStore.clear(_anonymousDraftKey);
+    } else {
+      draft = await FormDraftStore.read(userDraftKey);
+    }
+    if (sessionUserId != null && pendingAction == null) {
       final guestDraft = await FormDraftStore.read(_anonymousDraftKey);
       if (guestDraft?['owner_id'] == sessionUserId) {
         draft = guestDraft;
@@ -123,6 +223,7 @@ class _ProjectCreationFlowState extends ConsumerState<ProjectCreationFlow> {
     final restoredDraft = draft;
     if (restoredDraft == null || restoredDraft.isEmpty) {
       _publishKey = _newPublishKey();
+      _publishFingerprint = null;
       setState(() {
         _city = homeowner?.city;
         _district = homeowner?.district;
@@ -136,6 +237,7 @@ class _ProjectCreationFlowState extends ConsumerState<ProjectCreationFlow> {
     if (_publishKey == null || _publishKey!.isEmpty) {
       _publishKey = _newPublishKey();
     }
+    _publishFingerprint = restoredDraft['publish_fingerprint'] as String?;
     final apartmentName = restoredDraft['apartment_type'] as String?;
     final restoredApartment = ApartmentType.values
         .cast<ApartmentType?>()
@@ -158,6 +260,26 @@ class _ProjectCreationFlowState extends ConsumerState<ProjectCreationFlow> {
       _hydrated = true;
     });
     await _writeDraftSnapshot();
+    _schedulePendingPublishResume();
+  }
+
+  void _schedulePendingPublishResume() {
+    final actionId = _resumePublishActionId;
+    if (actionId == null) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final coordinator = ref.read(pendingProtectedActionCoordinatorProvider);
+      final session = ref.read(currentSessionProvider);
+      final profile = ref.read(currentProfileProvider).asData?.value;
+      if (!coordinator.claim(
+        actionId,
+        sessionUserId: session?.user.id,
+        profile: profile,
+      )) {
+        return;
+      }
+      unawaited(_publish(pendingActionId: actionId));
+    });
   }
 
   void _saveDraft() {
@@ -179,6 +301,8 @@ class _ProjectCreationFlowState extends ConsumerState<ProjectCreationFlow> {
       'start_timing': _startTiming,
       'budget_undecided': _budgetUndecided,
       'publish_key': _publishKey ??= _newPublishKey(),
+      if (_publishFingerprint != null)
+        'publish_fingerprint': _publishFingerprint,
       if (_draftOwnerId != null) 'owner_id': _draftOwnerId,
     };
     final write = _draftWriteTail
@@ -245,6 +369,10 @@ class _ProjectCreationFlowState extends ConsumerState<ProjectCreationFlow> {
       setState(() => _error = context.l10n.areaInvalid);
       return false;
     }
+    if (!_budgetUndecided && _budgetController.text.trim().isEmpty) {
+      setState(() => _error = context.l10n.fieldRequired);
+      return false;
+    }
     return true;
   }
 
@@ -272,19 +400,11 @@ class _ProjectCreationFlowState extends ConsumerState<ProjectCreationFlow> {
     await _scrollToTop();
   }
 
-  Future<void> _publish() async {
+  Future<void> _publish({String? pendingActionId}) async {
     if (_busy) return;
-    if (ref.read(currentSessionProvider) == null) {
-      final completed = await showSignInSheet(
-        context,
-        reason: context.l10n.signInToPost,
-      );
-      if (!completed || !mounted || ref.read(currentSessionProvider) == null) {
-        return;
-      }
-    }
-    _draftOwnerId = ref.read(currentSessionProvider)?.user.id;
+    final coordinator = ref.read(pendingProtectedActionCoordinatorProvider);
     if (!_validateStepOne() || !_validateStepTwo()) {
+      if (pendingActionId != null) coordinator.release(pendingActionId);
       if (mounted) {
         setState(
           () => _step = _descriptionController.text.trim().length < 10 ? 1 : 0,
@@ -292,45 +412,145 @@ class _ProjectCreationFlowState extends ConsumerState<ProjectCreationFlow> {
       }
       return;
     }
+
+    if (ref.read(currentSessionProvider) == null) {
+      await _writeDraftSnapshot();
+      if (!mounted) return;
+      pendingActionId = await beginProtectedActionSignIn(
+        context,
+        ref,
+        reason: context.l10n.signInToPost,
+        action: ProjectPublishAction(
+          draft: ProjectPublishDraft(
+            title: _titleController.text,
+            description: _descriptionController.text,
+            area: _areaController.text,
+            budget: _budgetController.text,
+            service: _selectedService,
+            apartmentType: _apartmentType?.name,
+            city: _city,
+            district: _district,
+            startTiming: _startTiming,
+            budgetUndecided: _budgetUndecided,
+            publishKey: _publishKey ??= _newPublishKey(),
+            publishFingerprint: _publishFingerprint,
+            step: _step,
+            photos: List<DraftPhoto>.unmodifiable(_photos),
+          ),
+        ),
+      );
+      if (pendingActionId == null ||
+          !mounted ||
+          ref.read(currentSessionProvider) == null) {
+        return;
+      }
+    }
+
+    final session = ref.read(currentSessionProvider);
+    final profile = ref.read(currentProfileProvider).asData?.value;
+    if (session == null ||
+        !coordinator.isEligibleHomeowner(profile, userId: session.user.id)) {
+      if (pendingActionId != null) coordinator.release(pendingActionId);
+      return;
+    }
+    _draftOwnerId = session.user.id;
+    if (pendingActionId != null &&
+        !coordinator.isClaimed(pendingActionId) &&
+        !coordinator.claim(
+          pendingActionId,
+          sessionUserId: session.user.id,
+          profile: profile,
+        )) {
+      return;
+    }
+    if (pendingActionId == null) {
+      final retained = coordinator.action;
+      if (retained is ProjectPublishAction &&
+          retained.draft.publishKey == _publishKey &&
+          coordinator.isReleasedRetryable(retained.id) &&
+          coordinator.claim(
+            retained.id,
+            sessionUserId: session.user.id,
+            profile: profile,
+          )) {
+        // This method is reached from the visible Publish/Retry control. Keep
+        // an earlier failed intent attached to that explicit retry only.
+        pendingActionId = retained.id;
+      }
+    }
+    if (pendingActionId == null) {
+      final pending = coordinator.resumable<ProjectPublishAction>(
+        Routes.homeownerNewPost,
+        sessionUserId: session.user.id,
+        profile: profile,
+      );
+      if (pending != null &&
+          coordinator.claim(
+            pending.id,
+            sessionUserId: session.user.id,
+            profile: profile,
+          )) {
+        pendingActionId = pending.id;
+      }
+    }
     setState(() {
       _busy = true;
       _error = null;
     });
+    FocusManager.instance.primaryFocus?.unfocus();
     try {
-      // Persist the logical key and latest form values before inserting. The
-      // same key survives auth continuation, timeouts, and process restarts.
       final budgetNote = _budgetUndecided
           ? context.l10n.budgetUndecided
           : _budgetController.text.trim();
+      final publishKey = _publishKey ??= _newPublishKey();
+      final snapshot = await _capturePublishSnapshot(
+        homeownerId: session.user.id,
+        publishKey: publishKey,
+        budgetNote: budgetNote,
+      );
+      if (_publishFingerprint != null &&
+          _publishFingerprint != snapshot.privateFingerprint) {
+        throw StateError('brief_publish_payload_changed');
+      }
+      _publishFingerprint = snapshot.privateFingerprint;
+      // Persist the immutable private value fingerprint and the same key
+      // before inserting. A changed retry or unavailable local media fails
+      // closed before it can mutate the row or private note.
       await _writeDraftSnapshot();
       final brief = await ref
           .read(briefsControllerProvider.notifier)
           .createPost(
-            apartmentType: _apartmentType!,
-            city: _city!,
-            district: _district,
-            workDescription: _descriptionController.text.trim(),
-            targetSpecialties: [_selectedService!],
-            photos: _photos,
-            projectTitle: _titleController.text.trim(),
-            estimatedArea: int.tryParse(_areaController.text.trim()),
-            budgetNote: budgetNote,
-            startTiming: _startTiming,
-            publishKey: _publishKey!,
+            apartmentType: snapshot.apartmentType,
+            city: snapshot.city,
+            district: snapshot.district,
+            workDescription: snapshot.description,
+            targetSpecialties: snapshot.targetSpecialties,
+            photos: snapshot.photos,
+            projectTitle: snapshot.title,
+            estimatedArea: snapshot.estimatedArea,
+            budgetNote: snapshot.budgetNote,
+            startTiming: snapshot.startTiming,
+            publishKey: publishKey,
+            publishPayloadFingerprint: snapshot.publicFingerprint,
+            privatePublishFingerprint: snapshot.privateFingerprint,
           );
+      if (pendingActionId != null) coordinator.complete(pendingActionId);
       if (!mounted) return;
       await _draftWriteTail.catchError((Object _) {});
       await FormDraftStore.clear(_draftKey);
       if (!mounted) return;
+      _publishKey = _newPublishKey();
+      _publishFingerprint = null;
       await Navigator.of(context).push(
         MaterialPageRoute<void>(
           builder: (_) => ProjectPublishedScreen(
             brief: brief,
-            titleFallback: _titleController.text.trim(),
+            titleFallback: snapshot.title,
           ),
         ),
       );
     } catch (error) {
+      if (pendingActionId != null) coordinator.release(pendingActionId);
       if (!mounted) return;
       setState(() => _error = ErrorMapper.map(error));
     } finally {
@@ -355,19 +575,22 @@ class _ProjectCreationFlowState extends ConsumerState<ProjectCreationFlow> {
           children: [
             _FlowHeader(step: _step, title: _stepTitle(context), onBack: _back),
             Expanded(
-              child: SingleChildScrollView(
-                controller: _scrollController,
-                padding: const EdgeInsets.fromLTRB(
-                  BatshSpacing.sectionH,
-                  BatshSpacing.md,
-                  BatshSpacing.sectionH,
-                  BatshSpacing.xl,
+              child: AbsorbPointer(
+                absorbing: _busy,
+                child: SingleChildScrollView(
+                  controller: _scrollController,
+                  padding: const EdgeInsets.fromLTRB(
+                    BatshSpacing.sectionH,
+                    BatshSpacing.md,
+                    BatshSpacing.sectionH,
+                    BatshSpacing.xl,
+                  ),
+                  child: _step == 0
+                      ? _buildStepOne(context)
+                      : _step == 1
+                      ? _buildStepTwo(context)
+                      : _buildStepThree(context),
                 ),
-                child: _step == 0
-                    ? _buildStepOne(context)
-                    : _step == 1
-                    ? _buildStepTwo(context)
-                    : _buildStepThree(context),
               ),
             ),
             _FlowFooter(
@@ -522,6 +745,8 @@ class _ProjectCreationFlowState extends ConsumerState<ProjectCreationFlow> {
         ),
         const SizedBox(height: BatshSpacing.md),
         PhotoPicker(
+          key: ValueKey('project-photos-$_resumePublishActionId'),
+          initial: _photos,
           onChanged: (photos) => setState(() {
             _photos = photos;
             _saveDraft();
@@ -649,6 +874,36 @@ class _ProjectCreationFlowState extends ConsumerState<ProjectCreationFlow> {
     });
     unawaited(_scrollToTop());
   }
+}
+
+class _ProjectPublishSnapshot {
+  const _ProjectPublishSnapshot({
+    required this.title,
+    required this.description,
+    required this.estimatedArea,
+    required this.apartmentType,
+    required this.city,
+    required this.district,
+    required this.targetSpecialties,
+    required this.startTiming,
+    required this.budgetNote,
+    required this.photos,
+    required this.publicFingerprint,
+    required this.privateFingerprint,
+  });
+
+  final String title;
+  final String description;
+  final int? estimatedArea;
+  final ApartmentType apartmentType;
+  final String city;
+  final String? district;
+  final List<String> targetSpecialties;
+  final String startTiming;
+  final String budgetNote;
+  final List<DraftPhoto> photos;
+  final String publicFingerprint;
+  final String privateFingerprint;
 }
 
 class ProjectPublishedScreen extends StatelessWidget {
@@ -1016,7 +1271,7 @@ class _ChoiceTile extends StatelessWidget {
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 150),
           width: 108,
-          height: 94,
+          constraints: const BoxConstraints(minHeight: 94),
           padding: const EdgeInsets.all(BatshSpacing.sm),
           decoration: BoxDecoration(
             color: selected
@@ -1037,8 +1292,6 @@ class _ChoiceTile extends StatelessWidget {
               const SizedBox(height: BatshSpacing.xs),
               Text(
                 label,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
                 textAlign: TextAlign.center,
                 style: BatshTypography.labelSm.copyWith(
                   fontWeight: FontWeight.w700,
@@ -1345,24 +1598,32 @@ class _CreationLocationSheetState extends State<_CreationLocationSheet> {
                   final selected = item.city == _city;
                   return Column(
                     children: [
-                      ListTile(
-                        selected: selected,
-                        selectedTileColor: context.colorScheme.primaryContainer,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BatshRadius.brMd,
+                      Material(
+                        color: context.colorScheme.surface,
+                        borderRadius: BatshRadius.brMd,
+                        clipBehavior: Clip.antiAlias,
+                        child: ListTile(
+                          selected: selected,
+                          selectedTileColor:
+                              context.colorScheme.primaryContainer,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BatshRadius.brMd,
+                          ),
+                          leading: Icon(Icons.location_city_outlined),
+                          title: Text(item.city),
+                          trailing: Icon(
+                            selected
+                                ? Icons.radio_button_checked_rounded
+                                : Icons.radio_button_unchecked_rounded,
+                            color: selected
+                                ? context.colorScheme.primary
+                                : null,
+                          ),
+                          onTap: () => setState(() {
+                            _city = item.city;
+                            _district = null;
+                          }),
                         ),
-                        leading: Icon(Icons.location_city_outlined),
-                        title: Text(item.city),
-                        trailing: Icon(
-                          selected
-                              ? Icons.radio_button_checked_rounded
-                              : Icons.radio_button_unchecked_rounded,
-                          color: selected ? context.colorScheme.primary : null,
-                        ),
-                        onTap: () => setState(() {
-                          _city = item.city;
-                          _district = null;
-                        }),
                       ),
                       if (selected)
                         Padding(

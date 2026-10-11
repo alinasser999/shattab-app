@@ -1,3 +1,5 @@
+import 'dart:ui' as ui;
+
 import 'package:batsh/l10n/app_localizations.dart';
 import 'package:batsh/core/widgets/batsh_button.dart';
 import 'package:flutter/material.dart';
@@ -48,7 +50,18 @@ void main() {
       );
 
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
-      expect(find.text('احفظ'), findsNothing);
+      expect(find.text('احفظ'), findsOneWidget);
+      final copy = AppLocalizations.of(
+        tester.element(find.byType(BatshButton)),
+      )!;
+      final data = tester
+          .getSemantics(find.bySemanticsLabel('احفظ'))
+          .getSemanticsData();
+      expect(data.label, 'احفظ');
+      expect(data.value, copy.loading);
+      expect(data.flagsCollection.isButton, isTrue);
+      expect(data.flagsCollection.isEnabled, ui.Tristate.isFalse);
+      expect(data.flagsCollection.isLiveRegion, isTrue);
     });
 
     testWidgets('fires onPressed when enabled', (tester) async {

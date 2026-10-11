@@ -43,7 +43,7 @@ Page<T> slideUpPage<T>(Widget child, GoRouterState state) =>
     CustomTransitionPage<T>(
       key: state.pageKey,
       child: child,
-      transitionDuration: BatshMotion.slower,
+      transitionDuration: BatshMotion.normal,
       reverseTransitionDuration: BatshMotion.fast,
       transitionsBuilder: (context, animation, secondaryAnimation, child) {
         final curved = CurvedAnimation(

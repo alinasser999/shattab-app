@@ -41,15 +41,7 @@ class BatshApp extends ConsumerWidget {
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       builder: (context, child) {
         if (child == null) return const SizedBox.shrink();
-        // Honour the system font size, but cap it. Many surfaces still use
-        // fixed heights (search bars, CTA rows, stat tiles), so at 200% scale
-        // text clips instead of reflowing. 1.5x is a compromise: the large-text
-        // users this matters most for get most of their preference, and nothing
-        // shears off. Drop the cap once those fixed heights become min-heights.
-        Widget result = MediaQuery.withClampedTextScaling(
-          maxScaleFactor: 1.5,
-          child: child,
-        );
+        Widget result = child;
         if (motionMode != MotionMode.full) {
           final mq = MediaQuery.of(context);
           result = MediaQuery(

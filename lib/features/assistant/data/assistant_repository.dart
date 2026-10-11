@@ -5,7 +5,9 @@
 
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../core/utils/phone_number_formatter.dart';
 import '../domain/assistant_envelope.dart';
+import '../domain/assistant_failure.dart';
 import '../domain/assistant_message.dart';
 
 class AssistantRepository {
@@ -29,7 +31,7 @@ class AssistantRepository {
 
   static String redactPii(String input) {
     if (input.isEmpty) return '';
-    return input
+    return normalizeLocalizedDigits(input)
         .replaceAll(_phonePattern, '[رقم محذوف]')
         .replaceAll(_emailPattern, '[بريد محذوف]')
         .replaceAll(_uuidPattern, '[معرف محذوف]')
@@ -67,10 +69,14 @@ class AssistantRepository {
     String audience = 'homeowner',
   }) async {
     final session = _supabase.auth.currentSession;
-    if (session == null) return AssistantEnvelope.safeFallback;
+    if (session == null) {
+      throw const AssistantFailure(AssistantFailureType.authenticationRequired);
+    }
 
     final messages = prepareMessagesPayload(history);
-    if (messages.isEmpty) return AssistantEnvelope.safeFallback;
+    if (messages.isEmpty) {
+      throw const AssistantFailure(AssistantFailureType.temporaryService);
+    }
 
     try {
       final response = await _supabase.functions
@@ -87,13 +93,48 @@ class AssistantRepository {
           .timeout(const Duration(seconds: 18));
 
       final data = response.data;
-      if (data is Map<String, dynamic>) return AssistantEnvelope.fromJson(data);
-      if (data is Map) {
-        return AssistantEnvelope.fromJson(Map<String, dynamic>.from(data));
+      final json = switch (data) {
+        Map<String, dynamic>() => data,
+        Map() => Map<String, dynamic>.from(data),
+        _ => throw const AssistantFailure(
+          AssistantFailureType.temporaryService,
+        ),
+      };
+      if (json['reply'] is! String ||
+          (json['reply'] as String).trim().isEmpty) {
+        throw const AssistantFailure(AssistantFailureType.temporaryService);
       }
-      return AssistantEnvelope.safeFallback;
+      return AssistantEnvelope.fromJson(json);
+    } on FunctionException catch (error) {
+      final code = _assistantErrorCode(error.details);
+      if (error.status == 429 && code == 'quota_exceeded') {
+        throw const AssistantFailure(AssistantFailureType.quotaExceeded);
+      }
+      if (error.status == 401 && code == 'authentication_required') {
+        throw const AssistantFailure(
+          AssistantFailureType.authenticationRequired,
+        );
+      }
+      throw const AssistantFailure(AssistantFailureType.temporaryService);
+    } on AssistantFailure {
+      rethrow;
     } catch (_) {
-      return AssistantEnvelope.safeFallback;
+      throw const AssistantFailure(AssistantFailureType.temporaryService);
     }
+  }
+
+  static String? _assistantErrorCode(dynamic details) {
+    if (details is! Map) return null;
+    final code = details['code'];
+    if (code is String &&
+        const {
+          'quota_exceeded',
+          'authentication_required',
+          'assistant_unavailable',
+          'invalid_request',
+        }.contains(code)) {
+      return code;
+    }
+    return null;
   }
 }

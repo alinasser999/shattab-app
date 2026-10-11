@@ -1,3 +1,4 @@
+import '../../../core/widgets/professional_reference_states.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -6,8 +7,6 @@ import '../../../core/theme/batsh_spacing.dart';
 import '../../../core/theme/batsh_typography.dart';
 import '../../../core/utils/error_mapper.dart';
 import '../../../core/utils/time_format.dart';
-import '../../../core/widgets/batsh_empty_state.dart';
-import '../../../core/widgets/batsh_error.dart';
 import '../../../core/widgets/batsh_shimmer.dart';
 import '../domain/review.dart';
 import 'providers/reviews_providers.dart';
@@ -49,17 +48,19 @@ class _ReviewsSheet extends ConsumerWidget {
           Expanded(
             child: async.when(
               loading: () => const BatshListSkeleton(count: 4),
-              error: (e, _) => BatshError(
+              error: (e, _) => ProfessionalReferenceReadError(
                 message: ErrorMapper.map(e),
                 onRetry: () =>
                     ref.invalidate(reviewsForContractorProvider(contractorId)),
               ),
               data: (reviews) {
                 if (reviews.isEmpty) {
-                  return BatshEmptyState(
+                  return ProfessionalReferenceState(
                     title: context.l10n.noReviewsYet,
-                    message: context.l10n.noReviewsYetSub,
-                    icon: Icons.rate_review_outlined,
+                    message: context.l10n.stateClientReviewsMessage,
+                    motif: ProfessionalReferenceMotif.reviews,
+                    primaryLabel: context.l10n.stateCloseAction,
+                    onPrimary: () => Navigator.of(context).pop(),
                   );
                 }
                 return ListView.separated(

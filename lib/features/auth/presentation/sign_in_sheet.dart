@@ -1,19 +1,21 @@
+import '../../../core/theme/professional_reference_theme.dart';
+import '../../../core/widgets/professional_reference_primitives.dart';
+import '../../../core/widgets/professional_reference_states.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:batsh/core/l10n/l10n_extension.dart';
 import '../../../core/theme/batsh_spacing.dart';
-import '../../../core/theme/batsh_typography.dart';
 import '../../../core/utils/error_mapper.dart';
 import '../../../core/utils/phone_number_formatter.dart';
 import '../../../core/utils/validators.dart';
-import '../../../core/widgets/batsh_button.dart';
-import '../../../core/widgets/batsh_text_field.dart';
 import '../../onboarding/data/onboarding_repository.dart';
 import 'providers/auth_provider.dart';
 import 'providers/otp_provider.dart';
 import '../../../core/widgets/batsh_sheet.dart';
+import '../domain/profile.dart';
+import 'pending_protected_action.dart';
 
 import 'package:batsh/core/theme/theme_extension.dart';
 
@@ -25,12 +27,68 @@ Future<bool> showSignInSheet(
   BuildContext context, {
   required String reason,
 }) async {
-  final completed = await BatshSheet.show<bool>(
+  final outcome = await _showSignInSheet(context, reason: reason);
+  return outcome == SignInSheetOutcome.completed;
+}
+
+enum SignInSheetOutcome { completed, onboardingRequired, dismissed }
+
+Future<String?> beginProtectedActionSignIn(
+  BuildContext context,
+  WidgetRef ref, {
+  required String reason,
+  required PendingProtectedAction action,
+}) async {
+  final coordinator = ref.read(pendingProtectedActionCoordinatorProvider);
+  final captured = coordinator.capture(action);
+  if (captured == null) return null;
+
+  final outcome = await _showSignInSheet(
+    context,
+    reason: reason,
+    actionId: captured.id,
+  );
+  if (outcome == SignInSheetOutcome.completed) {
+    if (!context.mounted) {
+      coordinator.complete(captured.id);
+      return null;
+    }
+    final session = ref.read(currentSessionProvider);
+    final profile = ref.read(currentProfileProvider).asData?.value;
+    coordinator.observeProfile(profile, sessionUserId: session?.user.id);
+    if (coordinator.claim(
+      captured.id,
+      sessionUserId: session?.user.id,
+      profile: profile,
+    )) {
+      return captured.id;
+    }
+    coordinator.complete(captured.id);
+    return null;
+  }
+
+  // Only OTP completion followed by the explicit onboarding handoff retains
+  // the action. Barrier/drag dismissal always cancels it, even if profile
+  // state changed while the sheet was open.
+  if (outcome == SignInSheetOutcome.onboardingRequired &&
+      coordinator.isAwaitingOnboarding(captured.id)) {
+    return null;
+  }
+  coordinator.complete(captured.id);
+  return null;
+}
+
+Future<SignInSheetOutcome> _showSignInSheet(
+  BuildContext context, {
+  required String reason,
+  String? actionId,
+}) async {
+  final outcome = await BatshSheet.show<SignInSheetOutcome>(
     context,
     contentPadding: EdgeInsets.zero,
-    builder: (_) => _SignInSheet(reason: reason),
+    builder: (_) => _SignInSheet(reason: reason, actionId: actionId),
   );
-  return completed == true;
+  return outcome ?? SignInSheetOutcome.dismissed;
 }
 
 final Expando<bool> _pendingSignInGates = Expando<bool>(
@@ -63,8 +121,9 @@ Future<void> runSignedIn(
 enum _Step { phone, otp, profile, name }
 
 class _SignInSheet extends ConsumerStatefulWidget {
-  const _SignInSheet({required this.reason});
+  const _SignInSheet({required this.reason, this.actionId});
   final String reason;
+  final String? actionId;
 
   @override
   ConsumerState<_SignInSheet> createState() => _SignInSheetState();
@@ -166,9 +225,42 @@ class _SignInSheetState extends ConsumerState<_SignInSheet> {
         return;
       }
 
+      final sessionUserId = ref.read(currentSessionProvider)?.user.id;
+      final coordinator = ref.read(pendingProtectedActionCoordinatorProvider);
+      if (sessionUserId == null) {
+        setState(() {
+          _step = _Step.profile;
+          _error = context.l10n.errAuthFailed;
+        });
+        return;
+      }
+      coordinator.observeProfile(profile, sessionUserId: sessionUserId);
+      if (profile.role != UserRole.homeowner) {
+        if (widget.actionId != null) {
+          coordinator.complete(widget.actionId!);
+        }
+        Navigator.of(context).pop(SignInSheetOutcome.dismissed);
+        return;
+      }
+      if (!coordinator.isEligibleHomeowner(profile, userId: sessionUserId)) {
+        if (widget.actionId != null && _otpVerified) {
+          coordinator.markOtpCompletedAwaitingOnboarding(
+            widget.actionId!,
+            sessionUserId,
+          );
+          Navigator.of(context).pop(SignInSheetOutcome.onboardingRequired);
+          return;
+        }
+        if (widget.actionId != null) {
+          coordinator.complete(widget.actionId!);
+        }
+        Navigator.of(context).pop(SignInSheetOutcome.dismissed);
+        return;
+      }
+
       if (expectedName != null) {
         if (profile.fullName.trim() == expectedName) {
-          Navigator.of(context).pop(true);
+          Navigator.of(context).pop(SignInSheetOutcome.completed);
           return;
         }
         _pendingSavedName = null;
@@ -182,7 +274,7 @@ class _SignInSheetState extends ConsumerState<_SignInSheet> {
       if (profile.fullName.trim().isEmpty) {
         setState(() => _step = _Step.name);
       } else {
-        Navigator.of(context).pop(true);
+        Navigator.of(context).pop(SignInSheetOutcome.completed);
       }
     } catch (_) {
       if (!mounted) return;
@@ -252,22 +344,14 @@ class _SignInSheetState extends ConsumerState<_SignInSheet> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(
-              context.l10n.signInSheetTitle,
-              textAlign: TextAlign.center,
-              style: BatshTypography.titleLg,
-            ),
-            const SizedBox(height: BatshSpacing.xs),
-            Text(
-              widget.reason,
-              textAlign: TextAlign.center,
-              style: BatshTypography.bodyMd.copyWith(
-                color: context.colorScheme.onSurfaceVariant,
-              ),
+            ProfessionalReferenceWelcome(
+              title: context.l10n.signInSheetTitle,
+              message: widget.reason,
+              motif: ProfessionalReferenceMotif.identity,
             ),
             const SizedBox(height: BatshSpacing.lg),
             if (_step == _Step.phone) ...[
-              BatshTextField(
+              ProfessionalReferenceTextField(
                 controller: _phoneCtrl,
                 label: context.l10n.phoneLabel,
                 hint: context.l10n.phoneLocalHint,
@@ -282,7 +366,7 @@ class _SignInSheetState extends ConsumerState<_SignInSheet> {
                 autofocus: true,
               ),
               const SizedBox(height: BatshSpacing.lg),
-              BatshButton(
+              ProfessionalReferencePrimaryButton(
                 label: context.l10n.continueLabel,
                 onPressed: otpState.isSending ? null : _sendCode,
                 isLoading: otpState.isSending,
@@ -296,9 +380,9 @@ class _SignInSheetState extends ConsumerState<_SignInSheet> {
                   child: Text(
                     otpState.errorMessage!,
                     textAlign: TextAlign.center,
-                    style: BatshTypography.bodySm.copyWith(
-                      color: context.colorScheme.error,
-                    ),
+                    style: ProfessionalReferenceTheme.text(
+                      16,
+                    ).copyWith(color: context.colorScheme.error),
                   ),
                 ),
               ],
@@ -307,12 +391,12 @@ class _SignInSheetState extends ConsumerState<_SignInSheet> {
                 '\u2066${otpState.phone ?? ''}\u2069',
                 textAlign: TextAlign.center,
                 textDirection: TextDirection.ltr,
-                style: BatshTypography.bodyMd.copyWith(
-                  color: context.colorScheme.onSurfaceVariant,
-                ),
+                style: ProfessionalReferenceTheme.text(
+                  16,
+                ).copyWith(color: context.colorScheme.onSurfaceVariant),
               ),
               const SizedBox(height: BatshSpacing.md),
-              BatshTextField(
+              ProfessionalReferenceTextField(
                 controller: _otpCtrl,
                 semanticLabel: context.l10n.otpTitle,
                 hint: context.l10n.otpHint,
@@ -331,7 +415,7 @@ class _SignInSheetState extends ConsumerState<_SignInSheet> {
                 autofocus: true,
               ),
               const SizedBox(height: BatshSpacing.lg),
-              BatshButton(
+              ProfessionalReferencePrimaryButton(
                 label: context.l10n.continueLabel,
                 onPressed: isOtpContinueBusy ? null : _verifyCode,
                 isLoading: isOtpContinueBusy,
@@ -358,9 +442,9 @@ class _SignInSheetState extends ConsumerState<_SignInSheet> {
                   child: Text(
                     otpState.errorMessage!,
                     textAlign: TextAlign.center,
-                    style: BatshTypography.bodySm.copyWith(
-                      color: context.colorScheme.error,
-                    ),
+                    style: ProfessionalReferenceTheme.text(
+                      16,
+                    ).copyWith(color: context.colorScheme.error),
                   ),
                 ),
               ],
@@ -370,13 +454,13 @@ class _SignInSheetState extends ConsumerState<_SignInSheet> {
                 child: Text(
                   _error ?? context.l10n.profileError,
                   textAlign: TextAlign.center,
-                  style: BatshTypography.bodyMd.copyWith(
-                    color: context.colorScheme.error,
-                  ),
+                  style: ProfessionalReferenceTheme.text(
+                    16,
+                  ).copyWith(color: context.colorScheme.error),
                 ),
               ),
               const SizedBox(height: BatshSpacing.lg),
-              BatshButton(
+              ProfessionalReferencePrimaryButton(
                 label: context.l10n.tryAgain,
                 onPressed: _isRefreshingProfile ? null : _retryProfile,
                 isLoading: _isRefreshingProfile,
@@ -385,10 +469,10 @@ class _SignInSheetState extends ConsumerState<_SignInSheet> {
               Text(
                 context.l10n.whatsYourName,
                 textAlign: TextAlign.center,
-                style: BatshTypography.bodyMd,
+                style: ProfessionalReferenceTheme.text(16),
               ),
               const SizedBox(height: BatshSpacing.md),
-              BatshTextField(
+              ProfessionalReferenceTextField(
                 controller: _nameCtrl,
                 label: context.l10n.profileNameLabel,
                 hint: context.l10n.fullNameHint,
@@ -398,7 +482,7 @@ class _SignInSheetState extends ConsumerState<_SignInSheet> {
                 autofocus: true,
               ),
               const SizedBox(height: BatshSpacing.lg),
-              BatshButton(
+              ProfessionalReferencePrimaryButton(
                 label: context.l10n.saveProfile,
                 onPressed: _isSavingName ? null : _saveName,
                 isLoading: _isSavingName,

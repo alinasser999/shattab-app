@@ -1045,6 +1045,13 @@
   "contactPrivacyShareHint": "Start a secure conversation through Shattab.",
   "worksIn": "Works in",
   "newProfessional": "New Professional",
+  "referenceDirectoryYearsExperienceCount": "{years} years of experience",
+  "@referenceDirectoryYearsExperienceCount": {
+    "placeholders": {
+      "years": {"type": "String"}
+    }
+  },
+  "referenceUnratedLabel": "No reviews",
   "noRatingsYet": "No ratings yet",
   "responseRate": "Response Rate",
   "projectsCompleted": "Projects Completed",
@@ -1529,7 +1536,7 @@
   "homeReferenceHeroTitleLineOne": "From the first idea",
   "homeReferenceHeroTitleLineTwo": "to the home you love",
   "homeReferenceHeroSupportBody": "Trusted professionals to help with every step, from planning and design to delivery",
-  "homeReferenceServiceFullRenovationLabel": "Full renovation",
+  "homeReferenceServiceFullRenovationLabel": "Renovation",
   "homeReferenceHeroTagline": "Every home\nhas a story",
   "homeReferenceProjectStatus": "My current project",
   "homeReferenceProjectTitle": "Renovating an apartment in Maadi",
@@ -1544,7 +1551,7 @@
   "homeReferenceRealWorkSubtitle": "See the difference before and after",
   "homeReferenceCaseDetails": "View details",
   "homeReferenceCaseQuote": "The result was amazing and beyond my expectations",
-  "homeReferenceCommunityTitle": "From the Shattab community",
+  "homeReferenceCommunityTitle": "From the community",
   "homeReferenceCommunityTip": "Advice from experience",
   "homeReferenceCommunityExperience": "My experience",
   "homeReferenceCommunityInviteTitle": "Share your Shattab experience",
@@ -1742,6 +1749,19 @@
   "assistantActionPricing": "Pro plans and pricing",
   "assistantActionSupport": "Contact support",
   "assistantSignInRequired": "Sign in to use the AI assistant",
+  "assistantErrorQuota": "You have reached the assistant query limit. Browse professionals directly.",
+  "assistantErrorQuotaContractor": "You have reached the assistant query limit. Continue using the app from your dashboard.",
+  "assistantQuotaBrowseAction": "Browse professionals",
+  "assistantQuotaDashboardAction": "Open dashboard",
+  "assistantSignInAgain": "Sign in to the same account",
+  "assistantReauthTitle": "Recover assistant question",
+  "assistantReauthMessage": "Sign in again to the account that sent the question that could not be delivered.",
+  "assistantReauthFailed": "We could not verify the account. Check your sign-in details and try again.",
+  "assistantReauthMismatchMessage": "This is not the account that sent the question, or its account type could not be confirmed. Try the original account details or discard the question to continue with this account.",
+  "assistantReauthTryOriginal": "Enter the original account details",
+  "assistantReauthDiscard": "Discard question and continue with this account",
+  "assistantRetryQuestion": "Retry question",
+  "assistantConversationHiddenMessage": "This conversation is hidden because the current account or account type does not match the one that started it. Discard the question to continue with this account.",
   "onboardingStepLabel": "Step {step} of {total}",
   "@onboardingStepLabel": {
     "placeholders": {
@@ -1926,7 +1946,7 @@
   "professionalContactReviewFormIntro": "Share your review of the experience. This is your report and does not independently confirm the work was completed.",
   "professionalContactReviewAttribution": "Homeowner-reported experience; first contact began through Shattab.",
   "homeownerLocationHint": "Choose the city and area where your home is located.",
-  "homeownerReferenceSearchHint": "Find a professional or service",
+  "homeownerReferenceSearchHint": "Search for a service or professional",
   "homeownerReferenceProfessionalsTitle": "Professionals for your project",
   "homeownerReferenceWorkTitle": "Work to inspire you",
   "homeownerReferenceStartTitle": "Start your home project",
@@ -1934,5 +1954,69 @@
   "homeownerReferenceStartSteps": "Describe your needs → receive quotes → choose a professional",
   "homeownerReferencePhotoUnavailable": "Work photo unavailable",
   "homeownerReferenceOffers": "{count} offers",
-  "@homeownerReferenceOffers": {"placeholders": {"count": {"type": "int"}}}
+  "@homeownerReferenceOffers": {"placeholders": {"count": {"type": "int"}}},
+  "stateHomeAction": "Home",
+  "stateQuotesRefresh": "Refresh quotes",
+  "stateProjectsAction": "My projects",
+  "stateQuotesMessage": "Quotes for this request will appear here. Refresh the list or return to your projects.",
+  "stateSupplyTitle": "No professionals to show yet",
+  "stateSupplyMessage": "Professional profiles will appear here when available. You can return home.",
+  "stateClearSearchFilters": "Clear search and filters",
+  "stateProfileAction": "Back to profile",
+  "stateServicesAction": "View services",
+  "stateCloseAction": "Close",
+  "statePublicWorksMessage": "Work added by this professional will appear here.",
+  "stateClientReviewsMessage": "Reviews shared by clients will appear here.",
+  "stateFilteredCommunityTitle": "No posts in this category",
+  "stateFilteredCommunityMessage": "Show all posts to browse the rest of the community.",
+  "stateProjectsNoResultsMessage": "No projects match these filters. Change or clear the filters to see your projects.",
+  "statePickerGuidance": "Could not select photos. Check photo access permission and retry; your selected photos are retained.",
+  "stateCommunityAllTitle": "No posts yet",
+  "stateCommunityAllMessage": "New posts will appear here when added.",
+  "stateNoResultsMessage": "Try another search or clear search and filters to see available professionals.",
+  "stateReadErrorTitle": "Could not load the data",
+  "stateOfflineTitle": "No network connection",
+  "stateSavedEmptyTitle": "You haven't saved any professionals yet",
+  "stateSearchNoResultsTitle": "No matching results",
+  "homeownerAssistantEntryHint": "Not sure where to start?",
+  "homeownerAssistantEntryTitle": "Ask Shattab assistant",
+  "homeownerServiceDesignShortLabel": "Design",
+  "homeCloneWelcome": "Welcome, {name}",
+  "@homeCloneWelcome": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "homeCloneHeroTitle": "Your home starts here",
+  "homeCloneStartTitle": "Have a new project?",
+  "homeCloneStartBody": "Tell us your idea and find professionals for your needs.",
+  "homeCloneAssistant": "Ask Shattab assistant",
+  "homeCloneServiceAll": "Service: All",
+  "homeCloneFilters": "Filters",
+  "homeCloneFeatured": "Featured professionals",
+  "homeCloneFeaturedSubtitle": "Explore professionals for your project",
+  "homeCloneEditorialSubtitle": "Work selected by Shattab",
+  "homeCloneNearby": "Near you",
+  "homeCloneKitchen": "Kitchen specialists",
+  "homeCloneFinishing": "Finishing from the first step",
+  "homeCloneStory": "From an ordinary flat to a home you love",
+  "homeCloneStoryBody": "A dark traditional kitchen became a practical, comfortable space for family life.",
+  "homeCloneStoryDetails": "See project details",
+  "homeCloneBefore": "Before",
+  "homeCloneAfter": "After",
+  "homeCloneCommunity": "Community stories",
+  "homeCloneShare": "Share your experience",
+  "homeCloneReadStory": "Read the story",
+  "homeCloneQuestion": "View question",
+  "homeCloneUnrated": "New · No reviews",
+  "homeCloneReviews": "{count} reviews",
+  "@homeCloneReviews": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }

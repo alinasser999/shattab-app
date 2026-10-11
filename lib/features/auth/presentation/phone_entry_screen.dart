@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:batsh/core/l10n/l10n_extension.dart';
+import '../../../core/debug/debug_flags.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/batsh_motion.dart';
 import '../../../core/theme/batsh_radius.dart';
@@ -169,7 +170,7 @@ class _PhoneEntryScreenState extends ConsumerState<PhoneEntryScreen> {
                           disableMotion: disableMotion,
                         ),
                         SizedBox(height: BatshSpacing.xl),
-                        if (kDebugMode) _DemoLoginBlock(),
+                        if (DebugFlags.loginVisible) const _DemoLoginBlock(),
                         SizedBox(height: BatshSpacing.xl),
                       ],
                     ),
@@ -205,10 +206,13 @@ class _Footer extends StatelessWidget {
               color: context.colorScheme.onSurfaceVariant,
             ),
             const SizedBox(width: 6),
-            Text(
-              context.l10n.dataSecure,
-              style: BatshTypography.labelSm.copyWith(
-                color: context.colorScheme.onSurfaceVariant,
+            Flexible(
+              child: Text(
+                context.l10n.dataSecure,
+                textAlign: TextAlign.center,
+                style: BatshTypography.labelSm.copyWith(
+                  color: context.colorScheme.onSurfaceVariant,
+                ),
               ),
             ),
           ],
@@ -252,29 +256,87 @@ class _Footer extends StatelessWidget {
   }
 }
 
-// ─── Debug Demo Login ────────────────────────────────────────────────────────
+// ─── Debug account login ─────────────────────────────────────────────────────
+
+enum _DebugAccountPath { homeowner, contractor }
 
 class _DemoLoginBlock extends ConsumerStatefulWidget {
+  const _DemoLoginBlock();
+
   @override
   ConsumerState<_DemoLoginBlock> createState() => _DemoLoginBlockState();
 }
 
 class _DemoLoginBlockState extends ConsumerState<_DemoLoginBlock> {
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _emailFocus = FocusNode();
+  final _passwordFocus = FocusNode();
+  _DebugAccountPath? _selectedPath;
   bool _busy = false;
   String? _error;
 
-  Future<void> _signInAs(String email) async {
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    _emailFocus.dispose();
+    _passwordFocus.dispose();
+    super.dispose();
+  }
+
+  void _selectPath(_DebugAccountPath path) {
+    if (_busy) return;
+    setState(() {
+      _selectedPath = path;
+      _error = null;
+      _emailController.clear();
+      _passwordController.clear();
+    });
+  }
+
+  void _cancel() {
+    if (_busy) return;
+    setState(() {
+      _selectedPath = null;
+      _error = null;
+      _emailController.clear();
+      _passwordController.clear();
+    });
+    _emailFocus.unfocus();
+    _passwordFocus.unfocus();
+  }
+
+  Future<void> _signIn() async {
+    if (_busy || _selectedPath == null) return;
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
+    if (email.isEmpty || password.isEmpty) {
+      setState(() {
+        _error = context.l10n.debugLoginCredentialsRequired;
+        _passwordController.clear();
+      });
+      return;
+    }
+
     setState(() {
       _busy = true;
       _error = null;
     });
+    _emailController.clear();
+    _passwordController.clear();
+    _emailFocus.unfocus();
+    _passwordFocus.unfocus();
     try {
-      final repo = ref.read(authRepositoryProvider);
-      await repo.signInWithPassword(email: email, password: 'batsh-demo-2026');
-      await ref.read(currentProfileProvider.notifier).refresh();
-    } catch (e) {
+      await ref
+          .read(authRepositoryProvider)
+          .signInWithPassword(email: email, password: password);
+      if (mounted) {
+        await ref.read(currentProfileProvider.notifier).refresh();
+      }
+    } catch (_) {
       if (!mounted) return;
-      setState(() => _error = ErrorMapper.map(e));
+      setState(() => _error = context.l10n.debugLoginFailed);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -292,10 +354,21 @@ class _DemoLoginBlockState extends ConsumerState<_DemoLoginBlock> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          Semantics(
+            header: true,
+            child: Text(
+              context.l10n.debugLoginTitle,
+              textAlign: TextAlign.center,
+              style: BatshTypography.labelMd.copyWith(
+                color: context.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+          const SizedBox(height: BatshSpacing.xs),
           Text(
-            context.l10n.debugMode,
+            context.l10n.debugLoginHelper,
             textAlign: TextAlign.center,
-            style: BatshTypography.labelMd.copyWith(
+            style: BatshTypography.bodySm.copyWith(
               color: context.colorScheme.onSurfaceVariant,
             ),
           ),
@@ -303,22 +376,83 @@ class _DemoLoginBlockState extends ConsumerState<_DemoLoginBlock> {
           BatshButton(
             label: context.l10n.demoLoginHomeowner,
             style: BatshButtonStyle.secondary,
-            onPressed: _busy ? null : () => _signInAs('homeowner@batsh.demo'),
-            isLoading: _busy,
+            onPressed: _busy
+                ? null
+                : () => _selectPath(_DebugAccountPath.homeowner),
           ),
           const SizedBox(height: BatshSpacing.sm),
           BatshButton(
             label: context.l10n.demoLoginContractor,
             style: BatshButtonStyle.secondary,
-            onPressed: _busy ? null : () => _signInAs('contractor@batsh.demo'),
+            onPressed: _busy
+                ? null
+                : () => _selectPath(_DebugAccountPath.contractor),
           ),
-          if (_error != null) ...[
-            const SizedBox(height: BatshSpacing.sm),
+          if (_selectedPath != null) ...[
+            const SizedBox(height: BatshSpacing.md),
             Text(
-              _error!,
+              _selectedPath == _DebugAccountPath.homeowner
+                  ? context.l10n.demoLoginHomeowner
+                  : context.l10n.demoLoginContractor,
               textAlign: TextAlign.center,
               style: BatshTypography.labelMd.copyWith(
-                color: context.colorScheme.error,
+                color: context.colorScheme.onSurface,
+              ),
+            ),
+            const SizedBox(height: BatshSpacing.sm),
+            TextFormField(
+              controller: _emailController,
+              focusNode: _emailFocus,
+              enabled: !_busy,
+              keyboardType: TextInputType.emailAddress,
+              textInputAction: TextInputAction.next,
+              autocorrect: false,
+              enableSuggestions: false,
+              textDirection: TextDirection.ltr,
+              onFieldSubmitted: (_) => _passwordFocus.requestFocus(),
+              decoration: InputDecoration(
+                labelText: context.l10n.debugLoginEmailLabel,
+                floatingLabelBehavior: FloatingLabelBehavior.always,
+              ),
+            ),
+            const SizedBox(height: BatshSpacing.sm),
+            TextFormField(
+              controller: _passwordController,
+              focusNode: _passwordFocus,
+              enabled: !_busy,
+              obscureText: true,
+              autocorrect: false,
+              enableSuggestions: false,
+              textInputAction: TextInputAction.done,
+              textDirection: TextDirection.ltr,
+              onFieldSubmitted: (_) => _signIn(),
+              decoration: InputDecoration(
+                labelText: context.l10n.debugLoginPasswordLabel,
+                floatingLabelBehavior: FloatingLabelBehavior.always,
+              ),
+            ),
+            const SizedBox(height: BatshSpacing.md),
+            BatshButton(
+              label: context.l10n.debugLoginSubmit,
+              onPressed: _busy ? null : _signIn,
+              isLoading: _busy,
+            ),
+            const SizedBox(height: BatshSpacing.xs),
+            TextButton(
+              onPressed: _busy ? null : _cancel,
+              child: Text(context.l10n.debugLoginCancel),
+            ),
+          ],
+          if (_error != null) ...[
+            const SizedBox(height: BatshSpacing.sm),
+            Semantics(
+              liveRegion: true,
+              child: Text(
+                _error!,
+                textAlign: TextAlign.center,
+                style: BatshTypography.labelMd.copyWith(
+                  color: context.colorScheme.error,
+                ),
               ),
             ),
           ],

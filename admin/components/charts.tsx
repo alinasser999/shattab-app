@@ -1,5 +1,6 @@
 import { fmtDayShort, fmtDelta, fmtNum, pct } from '@/lib/format';
 import { Dot, cx, type Tone } from './ui';
+import { t, type AdminLocale } from '@/lib/i18n';
 
 /**
  * Data display. Hand-rolled SVG rather than a charting library: two shapes are
@@ -24,11 +25,11 @@ export type Stat = {
  * every number is a single digit — which is exactly where a card grid looks
  * emptiest.
  */
-export function StatStrip({ stats }: { stats: Stat[] }) {
+export function StatStrip({ stats, locale = 'en' }: { stats: Stat[]; locale?: AdminLocale }) {
   return (
     <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-line bg-line sm:grid-cols-3 lg:grid-cols-6">
       {stats.map((stat, i) => {
-        const delta = stat.delta ? fmtDelta(stat.delta.current, stat.delta.previous) : null;
+        const delta = stat.delta ? fmtDelta(stat.delta.current, stat.delta.previous, locale) : null;
         return (
           <div key={stat.label} className="bg-surface px-3.5 py-3" style={{ ['--i' as string]: i }}>
             <dt className="text-xs text-ink-3">{stat.label}</dt>
@@ -42,7 +43,7 @@ export function StatStrip({ stats }: { stats: Stat[] }) {
                     delta.dir === -1 && 'text-danger',
                     delta.dir === 0 && 'text-ink-3',
                   )}
-                  title="Compared with the previous 7 days"
+                  title={t(locale, 'Compared with the previous 7 days')}
                 >
                   {delta.text}
                 </span>
@@ -74,7 +75,7 @@ const BAR_FILL: Record<Tone, string> = {
  * "did contractors quote on the days homeowners posted", and a stacked bar hides
  * exactly that comparison inside a total nobody asked for.
  */
-export function ActivityChart({ days, series }: { days: string[]; series: Series[] }) {
+export function ActivityChart({ days, series, locale = 'en' }: { days: string[]; series: Series[]; locale?: AdminLocale }) {
   const n = days.length;
   const peak = Math.max(1, ...series.flatMap((s) => s.values));
 
@@ -93,10 +94,10 @@ export function ActivityChart({ days, series }: { days: string[]; series: Series
           <span key={s.key} className="flex items-center gap-1.5 text-xs text-ink-2">
             <Dot tone={s.tone} />
             {s.label}
-            <span className="text-ink-3">{fmtNum(s.values.reduce((a, b) => a + b, 0))}</span>
+            <span className="text-ink-3">{fmtNum(s.values.reduce((a, b) => a + b, 0), locale)}</span>
           </span>
         ))}
-        <span className="ml-auto text-xs text-ink-3">Peak {fmtNum(peak)}/day</span>
+        <span className="ms-auto text-xs text-ink-3">{t(locale, 'Peak {count}/day', { count: fmtNum(peak, locale) })}</span>
       </div>
 
       <div className="scroll-x">
@@ -105,7 +106,10 @@ export function ActivityChart({ days, series }: { days: string[]; series: Series
           preserveAspectRatio="none"
           className="h-[9.25rem] w-full min-w-[34rem]"
           role="img"
-          aria-label={`Daily ${series.map((s) => s.label).join(', ')} over ${n} days. Peak ${peak} per day.`}
+          aria-label={t(locale, 'Daily {series} over {days} days. Peak {peak} per day.', {
+            series: series.map((s) => s.label).join(locale === 'ar' ? '، ' : ', '),
+            days: fmtNum(n, locale), peak: fmtNum(peak, locale),
+          })}
         >
           {/* Two reference lines. More than that is chartjunk at this size. */}
           {[0.5, 1].map((f) => (
@@ -123,34 +127,36 @@ export function ActivityChart({ days, series }: { days: string[]; series: Series
 
           {days.map((day, d) => (
             <g key={day}>
-              {series.map((s, si) => {
-                const value = s.values[d] ?? 0;
-                // Anything non-zero gets at least 2 units of height. One signup
-                // rendering as literally nothing is a worse lie than slightly
-                // overstating it.
-                const h = value === 0 ? 0 : Math.max(2, (value / peak) * H);
-                return (
-                  <rect
-                    key={s.key}
-                    x={d * SLOT + GAP + si * (barW + GAP)}
-                    y={H - h}
-                    width={barW}
-                    height={h}
-                    rx={1}
-                    className={BAR_FILL[s.tone]}
-                  >
-                    <title>{`${fmtDayShort(day)} · ${s.label}: ${value}`}</title>
-                  </rect>
-                );
-              })}
+              {(() => {
+                const column = locale === 'ar' ? n - 1 - d : d;
+                return series.map((s, si) => {
+                  const value = s.values[d] ?? 0;
+                  // Anything non-zero gets at least 2 units of height so a small
+                  // value remains visible. Arabic dates advance from right to left.
+                  const h = value === 0 ? 0 : Math.max(2, (value / peak) * H);
+                  return (
+                    <rect
+                      key={s.key}
+                      x={column * SLOT + GAP + si * (barW + GAP)}
+                      y={H - h}
+                      width={barW}
+                      height={h}
+                      rx={1}
+                      className={BAR_FILL[s.tone]}
+                    >
+                      <title>{`${fmtDayShort(day, locale)} · ${s.label}: ${fmtNum(value, locale)}`}</title>
+                    </rect>
+                  );
+                });
+              })()}
               {d % 5 === 0 || d === n - 1 ? (
                 <text
-                  x={d * SLOT + SLOT / 2}
+                  x={(locale === 'ar' ? n - 1 - d : d) * SLOT + SLOT / 2}
                   y={H + 13}
                   textAnchor="middle"
                   className="fill-ink-3 text-[9px]"
                 >
-                  {fmtDayShort(day)}
+                  {fmtDayShort(day, locale)}
                 </text>
               ) : null}
             </g>
@@ -170,7 +176,7 @@ export type FunnelStep = { label: string; value: number; note?: string };
  * above it. Share-of-previous rather than share-of-first: the biggest single drop
  * is the thing worth acting on, and share-of-first buries it.
  */
-export function Funnel({ steps }: { steps: FunnelStep[] }) {
+export function Funnel({ steps, locale = 'en' }: { steps: FunnelStep[]; locale?: AdminLocale }) {
   const first = steps[0]?.value ?? 0;
 
   return (
@@ -186,13 +192,13 @@ export function Funnel({ steps }: { steps: FunnelStep[] }) {
             <div className="flex items-baseline justify-between gap-3 text-sm">
               <span className="min-w-0 truncate text-ink-2">{step.label}</span>
               <span className="flex shrink-0 items-baseline gap-2">
-                <span className="font-medium text-ink">{fmtNum(step.value)}</span>
+                <span className="font-medium text-ink">{fmtNum(step.value, locale)}</span>
                 {i > 0 ? (
                   <span
                     className={cx('text-xs', share < 40 ? 'text-warn' : 'text-ink-3')}
-                    title="Share of the previous step"
+                    title={t(locale, 'Share of the previous step')}
                   >
-                    {share}%
+                    {fmtNum(share, locale)}%
                   </span>
                 ) : null}
               </span>

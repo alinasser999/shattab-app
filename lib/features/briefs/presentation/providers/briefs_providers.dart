@@ -169,6 +169,8 @@ class BriefsController extends _$BriefsController {
     String? budgetNote,
     String? startTiming,
     String? publishKey,
+    String? publishPayloadFingerprint,
+    String? privatePublishFingerprint,
   }) async {
     if (_creating) throw StateError('brief_creation_in_progress');
     _creating = true;
@@ -186,6 +188,8 @@ class BriefsController extends _$BriefsController {
         budgetNote: budgetNote,
         startTiming: startTiming,
         publishKey: publishKey,
+        publishPayloadFingerprint: publishPayloadFingerprint,
+        privatePublishFingerprint: privatePublishFingerprint,
       );
     } finally {
       _creating = false;
@@ -205,6 +209,8 @@ class BriefsController extends _$BriefsController {
     String? budgetNote,
     String? startTiming,
     String? publishKey,
+    String? publishPayloadFingerprint,
+    String? privatePublishFingerprint,
   }) async {
     final session = ref.read(currentSessionProvider);
     if (session == null) {
@@ -213,7 +219,7 @@ class BriefsController extends _$BriefsController {
     final repo = ref.read(briefsRepositoryProvider);
 
     // Create brief with empty photos first to get an ID for the storage path.
-    final brief = await repo.createBrief(
+    final creation = await repo.createBrief(
       homeownerId: session.user.id,
       targetContractorId: targetContractorId,
       apartmentType: apartmentType,
@@ -224,11 +230,13 @@ class BriefsController extends _$BriefsController {
       targetSpecialties: targetSpecialties,
       projectTitle: projectTitle,
       estimatedArea: estimatedArea,
-      budgetNote: budgetNote,
       startTiming: startTiming,
       publishKey: publishKey,
+      publishPayloadFingerprint: publishPayloadFingerprint,
     );
+    final brief = creation.brief;
 
+    var uploadedPhotoUrls = const <String>[];
     if (photos.isNotEmpty) {
       final uploadedUrls = <String>[];
       try {
@@ -253,29 +261,41 @@ class BriefsController extends _$BriefsController {
                 }),
         ], eagerError: false);
         await repo.setPhotoUrls(brief.id, urls);
+        uploadedPhotoUrls = urls;
       } catch (e) {
         // The database row does not own storage objects, so deleting or
         // cancelling the brief alone would leave successful partial uploads
         // orphaned in `brief-photos`.
-        await repo.deleteUploadedPhotos(uploadedUrls);
-        // Compensate: a brief left open with none of its photos reads as
-        // spam to every matched contractor. This brief is seconds old and
-        // quote-less, so delete-or-cancel resolves to a hard delete; if the
-        // network is gone entirely the brief remains visible and deletable
-        // from My Requests rather than being lost.
-        try {
-          await repo.deleteOrCancelBrief(brief.id);
-        } catch (_) {
-          // Secondary failure — surface the primary upload error.
+        if (!creation.wasExisting) {
+          await repo.deleteUploadedPhotos(uploadedUrls);
+          // Compensate only for a row created by this attempt. A same-key
+          // retry may have already published media referenced by the row.
+          try {
+            await repo.deleteOrCancelBrief(brief.id);
+          } catch (_) {
+            // Secondary failure — surface the primary upload error.
+          }
         }
         rethrow;
       }
     }
 
+    final confirmedBrief = await repo.confirmBriefCreateReadback(
+      briefId: brief.id,
+      homeownerId: session.user.id,
+      expectedPayload: creation.expectedPayload,
+      photoUrls: uploadedPhotoUrls,
+    );
+    if (budgetNote != null) {
+      await repo.saveHomeownerBudgetNote(
+        briefId: confirmedBrief.id,
+        budgetNote: budgetNote,
+        privatePublishFingerprint: privatePublishFingerprint,
+      );
+    }
+
     ref.invalidate(myBriefsProvider);
-    // Re-read after the photo association. The success screen must represent
-    // the persisted record, not the pre-upload placeholder row.
-    return await repo.fetchById(brief.id) ?? brief;
+    return confirmedBrief;
   }
 
   /// Homeowner: change a brief's scope. Photos are handled separately by

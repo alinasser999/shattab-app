@@ -190,7 +190,7 @@ class HomeownerReferenceScenario {
   };
 
   List<ContractorListing> get featuredListings =>
-      ProfessionalReferenceFixture.listings.take(3).toList(growable: false);
+      ProfessionalReferenceFixture.listings.take(12).toList(growable: false);
 
   List<ContractorListing> get topRatedListings =>
       ProfessionalReferenceFixture.page(

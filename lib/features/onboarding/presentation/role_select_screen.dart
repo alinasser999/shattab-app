@@ -1,3 +1,4 @@
+import '../../../core/widgets/professional_reference_states.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -11,12 +12,9 @@ import '../../../core/theme/batsh_typography.dart';
 import '../../../core/theme/professional_reference_theme.dart';
 import '../../../core/theme/theme_extension.dart';
 import '../../../core/utils/error_mapper.dart';
-import '../../../core/widgets/batsh_button.dart';
 import '../../../core/widgets/batsh_card.dart';
-import '../../../core/widgets/batsh_error.dart';
 import '../../../core/widgets/batsh_scaffold.dart';
 import '../../../core/widgets/batsh_shimmer.dart';
-import '../../../core/widgets/batsh_text_field.dart';
 import '../../../core/widgets/professional_reference_primitives.dart';
 import '../../auth/domain/profile.dart';
 import '../../auth/presentation/providers/auth_provider.dart';
@@ -156,7 +154,7 @@ class _RoleSelectScreenState extends ConsumerState<RoleSelectScreen> {
       return BatshScaffold(
         showAppBar: false,
         animateEntrance: false,
-        body: BatshError(
+        body: ProfessionalReferenceReadError(
           message: profileAsync.hasError
               ? ErrorMapper.map(profileAsync.error!)
               : null,
@@ -168,168 +166,15 @@ class _RoleSelectScreenState extends ConsumerState<RoleSelectScreen> {
     final locked = profile.roleSelectionLocked;
     final selectedRole = locked ? profile.role : _selectedRole;
     final reduced = MediaQuery.disableAnimationsOf(context);
-    if (selectedRole == null || selectedRole == UserRole.homeowner) {
-      return Theme(
-        data: ProfessionalReferenceTheme.scopedTheme(Theme.of(context)),
-        child: Builder(
-          builder: (referenceContext) => _buildReferenceRolePage(
-            referenceContext,
-            profile: profile,
-            locked: locked,
-            selectedRole: selectedRole,
-            reduced: reduced,
-          ),
-        ),
-      );
-    }
-    return PopScope<void>(
-      canPop: false,
-      child: BatshScaffold(
-        showAppBar: false,
-        animateEntrance: false,
-        body: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: BatshSpacing.lg),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                OnboardingProgressHeader(
-                  step: 1,
-                  stepLabel: context.l10n.onboardingStepRole,
-                ),
-                const SizedBox(height: BatshSpacing.xl),
-                Text(
-                  context.l10n.chooseRoleTitle,
-                  style: BatshTypography.headlineLg,
-                ),
-                const SizedBox(height: BatshSpacing.sm),
-                Text(
-                  locked
-                      ? context.l10n.onboardingRoleLocked
-                      : context.l10n.chooseRoleSubtitle,
-                  style: BatshTypography.bodyMd.copyWith(
-                    color: context.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-                const SizedBox(height: BatshSpacing.lg),
-                Focus(
-                  focusNode: _roleFocus,
-                  child: Semantics(
-                    container: true,
-                    focusable: true,
-                    label: context.l10n.chooseRoleTitle,
-                    child: locked
-                        ? _RoleCard(
-                            title: profile.role == UserRole.homeowner
-                                ? context.l10n.roleHomeowner
-                                : context.l10n.roleProfessional,
-                            subtitle: profile.role == UserRole.homeowner
-                                ? context.l10n.roleHomeownerSub
-                                : context.l10n.roleContractorSub,
-                            icon: profile.role == UserRole.homeowner
-                                ? Icons.home_outlined
-                                : Icons.engineering_outlined,
-                            selected: true,
-                            enabled: false,
-                            reduced: reduced,
-                            semanticLabel: context.l10n.onboardingRoleLocked,
-                          )
-                        : Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              _RoleCard(
-                                title: context.l10n.roleHomeowner,
-                                subtitle: context.l10n.roleHomeownerSub,
-                                icon: Icons.home_outlined,
-                                selected: selectedRole == UserRole.homeowner,
-                                enabled: !_busy,
-                                reduced: reduced,
-                                onTap: () {
-                                  setState(() {
-                                    _selectedRole = UserRole.homeowner;
-                                    _roleError = null;
-                                    _saveError = null;
-                                  });
-                                  ref
-                                      .read(onboardingDraftProvider.notifier)
-                                      .updateRole(UserRole.homeowner);
-                                },
-                              ),
-                              const SizedBox(height: BatshSpacing.gutter),
-                              _RoleCard(
-                                title: context.l10n.roleProfessional,
-                                subtitle: context.l10n.roleContractorSub,
-                                icon: Icons.engineering_outlined,
-                                selected: selectedRole == UserRole.contractor,
-                                enabled: !_busy,
-                                reduced: reduced,
-                                onTap: () {
-                                  setState(() {
-                                    _selectedRole = UserRole.contractor;
-                                    _roleError = null;
-                                    _saveError = null;
-                                  });
-                                  ref
-                                      .read(onboardingDraftProvider.notifier)
-                                      .updateRole(UserRole.contractor);
-                                },
-                              ),
-                            ],
-                          ),
-                  ),
-                ),
-                if (_roleError != null) ...[
-                  const SizedBox(height: BatshSpacing.sm),
-                  _InlineStatus(message: _roleError!),
-                ],
-                const SizedBox(height: BatshSpacing.xl),
-                Focus(
-                  focusNode: _nameFocus,
-                  child: BatshTextField(
-                    controller: _nameController,
-                    label: context.l10n.professionalNameLabel,
-                    hint: context.l10n.professionalNameHint,
-                    errorText: _nameError,
-                    enabled: !_busy,
-                    onChanged: (value) {
-                      ref
-                          .read(onboardingDraftProvider.notifier)
-                          .updateFullName(value);
-                      if (_nameError != null || _saveError != null) {
-                        setState(() {
-                          _nameError = null;
-                          _saveError = null;
-                        });
-                      }
-                    },
-                  ),
-                ),
-                if (_saveError != null) ...[
-                  const SizedBox(height: BatshSpacing.md),
-                  _InlineStatus(message: _saveError!),
-                ],
-                if (_busy) ...[
-                  const SizedBox(height: BatshSpacing.md),
-                  Semantics(
-                    liveRegion: true,
-                    child: Text(
-                      context.l10n.onboardingSaving,
-                      style: BatshTypography.bodySm.copyWith(
-                        color: context.colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ),
-                ],
-                const SizedBox(height: BatshSpacing.lg),
-                BatshButton(
-                  label: context.l10n.continueLabel,
-                  onPressed: _busy ? null : () => _continue(profile),
-                  isLoading: _busy,
-                  animate: false,
-                ),
-              ],
-            ),
-          ),
+    return Theme(
+      data: ProfessionalReferenceTheme.scopedTheme(Theme.of(context)),
+      child: Builder(
+        builder: (referenceContext) => _buildReferenceRolePage(
+          referenceContext,
+          profile: profile,
+          locked: locked,
+          selectedRole: selectedRole,
+          reduced: reduced,
         ),
       ),
     );
@@ -354,6 +199,13 @@ class _RoleSelectScreenState extends ConsumerState<RoleSelectScreen> {
         referenceStyle: true,
       ),
       const SizedBox(height: BatshSpacing.xl),
+      const Center(
+        child: ProfessionalReferenceStateIllustration(
+          motif: ProfessionalReferenceMotif.house,
+          size: 112,
+        ),
+      ),
+      const SizedBox(height: 16),
       Semantics(
         header: true,
         child: Text(
@@ -380,9 +232,15 @@ class _RoleSelectScreenState extends ConsumerState<RoleSelectScreen> {
           label: context.l10n.chooseRoleTitle,
           child: locked
               ? _RoleCard(
-                  title: context.l10n.roleHomeowner,
-                  subtitle: context.l10n.roleHomeownerSub,
-                  icon: Icons.home_outlined,
+                  title: profile.role == UserRole.homeowner
+                      ? context.l10n.roleHomeowner
+                      : context.l10n.roleProfessional,
+                  subtitle: profile.role == UserRole.homeowner
+                      ? context.l10n.roleHomeownerSub
+                      : context.l10n.roleContractorSub,
+                  icon: profile.role == UserRole.homeowner
+                      ? Icons.home_outlined
+                      : Icons.engineering_outlined,
                   selected: true,
                   enabled: false,
                   reduced: reduced,
@@ -634,7 +492,7 @@ class _InlineStatus extends StatelessWidget {
       message,
       style: referenceStyle
           ? ProfessionalReferenceTheme.text(
-              14,
+              16,
               color: context.colorScheme.error,
               weight: FontWeight.w600,
             )
@@ -699,7 +557,7 @@ class _ReferenceNameField extends StatelessWidget {
         color: ProfessionalReferenceTheme.muted,
       ),
       errorStyle: ProfessionalReferenceTheme.text(
-        14,
+        16,
         color: context.colorScheme.error,
         weight: FontWeight.w600,
       ),

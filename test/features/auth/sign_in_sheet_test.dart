@@ -7,8 +7,9 @@ import 'package:batsh/features/auth/domain/profile.dart';
 import 'package:batsh/features/auth/presentation/providers/auth_provider.dart';
 import 'package:batsh/features/auth/presentation/providers/otp_provider.dart';
 import 'package:batsh/features/auth/presentation/sign_in_sheet.dart';
+import 'package:batsh/features/auth/presentation/pending_protected_action.dart';
 import 'package:batsh/features/onboarding/data/onboarding_repository.dart';
-import 'package:batsh/core/widgets/batsh_text_field.dart';
+import 'package:batsh/core/widgets/professional_reference_primitives.dart';
 import 'package:batsh/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -27,8 +28,8 @@ void main() {
       await _openGate(tester);
       final l10n = _localizations(tester);
       await _submitPhone(tester, l10n);
-      final otpField = tester.widget<BatshTextField>(
-        find.byType(BatshTextField),
+      final otpField = tester.widget<ProfessionalReferenceTextField>(
+        find.byType(ProfessionalReferenceTextField),
       );
       expect(otpField.semanticLabel, l10n.otpTitle);
       await _submitCode(tester, l10n);
@@ -250,61 +251,78 @@ void main() {
     await fixture.dispose(tester);
   });
 
-  testWidgets('name save failure remains actionable and blocks the action', (
-    tester,
-  ) async {
-    final fixture = await _GuestFixture.create(
-      profile: _readyProfile.copyWith(fullName: ''),
-    );
-    fixture.onboardingRepository.updateError = StateError(
-      'synthetic profile update failure',
-    );
-    var actionCalls = 0;
-    await tester.pumpWidget(fixture.app(onAction: () => actionCalls++));
-    await _openGate(tester);
-    final l10n = _localizations(tester);
-    await _submitPhone(tester, l10n);
-    await _submitCode(tester, l10n);
-    await tester.pumpAndSettle();
-    expect(find.text(l10n.profileNameLabel), findsOneWidget);
+  testWidgets(
+    'blank name blocks compact gate without attempting a name write',
+    (tester) async {
+      final fixture = await _GuestFixture.create(
+        profile: _readyProfile.copyWith(fullName: ''),
+      );
+      fixture.onboardingRepository.updateError = StateError(
+        'synthetic profile update failure',
+      );
+      var actionCalls = 0;
+      await tester.pumpWidget(fixture.app(onAction: () => actionCalls++));
+      await _openGate(tester);
+      final l10n = _localizations(tester);
+      await _submitPhone(tester, l10n);
+      await _submitCode(tester, l10n);
+      await tester.pumpAndSettle();
 
-    await tester.enterText(find.byType(TextFormField).first, 'Synthetic Name');
-    await tester.tap(find.text(l10n.saveProfile));
-    await tester.pumpAndSettle();
-    expect(fixture.onboardingRepository.updateCalls, 1);
-    expect(_fieldErrorText(tester), l10n.unknownErrorRetry);
-    expect(actionCalls, 0);
-    expect(find.text(l10n.signInSheetTitle), findsOneWidget);
-    await fixture.dispose(tester);
-  });
+      expect(fixture.repository.verifyCalls, 1);
+      expect(fixture.profile.refreshCalls, 1);
+      expect(fixture.session.value?.user.id, _readyProfile.id);
+      expect(fixture.onboardingRepository.updateCalls, 0);
+      expect(fixture.profile.profile?.fullName, '');
+      expect(actionCalls, 0);
+      expect(find.text(l10n.profileNameLabel), findsNothing);
+      expect(find.text(l10n.signInSheetTitle), findsNothing);
+      expect(tester.takeException(), isNull);
+      await fixture.dispose(tester);
+    },
+  );
 
-  testWidgets('confirmed name save completes profile before resuming once', (
-    tester,
-  ) async {
-    final fixture = await _GuestFixture.create(
-      profile: _readyProfile.copyWith(fullName: ''),
-    );
-    var actionCalls = 0;
-    await tester.pumpWidget(fixture.app(onAction: () => actionCalls++));
-    await _openGate(tester);
-    final l10n = _localizations(tester);
-    await _submitPhone(tester, l10n);
-    await _submitCode(tester, l10n);
-    await tester.pumpAndSettle();
+  testWidgets(
+    'blank name retains protected intent for onboarding without resuming',
+    (tester) async {
+      final fixture = await _GuestFixture.create(
+        profile: _readyProfile.copyWith(fullName: ''),
+      );
+      var actionCalls = 0;
+      await tester.pumpWidget(
+        fixture.app(onAction: () => actionCalls++, protectedIntent: true),
+      );
+      await _openGate(tester);
+      final l10n = _localizations(tester);
+      await _submitPhone(tester, l10n);
+      await _submitCode(tester, l10n);
+      await tester.pumpAndSettle();
 
-    expect(find.text(l10n.whatsYourName), findsOneWidget);
-    await tester.enterText(find.byType(TextFormField).first, 'Synthetic Name');
-    await tester.tap(find.text(l10n.saveProfile));
-    await tester.pumpAndSettle();
-
-    expect(fixture.repository.verifyCalls, 1);
-    expect(fixture.onboardingRepository.updateCalls, 1);
-    expect(fixture.profile.refreshCalls, 2);
-    expect(fixture.profile.profile?.fullName, 'Synthetic Name');
-    expect(actionCalls, 1);
-    expect(find.text(l10n.signInSheetTitle), findsNothing);
-    await fixture.dispose(tester);
-  });
+      final coordinator = fixture.container.read(
+        pendingProtectedActionCoordinatorProvider,
+      );
+      expect(fixture.repository.verifyCalls, 1);
+      expect(fixture.profile.refreshCalls, 1);
+      expect(fixture.session.value?.user.id, _readyProfile.id);
+      expect(fixture.onboardingRepository.updateCalls, 0);
+      expect(fixture.profile.profile?.fullName, '');
+      expect(actionCalls, 0);
+      expect(coordinator.action, isA<ExploreFeedRefreshAction>());
+      expect(coordinator.isAwaitingOnboarding(coordinator.action!.id), isTrue);
+      expect(coordinator.isClaimed(coordinator.action!.id), isFalse);
+      expect(
+        coordinator.claim(
+          coordinator.action!.id,
+          sessionUserId: fixture.session.value?.user.id,
+          profile: fixture.profile.profile,
+        ),
+        isFalse,
+      );
+      expect(find.text(l10n.whatsYourName), findsNothing);
+      expect(find.text(l10n.signInSheetTitle), findsNothing);
+      expect(tester.takeException(), isNull);
+      await fixture.dispose(tester);
+    },
+  );
 }
 
 Future<void> _openGate(WidgetTester tester) async {
@@ -381,46 +399,62 @@ class _GuestFixture {
     );
   }
 
-  Widget app({required VoidCallback onAction, bool duplicateGateTap = false}) =>
-      UncontrolledProviderScope(
-        container: container,
-        child: MaterialApp(
-          locale: const Locale('en'),
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
-          supportedLocales: AppLocalizations.supportedLocales,
-          theme: BatshTheme.light(),
-          home: Consumer(
-            builder: (context, ref, _) => Scaffold(
-              body: Center(
-                child: ElevatedButton(
-                  key: const ValueKey('gated-action-trigger'),
-                  onPressed: () {
-                    unawaited(
-                      runSignedIn(
-                        context,
-                        ref,
-                        reason: 'Save this synthetic item',
-                        action: onAction,
-                      ),
-                    );
-                    if (duplicateGateTap) {
-                      unawaited(
-                        runSignedIn(
-                          context,
-                          ref,
-                          reason: 'Save this synthetic item',
-                          action: onAction,
-                        ),
-                      );
-                    }
-                  },
-                  child: const Text('Start gated action'),
-                ),
-              ),
+  Widget app({
+    required VoidCallback onAction,
+    bool duplicateGateTap = false,
+    bool protectedIntent = false,
+  }) => UncontrolledProviderScope(
+    container: container,
+    child: MaterialApp(
+      locale: const Locale('en'),
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      theme: BatshTheme.light(),
+      home: Consumer(
+        builder: (context, ref, _) => Scaffold(
+          body: Center(
+            child: ElevatedButton(
+              key: const ValueKey('gated-action-trigger'),
+              onPressed: () {
+                if (protectedIntent) {
+                  unawaited(
+                    beginProtectedActionSignIn(
+                      context,
+                      ref,
+                      reason: 'Save this synthetic item',
+                      action: const ExploreFeedRefreshAction(),
+                    ).then((id) {
+                      if (id != null) onAction();
+                    }),
+                  );
+                  return;
+                }
+                unawaited(
+                  runSignedIn(
+                    context,
+                    ref,
+                    reason: 'Save this synthetic item',
+                    action: onAction,
+                  ),
+                );
+                if (duplicateGateTap) {
+                  unawaited(
+                    runSignedIn(
+                      context,
+                      ref,
+                      reason: 'Save this synthetic item',
+                      action: onAction,
+                    ),
+                  );
+                }
+              },
+              child: const Text('Start gated action'),
             ),
           ),
         ),
-      );
+      ),
+    ),
+  );
 
   Future<void> dispose(WidgetTester tester) async {
     await tester.pumpWidget(const SizedBox.shrink());

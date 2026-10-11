@@ -66,6 +66,7 @@ class HomeownerShell extends StatelessWidget {
         onTap: _goToTab,
         index: navigationShell.currentIndex,
         readable: true,
+        compactHome: isHome,
         labels: [
           shellContext.l10n.tabHome,
           shellContext.l10n.tabDiscover,

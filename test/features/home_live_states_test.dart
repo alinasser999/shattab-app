@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:batsh/core/theme/batsh_theme.dart';
+import 'package:batsh/features/quotes/presentation/providers/quotes_providers.dart';
 import 'package:batsh/core/utils/connectivity.dart';
 import 'package:batsh/features/briefs/domain/brief.dart';
 import 'package:batsh/features/briefs/presentation/providers/briefs_providers.dart';
@@ -29,9 +30,8 @@ void main() {
     final l10n = AppLocalizations.of(
       tester.element(find.byType(HomeLiveStateSection)),
     )!;
-    expect(find.text(l10n.homeLiveErrorTitle), findsOneWidget);
+    expect(find.text(l10n.stateReadErrorTitle), findsOneWidget);
     expect(find.text(l10n.homeLiveEmptyTitle), findsNothing);
-    expect(find.text(l10n.helpSupport), findsOneWidget);
     await tester.tap(find.text(l10n.tryAgain));
     await tester.pumpAndSettle();
     expect(attempts, 2);
@@ -139,6 +139,7 @@ Future<void> _pump(
     ProviderScope(
       overrides: [
         myBriefsProvider.overrideWith(briefs),
+        quotesForBriefProvider('b').overrideWith((_) async => []),
         notificationsProvider.overrideWith(
           notifications ?? (_) => Stream.value([]),
         ),
@@ -150,11 +151,13 @@ Future<void> _pump(
         supportedLocales: AppLocalizations.supportedLocales,
         theme: BatshTheme.light(),
         home: Scaffold(
-          body: HomeLiveStateSection(
-            onOpenRequests: () {},
-            onOpenNotifications: () {},
-            onStartRequest: onStart ?? () {},
-            child: child ? const Text('project') : null,
+          body: SingleChildScrollView(
+            child: HomeLiveStateSection(
+              onOpenRequests: () {},
+              onOpenNotifications: () {},
+              onStartRequest: onStart ?? () {},
+              child: child ? const Text('project') : null,
+            ),
           ),
         ),
       ),

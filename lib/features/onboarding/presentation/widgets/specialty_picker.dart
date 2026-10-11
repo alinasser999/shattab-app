@@ -7,6 +7,7 @@ import '../../../../core/theme/batsh_icon_size.dart';
 import '../../../../core/theme/batsh_radius.dart';
 import '../../../../core/theme/batsh_spacing.dart';
 import '../../../../core/theme/batsh_typography.dart';
+import '../../../../core/theme/professional_reference_theme.dart';
 import '../../../../core/theme/theme_extension.dart';
 import '../../../../core/widgets/batsh_pressable.dart';
 
@@ -19,12 +20,14 @@ class SpecialtyPicker extends StatefulWidget {
     required this.onChanged,
     this.showChildren = true,
     this.requirePrimary = true,
+    this.referenceStyle = false,
   });
 
   final List<String> initialSelection;
   final ValueChanged<List<String>> onChanged;
   final bool showChildren;
   final bool requirePrimary;
+  final bool referenceStyle;
 
   @override
   State<SpecialtyPicker> createState() => _SpecialtyPickerState();
@@ -87,9 +90,14 @@ class _SpecialtyPickerState extends State<SpecialtyPicker> {
           widget.requirePrimary
               ? context.l10n.specialtyPickerHint
               : context.l10n.specialtyRequestHint,
-          style: BatshTypography.bodySm.copyWith(
-            color: context.colorScheme.onSurfaceVariant,
-          ),
+          style: widget.referenceStyle
+              ? ProfessionalReferenceTheme.text(
+                  16,
+                  color: ProfessionalReferenceTheme.muted,
+                )
+              : BatshTypography.bodySm.copyWith(
+                  color: context.colorScheme.onSurfaceVariant,
+                ),
         ),
         const SizedBox(height: BatshSpacing.sm),
         Wrap(
@@ -106,6 +114,7 @@ class _SpecialtyPickerState extends State<SpecialtyPicker> {
                   root.key,
                   primary == root.key,
                 ),
+                referenceStyle: widget.referenceStyle,
                 onTap: () => _toggleRoot(root.key),
               ),
               if (widget.requirePrimary &&
@@ -113,6 +122,7 @@ class _SpecialtyPickerState extends State<SpecialtyPicker> {
                   primary != root.key)
                 _PrimaryAction(
                   specialtyLabel: localizedSpecialtyLabel(context, root.key),
+                  referenceStyle: widget.referenceStyle,
                   onTap: () => _makePrimary(root.key),
                 ),
               if (widget.showChildren &&
@@ -122,6 +132,7 @@ class _SpecialtyPickerState extends State<SpecialtyPicker> {
                   parent: root.key,
                   children: root.children,
                   selected: _selection,
+                  referenceStyle: widget.referenceStyle,
                   onToggle: _toggleChild,
                 ),
             ],
@@ -139,10 +150,15 @@ class _SpecialtyPickerState extends State<SpecialtyPicker> {
 }
 
 class _PrimaryAction extends StatelessWidget {
-  const _PrimaryAction({required this.specialtyLabel, required this.onTap});
+  const _PrimaryAction({
+    required this.specialtyLabel,
+    required this.onTap,
+    this.referenceStyle = false,
+  });
 
   final String specialtyLabel;
   final VoidCallback onTap;
+  final bool referenceStyle;
 
   @override
   Widget build(BuildContext context) {
@@ -162,10 +178,16 @@ class _PrimaryAction extends StatelessWidget {
               child: Center(
                 child: Text(
                   context.l10n.makePrimarySpecialty,
-                  style: BatshTypography.labelSm.copyWith(
-                    color: context.colorScheme.primary,
-                    fontWeight: FontWeight.w700,
-                  ),
+                  style: referenceStyle
+                      ? ProfessionalReferenceTheme.text(
+                          16,
+                          color: ProfessionalReferenceTheme.action,
+                          weight: FontWeight.w700,
+                        )
+                      : BatshTypography.labelSm.copyWith(
+                          color: context.colorScheme.primary,
+                          fontWeight: FontWeight.w700,
+                        ),
                 ),
               ),
             ),
@@ -182,12 +204,14 @@ class _ChildOptions extends StatelessWidget {
     required this.children,
     required this.selected,
     required this.onToggle,
+    this.referenceStyle = false,
   });
 
   final String parent;
   final List<String> children;
   final List<String> selected;
   final void Function(String key, String parent) onToggle;
+  final bool referenceStyle;
 
   @override
   Widget build(BuildContext context) {
@@ -215,10 +239,16 @@ class _ChildOptions extends StatelessWidget {
         children: [
           Text(
             context.l10n.specialtyDetailsLabel,
-            style: BatshTypography.labelSm.copyWith(
-              color: context.colorScheme.onSurfaceVariant,
-              fontWeight: FontWeight.w700,
-            ),
+            style: referenceStyle
+                ? ProfessionalReferenceTheme.text(
+                    16,
+                    color: ProfessionalReferenceTheme.muted,
+                    weight: FontWeight.w700,
+                  )
+                : BatshTypography.labelSm.copyWith(
+                    color: context.colorScheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w700,
+                  ),
           ),
           for (final child in children)
             _SpecialtyOption(
@@ -226,6 +256,7 @@ class _ChildOptions extends StatelessWidget {
               selected: selected.contains(child),
               compact: true,
               semanticLabel: localizedSpecialtyDisplayLabel(context, child),
+              referenceStyle: referenceStyle,
               onTap: () => onToggle(child, parent),
             ),
         ],
@@ -242,6 +273,7 @@ class _SpecialtyOption extends StatelessWidget {
     required this.onTap,
     this.icon,
     this.compact = false,
+    this.referenceStyle = false,
   });
 
   final String label;
@@ -250,9 +282,23 @@ class _SpecialtyOption extends StatelessWidget {
   final VoidCallback onTap;
   final IconData? icon;
   final bool compact;
+  final bool referenceStyle;
 
   @override
   Widget build(BuildContext context) {
+    final labelColor = selected
+        ? context.colorScheme.onPrimaryContainer
+        : context.colorScheme.onSurface;
+    final labelStyle = referenceStyle
+        ? ProfessionalReferenceTheme.text(
+            16,
+            color: labelColor,
+            weight: selected ? FontWeight.w700 : FontWeight.w500,
+          )
+        : BatshTypography.labelMd.copyWith(
+            color: labelColor,
+            fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+          );
     return Semantics(
       button: true,
       selected: selected,
@@ -294,12 +340,7 @@ class _SpecialtyOption extends StatelessWidget {
                 ],
                 Text(
                   label,
-                  style: BatshTypography.labelMd.copyWith(
-                    color: selected
-                        ? context.colorScheme.onPrimaryContainer
-                        : context.colorScheme.onSurface,
-                    fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                  ),
+                  style: labelStyle,
                 ),
                 if (selected) ...[
                   const SizedBox(width: BatshSpacing.xs),

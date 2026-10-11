@@ -1,3 +1,4 @@
+import '../../../core/widgets/professional_reference_states.dart';
 import 'dart:async';
 
 import 'package:cached_network_image/cached_network_image.dart';
@@ -16,8 +17,6 @@ import '../../../core/theme/batsh_spacing.dart';
 import '../../../core/theme/batsh_typography.dart';
 import '../../../core/utils/error_mapper.dart';
 import '../../../core/utils/image_url.dart';
-import '../../../core/widgets/batsh_button.dart';
-import '../../../core/widgets/batsh_error.dart';
 import '../../../core/widgets/batsh_initial_plate.dart';
 import '../../../core/widgets/batsh_pressable.dart';
 import '../../../core/widgets/batsh_scaffold.dart';
@@ -105,7 +104,7 @@ class _SavedScreenState extends ConsumerState<SavedScreen> {
       animateEntrance: false,
       body: async.when(
         loading: () => const BatshListSkeleton(count: 3),
-        error: (e, _) => BatshError(
+        error: (e, _) => ProfessionalReferenceReadError(
           message: ErrorMapper.map(e),
           onRetry: () => ref.invalidate(savedContractorsProvider),
         ),
@@ -432,135 +431,22 @@ class _SavedEmptyState extends StatelessWidget {
   final VoidCallback onBackToAccount;
 
   @override
-  Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: context.colorScheme.surfaceContainerLowest,
-        borderRadius: BatshRadius.brXxl,
-        border: Border.all(
-          color: context.colorScheme.outlineVariant.withValues(alpha: 0.62),
-        ),
-        boxShadow: BatshShadows.soft,
-      ),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(
-          BatshSpacing.lg,
-          BatshSpacing.xl,
-          BatshSpacing.lg,
-          BatshSpacing.lg,
-        ),
-        child: Column(
-          children: [
-            CustomPaint(
-              size: const Size(180, 150),
-              painter: _SavedEmptyIllustrationPainter(
-                color: context.colorScheme.primary,
-              ),
-            ),
-            Text(
-              isGuest
-                  ? context.l10n.signInToSeeSaved
-                  : context.l10n.homeownerSavedEmptyTitle,
-              textAlign: TextAlign.center,
-              style: BatshTypography.headlineSm.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: BatshSpacing.xs),
-            Text(
-              isGuest
-                  ? context.l10n.signInEmptyMessage
-                  : context.l10n.homeownerSavedEmptyMessage,
-              textAlign: TextAlign.center,
-              style: BatshTypography.bodySm.copyWith(
-                color: context.colorScheme.onSurfaceVariant,
-              ),
-            ),
-            const SizedBox(height: BatshSpacing.lg),
-            BatshButton(
-              label: isGuest
-                  ? context.l10n.signInSheetTitle
-                  : context.l10n.homeownerSavedDiscoverAction,
-              onPressed: isGuest ? onSignIn : onDiscover,
-            ),
-            const SizedBox(height: BatshSpacing.xs),
-            TextButton(
-              onPressed: onBackToAccount,
-              child: Text(context.l10n.homeownerOrdersBackToAccount),
-            ),
-            if (!isGuest) ...[
-              const SizedBox(height: BatshSpacing.md),
-              DecoratedBox(
-                decoration: BoxDecoration(
-                  color: context.colorScheme.surfaceContainerLow,
-                  borderRadius: BatshRadius.brLg,
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(BatshSpacing.sm),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.bookmark_border,
-                        color: context.colorScheme.primary,
-                      ),
-                      const SizedBox(width: BatshSpacing.sm),
-                      Expanded(
-                        child: Text(
-                          context.l10n.homeownerSavedHint,
-                          style: BatshTypography.labelSm.copyWith(
-                            color: context.colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _SavedEmptyIllustrationPainter extends CustomPainter {
-  const _SavedEmptyIllustrationPainter({required this.color});
-  final Color color;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final ink = Paint()
-      ..color = color.withValues(alpha: 0.78)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2;
-    final soft = Paint()
-      ..color = color.withValues(alpha: 0.09)
-      ..style = PaintingStyle.fill;
-    final bookmark = Path()
-      ..moveTo(size.width * 0.32, 20)
-      ..lineTo(size.width * 0.68, 20)
-      ..lineTo(size.width * 0.68, 116)
-      ..lineTo(size.width * 0.50, 96)
-      ..lineTo(size.width * 0.32, 116)
-      ..close();
-    canvas.drawPath(bookmark, soft);
-    canvas.drawPath(bookmark, ink);
-    canvas.drawLine(
-      Offset(size.width * 0.18, 126),
-      Offset(size.width * 0.82, 126),
-      ink,
-    );
-    canvas.drawLine(
-      Offset(size.width * 0.22, 136),
-      Offset(size.width * 0.78, 136),
-      ink,
-    );
-    canvas.drawCircle(Offset(size.width * 0.2, 44), 14, soft);
-    canvas.drawCircle(Offset(size.width * 0.8, 58), 18, soft);
-  }
-
-  @override
-  bool shouldRepaint(covariant _SavedEmptyIllustrationPainter oldDelegate) =>
-      oldDelegate.color != color;
+  Widget build(BuildContext context) => ProfessionalReferenceState(
+    kind: isGuest
+        ? ProfessionalReferenceStateKind.access
+        : ProfessionalReferenceStateKind.empty,
+    motif: isGuest
+        ? ProfessionalReferenceMotif.savedLocked
+        : ProfessionalReferenceMotif.saved,
+    title: isGuest
+        ? context.l10n.signInToSeeSaved
+        : context.l10n.stateSavedEmptyTitle,
+    message: isGuest
+        ? context.l10n.signInEmptyMessage
+        : context.l10n.homeownerSavedEmptyMessage,
+    primaryLabel: isGuest
+        ? context.l10n.signInSheetTitle
+        : context.l10n.homeownerSavedDiscoverAction,
+    onPrimary: isGuest ? onSignIn : onDiscover,
+  );
 }

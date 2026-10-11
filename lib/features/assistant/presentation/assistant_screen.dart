@@ -3,6 +3,8 @@
 // The assistant explains and narrows the request. Real professionals are
 // always loaded from DiscoveryRepository and never invented by the model.
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -15,6 +17,7 @@ import 'package:batsh/core/router/routes.dart';
 import 'package:batsh/core/theme/batsh_icon_size.dart';
 import 'package:batsh/core/theme/batsh_spacing.dart';
 import 'package:batsh/core/theme/batsh_typography.dart';
+import 'package:batsh/core/theme/motion_mode_provider.dart';
 import 'package:batsh/core/theme/theme_extension.dart';
 import 'package:batsh/core/widgets/avatar_with_initials.dart';
 import 'package:batsh/core/widgets/batsh_badge.dart';
@@ -25,10 +28,14 @@ import 'package:batsh/core/widgets/batsh_pressable.dart';
 import 'package:batsh/core/widgets/batsh_scaffold.dart';
 import 'package:batsh/core/widgets/batsh_text_field.dart';
 import 'package:batsh/features/auth/presentation/providers/auth_provider.dart';
+import 'package:batsh/features/auth/presentation/pending_protected_action.dart';
 import 'package:batsh/features/auth/presentation/sign_in_sheet.dart';
+import 'package:batsh/features/auth/domain/assistant_reauthentication_request.dart';
+import 'package:batsh/features/auth/domain/profile.dart';
 import 'package:batsh/features/discovery/domain/contractor_listing.dart';
 import 'package:batsh/features/discovery/presentation/providers/discovery_providers.dart';
 
+import '../domain/assistant_failure.dart';
 import '../domain/assistant_message.dart';
 import '../domain/specialty_catalog.dart';
 import 'providers/assistant_providers.dart';
@@ -46,6 +53,7 @@ class _AssistantScreenState extends ConsumerState<AssistantScreen> {
   final _inputController = TextEditingController();
   final _scrollController = ScrollController();
   String? _lastSubmittedText;
+  bool _isOpeningAssistantReauthentication = false;
 
   bool get _isHomeowner => widget.isHomeowner;
 
@@ -56,6 +64,28 @@ class _AssistantScreenState extends ConsumerState<AssistantScreen> {
       MarketplaceEvents.assistantOpened,
       properties: {'audience_homeowner': widget.isHomeowner},
     );
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_isHomeowner) return;
+      final coordinator = ref.read(pendingProtectedActionCoordinatorProvider);
+      final session = ref.read(currentSessionProvider);
+      final profile = ref.read(currentProfileProvider).asData?.value;
+      final pending = coordinator.resumable<AssistantSendAction>(
+        Routes.homeownerAssistant,
+        sessionUserId: session?.user.id,
+        profile: profile,
+      );
+      if (pending == null ||
+          !coordinator.claim(
+            pending.id,
+            sessionUserId: session?.user.id,
+            profile: profile,
+          )) {
+        return;
+      }
+      unawaited(
+        _handleSend(presetText: pending.text, pendingActionId: pending.id),
+      );
+    });
   }
 
   @override
@@ -84,9 +114,36 @@ class _AssistantScreenState extends ConsumerState<AssistantScreen> {
   Future<void> _handleSend({
     String? presetText,
     bool isQuickPrompt = false,
+    bool retryFailedTurn = false,
+    String? pendingActionId,
   }) async {
+    final coordinator = ref.read(pendingProtectedActionCoordinatorProvider);
+    var session = ref.read(currentSessionProvider);
+    var profile = ref.read(currentProfileProvider).asData?.value;
+
+    if (pendingActionId != null && !coordinator.isClaimed(pendingActionId)) {
+      if (!coordinator.claim(
+        pendingActionId,
+        sessionUserId: session?.user.id,
+        profile: profile,
+      )) {
+        return;
+      }
+    }
+
     final text = (presetText ?? _inputController.text).trim();
-    if (text.isEmpty) return;
+    if (text.isEmpty) {
+      if (pendingActionId != null) coordinator.release(pendingActionId);
+      return;
+    }
+
+    if (pendingActionId == null) {
+      final previous = coordinator.action;
+      if (previous is AssistantSendAction &&
+          !coordinator.discardReleased(previous.id)) {
+        return;
+      }
+    }
 
     _lastSubmittedText = text;
     if (isQuickPrompt) {
@@ -96,25 +153,192 @@ class _AssistantScreenState extends ConsumerState<AssistantScreen> {
       );
     }
 
-    if (ref.read(currentSessionProvider) == null) {
-      final completed = await showSignInSheet(
+    if (session == null) {
+      pendingActionId = await beginProtectedActionSignIn(
         context,
+        ref,
         reason: context.l10n.assistantSignInRequired,
+        action: AssistantSendAction(text: text),
       );
-      if (!completed || !mounted || ref.read(currentSessionProvider) == null) {
+      if (pendingActionId == null) return;
+      if (!mounted) {
+        coordinator.release(pendingActionId);
+        return;
+      }
+    }
+
+    session = ref.read(currentSessionProvider);
+    profile = ref.read(currentProfileProvider).asData?.value;
+    if (session == null ||
+        (_isHomeowner &&
+            !coordinator.isEligibleHomeowner(
+              profile,
+              userId: session.user.id,
+            ))) {
+      if (pendingActionId != null) coordinator.release(pendingActionId);
+      return;
+    }
+
+    final expectedRole = _isHomeowner
+        ? UserRole.homeowner
+        : UserRole.contractor;
+    if (profile == null ||
+        profile.id != session.user.id ||
+        profile.role != expectedRole ||
+        !profile.roleSelectionLocked) {
+      if (pendingActionId != null) coordinator.release(pendingActionId);
+      return;
+    }
+    final notifier = ref.read(assistantChatProvider.notifier);
+    if (!notifier.bindConversationOwner(
+      userId: session.user.id,
+      role: expectedRole.name,
+    )) {
+      if (pendingActionId != null) coordinator.release(pendingActionId);
+      return;
+    }
+
+    if (pendingActionId != null && !coordinator.isClaimed(pendingActionId)) {
+      if (!coordinator.claim(
+        pendingActionId,
+        sessionUserId: session.user.id,
+        profile: profile,
+      )) {
         return;
       }
     }
 
     if (presetText == null) _inputController.clear();
-    await ref
-        .read(assistantChatProvider.notifier)
-        .sendMessage(
-          text,
-          resolveContractors: _isHomeowner,
-          audience: _isHomeowner ? 'homeowner' : 'contractor',
-        );
+    var succeeded = false;
+    try {
+      succeeded = retryFailedTurn
+          ? await notifier.retryLastMessage(
+              resolveContractors: _isHomeowner,
+              audience: _isHomeowner ? 'homeowner' : 'contractor',
+            )
+          : await notifier.sendMessage(
+              text,
+              resolveContractors: _isHomeowner,
+              audience: _isHomeowner ? 'homeowner' : 'contractor',
+            );
+    } finally {
+      if (pendingActionId != null) {
+        if (succeeded) {
+          coordinator.complete(pendingActionId);
+        } else {
+          coordinator.release(pendingActionId);
+        }
+      }
+    }
     if (mounted) _scrollToBottom();
+  }
+
+  void _retryLastMessage() {
+    final text = _lastSubmittedText;
+    if (text == null) return;
+    final pending = ref.read(pendingProtectedActionCoordinatorProvider).action;
+    final pendingActionId =
+        pending is AssistantSendAction && pending.text.trim() == text.trim()
+        ? pending.id
+        : null;
+    unawaited(
+      _handleSend(
+        presetText: text,
+        retryFailedTurn: true,
+        pendingActionId: pendingActionId,
+      ),
+    );
+  }
+
+  bool _isVerifiedConversationOwner(AssistantChatState state) {
+    final session = ref.read(currentSessionProvider);
+    final profile = ref.read(currentProfileProvider).asData?.value;
+    final expectedRole = _isHomeowner
+        ? UserRole.homeowner
+        : UserRole.contractor;
+    return session != null &&
+        profile != null &&
+        profile.id == session.user.id &&
+        profile.role == expectedRole &&
+        profile.roleSelectionLocked &&
+        state.conversationOwnerUserId == session.user.id &&
+        state.conversationOwnerRole == expectedRole.name;
+  }
+
+  Future<void> _openAssistantReauthentication(AssistantChatState state) async {
+    if (_isOpeningAssistantReauthentication ||
+        !_isVerifiedConversationOwner(state) ||
+        state.failure?.type != AssistantFailureType.authenticationRequired ||
+        state.messages.isEmpty ||
+        state.messages.last.role != AssistantMessageRole.user) {
+      return;
+    }
+    _isOpeningAssistantReauthentication = true;
+    if (mounted) setState(() {});
+    AssistantReauthenticationRequest? request;
+    try {
+      final session = ref.read(currentSessionProvider);
+      final profile = ref.read(currentProfileProvider).asData?.value;
+      if (session == null || profile == null) return;
+      final role = _isHomeowner ? UserRole.homeowner : UserRole.contractor;
+      late final AssistantReauthenticationRequest challenge;
+      try {
+        challenge = AssistantReauthenticationChallenges.issue(
+          AssistantReauthenticationRequest(
+            originalUserId: session.user.id,
+            expectedRole: role,
+            assistantRoute: AssistantReauthenticationRequest.routeForRole(role),
+            failedTurnId: state.messages.last.id,
+          ),
+        );
+      } on StateError {
+        return;
+      }
+      request = challenge;
+      final outcome = await context.push<AssistantReauthenticationOutcome>(
+        Routes.assistantReauthentication,
+        extra: challenge,
+      );
+      if (!mounted || outcome == null || !outcome.matches(challenge)) return;
+      final currentSession = ref.read(currentSessionProvider);
+      final currentProfile = ref.read(currentProfileProvider).asData?.value;
+      if (currentSession?.user.id != challenge.originalUserId ||
+          currentProfile?.id != challenge.originalUserId ||
+          currentProfile?.role != challenge.expectedRole ||
+          currentProfile?.roleSelectionLocked != true) {
+        return;
+      }
+      ref
+          .read(assistantChatProvider.notifier)
+          .confirmReauthentication(
+            userId: challenge.originalUserId,
+            role: challenge.expectedRole.name,
+            failedTurnId: challenge.failedTurnId,
+          );
+    } finally {
+      if (request != null) {
+        AssistantReauthenticationChallenges.clear(request);
+      }
+      _isOpeningAssistantReauthentication = false;
+      if (mounted) setState(() {});
+    }
+  }
+
+  void _discardHiddenConversation() {
+    ref.read(assistantChatProvider.notifier).clearChat();
+    final session = ref.read(currentSessionProvider);
+    final profile = ref.read(currentProfileProvider).asData?.value;
+    final String destination;
+    if (session == null) {
+      destination = Routes.homeownerHome;
+    } else if (profile == null || profile.id != session.user.id) {
+      destination = Routes.splash;
+    } else {
+      destination = profile.role == UserRole.homeowner
+          ? Routes.homeownerHome
+          : Routes.contractorDashboard;
+    }
+    context.go(destination);
   }
 
   void _handleHelpAction(String actionId) {
@@ -142,44 +366,82 @@ class _AssistantScreenState extends ConsumerState<AssistantScreen> {
   Widget build(BuildContext context) {
     final state = ref.watch(assistantChatProvider);
     final l10n = context.l10n;
+    final session = ref.watch(currentSessionProvider);
+    final profile = ref.watch(currentProfileProvider).asData?.value;
+    final expectedRole = _isHomeowner
+        ? UserRole.homeowner
+        : UserRole.contractor;
+    final conversationVisible =
+        state.messages.isEmpty ||
+        (session != null &&
+            profile != null &&
+            profile.id == session.user.id &&
+            profile.role == expectedRole &&
+            profile.roleSelectionLocked &&
+            state.conversationOwnerUserId == session.user.id &&
+            state.conversationOwnerRole == expectedRole.name);
 
     return Directionality(
-      textDirection: TextDirection.rtl,
-      child: BatshScaffold(
-        title: l10n.assistantTitle,
-        padding: EdgeInsets.zero,
-        showPattern: false,
-        actions: [
-          Tooltip(
-            message: l10n.assistantClear,
-            child: BatshPressable(
-              onTap: () => ref.read(assistantChatProvider.notifier).clearChat(),
-              semanticLabel: l10n.assistantClear,
-              child: SizedBox(
-                width: BatshSpacing.xxxl,
-                height: BatshSpacing.xxxl,
-                child: Icon(
-                  Icons.refresh_rounded,
-                  size: BatshIconSize.nav,
-                  color: context.colorScheme.onSurfaceVariant,
+      textDirection: Directionality.of(context),
+      child: conversationVisible
+          ? BatshScaffold(
+              title: l10n.assistantTitle,
+              padding: EdgeInsets.zero,
+              showPattern: false,
+              actions: [
+                Tooltip(
+                  message: l10n.assistantClear,
+                  child: BatshPressable(
+                    onTap: () =>
+                        ref.read(assistantChatProvider.notifier).clearChat(),
+                    semanticLabel: l10n.assistantClear,
+                    child: SizedBox(
+                      width: BatshSpacing.xxxl,
+                      height: BatshSpacing.xxxl,
+                      child: Icon(
+                        Icons.refresh_rounded,
+                        size: BatshIconSize.nav,
+                        color: context.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+              body: Column(
+                children: [
+                  _buildPrivacyBanner(context),
+                  if (state.errorMessage != null) _buildErrorCard(context),
+                  Expanded(
+                    child: state.messages.isEmpty
+                        ? _buildEmptyState(context)
+                        : _buildMessageList(context, state),
+                  ),
+                  _buildComposer(context, state.isThinking),
+                ],
+              ),
+            )
+          : BatshScaffold(
+              title: l10n.assistantTitle,
+              padding: const EdgeInsets.all(BatshSpacing.lg),
+              showPattern: false,
+              body: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      l10n.assistantConversationHiddenMessage,
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: BatshSpacing.lg),
+                    BatshButton(
+                      label: l10n.assistantReauthDiscard,
+                      onPressed: _discardHiddenConversation,
+                    ),
+                  ],
                 ),
               ),
             ),
-          ),
-        ],
-        body: Column(
-          children: [
-            _buildPrivacyBanner(context),
-            if (state.errorMessage != null) _buildErrorCard(context),
-            Expanded(
-              child: state.messages.isEmpty
-                  ? _buildEmptyState(context)
-                  : _buildMessageList(context, state),
-            ),
-            _buildComposer(context, state.isThinking),
-          ],
-        ),
-      ),
     );
   }
 
@@ -574,31 +836,51 @@ class _AssistantScreenState extends ConsumerState<AssistantScreen> {
   }
 
   Widget _buildThinkingCard(BuildContext context) {
+    final motionMode = ref.watch(motionModeProvider);
+    final isReducedMotion =
+        context.systemMotionReduced || motionMode != MotionMode.full;
+
     return Align(
       alignment: Alignment.centerRight,
       child: Padding(
         padding: const EdgeInsets.only(bottom: BatshSpacing.md),
-        child: BatshCard(
-          padding: const EdgeInsets.symmetric(
-            horizontal: BatshSpacing.md,
-            vertical: BatshSpacing.sm,
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.more_horiz_rounded,
-                size: BatshIconSize.action,
-                color: context.colorScheme.primary,
+        child: Semantics(
+          liveRegion: true,
+          label: context.l10n.assistantThinking,
+          child: ExcludeSemantics(
+            child: BatshCard(
+              padding: const EdgeInsets.symmetric(
+                horizontal: BatshSpacing.md,
+                vertical: BatshSpacing.sm,
               ),
-              const SizedBox(width: BatshSpacing.sm),
-              Text(
-                context.l10n.assistantThinking,
-                style: BatshTypography.bodySm.copyWith(
-                  color: context.colorScheme.onSurfaceVariant,
-                ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (isReducedMotion)
+                    Icon(
+                      Icons.more_horiz_rounded,
+                      size: BatshIconSize.action,
+                      color: context.colorScheme.primary,
+                    )
+                  else
+                    SizedBox(
+                      width: BatshIconSize.action,
+                      height: BatshIconSize.action,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: context.colorScheme.primary,
+                      ),
+                    ),
+                  const SizedBox(width: BatshSpacing.sm),
+                  Text(
+                    context.l10n.assistantThinking,
+                    style: BatshTypography.bodySm.copyWith(
+                      color: context.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),
@@ -606,6 +888,56 @@ class _AssistantScreenState extends ConsumerState<AssistantScreen> {
   }
 
   Widget _buildErrorCard(BuildContext context) {
+    final state = ref.watch(assistantChatProvider);
+    final failure = state.failure;
+    final errorText = switch (failure?.type) {
+      AssistantFailureType.quotaExceeded =>
+        _isHomeowner
+            ? context.l10n.assistantErrorQuota
+            : context.l10n.assistantErrorQuotaContractor,
+      AssistantFailureType.authenticationRequired =>
+        context.l10n.assistantSignInRequired,
+      AssistantFailureType.temporaryService ||
+      null => context.l10n.assistantErrorFallback,
+    };
+    final canRetry =
+        failure?.type == AssistantFailureType.temporaryService &&
+        _lastSubmittedText != null;
+    final canRetryAfterAuth =
+        failure?.type == AssistantFailureType.authenticationRequired &&
+        state.messages.isNotEmpty &&
+        state.reauthenticatedTurnId == state.messages.last.id &&
+        _isVerifiedConversationOwner(state);
+    final canReauthenticate =
+        !_isOpeningAssistantReauthentication &&
+        failure?.type == AssistantFailureType.authenticationRequired &&
+        state.messages.isNotEmpty &&
+        state.messages.last.role == AssistantMessageRole.user &&
+        _isVerifiedConversationOwner(state);
+    final String? actionLabel;
+    final VoidCallback? onAction;
+    if (canRetry) {
+      actionLabel = context.l10n.assistantRetry;
+      onAction = _retryLastMessage;
+    } else if (canRetryAfterAuth) {
+      actionLabel = context.l10n.assistantRetryQuestion;
+      onAction = () => unawaited(_handleAuthenticatedRetry(state));
+    } else if (canReauthenticate) {
+      actionLabel = context.l10n.assistantSignInAgain;
+      onAction = () => unawaited(_openAssistantReauthentication(state));
+    } else if (failure?.type == AssistantFailureType.quotaExceeded) {
+      if (_isHomeowner) {
+        actionLabel = context.l10n.assistantQuotaBrowseAction;
+        onAction = () => _openDiscovery();
+      } else {
+        actionLabel = context.l10n.assistantQuotaDashboardAction;
+        onAction = () => context.go(Routes.contractorDashboard);
+      }
+    } else {
+      actionLabel = null;
+      onAction = null;
+    }
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(
         BatshSpacing.md,
@@ -614,31 +946,45 @@ class _AssistantScreenState extends ConsumerState<AssistantScreen> {
         0,
       ),
       child: BatshCard(
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Expanded(
-              child: Text(
-                context.l10n.assistantErrorFallback,
-                style: BatshTypography.bodySm.copyWith(
-                  color: context.colorScheme.onSurface,
+            Text(
+              errorText,
+              style: BatshTypography.bodySm.copyWith(
+                color: context.colorScheme.onSurface,
+              ),
+            ),
+            if (actionLabel != null && onAction != null)
+              Align(
+                alignment: AlignmentDirectional.centerEnd,
+                child: BatshButton(
+                  label: actionLabel,
+                  style: BatshButtonStyle.ghost,
+                  fullWidth: false,
+                  onPressed: onAction,
                 ),
               ),
-            ),
-            SizedBox(
-              width: 120,
-              child: BatshButton(
-                label: context.l10n.assistantRetry,
-                style: BatshButtonStyle.ghost,
-                fullWidth: false,
-                onPressed: _lastSubmittedText == null
-                    ? null
-                    : () => _handleSend(presetText: _lastSubmittedText),
-              ),
-            ),
           ],
         ),
       ),
     );
+  }
+
+  Future<void> _handleAuthenticatedRetry(AssistantChatState state) async {
+    if (!_isVerifiedConversationOwner(state) ||
+        state.messages.isEmpty ||
+        state.reauthenticatedTurnId != state.messages.last.id) {
+      return;
+    }
+    final notifier = ref.read(assistantChatProvider.notifier);
+    final succeeded = await notifier.retryLastMessage(
+      resolveContractors: _isHomeowner,
+      audience: _isHomeowner ? 'homeowner' : 'contractor',
+      expectedFailedTurnId: state.messages.last.id,
+      afterReauthentication: true,
+    );
+    if (mounted && succeeded) _scrollToBottom();
   }
 
   Widget _buildComposer(BuildContext context, bool isThinking) {

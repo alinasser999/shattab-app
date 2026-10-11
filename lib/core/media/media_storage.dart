@@ -40,18 +40,34 @@ enum MediaProvider { supabase, cloudflareR2 }
 
 /// Public objects written with an immutable key can be cached for a year.
 ///
-/// R2 keys include a UUID. Supabase fallbacks use this value only for
-/// insert-only uploads; mutable upserts use [publicMediaMutableCacheControl]
-/// so an avatar or logo replacement is not hidden behind a year-long cache.
+/// These complete HTTP cache directives are retained for the R2 upload path.
+/// Supabase Storage's `FileOptions.cacheControl` takes seconds instead; use
+/// [supabaseMediaCacheControlSecondsFor] for that API.
 const publicMediaImmutableCacheControl = 'public, max-age=31536000, immutable';
 const publicMediaMutableCacheControl = 'public, max-age=3600';
 const privateMediaCacheControl = 'private, max-age=0, no-store';
+
+/// `storage_client` accepts only a max-age value in seconds for uploads.
+/// Keep these distinct from the complete directives used by signed R2 uploads.
+const supabasePublicMediaImmutableCacheControlSeconds = '31536000';
+const supabasePublicMediaMutableCacheControlSeconds = '3600';
+const supabasePrivateMediaCacheControlSeconds = '0';
 
 String mediaCacheControlFor(MediaCategory category, {required bool upsert}) {
   if (!category.canUsePublicR2) return privateMediaCacheControl;
   return upsert
       ? publicMediaMutableCacheControl
       : publicMediaImmutableCacheControl;
+}
+
+String supabaseMediaCacheControlSecondsFor(
+  MediaCategory category, {
+  required bool upsert,
+}) {
+  if (!category.canUsePublicR2) return supabasePrivateMediaCacheControlSeconds;
+  return upsert
+      ? supabasePublicMediaMutableCacheControlSeconds
+      : supabasePublicMediaImmutableCacheControlSeconds;
 }
 
 class MediaUploadResult {

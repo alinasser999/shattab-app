@@ -24,7 +24,9 @@ class BriefCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hasPhoto = brief.photoUrls.isNotEmpty;
-    final formatted = intl.DateFormat.yMMMd('ar').format(brief.createdAt);
+    final formatted = intl.DateFormat.yMMMd(
+      Localizations.localeOf(context).languageCode,
+    ).format(brief.createdAt);
 
     return BatshCard(
       onTap: onTap,
@@ -38,10 +40,11 @@ class BriefCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 4,
                   children: [
                     _StatusBadge(status: brief.status, isPost: brief.isPost),
-                    const Spacer(),
                     Text(
                       formatted,
                       style: BatshTypography.labelSm.copyWith(
@@ -66,30 +69,17 @@ class BriefCard extends StatelessWidget {
                       color: context.colorScheme.onSurfaceVariant,
                     ),
                     const SizedBox(width: 4),
-                    Text(
-                      brief.city,
-                      style: BatshTypography.labelMd.copyWith(
-                        color: context.colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                    if (brief.district != null) ...[
-                      Text(
-                        ' · ',
+                    Expanded(
+                      child: Text(
+                        [
+                          brief.city,
+                          if (brief.district != null) brief.district!,
+                        ].join(' · '),
                         style: BatshTypography.labelMd.copyWith(
                           color: context.colorScheme.onSurfaceVariant,
                         ),
                       ),
-                      Expanded(
-                        child: Text(
-                          brief.district!,
-                          style: BatshTypography.labelMd.copyWith(
-                            color: context.colorScheme.onSurfaceVariant,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
+                    ),
                   ],
                 ),
                 const SizedBox(height: BatshSpacing.xs),
@@ -135,6 +125,7 @@ class _NextStep extends StatelessWidget {
     final cancelled = brief.status == BriefStatus.cancelled;
     return Semantics(
       label: cancelled ? context.l10n.statusCancelled : label,
+      excludeSemantics: true,
       child: Row(
         children: [
           Icon(
@@ -186,6 +177,10 @@ class _Thumb extends StatelessWidget {
               imageUrl: sizedImageUrl(url!, width: 320),
               fit: BoxFit.cover,
               memCacheWidth: 320,
+              placeholder: (_, _) =>
+                  const Center(child: Icon(Icons.image_outlined)),
+              errorWidget: (_, _, _) =>
+                  const Center(child: Icon(Icons.broken_image_outlined)),
             )
           : Center(
               child: Icon(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../theme/theme_extension.dart';
+import '../l10n/l10n_extension.dart';
 
 /// Read-only star row for a fractional rating in [0, 5].
 class BatshStars extends StatelessWidget {
@@ -22,7 +23,8 @@ class BatshStars extends StatelessWidget {
   Widget build(BuildContext context) {
     final fill = color ?? context.colorScheme.tertiary;
     return Semantics(
-      label: '${rating.toStringAsFixed(1)} من 5 نجوم',
+      label: context.l10n.ratingOutOfFive(rating.toStringAsFixed(1)),
+      excludeSemantics: true,
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: List.generate(5, (i) {
@@ -62,18 +64,21 @@ class BatshStarInput extends StatelessWidget {
       children: List.generate(5, (i) {
         final star = i + 1;
         final active = star <= value;
-        return IconButton(
-          padding: const EdgeInsets.symmetric(horizontal: 2),
-          // Keep the 48dp minimum tap target (WCAG / Material touch size).
-          constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
-          iconSize: size,
-          tooltip: '$star',
-          onPressed: () => onChanged(star),
-          icon: Icon(
-            active ? Icons.star : Icons.star_border,
-            color: active
-                ? context.colorScheme.tertiary
-                : context.colorScheme.onSurfaceVariant,
+        return Semantics(
+          selected: star == value,
+          child: IconButton(
+            padding: const EdgeInsets.symmetric(horizontal: 2),
+            // Keep the 48dp minimum tap target (WCAG / Material touch size).
+            constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+            iconSize: size,
+            tooltip: context.l10n.chooseStarRating('$star'),
+            onPressed: () => onChanged(star),
+            icon: Icon(
+              active ? Icons.star : Icons.star_border,
+              color: active
+                  ? context.colorScheme.tertiary
+                  : context.colorScheme.onSurfaceVariant,
+            ),
           ),
         );
       }),

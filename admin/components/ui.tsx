@@ -1,4 +1,5 @@
 import type { ComponentProps, ReactNode } from 'react';
+import { t, type AdminLocale } from '@/lib/i18n';
 
 /**
  * The console's component vocabulary. One button shape, one badge shape, one
@@ -146,7 +147,7 @@ function Spinner() {
 export function Table({ children }: { children: ReactNode }) {
   return (
     <div className="scroll-x">
-      <table className="w-full border-collapse text-left">{children}</table>
+      <table className="w-full border-collapse text-start">{children}</table>
     </div>
   );
 }
@@ -166,7 +167,7 @@ export function TH({
       className={cx(
         'sticky top-0 z-[var(--z-sticky)] border-b border-line bg-surface px-3 py-2',
         'text-xs font-medium whitespace-nowrap text-ink-3',
-        align === 'right' && 'text-right',
+        align === 'right' && 'text-end',
         className,
       )}
     >
@@ -185,7 +186,7 @@ export function TD({
     <td
       className={cx(
         'border-b border-line/60 px-3 py-2.5 align-middle',
-        align === 'right' && 'text-right',
+        align === 'right' && 'text-end',
         className,
       )}
       {...rest}
@@ -247,13 +248,13 @@ export function TableSkeleton({ rows = 6, cols = 5 }: { rows?: number; cols?: nu
 
 // Shown when a read fails. An empty table on error reads as "no data", which is
 // the wrong conclusion to hand an operator.
-export function ErrorState({ what }: { what: string }) {
+export function ErrorState({ what, locale = 'en' }: { what: string; locale?: AdminLocale }) {
   return (
     <div className="flex flex-col items-center gap-2 px-6 py-12 text-center">
-      <Badge tone="danger">Failed to load</Badge>
+      <Badge tone="danger">{t(locale, 'Failed to load')}</Badge>
       <p className="text-sm text-ink-2">{what}</p>
       <p className="text-xs text-ink-3">
-        Reload the page. If it persists, check the Supabase project status.
+        {t(locale, 'Reload the page. If it persists, check the Supabase project status.')}
       </p>
     </div>
   );
@@ -261,12 +262,12 @@ export function ErrorState({ what }: { what: string }) {
 
 /* ── identity ─────────────────────────────────────────────── */
 
-export function Avatar({ name, size = 28 }: { name: string | null | undefined; size?: number }) {
+export function Avatar({ name, size = 28, locale = 'en' }: { name: string | null | undefined; size?: number; locale?: AdminLocale }) {
   const parts = (name ?? '').trim().split(/\s+/).filter(Boolean);
   // Spread-then-index rather than charAt: Arabic is fine either way, but an
   // emoji or surrogate pair in a display name would otherwise render as half a
   // character.
-  const first = [...(parts[0] ?? '')][0] ?? '?';
+  const first = [...(parts[0] ?? '')][0] ?? (locale === 'ar' ? '؟' : '?');
   const last = parts.length > 1 ? ([...(parts[parts.length - 1] ?? '')][0] ?? '') : '';
   return (
     <span

@@ -1,5 +1,4 @@
 import '../../discovery/domain/contractor_listing.dart';
-import '../../../core/theme/professional_reference_theme.dart';
 import '../../portfolio/presentation/providers/portfolio_providers.dart';
 import 'dart:async';
 
@@ -10,6 +9,8 @@ import 'package:go_router/go_router.dart';
 import '../../../core/analytics/app_analytics.dart';
 import '../../../core/analytics/marketplace_events.dart';
 import '../../../core/l10n/l10n_extension.dart';
+import '../../../core/l10n/catalog_labels.dart';
+import '../../../core/catalog/specialty_catalog.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/batsh_spacing.dart';
 import '../../../core/theme/theme_extension.dart';
@@ -32,6 +33,7 @@ import '../../quotes/presentation/providers/quotes_providers.dart';
 import '../../saved/presentation/providers/saved_providers.dart';
 import '../domain/reference_home_data.dart';
 import 'widgets/reference_home_experience.dart';
+import 'widgets/homeowner_reference_style.dart';
 
 /// The homeowner landing surface.
 ///
@@ -52,6 +54,8 @@ class _HomeownerHomeScreenState extends ConsumerState<HomeownerHomeScreen>
   static const _contactReviewPollInterval = Duration(minutes: 5);
 
   late final TextEditingController _searchController;
+  final ScrollController _homeScrollController = ScrollController();
+  bool _compactHomeLocation = false;
   final Set<String> _previewSavedIds = <String>{};
   GoRouter? _router;
   Timer? _contactReviewPollTimer;
@@ -62,6 +66,7 @@ class _HomeownerHomeScreenState extends ConsumerState<HomeownerHomeScreen>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _homeScrollController.addListener(_handleHomeScroll);
     if (!referenceHomePreviewEnabled) {
       unawaited(AppAnalytics.track(MarketplaceEvents.homeViewed));
     }
@@ -89,8 +94,17 @@ class _HomeownerHomeScreenState extends ConsumerState<HomeownerHomeScreen>
     _contactReviewPollTimer?.cancel();
     _router?.routeInformationProvider.removeListener(_handleHomeRouteChange);
     WidgetsBinding.instance.removeObserver(this);
+    _homeScrollController.dispose();
     _searchController.dispose();
     super.dispose();
+  }
+
+  void _handleHomeScroll() {
+    final compact =
+        _homeScrollController.hasClients && _homeScrollController.offset >= 150;
+    if (compact != _compactHomeLocation && mounted) {
+      setState(() => _compactHomeLocation = compact);
+    }
   }
 
   bool get _isSignedInHomeowner {
@@ -182,7 +196,7 @@ class _HomeownerHomeScreenState extends ConsumerState<HomeownerHomeScreen>
     // wraps rendering, so ref.listen retains its consumer lifecycle boundary.
     final content = _buildHome(context);
     return Theme(
-      data: ProfessionalReferenceTheme.scopedTheme(Theme.of(context)),
+      data: HomeownerReferenceStyle.scopedTheme(Theme.of(context)),
       child: content,
     );
   }
@@ -254,21 +268,38 @@ class _HomeownerHomeScreenState extends ConsumerState<HomeownerHomeScreen>
               .map(_mapProfessional)
               .toList(growable: false)
         : const <ReferenceHomeProfessional>[];
-    final featuredIds = featuredProfessionals.map((item) => item.id).toSet();
     final topRatedIds = <String>{};
-    final topRatedProfessionals =
-        (preview
-                ? ReferenceHomePreviewData.topRated
-                : topRatedListings
-                      .where(
-                        (listing) =>
-                            !featuredIds.contains(listing.id) &&
-                            topRatedIds.add(listing.id),
-                      )
-                      .take(5)
-                      .map(_mapProfessional))
-            .where((item) => !featuredIds.contains(item.id))
+    final topRatedProfessionals = topRatedListings
+        .where((listing) => topRatedIds.add(listing.id))
+        .take(3)
+        .map(_mapProfessional)
+        .toList(growable: false);
+    final filters = ref.watch(discoveryFiltersControllerProvider);
+    final selectedCity = (filters.city ?? homeowner?.city)?.trim();
+    final nearbyProfessionals = selectedCity == null || selectedCity.isEmpty
+        ? const <ReferenceHomeProfessional>[]
+        : professionalListings
+              .where(
+                (listing) => listing.serviceAreas.any(
+                  (area) =>
+                      area.trim().toLowerCase() == selectedCity.toLowerCase(),
+                ),
+              )
+              .take(3)
+              .map(_mapProfessional)
+              .toList(growable: false);
+    List<ReferenceHomeProfessional> collection(String root) =>
+        professionalListings
+            .where(
+              (listing) => listing.specialties.any(
+                (specialty) => SpecialtyCatalog.rootKeyFor(specialty) == root,
+              ),
+            )
+            .take(5)
+            .map(_mapProfessional)
             .toList(growable: false);
+    final kitchens = collection('kitchen');
+    final finishing = collection('full_reno');
     final work = preview
         ? ReferenceHomePreviewData.work
         : workProjects.isNotEmpty
@@ -303,14 +334,14 @@ class _HomeownerHomeScreenState extends ConsumerState<HomeownerHomeScreen>
     return BatshScaffold(
       showAppBar: false,
       padding: EdgeInsets.zero,
-      backgroundColor: ProfessionalReferenceTheme.background,
+      backgroundColor: HomeownerReferenceStyle.background,
       showPattern: false,
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           DecoratedBox(
             decoration: BoxDecoration(
-              color: ProfessionalReferenceTheme.background,
+              color: HomeownerReferenceStyle.background,
               border: Border(
                 bottom: BorderSide(
                   color: context.colorScheme.outlineVariant.withValues(
@@ -320,6 +351,7 @@ class _HomeownerHomeScreenState extends ConsumerState<HomeownerHomeScreen>
               ),
             ),
             child: ReferenceHomeHeader(
+              compactLocation: _compactHomeLocation,
               locationLabel: location,
               homeownerName: name,
               avatarUrl:
@@ -335,6 +367,7 @@ class _HomeownerHomeScreenState extends ConsumerState<HomeownerHomeScreen>
           ),
           Expanded(
             child: CustomScrollView(
+              controller: _homeScrollController,
               key: const PageStorageKey<String>('homeowner-home-scroll'),
               physics: const AlwaysScrollableScrollPhysics(),
               slivers: [
@@ -348,7 +381,7 @@ class _HomeownerHomeScreenState extends ConsumerState<HomeownerHomeScreen>
                     padding: EdgeInsets.only(bottom: BatshSpacing.md),
                     child: ReferenceHomeExperience(
                       showHeader: false,
-                      locationLabel: location,
+                      locationLabel: filters.city ?? location,
                       homeownerName: name,
                       avatarUrl:
                           profile?.avatarUrl ??
@@ -365,6 +398,8 @@ class _HomeownerHomeScreenState extends ConsumerState<HomeownerHomeScreen>
                       onSearchChanged: (_) => setState(() {}),
                       onSearchClear: () => _clearSearch(context),
                       onStartProject: () => _startProject(context),
+                      onOpenAssistant: () =>
+                          context.push(Routes.homeownerAssistant),
                       onSelectService: (specialty) =>
                           _selectService(context, specialty),
                       onOpenProject: (item) => _openProject(context, item),
@@ -384,6 +419,21 @@ class _HomeownerHomeScreenState extends ConsumerState<HomeownerHomeScreen>
                           context.go(Routes.homeownerExplore),
                       onCreatePost: () => _createCommunityPost(context),
                       onOpenClosingCta: () => _startProject(context),
+                      nearbyProfessionals: nearbyProfessionals,
+                      kitchenProfessionals: kitchens,
+                      finishingProfessionals: finishing,
+                      selectedServiceLabel: filters.specialty == null
+                          ? null
+                          : localizedSpecialtyLabel(
+                              context,
+                              filters.specialty!,
+                            ),
+                      onServiceFilter: () => _openServiceChooser(context),
+                      onFilters: () => context.go(Routes.homeownerDiscover),
+                      onOpenNearby: () => _openNearby(context, selectedCity),
+                      onOpenKitchens: () => _selectService(context, 'kitchen'),
+                      onOpenFinishing: () =>
+                          _selectService(context, 'full_reno'),
                       featuredProfessionals: featuredProfessionals,
                       topRatedProfessionals: topRatedProfessionals,
                       project: project,
@@ -427,7 +477,8 @@ class _HomeownerHomeScreenState extends ConsumerState<HomeownerHomeScreen>
                       showOfferCount:
                           preview ||
                           (quoteState?.hasValue == true &&
-                              quoteState?.hasError != true),
+                              quoteState?.hasError != true &&
+                              quoteState?.isLoading != true),
                     ),
                   ),
                 ),
@@ -442,19 +493,19 @@ class _HomeownerHomeScreenState extends ConsumerState<HomeownerHomeScreen>
   Widget _buildPreviewHome(BuildContext context) {
     final name = _displayName(context, null, true);
     final location = context.l10n.cityNewCairo;
-    const avatarUrl = 'assets/images/stitch_home_header_avatar.jpg';
+    const avatarUrl = 'assets/images/home_clone_avatar_noor.png';
 
     return BatshScaffold(
       showAppBar: false,
       padding: EdgeInsets.zero,
-      backgroundColor: ProfessionalReferenceTheme.background,
+      backgroundColor: HomeownerReferenceStyle.background,
       showPattern: false,
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           DecoratedBox(
             decoration: BoxDecoration(
-              color: ProfessionalReferenceTheme.background,
+              color: HomeownerReferenceStyle.background,
               border: Border(
                 bottom: BorderSide(
                   color: context.colorScheme.outlineVariant.withValues(
@@ -464,6 +515,7 @@ class _HomeownerHomeScreenState extends ConsumerState<HomeownerHomeScreen>
               ),
             ),
             child: ReferenceHomeHeader(
+              compactLocation: _compactHomeLocation,
               locationLabel: location,
               homeownerName: name,
               avatarUrl: avatarUrl,
@@ -475,6 +527,7 @@ class _HomeownerHomeScreenState extends ConsumerState<HomeownerHomeScreen>
           ),
           Expanded(
             child: CustomScrollView(
+              controller: _homeScrollController,
               key: const PageStorageKey<String>('homeowner-home-scroll'),
               physics: const AlwaysScrollableScrollPhysics(),
               slivers: [
@@ -497,6 +550,8 @@ class _HomeownerHomeScreenState extends ConsumerState<HomeownerHomeScreen>
                       onSearchChanged: (_) => setState(() {}),
                       onSearchClear: () => _clearSearch(context),
                       onStartProject: () => _startProject(context),
+                      onOpenAssistant: () =>
+                          context.push(Routes.homeownerAssistant),
                       onSelectService: (specialty) =>
                           _selectService(context, specialty),
                       onOpenProject: (item) => _openProject(context, item),
@@ -516,10 +571,33 @@ class _HomeownerHomeScreenState extends ConsumerState<HomeownerHomeScreen>
                           context.go(Routes.homeownerExplore),
                       onCreatePost: () => _createCommunityPost(context),
                       onOpenClosingCta: () => _startProject(context),
+                      nearbyProfessionals: ReferenceHomePreviewData.nearby,
+                      kitchenProfessionals: ReferenceHomePreviewData.kitchens,
+                      finishingProfessionals:
+                          ReferenceHomePreviewData.finishing,
+                      selectedServiceLabel:
+                          ref
+                                  .watch(discoveryFiltersControllerProvider)
+                                  .specialty ==
+                              null
+                          ? null
+                          : localizedSpecialtyLabel(
+                              context,
+                              ref
+                                  .watch(discoveryFiltersControllerProvider)
+                                  .specialty!,
+                            ),
+                      onServiceFilter: () => _openServiceChooser(context),
+                      onFilters: () => context.go(Routes.homeownerDiscover),
+                      onOpenNearby: () =>
+                          _openNearby(context, context.l10n.cityNewCairo),
+                      onOpenKitchens: () => _selectService(context, 'kitchen'),
+                      onOpenFinishing: () =>
+                          _selectService(context, 'full_reno'),
                       featuredProfessionals:
                           ReferenceHomePreviewData.professionals,
                       topRatedProfessionals: ReferenceHomePreviewData.topRated,
-                      project: ReferenceHomePreviewData.project,
+                      project: null,
                       work: ReferenceHomePreviewData.work,
                       communityPosts: ReferenceHomePreviewData.communityPosts,
                       savedProfessionalIds: _previewSavedIds,
@@ -561,6 +639,51 @@ class _HomeownerHomeScreenState extends ConsumerState<HomeownerHomeScreen>
     context.go(Routes.homeownerDiscover);
   }
 
+  void _openNearby(BuildContext context, String? city) {
+    if (city != null && city.trim().isNotEmpty) {
+      ref
+          .read(discoveryFiltersControllerProvider.notifier)
+          .setCity(city.trim());
+    }
+    context.go(Routes.homeownerDiscover);
+  }
+
+  void _openServiceChooser(BuildContext context) {
+    unawaited(
+      showModalBottomSheet<void>(
+        context: context,
+        useSafeArea: true,
+        builder: (sheetContext) => SafeArea(
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ListTile(
+                  title: Text(context.l10n.homeCloneServiceAll),
+                  onTap: () {
+                    Navigator.pop(sheetContext);
+                    _selectService(context, '');
+                  },
+                ),
+                for (final specialty in SpecialtyCatalog.roots)
+                  ListTile(
+                    leading: Icon(specialtyIcon(specialty.key)),
+                    title: Text(
+                      localizedSpecialtyLabel(context, specialty.key),
+                    ),
+                    onTap: () {
+                      Navigator.pop(sheetContext);
+                      _selectService(context, specialty.key);
+                    },
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   void _openLocation(BuildContext context) {
     _runSignedIn(
       context,
@@ -594,6 +717,10 @@ class _HomeownerHomeScreenState extends ConsumerState<HomeownerHomeScreen>
   }
 
   void _openProfessional(BuildContext context, String id) {
+    if (id.startsWith('preview-')) {
+      context.go(Routes.homeownerDiscover);
+      return;
+    }
     context.push(Routes.homeownerContractorProfilePath(id));
   }
 
@@ -702,7 +829,7 @@ class _HomeownerHomeScreenState extends ConsumerState<HomeownerHomeScreen>
   String _displayName(BuildContext context, String? value, bool preview) {
     final name = value?.trim();
     if (name != null && name.isNotEmpty) return name;
-    if (preview) return 'أحمد';
+    if (preview) return 'مريم';
     return context.l10n.homeownerAccountRole;
   }
 

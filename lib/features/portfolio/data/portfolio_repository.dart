@@ -234,7 +234,7 @@ class PortfolioRepository {
       fileOptions: const FileOptions(
         upsert: true,
         contentType: 'image/jpeg',
-        cacheControl: publicMediaMutableCacheControl,
+        cacheControl: supabasePublicMediaMutableCacheControlSeconds,
       ),
     );
     return storage.getPublicUrl(path);

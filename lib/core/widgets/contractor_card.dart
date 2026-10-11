@@ -52,6 +52,10 @@ class ContractorCard extends StatelessWidget {
     final area = listing.serviceAreas.isNotEmpty
         ? listing.serviceAreas.first
         : context.l10n.notSpecified;
+    final stackLayout =
+        MediaQuery.textScalerOf(context).scale(15) > 21 ||
+        MediaQuery.sizeOf(context).width <= 400 ||
+        name.length > 34;
 
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -65,40 +69,18 @@ class ContractorCard extends StatelessWidget {
       child: BatshPressable(
         onTap: onTap,
         semanticLabel: '$name. ${context.l10n.homeViewProfile}',
-        child: SizedBox(
-          height: 304,
-          child: ClipRRect(
-            borderRadius: BatshRadius.brCard,
-            child: Row(
-              textDirection: TextDirection.ltr,
-              children: [
-                Expanded(
-                  flex: 42,
-                  child: _CatalogueCover(listing: listing, name: name),
-                ),
-                SizedBox(
-                  width: 22,
-                  child: Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      ColoredBox(color: context.colorScheme.primary),
-                      IgnorePointer(
-                        child: ExcludeSemantics(
-                          child: ShattabPattern(
-                            kind: ShattabPatternKind.terrazzo,
-                            color: Colors.white,
-                            opacity: 0.18,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Expanded(
-                  flex: 58,
-                  child: Directionality(
-                    textDirection: TextDirection.rtl,
-                    child: _CatalogueDetails(
+        child: stackLayout
+            ? ClipRRect(
+                borderRadius: BatshRadius.brCard,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SizedBox(
+                      height: 180,
+                      width: double.infinity,
+                      child: _CatalogueCover(listing: listing, name: name),
+                    ),
+                    _CatalogueDetails(
                       listing: listing,
                       name: name,
                       specialty: specialty,
@@ -108,12 +90,55 @@ class ContractorCard extends StatelessWidget {
                       discoveryReason: discoveryReason,
                       onTap: onTap,
                     ),
+                  ],
+                ),
+              )
+            : SizedBox(
+                height: 320,
+                child: ClipRRect(
+                  borderRadius: BatshRadius.brCard,
+                  child: Row(
+                    textDirection: TextDirection.ltr,
+                    children: [
+                      Expanded(
+                        flex: 42,
+                        child: _CatalogueCover(listing: listing, name: name),
+                      ),
+                      SizedBox(
+                        width: 22,
+                        child: Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            ColoredBox(color: context.colorScheme.primary),
+                            IgnorePointer(
+                              child: ExcludeSemantics(
+                                child: ShattabPattern(
+                                  kind: ShattabPatternKind.terrazzo,
+                                  color: Colors.white,
+                                  opacity: 0.18,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Expanded(
+                        flex: 58,
+                        child: _CatalogueDetails(
+                          listing: listing,
+                          name: name,
+                          specialty: specialty,
+                          area: area,
+                          isSaved: isSaved,
+                          onToggleSave: onToggleSave,
+                          discoveryReason: discoveryReason,
+                          onTap: onTap,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ],
-            ),
-          ),
-        ),
+              ),
       ),
     );
   }
@@ -203,6 +228,7 @@ class _CatalogueDetails extends StatelessWidget {
             BatshSpacing.sm,
           ),
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Padding(
@@ -219,7 +245,7 @@ class _CatalogueDetails extends StatelessWidget {
                       child: Text(
                         name,
                         maxLines: 2,
-                        overflow: TextOverflow.clip,
+                        overflow: TextOverflow.visible,
                         style: BatshTypography.titleMd.copyWith(
                           color: scheme.onSurface,
                           fontWeight: FontWeight.w700,
@@ -248,7 +274,7 @@ class _CatalogueDetails extends StatelessWidget {
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-              const Spacer(),
+              const SizedBox(height: BatshSpacing.sm),
               Text(
                 specialty,
                 maxLines: 1,
@@ -306,7 +332,7 @@ class _CatalogueDetails extends StatelessWidget {
                   ],
                 ],
               ),
-              const Spacer(),
+              const SizedBox(height: BatshSpacing.sm),
               if (listing.projectsCompleted > 0 ||
                   (listing.yearsExperience != null &&
                       listing.yearsExperience! > 0))
@@ -330,24 +356,20 @@ class _CatalogueDetails extends StatelessWidget {
                   ],
                 ),
               const SizedBox(height: BatshSpacing.sm),
-              SizedBox(
-                height: 44,
-                child: FilledButton(
-                  onPressed: onTap,
-                  style: FilledButton.styleFrom(
-                    backgroundColor: scheme.primary,
-                    foregroundColor: scheme.onPrimary,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BatshRadius.brMd,
-                    ),
-                    padding: EdgeInsets.zero,
-                  ),
-                  child: Text(
-                    context.l10n.homeViewProfile,
-                    style: BatshTypography.labelMd.copyWith(
-                      color: scheme.onPrimary,
-                      fontWeight: FontWeight.w700,
-                    ),
+              FilledButton(
+                onPressed: onTap,
+                style: FilledButton.styleFrom(
+                  backgroundColor: scheme.primary,
+                  foregroundColor: scheme.onPrimary,
+                  shape: RoundedRectangleBorder(borderRadius: BatshRadius.brMd),
+                  padding: const EdgeInsets.all(8),
+                  minimumSize: const Size(48, 48),
+                ),
+                child: Text(
+                  context.l10n.homeViewProfile,
+                  style: BatshTypography.labelMd.copyWith(
+                    color: scheme.onPrimary,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ),

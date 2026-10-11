@@ -42,6 +42,7 @@ class BatshDialog {
     return showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
+        scrollable: true,
         shape: const RoundedRectangleBorder(borderRadius: BatshRadius.brXl),
         backgroundColor: context.colorScheme.surface,
         title: Text(title, style: BatshTypography.titleMd),
@@ -85,6 +86,7 @@ class BatshDialog {
     return showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
+        scrollable: true,
         shape: const RoundedRectangleBorder(borderRadius: BatshRadius.brXl),
         backgroundColor: context.colorScheme.surface,
         title: Text(title, style: BatshTypography.titleMd),

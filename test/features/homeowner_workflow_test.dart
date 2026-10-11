@@ -76,43 +76,42 @@ void main() {
       expect(tester.takeException(), isNull);
     });
   }
-  testWidgets('top rated excludes featured and deduplicates before take five', (
-    tester,
-  ) async {
-    await pumpHomeownerReference(
-      tester,
-      extraOverrides: [
-        for (final id in ['featured', 'a', 'b', 'c', 'd', 'e', 'no-cover'])
-          portfolioForContractorProvider(id).overrideWith((_) async => []),
-        discoverContractorsProvider.overrideWith(
-          () => _Listings([_listing('featured')]),
-        ),
-        topRatedProfessionalsProvider.overrideWith(
-          () => _TopListings([
-            _listing('featured'),
-            _listing('a'),
-            _listing('a'),
-            _listing('b'),
-            _listing('c'),
-            _listing('d'),
-            _listing('e'),
-            _listing('f'),
-          ]),
-        ),
-      ],
-    );
-    final experience = tester.widget<ReferenceHomeExperience>(
-      find.byType(ReferenceHomeExperience),
-    );
-    expect(experience.topRatedProfessionals.map((p) => p.id), [
-      'a',
-      'b',
-      'c',
-      'd',
-      'e',
-    ]);
-    expect(tester.takeException(), isNull);
-  });
+  testWidgets(
+    'top rated allows cross-section overlap but deduplicates before take three',
+    (tester) async {
+      await pumpHomeownerReference(
+        tester,
+        extraOverrides: [
+          for (final id in ['featured', 'a', 'b', 'c', 'd', 'e', 'no-cover'])
+            portfolioForContractorProvider(id).overrideWith((_) async => []),
+          discoverContractorsProvider.overrideWith(
+            () => _Listings([_listing('featured')]),
+          ),
+          topRatedProfessionalsProvider.overrideWith(
+            () => _TopListings([
+              _listing('featured'),
+              _listing('a'),
+              _listing('a'),
+              _listing('b'),
+              _listing('c'),
+              _listing('d'),
+              _listing('e'),
+              _listing('f'),
+            ]),
+          ),
+        ],
+      );
+      final experience = tester.widget<ReferenceHomeExperience>(
+        find.byType(ReferenceHomeExperience),
+      );
+      expect(experience.topRatedProfessionals.map((p) => p.id), [
+        'featured',
+        'a',
+        'b',
+      ]);
+      expect(tester.takeException(), isNull);
+    },
+  );
   testWidgets('missing covers remain empty; exhausted top-rated rail omitted', (
     tester,
   ) async {

@@ -48,7 +48,6 @@ class Brief {
     this.editedAt,
     this.projectTitle,
     this.estimatedArea,
-    this.budgetNote,
     this.startTiming,
   });
 
@@ -86,7 +85,6 @@ class Brief {
   /// readable during the migration window.
   final String? projectTitle;
   final int? estimatedArea;
-  final String? budgetNote;
   final String? startTiming;
 
   /// True when the scope changed after posting. Contractors see this, because
@@ -162,7 +160,6 @@ class Brief {
         : DateTime.parse(json['edited_at'] as String),
     projectTitle: json['project_title'] as String?,
     estimatedArea: (json['estimated_area'] as num?)?.toInt(),
-    budgetNote: json['budget_note'] as String?,
     startTiming: json['start_timing'] as String?,
   );
 }

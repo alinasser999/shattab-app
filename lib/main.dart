@@ -11,6 +11,10 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'app.dart';
 import 'core/debug/debug_config.dart';
+import 'core/theme/batsh_theme.dart';
+import 'core/theme/batsh_typography.dart';
+import 'core/l10n/l10n_extension.dart';
+import 'l10n/app_localizations.dart';
 import 'core/env/env.dart';
 import 'core/logging/app_logger.dart';
 import 'core/notifications/push_service.dart';
@@ -83,57 +87,90 @@ Future<void> _initializeApp() async {
   }, appRunner: _runApp);
 }
 
-class _StartupApp extends StatelessWidget {
-  const _StartupApp();
-
-  @override
-  Widget build(BuildContext context) {
-    return const MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: Scaffold(
-        backgroundColor: Color(0xFFF8F4EC),
-        body: Center(
-          child: SizedBox(
-            width: 28,
-            height: 28,
-            child: CircularProgressIndicator(
-              strokeWidth: 2.5,
-              color: Color(0xFFA64E2F),
-            ),
-          ),
-        ),
-      ),
-    );
+Future<void> _retryInitialization() async {
+  runApp(const _StartupApp());
+  try {
+    await _initializeApp();
+  } catch (error, stackTrace) {
+    AppLogger.error('app_boot_failed', error: error, stackTrace: stackTrace);
+    runApp(const _StartupErrorApp());
   }
 }
 
-class _StartupErrorApp extends StatelessWidget {
-  const _StartupErrorApp();
+class _StartupApp extends StatelessWidget {
+  const _StartupApp({this.failed = false});
+  final bool failed;
 
   @override
-  Widget build(BuildContext context) {
-    return const MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: Scaffold(
-        backgroundColor: Color(0xFFF8F4EC),
-        body: Center(
-          child: Padding(
-            padding: EdgeInsets.all(24),
-            child: Text(
-              'شطّب بياخد لحظة يبدأ. اقفل الصفحة وافتحها تاني.',
-              textAlign: TextAlign.center,
-              textDirection: TextDirection.rtl,
-              style: TextStyle(
-                color: Color(0xFF2B2B2B),
-                fontSize: 18,
-                height: 1.6,
+  Widget build(BuildContext context) => MaterialApp(
+    debugShowCheckedModeBanner: false,
+    theme: BatshTheme.light(),
+    darkTheme: BatshTheme.dark(),
+    supportedLocales: AppLocalizations.supportedLocales,
+    localizationsDelegates: AppLocalizations.localizationsDelegates,
+    // The real router reads the captured URI after initialization. Bootstrap
+    // renders the same surface for deep links without attempting to resolve it.
+    initialRoute: '/',
+    onGenerateRoute: (_) => MaterialPageRoute<void>(
+      builder: (context) => Scaffold(
+        body: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 560),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Image.asset(
+                      'assets/icon/app_icon_foreground.png',
+                      width: 180,
+                      height: 100,
+                      fit: BoxFit.contain,
+                      semanticLabel: context.l10n.appName,
+                    ),
+                    const SizedBox(height: 24),
+                    if (failed) ...[
+                      Text(
+                        context.l10n.startupRetryMessage,
+                        textAlign: TextAlign.center,
+                        style: BatshTypography.bodyLg,
+                      ),
+                      const SizedBox(height: 16),
+                      OutlinedButton(
+                        onPressed: _retryInitialization,
+                        child: Text(context.l10n.tryAgain),
+                      ),
+                    ] else
+                      Semantics(
+                        label: context.l10n.loading,
+                        liveRegion: true,
+                        excludeSemantics: true,
+                        child: MediaQuery.disableAnimationsOf(context)
+                            ? const Icon(Icons.hourglass_top_rounded)
+                            : const SizedBox(
+                                width: 28,
+                                height: 28,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2.5,
+                                ),
+                              ),
+                      ),
+                  ],
+                ),
               ),
             ),
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
+
+class _StartupErrorApp extends StatelessWidget {
+  const _StartupErrorApp();
+  @override
+  Widget build(BuildContext context) => const _StartupApp(failed: true);
 }
 
 void _runApp() {

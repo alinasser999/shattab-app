@@ -330,9 +330,18 @@ class _HomeownerReferenceAppState extends State<HomeownerReferenceApp> {
     builder: (context, child) {
       if (child == null) return const SizedBox.shrink();
       final media = MediaQuery.of(context);
+      // Standalone isolated review fixture only: browsers have no native iOS
+      // safe areas. Opt in explicitly for calibrated 390x844 screenshots.
+      final iosReviewInsets = Uri.base.queryParameters['safeAreas'] == 'ios';
       return MediaQuery(
         data: media.copyWith(
           textScaler: TextScaler.linear(widget.scenario.textScale),
+          padding: iosReviewInsets
+              ? const EdgeInsets.only(top: 44, bottom: 34)
+              : media.padding,
+          viewPadding: iosReviewInsets
+              ? const EdgeInsets.only(top: 44, bottom: 34)
+              : media.viewPadding,
         ),
         child: child,
       );

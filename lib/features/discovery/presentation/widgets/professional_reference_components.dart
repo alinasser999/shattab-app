@@ -462,190 +462,271 @@ class ReferenceProfessionalCard extends StatelessWidget {
   final List<String> photos;
   final VoidCallback onOpen, onSave;
   @override
-  Widget build(BuildContext context) => Column(
-    children: [
-      Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10),
-        child: ReferenceGallery(
-          photos: photos,
-          premium: listing.isSponsored,
-          premiumLabel: listing.isPro,
-          saved: saved,
-          onSave: onSave,
-          onOpen: onOpen,
-        ),
-      ),
-      ReferencePremiumSurface(
-        premium: listing.isSponsored,
-        child: InkWell(
-          onTap: onOpen,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 6, 13, 11),
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, constraints) {
+      final stacked =
+          constraints.maxWidth < 340 ||
+          MediaQuery.textScalerOf(context).scale(1) > 1.2;
+      final identity = Row(
+        children: [
+          ReferenceAvatar(listing: listing, size: 42),
+          const SizedBox(width: 9),
+          Expanded(
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    ReferenceAvatar(listing: listing, size: 36),
-                    const SizedBox(width: 5),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            referenceName(listing),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: referenceText(13, weight: FontWeight.w800),
-                          ),
-                          const SizedBox(height: 5),
-                          Text(
-                            '${referenceSpecialty(context, listing)}  ·  ${listing.serviceAreas.firstOrNull ?? ''}',
-                            style: referenceText(10, color: referenceMuted),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    Directionality(
-                      textDirection: TextDirection.ltr,
-                      child: Row(
-                        children: [
-                          const Icon(
-                            Icons.star_rounded,
-                            size: 16,
-                            color: Color(0xffffb72a),
-                          ),
-                          const SizedBox(width: 3),
-                          Text(
-                            listing.rating?.toStringAsFixed(1) ?? '—',
-                            style: referenceText(13.5, weight: FontWeight.w700),
-                          ),
-                          Text(
-                            ' (${listing.reviewCount})',
-                            style: referenceText(12.5, color: referenceMuted),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+                Text(
+                  referenceName(listing),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: referenceText(18, weight: FontWeight.w800),
                 ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _CardFact(
-                        icon: Icons.assignment_outlined,
-                        label: context.l10n.referenceYearsExperienceCount(
-                          '${listing.yearsExperience ?? '—'}',
-                        ),
-                      ),
-                    ),
-                    const _FactDivider(),
-                    Expanded(
-                      child: _CardFact(
-                        icon: Icons.work_outline,
-                        label: context.l10n.referenceCompletedProjectsCount(
-                          listing.projectsCompleted,
-                        ),
-                      ),
-                    ),
-                    if (listing.verified) ...[
-                      const _FactDivider(),
-                      Expanded(
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Flexible(
-                              child: Text(
-                                context.l10n.referenceVerified,
-                                style: referenceText(
-                                  10,
-                                  color: const Color(0xff477f20),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 3),
-                            const Icon(
-                              Icons.verified_user,
-                              size: 13,
-                              color: Color(0xff477f20),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-                const SizedBox(height: 7),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        professionalReferenceEnabled &&
-                                ProfessionalReferenceFixture.isFixtureId(
-                                  listing.id,
-                                )
-                            ? 'استشارات  ·  تنفيذ وتشطيب  ·  تصميم 3D'
-                            : listing.specialties
-                                  .map(
-                                    (s) => localizedSpecialtyDisplayLabel(
-                                      context,
-                                      s,
-                                    ),
-                                  )
-                                  .join('  ·  '),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: referenceText(10, color: referenceMuted),
-                      ),
-                    ),
-                    Text(
-                      context.l10n.referenceViewProfile,
-                      style: referenceText(12, color: referenceOrange),
-                    ),
-                    const SizedBox(width: 3),
-                    const Directionality(
-                      textDirection: TextDirection.ltr,
-                      child: Icon(
-                        Icons.arrow_back,
-                        color: referenceOrange,
-                        size: 17,
-                      ),
-                    ),
-                  ],
+                const SizedBox(height: 3),
+                Text(
+                  '${referenceSpecialty(context, listing)}  ·  ${listing.serviceAreas.firstOrNull ?? ''}',
+                  style: referenceText(
+                    13,
+                    color: ProfessionalReferenceTheme.muted,
+                  ),
                 ),
               ],
             ),
           ),
+        ],
+      );
+      final rating = Row(
+        textDirection: TextDirection.ltr,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            listing.rating == null
+                ? Icons.star_border_rounded
+                : Icons.star_rounded,
+            size: 18,
+            color: listing.rating == null
+                ? ProfessionalReferenceTheme.muted
+                : const Color(0xffffb72a),
+          ),
+          const SizedBox(width: 5),
+          Flexible(
+            child: Text(
+              listing.rating == null
+                  ? context.l10n.referenceUnratedLabel
+                  : '${listing.rating!.toStringAsFixed(1)} (${listing.reviewCount})',
+              style: referenceText(
+                14,
+                color: listing.rating == null
+                    ? ProfessionalReferenceTheme.muted
+                    : referenceNavy,
+                weight: listing.rating == null
+                    ? FontWeight.w500
+                    : FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      );
+      final specialties = Text(
+        professionalReferenceEnabled &&
+                ProfessionalReferenceFixture.isFixtureId(listing.id)
+            ? 'استشارات  ·  تنفيذ وتشطيب  ·  تصميم 3D'
+            : listing.specialties
+                  .map((s) => localizedSpecialtyDisplayLabel(context, s))
+                  .join('  ·  '),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: referenceText(13, color: ProfessionalReferenceTheme.muted),
+      );
+      final profile = ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: 44),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              context.l10n.referenceViewProfile,
+              style: referenceText(14, color: referenceOrange),
+            ),
+            const SizedBox(width: 5),
+            const Icon(Icons.arrow_forward, color: referenceOrange, size: 20),
+          ],
         ),
-      ),
-    ],
+      );
+      return Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: ReferenceGallery(
+              photos: photos,
+              ratio: 1.86,
+              premium: listing.isSponsored,
+              premiumLabel: listing.isPro,
+              saved: saved,
+              onSave: onSave,
+              onOpen: onOpen,
+            ),
+          ),
+          ReferencePremiumSurface(
+            premium: listing.isSponsored,
+            child: InkWell(
+              onTap: onOpen,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    if (stacked) ...[
+                      identity,
+                      const SizedBox(height: 8),
+                      Align(
+                        alignment: AlignmentDirectional.centerEnd,
+                        child: rating,
+                      ),
+                    ] else
+                      Row(
+                        children: [
+                          Expanded(child: identity),
+                          const SizedBox(width: 12),
+                          rating,
+                        ],
+                      ),
+                    const SizedBox(height: 9),
+                    Container(
+                      constraints: const BoxConstraints(minHeight: 48),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 10,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xfffff8f2),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: const Color(0xffffefe4)),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: _CardFact(
+                              icon: Icons.assignment_outlined,
+                              value: '${listing.yearsExperience ?? '—'}',
+                              label: context.l10n
+                                  .referenceDirectoryYearsExperienceCount(
+                                    '${listing.yearsExperience ?? '—'}',
+                                  ),
+                            ),
+                          ),
+                          const _FactDivider(),
+                          Expanded(
+                            child: _CardFact(
+                              icon: Icons.work_outline,
+                              value: '${listing.projectsCompleted}',
+                              label: context.l10n
+                                  .referenceCompletedProjectsCount(
+                                    listing.projectsCompleted,
+                                  ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (listing.verified)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.verified_user,
+                              size: 16,
+                              color: Color(0xff477f20),
+                            ),
+                            const SizedBox(width: 5),
+                            Flexible(
+                              child: Text(
+                                context.l10n.referenceVerified,
+                                style: referenceText(
+                                  13,
+                                  color: const Color(0xff477f20),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    if (stacked) ...[
+                      const SizedBox(height: 10),
+                      specialties,
+                      Align(
+                        alignment: AlignmentDirectional.centerEnd,
+                        child: profile,
+                      ),
+                    ] else
+                      Row(
+                        children: [
+                          Expanded(child: specialties),
+                          const SizedBox(width: 10),
+                          profile,
+                        ],
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          const Padding(
+            padding: EdgeInsets.fromLTRB(16, 2, 16, 10),
+            child: Divider(height: 1, thickness: 1, color: Color(0xffe9ebef)),
+          ),
+        ],
+      );
+    },
   );
 }
 
 class _CardFact extends StatelessWidget {
-  const _CardFact({required this.icon, required this.label});
+  const _CardFact({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
   final IconData icon;
-  final String label;
+  final String label, value;
   @override
-  Widget build(BuildContext context) => Row(
-    mainAxisAlignment: MainAxisAlignment.center,
-    children: [
-      Flexible(
-        child: Text(label, style: referenceText(9.5, color: referenceMuted)),
-      ),
-      const SizedBox(width: 4),
-      Icon(icon, size: 13, color: referenceMuted),
-    ],
-  );
+  Widget build(BuildContext context) {
+    final index = label.indexOf(value);
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Flexible(
+          child: Text.rich(
+            TextSpan(
+              style: referenceText(14, color: ProfessionalReferenceTheme.muted),
+              children: index < 0
+                  ? [TextSpan(text: label)]
+                  : [
+                      TextSpan(text: label.substring(0, index)),
+                      TextSpan(
+                        text: value,
+                        style: referenceText(16, weight: FontWeight.w800),
+                      ),
+                      TextSpan(text: label.substring(index + value.length)),
+                    ],
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Icon(icon, size: 18, color: referenceOrange),
+      ],
+    );
+  }
 }
 
 class _FactDivider extends StatelessWidget {
   const _FactDivider();
   @override
-  Widget build(BuildContext context) =>
-      Container(height: 10, width: 1, color: const Color(0xfff1cfb1));
+  Widget build(BuildContext context) => Container(
+    margin: const EdgeInsets.symmetric(horizontal: 8),
+    height: 18,
+    width: 1,
+    color: const Color(0xfff1cfb1),
+  );
 }
 
 class ReferenceBottomNavigation extends StatelessWidget {

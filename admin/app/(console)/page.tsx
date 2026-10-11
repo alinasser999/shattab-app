@@ -3,7 +3,10 @@ import { supabaseServer } from '@/lib/supabase/server';
 import { ActivityChart, Funnel, StatStrip, type Stat } from '@/components/charts';
 import { OutcomeBanner } from '@/components/banner';
 import { Avatar, Badge, EmptyState, ErrorState, Panel, PanelHead, Table, TD, TH, TR } from '@/components/ui';
-import { fmtAgo, fmtDateTime, fmtEgp, fmtNum, fmtPhone, pct } from '@/lib/format';
+import { fmtAgo, fmtDateTime, fmtEgp, fmtNum, fmtPhone, formatRole } from '@/lib/format';
+import { fmtPct } from '@/lib/format';
+import { getAdminLocale } from '@/lib/locale';
+import { t, type AdminLocale } from '@/lib/i18n';
 
 // Operational data. Rendered per request, never from a build cache.
 export const dynamic = 'force-dynamic';
@@ -34,6 +37,7 @@ export default async function OverviewPage({
   searchParams: Promise<{ done?: string; error?: string }>;
 }) {
   const { done, error } = await searchParams;
+  const locale = await getAdminLocale();
   const supabase = await supabaseServer();
 
   // Four independent reads, so they go out together rather than in series.
@@ -48,7 +52,7 @@ export default async function OverviewPage({
   if (overviewRes.error || !overviewRes.data) {
     return (
       <Panel>
-        <ErrorState what="Could not read the overview metrics." />
+        <ErrorState what={t(locale, 'Could not read the overview metrics.')} locale={locale} />
       </Panel>
     );
   }
@@ -61,35 +65,35 @@ export default async function OverviewPage({
 
   const stats: Stat[] = [
     {
-      label: 'Accounts',
-      value: fmtNum(o.users.total),
-      foot: `${fmtNum(o.users.homeowners)} homeowners · ${fmtNum(o.users.contractors)} pros`,
+      label: t(locale, 'Accounts'),
+      value: fmtNum(o.users.total, locale),
+      foot: t(locale, '{homeowners} homeowners · {pros} pros', { homeowners: fmtNum(o.users.homeowners, locale), pros: fmtNum(o.users.contractors, locale) }),
       delta: { current: o.users.new_7d, previous: o.users.prev_7d },
     },
     {
-      label: 'New this week',
-      value: fmtNum(o.users.new_7d),
-      foot: `${fmtNum(o.users.new_30d)} in 30 days`,
+      label: t(locale, 'New this week'),
+      value: fmtNum(o.users.new_7d, locale),
+      foot: t(locale, '{count} in 30 days', { count: fmtNum(o.users.new_30d, locale) }),
     },
     {
-      label: 'Active this week',
-      value: fmtNum(o.users.active_7d),
-      foot: `${pct(o.users.active_7d, o.users.total)}% of all accounts`,
+      label: t(locale, 'Active this week'),
+      value: fmtNum(o.users.active_7d, locale),
+      foot: t(locale, '{percent}% of all accounts', { percent: fmtPct(o.users.active_7d, o.users.total, locale).replace('%', '') }),
     },
     {
-      label: 'Briefs',
-      value: fmtNum(o.demand.briefs),
-      foot: `${fmtNum(o.demand.briefs_open)} still open`,
+      label: t(locale, 'Briefs'),
+      value: fmtNum(o.demand.briefs, locale),
+      foot: t(locale, '{count} still open', { count: fmtNum(o.demand.briefs_open, locale) }),
     },
     {
-      label: 'Quotes',
-      value: fmtNum(o.demand.quotes),
-      foot: `${fmtNum(o.demand.accepted)} accepted · ${fmtNum(o.demand.completed)} completed`,
+      label: t(locale, 'Quotes'),
+      value: fmtNum(o.demand.quotes, locale),
+      foot: t(locale, '{accepted} accepted · {completed} completed', { accepted: fmtNum(o.demand.accepted, locale), completed: fmtNum(o.demand.completed, locale) }),
     },
     {
-      label: 'Collected',
-      value: fmtEgp(o.revenue.egp_total),
-      foot: `${fmtEgp(o.revenue.egp_30d)} in 30 days`,
+      label: t(locale, 'Collected'),
+      value: fmtEgp(o.revenue.egp_total, locale),
+      foot: t(locale, '{count} in 30 days', { count: fmtEgp(o.revenue.egp_30d, locale) }),
     },
   ];
 
@@ -98,66 +102,68 @@ export default async function OverviewPage({
   return (
     <>
       <header className="mb-5">
-        <h1 className="text-xl font-semibold tracking-tight text-ink">Overview</h1>
+        <h1 className="text-xl font-semibold tracking-tight text-ink">{t(locale, 'Overview')}</h1>
         <p className="mt-0.5 text-sm text-ink-3">
-          Live from the database. Times are Cairo.
+          {t(locale, 'Live from the database. Times are Cairo.')}
         </p>
       </header>
 
-      <OutcomeBanner done={done} error={error} />
+      <OutcomeBanner done={done} error={error} locale={locale} />
 
       <div className="flex flex-col gap-5">
-        <StatStrip stats={stats} />
+        <StatStrip stats={stats} locale={locale} />
 
         {pendingTotal > 0 ? (
           <Panel className="flex flex-wrap items-center gap-x-5 gap-y-2 px-4 py-3">
-            <span className="text-sm font-medium text-ink">Waiting on you</span>
-            <QueueLink href="/contractors" count={o.queues.verification} label="verification" />
-            <QueueLink href="/payments" count={o.queues.payment} label="payment" />
-            <QueueLink href="/moderation" count={o.queues.reports} label="report" />
+            <span className="text-sm font-medium text-ink">{t(locale, 'Waiting on you')}</span>
+            <QueueLink href="/contractors" count={o.queues.verification} label="verification" locale={locale} />
+            <QueueLink href="/payments" count={o.queues.payment} label="payment" locale={locale} />
+            <QueueLink href="/moderation" count={o.queues.reports} label="report" locale={locale} />
           </Panel>
         ) : null}
 
         <div className="grid gap-5 xl:grid-cols-[1.6fr_1fr]">
           <Panel>
             <PanelHead
-              title="Daily activity"
-              hint="Last 30 days. Zero-activity days are shown as gaps, not skipped."
+              title={t(locale, 'Daily activity')}
+              hint={t(locale, 'Last 30 days. Zero-activity days are shown as gaps, not skipped.')}
             />
             {seriesRes.error ? (
-              <ErrorState what="Could not read daily activity." />
+              <ErrorState what={t(locale, 'Could not read daily activity.')} locale={locale} />
             ) : days.length === 0 ? (
               <EmptyState
-                title="No activity yet"
-                body="Signups, briefs and quotes appear here the day they happen."
+                title={t(locale, 'No activity yet')}
+                body={t(locale, 'Signups, briefs and quotes appear here the day they happen.')}
               />
             ) : (
               <ActivityChart
                 days={days.map((d) => d.day)}
+                locale={locale}
                 series={[
-                  { key: 'signups', label: 'Signups', tone: 'accent', values: days.map((d) => d.signups) },
-                  { key: 'signins', label: 'Sign-ins', tone: 'info', values: days.map((d) => d.signins) },
-                  { key: 'briefs', label: 'Briefs', tone: 'warn', values: days.map((d) => d.briefs) },
-                  { key: 'quotes', label: 'Quotes', tone: 'ok', values: days.map((d) => d.quotes) },
+                  { key: 'signups', label: t(locale, 'Signups'), tone: 'accent', values: days.map((d) => d.signups) },
+                  { key: 'signins', label: t(locale, 'Sign-ins'), tone: 'info', values: days.map((d) => d.signins) },
+                  { key: 'briefs', label: t(locale, 'Briefs'), tone: 'warn', values: days.map((d) => d.briefs) },
+                  { key: 'quotes', label: t(locale, 'Quotes'), tone: 'ok', values: days.map((d) => d.quotes) },
                 ]}
               />
             )}
           </Panel>
 
           <Panel>
-            <PanelHead title="Marketplace funnel" hint="Each step as a share of the one above it." />
+            <PanelHead title={t(locale, 'Marketplace funnel')} hint={t(locale, 'Each step as a share of the one above it.')} />
             {funnelRes.error ? (
-              <ErrorState what="Could not read the marketplace funnel." />
+              <ErrorState what={t(locale, 'Could not read the marketplace funnel.')} locale={locale} />
             ) : (
               <Funnel
                 steps={[
-                  { label: 'Homeowners', value: f.homeowners ?? 0 },
-                  { label: 'Posted a brief', value: f.posted_brief ?? 0 },
-                  { label: 'Briefs with a quote', value: f.briefs_quoted ?? 0, note: liquidityNote(f) },
-                  { label: 'Quote accepted', value: f.briefs_accepted ?? 0 },
-                  { label: 'Job completed', value: f.briefs_completed ?? 0 },
-                  { label: 'Reviewed', value: f.briefs_reviewed ?? 0 },
+                  { label: t(locale, 'Homeowners'), value: f.homeowners ?? 0 },
+                  { label: t(locale, 'Posted a brief'), value: f.posted_brief ?? 0 },
+                  { label: t(locale, 'Briefs with a quote'), value: f.briefs_quoted ?? 0, note: liquidityNote(f, locale) },
+                  { label: t(locale, 'Quote accepted'), value: f.briefs_accepted ?? 0 },
+                  { label: t(locale, 'Job completed'), value: f.briefs_completed ?? 0 },
+                  { label: t(locale, 'Reviewed'), value: f.briefs_reviewed ?? 0 },
                 ]}
+                locale={locale}
               />
             )}
           </Panel>
@@ -166,45 +172,45 @@ export default async function OverviewPage({
         <div className="grid gap-5 lg:grid-cols-2">
           <Panel>
             <PanelHead
-              title="Supply health"
-              hint="A professional who never quotes is not supply."
+              title={t(locale, 'Supply health')}
+              hint={t(locale, 'A professional who never quotes is not supply.')}
             />
             <dl className="grid grid-cols-2 gap-x-4 gap-y-3 px-4 py-4">
-              <Metric label="Professionals" value={fmtNum(o.users.contractors)} />
+              <Metric label={t(locale, 'Professionals')} value={fmtNum(o.users.contractors, locale)} />
               <Metric
-                label="Quoted this week"
-                value={fmtNum(o.supply.quoting_7d)}
-                foot={`${pct(o.supply.quoting_7d, o.users.contractors)}% of them`}
+                label={t(locale, 'Quoted this week')}
+                value={fmtNum(o.supply.quoting_7d, locale)}
+                foot={t(locale, '{percent}% of them', { percent: fmtPct(o.supply.quoting_7d, o.users.contractors, locale).replace('%', '') })}
               />
               <Metric
-                label="Verified"
-                value={fmtNum(o.supply.verified)}
-                foot={`${pct(o.supply.verified, o.users.contractors)}% of them`}
+                label={t(locale, 'Verified')}
+                value={fmtNum(o.supply.verified, locale)}
+                foot={t(locale, '{percent}% of them', { percent: fmtPct(o.supply.verified, o.users.contractors, locale).replace('%', '') })}
               />
-              <Metric label="On Pro" value={fmtNum(o.supply.pro)} />
-              <Metric label="With a portfolio" value={fmtNum(o.supply.with_portfolio)} />
+              <Metric label={t(locale, 'On Pro')} value={fmtNum(o.supply.pro, locale)} />
+              <Metric label={t(locale, 'With a portfolio')} value={fmtNum(o.supply.with_portfolio, locale)} />
               <Metric
-                label="Finished onboarding"
-                value={fmtNum(o.users.onboarded)}
-                foot={`${pct(o.users.onboarded, o.users.total)}% of all accounts`}
+                label={t(locale, 'Finished onboarding')}
+                value={fmtNum(o.users.onboarded, locale)}
+                foot={t(locale, '{percent}% of all accounts', { percent: fmtPct(o.users.onboarded, o.users.total, locale).replace('%', '') })}
               />
             </dl>
           </Panel>
 
           <Panel>
-            <PanelHead title="Content and trust" />
+            <PanelHead title={t(locale, 'Content and trust')} />
             <dl className="grid grid-cols-2 gap-x-4 gap-y-3 px-4 py-4">
-              <Metric label="Posts" value={fmtNum(o.content.posts)} foot={`${fmtNum(o.content.posts_7d)} this week`} />
-              <Metric label="Comments" value={fmtNum(o.content.comments)} />
+              <Metric label={t(locale, 'Posts')} value={fmtNum(o.content.posts, locale)} foot={t(locale, '{count} this week', { count: fmtNum(o.content.posts_7d, locale) })} />
+              <Metric label={t(locale, 'Comments')} value={fmtNum(o.content.comments, locale)} />
               <Metric
-                label="Reviews"
-                value={fmtNum(o.content.reviews)}
-                foot={o.content.rating_avg ? `${o.content.rating_avg} average` : 'no ratings yet'}
+                label={t(locale, 'Reviews')}
+                value={fmtNum(o.content.reviews, locale)}
+                foot={o.content.rating_avg ? t(locale, '{rating} average', { rating: fmtNum(o.content.rating_avg, locale) }) : t(locale, 'no ratings yet')}
               />
               <Metric
-                label="Suspended accounts"
-                value={fmtNum(o.users.suspended)}
-                foot={o.users.suspended > 0 ? 'see Users' : undefined}
+                label={t(locale, 'Suspended accounts')}
+                value={fmtNum(o.users.suspended, locale)}
+                foot={o.users.suspended > 0 ? t(locale, 'see Users') : undefined}
               />
             </dl>
           </Panel>
@@ -212,31 +218,31 @@ export default async function OverviewPage({
 
         <div className="grid gap-5 lg:grid-cols-2">
           <Panel>
-            <PanelHead title="Newest accounts" action={<SeeAll href="/users" />} />
+            <PanelHead title={t(locale, 'Newest accounts')} action={<SeeAll href="/users" locale={locale} />} />
             {signupsRes.error ? (
-              <ErrorState what="Could not read recent signups." />
+              <ErrorState what={t(locale, 'Could not read recent signups.')} locale={locale} />
             ) : signups.length === 0 ? (
-              <EmptyState title="Nobody has signed up yet" body="New accounts appear here as they register." />
+              <EmptyState title={t(locale, 'Nobody has signed up yet')} body={t(locale, 'New accounts appear here as they register.')} />
             ) : (
               <Table>
                 <thead>
                   <tr>
-                    <TH>Name</TH>
-                    <TH>Role</TH>
-                    <TH align="right">Joined</TH>
+                    <TH>{t(locale, 'Name')}</TH>
+                    <TH>{t(locale, 'Role')}</TH>
+                    <TH align="right">{t(locale, 'Joined')}</TH>
                   </tr>
                 </thead>
                 <tbody className="stagger">
                   {signups.map((u, i) => (
                     <TR key={u.id} style={{ ['--i' as string]: i }}>
                       <TD>
-                        <PersonCell id={u.id} name={u.full_name} phone={u.phone} suspended={u.suspended_at} />
+                        <PersonCell id={u.id} name={u.full_name} phone={u.phone} suspended={u.suspended_at} locale={locale} />
                       </TD>
                       <TD>
-                        <RoleBadge role={u.role} onboarded={u.onboarded} />
+                        <RoleBadge role={u.role} onboarded={u.onboarded} locale={locale} />
                       </TD>
                       <TD align="right" className="whitespace-nowrap text-ink-3">
-                        <span title={fmtDateTime(u.created_at)}>{fmtAgo(u.created_at)}</span>
+                        <span title={fmtDateTime(u.created_at, locale)}>{fmtAgo(u.created_at, locale)}</span>
                       </TD>
                     </TR>
                   ))}
@@ -246,32 +252,32 @@ export default async function OverviewPage({
           </Panel>
 
           <Panel>
-            <PanelHead title="Most recent sign-ins" action={<SeeAll href="/activity" />} />
+            <PanelHead title={t(locale, 'Most recent sign-ins')} action={<SeeAll href="/activity" locale={locale} />} />
             {signinsRes.error ? (
-              <ErrorState what="Could not read recent sign-ins." />
+              <ErrorState what={t(locale, 'Could not read recent sign-ins.')} locale={locale} />
             ) : signins.length === 0 ? (
               <EmptyState
-                title="No sign-ins recorded"
-                body="An account shows here once it completes an OTP login."
+                title={t(locale, 'No sign-ins recorded')}
+                body={t(locale, 'An account shows here once it completes an OTP login.')}
               />
             ) : (
               <Table>
                 <thead>
                   <tr>
-                    <TH>Name</TH>
-                    <TH align="right">Sessions</TH>
-                    <TH align="right">Last seen</TH>
+                    <TH>{t(locale, 'Name')}</TH>
+                    <TH align="right">{t(locale, 'Sessions')}</TH>
+                    <TH align="right">{t(locale, 'Last seen')}</TH>
                   </tr>
                 </thead>
                 <tbody className="stagger">
                   {signins.map((u, i) => (
                     <TR key={u.id} style={{ ['--i' as string]: i }}>
                       <TD>
-                        <PersonCell id={u.id} name={u.full_name} phone={u.phone} suspended={u.suspended_at} />
+                        <PersonCell id={u.id} name={u.full_name} phone={u.phone} suspended={u.suspended_at} locale={locale} />
                       </TD>
-                      <TD align="right" className="text-ink-3">{fmtNum(u.session_count)}</TD>
+                      <TD align="right" className="text-ink-3">{fmtNum(u.session_count, locale)}</TD>
                       <TD align="right" className="whitespace-nowrap text-ink-3">
-                        <span title={fmtDateTime(u.last_sign_in)}>{fmtAgo(u.last_sign_in)}</span>
+                        <span title={fmtDateTime(u.last_sign_in, locale)}>{fmtAgo(u.last_sign_in, locale)}</span>
                       </TD>
                     </TR>
                   ))}
@@ -292,29 +298,35 @@ export default async function OverviewPage({
  * quote is a homeowner who tried the product and got silence, so it is called
  * out in words rather than left to be inferred from two bar heights.
  */
-function liquidityNote(f: Record<string, number>): string | undefined {
+function liquidityNote(f: Record<string, number>, locale: AdminLocale): string | undefined {
   const briefs = f.briefs ?? 0;
   const quoted = f.briefs_quoted ?? 0;
   if (briefs === 0) return undefined;
   const unanswered = briefs - quoted;
-  if (unanswered === 0) return 'Every brief has at least one quote.';
-  return `${unanswered} of ${briefs} briefs have no quote at all.`;
+  if (unanswered === 0) return t(locale, 'Every brief has at least one quote.');
+  return t(locale, '{unanswered} of {briefs} briefs have no quote at all.', { unanswered: fmtNum(unanswered, locale), briefs: fmtNum(briefs, locale) });
 }
 
-function QueueLink({ href, count, label }: { href: string; count: number; label: string }) {
+function QueueLink({ href, count, label, locale }: { href: string; count: number; label: 'verification' | 'payment' | 'report'; locale: AdminLocale }) {
   if (count === 0) return null;
+  const messageKey = label === 'verification'
+    ? count === 1 ? '{count} verification' : '{count} verifications'
+    : label === 'payment'
+      ? count === 1 ? '{count} payment' : '{count} payments'
+      : count === 1 ? '{count} report' : '{count} reports';
+  const text = t(locale, messageKey, { count: fmtNum(count, locale) });
   return (
     <Link
       href={href}
       className="flex items-center gap-1.5 text-sm text-ink-2 underline decoration-line-strong underline-offset-4 transition-colors duration-150 hover:text-ink hover:decoration-accent"
     >
-      <Badge tone="warn">{count}</Badge>
-      {count === 1 ? label : `${label}s`}
+      <Badge tone="warn">{fmtNum(count, locale)}</Badge>
+      {text}
     </Link>
   );
 }
 
-function SeeAll({ href }: { href: string }) {
+function SeeAll({ href, locale }: { href: string; locale: AdminLocale }) {
   // Standalone meaning: a screen reader announcing this out of context still
   // knows where it goes.
   return (
@@ -322,7 +334,7 @@ function SeeAll({ href }: { href: string }) {
       href={href}
       className="text-xs text-ink-2 underline decoration-line-strong underline-offset-4 transition-colors duration-150 hover:text-ink hover:decoration-accent"
     >
-      View all
+      {t(locale, 'View all')}
     </Link>
   );
 }
@@ -342,24 +354,26 @@ function PersonCell({
   name,
   phone,
   suspended,
+  locale,
 }: {
   id: string;
   name: string | null;
   phone: string | null;
   suspended: string | null;
+  locale: AdminLocale;
 }) {
   return (
     <Link href={`/users?user=${id}`} className="flex min-w-0 items-center gap-2.5 group">
-      <Avatar name={name} />
+      <Avatar name={name} locale={locale} />
       <span className="min-w-0">
         <span className="flex items-center gap-1.5">
           <span
             dir="auto"
             className="truncate font-medium text-ink group-hover:underline group-hover:decoration-accent group-hover:underline-offset-4"
           >
-            {name?.trim() || 'Unnamed'}
+            {name?.trim() || t(locale, 'Unnamed')}
           </span>
-          {suspended ? <Badge tone="danger">Suspended</Badge> : null}
+          {suspended ? <Badge tone="danger">{t(locale, 'Suspended')}</Badge> : null}
         </span>
         <span className="block text-xs text-ink-3" dir="ltr">
           {fmtPhone(phone)}
@@ -369,15 +383,15 @@ function PersonCell({
   );
 }
 
-function RoleBadge({ role, onboarded }: { role: string; onboarded?: boolean }) {
+function RoleBadge({ role, onboarded, locale }: { role: string; onboarded?: boolean; locale: AdminLocale }) {
   return (
     <span className="flex items-center gap-1.5">
       <Badge tone={role === 'contractor' ? 'accent' : 'info'}>
-        {role === 'contractor' ? 'Professional' : 'Homeowner'}
+        <bdi dir="auto">{formatRole(role, locale)}</bdi>
       </Badge>
       {onboarded === false ? (
-        <Badge tone="warn" title="Signed up but never finished onboarding">
-          Incomplete
+        <Badge tone="warn" title={t(locale, 'Signed up but never finished onboarding')}>
+          {t(locale, 'Incomplete')}
         </Badge>
       ) : null}
     </span>

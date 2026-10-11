@@ -39,12 +39,13 @@ class TrustStrip extends StatelessWidget {
     return Semantics(
       container: true,
       label: visible.map((signal) => signal.label).join('، '),
+      excludeSemantics: true,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           for (final signal in visible)
-            SizedBox(
-              height: 20,
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 2),
               child: Row(
                 children: [
                   Icon(
@@ -56,8 +57,6 @@ class TrustStrip extends StatelessWidget {
                   Expanded(
                     child: Text(
                       signal.label,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                       style: BatshTypography.labelSm.copyWith(
                         color: context.colorScheme.onSurfaceVariant,
                         fontWeight: FontWeight.w600,

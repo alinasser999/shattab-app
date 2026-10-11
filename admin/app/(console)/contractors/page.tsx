@@ -6,7 +6,9 @@ import {
   Avatar, Badge, Button, EmptyState, ErrorState, Input, Label, Panel, PanelHead,
   Select, Table, TD, TH, TR,
 } from '@/components/ui';
-import { PROVIDER_KIND_LABEL, fmtAgo, fmtDateTime, fmtNum } from '@/lib/format';
+import { formatProviderKind, fmtAgo, fmtDateTime, fmtNum } from '@/lib/format';
+import { getAdminLocale } from '@/lib/locale';
+import { t, type AdminLocale } from '@/lib/i18n';
 
 export const dynamic = 'force-dynamic';
 
@@ -43,9 +45,10 @@ const ROSTER_SELECT =
 export default async function ContractorsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ filter?: string; done?: string; error?: string }>;
+  searchParams: Promise<{ filter?: string; done?: string; error?: string; days?: string; max?: string }>;
 }) {
   const sp = await searchParams;
+  const locale = await getAdminLocale();
   const supabase = await supabaseServer();
 
   // The queue embeds the profile and the professional record, so one request
@@ -96,31 +99,31 @@ export default async function ContractorsPage({
   return (
     <>
       <header className="mb-4">
-        <h1 className="text-xl font-semibold tracking-tight text-ink">Professionals</h1>
+        <h1 className="text-xl font-semibold tracking-tight text-ink">{t(locale, 'Professionals')}</h1>
         <p className="mt-0.5 text-sm text-ink-3">
-          The verification queue first, then everyone on the supply side.
+          {t(locale, 'The verification queue first, then everyone on the supply side.')}
         </p>
       </header>
 
-      <OutcomeBanner done={sp.done} error={sp.error} />
+      <OutcomeBanner done={sp.done} error={sp.error} days={sp.days} max={sp.max} locale={locale} />
 
       <div className="flex flex-col gap-5">
         <Panel>
           <PanelHead
-            title="Verification queue"
-            hint="Oldest first. Document links are signed and expire after five minutes."
+            title={t(locale, 'Verification queue')}
+            hint={t(locale, 'Oldest first. Document links are signed and expire after five minutes.')}
             action={
               <Badge tone={queueRes.error ? 'danger' : pending.length > 0 ? 'warn' : 'ok'}>
-                {queueRes.error ? 'Unavailable' : `${pending.length} pending`}
+                {queueRes.error ? t(locale, 'Unavailable') : t(locale, '{count} pending', { count: fmtNum(pending.length, locale) })}
               </Badge>
             }
           />
           {queueRes.error ? (
-            <ErrorState what="Could not read the verification queue." />
+            <ErrorState what={t(locale, 'Could not read the verification queue.')} locale={locale} />
           ) : pending.length === 0 ? (
             <EmptyState
-              title="Queue is clear"
-              body="A request lands here when a professional submits their ID or trade licence from the app."
+              title={t(locale, 'Queue is clear')}
+              body={t(locale, 'A request lands here when a professional submits their ID or trade licence from the app.')}
             />
           ) : (
             <ul className="stagger divide-y divide-line">
@@ -130,6 +133,7 @@ export default async function ContractorsPage({
                   index={i}
                   request={request}
                   docUrls={docs.get(request.id) ?? []}
+                  locale={locale}
                 />
               ))}
             </ul>
@@ -138,40 +142,40 @@ export default async function ContractorsPage({
 
         <Panel className="overflow-hidden">
           <PanelHead
-            title="Supply roster"
-            hint="Newest first, capped at 200. Rating shows only where real reviews exist."
+            title={t(locale, 'Supply roster')}
+            hint={t(locale, 'Newest first, capped at 200. Rating shows only where real reviews exist.')}
             action={
               <form className="flex gap-2">
-                <Select name="filter" defaultValue={sp.filter ?? ''} aria-label="Filter professionals">
-                  <option value="">Everyone</option>
-                  <option value="unverified">Not verified</option>
-                  <option value="verified">Verified</option>
-                  <option value="pro">On Pro</option>
+                <Select name="filter" defaultValue={sp.filter ?? ''} aria-label={t(locale, 'Filter professionals')}>
+                  <option value="">{t(locale, 'Everyone')}</option>
+                  <option value="unverified">{t(locale, 'Not verified')}</option>
+                  <option value="verified">{t(locale, 'Verified')}</option>
+                  <option value="pro">{t(locale, 'On Pro')}</option>
                 </Select>
                 <Button type="submit" variant="secondary" size="sm">
-                  Apply
+                  {t(locale, 'Apply')}
                 </Button>
               </form>
             }
           />
           {rosterRes.error ? (
-            <ErrorState what="Could not read the roster." />
+            <ErrorState what={t(locale, 'Could not read the roster.')} locale={locale} />
           ) : pros.length === 0 ? (
             <EmptyState
-              title="No professionals match"
-              body="Clear the filter, or wait for contractor accounts to finish onboarding."
+              title={t(locale, 'No professionals match')}
+              body={t(locale, 'Clear the filter, or wait for contractor accounts to finish onboarding.')}
             />
           ) : (
             <Table>
               <thead>
                 <tr>
-                  <TH>Business</TH>
-                  <TH>Calls itself</TH>
-                  <TH>Trust</TH>
-                  <TH align="right">Jobs</TH>
-                  <TH align="right">Rating</TH>
-                  <TH>Plan</TH>
-                  <TH align="right">Verify</TH>
+                  <TH>{t(locale, 'Business')}</TH>
+                  <TH>{t(locale, 'Calls itself')}</TH>
+                  <TH>{t(locale, 'Trust')}</TH>
+                  <TH align="right">{t(locale, 'Jobs')}</TH>
+                  <TH align="right">{t(locale, 'Rating')}</TH>
+                  <TH>{t(locale, 'Plan')}</TH>
+                  <TH align="right">{t(locale, 'Verify')}</TH>
                 </tr>
               </thead>
               <tbody className="stagger">
@@ -184,38 +188,38 @@ export default async function ContractorsPage({
                           href={`/users?user=${pro.profile_id}`}
                           className="group flex min-w-0 items-center gap-2.5"
                         >
-                          <Avatar name={pro.business_name || pro.profiles?.full_name} />
+                          <Avatar name={pro.business_name || pro.profiles?.full_name} locale={locale} />
                           <span className="min-w-0">
                             <span
                               dir="auto"
                               className="block truncate font-medium text-ink group-hover:underline group-hover:decoration-accent group-hover:underline-offset-4"
                             >
-                              {pro.business_name?.trim() || pro.profiles?.full_name?.trim() || 'Unnamed'}
+                              {pro.business_name?.trim() || pro.profiles?.full_name?.trim() || t(locale, 'Unnamed')}
                             </span>
-                            <span className="block text-xs text-ink-3" title={fmtDateTime(pro.created_at)}>
-                              joined {fmtAgo(pro.created_at)}
+                            <span className="block text-xs text-ink-3" title={fmtDateTime(pro.created_at, locale)}>
+                              {t(locale, 'joined {time}', { time: fmtAgo(pro.created_at, locale) })}
                             </span>
                           </span>
                         </Link>
                       </TD>
                       <TD className="text-ink-2">
-                        {PROVIDER_KIND_LABEL[pro.provider_kind] ?? pro.provider_kind}
+                        <bdi dir="auto">{formatProviderKind(pro.provider_kind, locale)}</bdi>
                       </TD>
                       <TD>
                         <span className="flex flex-wrap items-center gap-1.5">
-                          {pro.verified ? <Badge tone="ok">Verified</Badge> : <Badge>Unverified</Badge>}
-                          {pro.profiles?.suspended_at ? <Badge tone="danger">Suspended</Badge> : null}
+                          {pro.verified ? <Badge tone="ok">{t(locale, 'Verified')}</Badge> : <Badge>{t(locale, 'Unverified')}</Badge>}
+                          {pro.profiles?.suspended_at ? <Badge tone="danger">{t(locale, 'Suspended')}</Badge> : null}
                         </span>
                       </TD>
                       <TD align="right" className="text-ink-2">
-                        {fmtNum(pro.projects_completed)}
+                        {fmtNum(pro.projects_completed, locale)}
                       </TD>
                       <TD align="right" className="text-ink-2">
                         {/* No fallback rating. An invented average on an unreviewed
                             professional is the one number that must never be shown. */}
                         {pro.rating_count > 0 ? (
-                          <span title={`${pro.rating_count} reviews`}>
-                            {pro.rating_avg} <span className="text-ink-3">({pro.rating_count})</span>
+                          <span title={t(locale, '{count} reviews', { count: fmtNum(pro.rating_count, locale) })}>
+                            {fmtNum(pro.rating_avg, locale)} <span className="text-ink-3">({fmtNum(pro.rating_count, locale)})</span>
                           </span>
                         ) : (
                           <span className="text-ink-3">—</span>
@@ -223,15 +227,17 @@ export default async function ContractorsPage({
                       </TD>
                       <TD>
                         {isPro ? (
-                          <Badge tone="warn" title={`Until ${fmtDateTime(pro.plan_expires_at)}`}>
-                            Pro
+                          <Badge tone="warn" title={t(locale, 'Until {date}', { date: fmtDateTime(pro.plan_expires_at, locale) })}>
+                            {t(locale, 'Pro')}
                           </Badge>
                         ) : pro.plan === 'pro' ? (
-                          <Badge tone="danger" title="Plan is pro but the expiry has passed">
-                            Expired
+                          <Badge tone="danger" title={t(locale, 'Plan is pro but the expiry has passed')}>
+                            {t(locale, 'Expired')}
                           </Badge>
+                        ) : pro.plan === 'free' ? (
+                          <Badge>{t(locale, 'Free')}</Badge>
                         ) : (
-                          <Badge>Free</Badge>
+                          <Badge><bdi dir="auto">{pro.plan}</bdi></Badge>
                         )}
                       </TD>
                       <TD align="right">
@@ -240,7 +246,7 @@ export default async function ContractorsPage({
                           <input type="hidden" name="path" value="/contractors" />
                           <input type="hidden" name="verified" value={String(!pro.verified)} />
                           <Button type="submit" variant={pro.verified ? 'ghost' : 'secondary'} size="sm">
-                            {pro.verified ? 'Remove' : 'Verify'}
+                            {pro.verified ? t(locale, 'Remove') : t(locale, 'Verify')}
                           </Button>
                         </form>
                       </TD>
@@ -261,21 +267,23 @@ function QueueItem({
   index,
   request,
   docUrls,
+  locale,
 }: {
   index: number;
   request: Pending;
   docUrls: string[];
+  locale: AdminLocale;
 }) {
   const name =
     request.contractor_profiles?.business_name?.trim() ||
     request.profiles?.full_name?.trim() ||
-    'Unnamed';
+    t(locale, 'Unnamed');
 
   return (
     <li style={{ ['--i' as string]: index }} className="px-4 py-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex min-w-0 items-start gap-2.5">
-          <Avatar name={name} />
+          <Avatar name={name} locale={locale} />
           <div className="min-w-0">
             <Link
               href={`/users?user=${request.contractor_id}`}
@@ -285,9 +293,11 @@ function QueueItem({
               {name}
             </Link>
             <p className="text-xs text-ink-3">
-              {PROVIDER_KIND_LABEL[request.contractor_profiles?.provider_kind ?? ''] ?? 'Contractor'}
-              {' · submitted '}
-              <span title={fmtDateTime(request.created_at)}>{fmtAgo(request.created_at)}</span>
+              <bdi dir="auto">{formatProviderKind(request.contractor_profiles?.provider_kind ?? '', locale)}</bdi>
+              {' · '}
+              <span title={fmtDateTime(request.created_at, locale)}>
+                {t(locale, 'submitted {time}', { time: fmtAgo(request.created_at, locale) })}
+              </span>
             </p>
             {request.note ? (
               <p dir="auto" className="mt-1 max-w-[60ch] text-sm text-ink-2">
@@ -308,10 +318,10 @@ function QueueItem({
               rel="noopener noreferrer"
               className="rounded-md border border-line-strong bg-panel px-2 py-1 text-xs text-ink-2 transition-colors duration-150 hover:bg-raised hover:text-ink"
             >
-              Open document {n + 1}
+              {t(locale, 'Open document {number}', { number: fmtNum(n + 1, locale) })}
             </a>
           ))}
-          {docUrls.length === 0 ? <Badge tone="warn">No readable documents</Badge> : null}
+          {docUrls.length === 0 ? <Badge tone="warn">{t(locale, 'No readable documents')}</Badge> : null}
         </div>
       </div>
 
@@ -321,7 +331,7 @@ function QueueItem({
           <input type="hidden" name="path" value="/contractors" />
           <input type="hidden" name="approve" value="true" />
           <Button type="submit" variant="primary" size="sm">
-            Approve and grant the badge
+            {t(locale, 'Approve and grant the badge')}
           </Button>
         </form>
 
@@ -330,15 +340,16 @@ function QueueItem({
           <input type="hidden" name="path" value="/contractors" />
           <input type="hidden" name="approve" value="false" />
           <div className="min-w-40 flex-1">
-            <Label htmlFor={`reason-${request.id}`}>Rejection reason</Label>
+            <Label htmlFor={`reason-${request.id}`}>{t(locale, 'Rejection reason')}</Label>
             <Input
               id={`reason-${request.id}`}
               name="reason"
-              placeholder="What was wrong with the documents"
+              placeholder={t(locale, 'What was wrong with the documents')}
+              dir="auto"
             />
           </div>
           <Button type="submit" variant="danger" size="sm">
-            Reject
+            {t(locale, 'Reject')}
           </Button>
         </form>
       </div>

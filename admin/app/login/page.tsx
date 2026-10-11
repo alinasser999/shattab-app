@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 import { currentAdmin } from '@/lib/supabase/server';
+import { getAdminLocale } from '@/lib/locale';
 import { LoginForm } from './form';
 
 /**
@@ -18,6 +19,7 @@ export default async function LoginPage({
   searchParams: Promise<{ next?: string; denied?: string }>;
 }) {
   const { next, denied } = await searchParams;
+  const locale = await getAdminLocale();
 
   // Keep the convenience redirect for a real admin, but leave authenticated
   // non-admins on this page so the console does not bounce them indefinitely.
@@ -27,5 +29,5 @@ export default async function LoginPage({
   // would turn a successful sign-in into an open redirect off the console.
   const target = next && next.startsWith('/') && !next.startsWith('//') ? next : '/';
 
-  return <LoginForm next={target} denied={denied === '1'} />;
+  return <LoginForm next={target} denied={denied === '1'} locale={locale} />;
 }

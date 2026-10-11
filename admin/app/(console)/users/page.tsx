@@ -7,7 +7,9 @@ import {
   Avatar, Badge, Button, EmptyState, ErrorState, Input, Panel, Select,
   Table, TD, TH, TR,
 } from '@/components/ui';
-import { fmtAgo, fmtDateTime, fmtNum, fmtPhone } from '@/lib/format';
+import { fmtAgo, fmtDateTime, fmtNum, fmtPhone, formatRole } from '@/lib/format';
+import { getAdminLocale } from '@/lib/locale';
+import { t } from '@/lib/i18n';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,8 +26,9 @@ type Row = {
   created_at: string;
 };
 
-export default async function UsersPage({ searchParams }: { searchParams: Promise<Query> }) {
+export default async function UsersPage({ searchParams }: { searchParams: Promise<Query & { days?: string; max?: string }> }) {
   const sp = await searchParams;
+  const locale = await getAdminLocale();
   const page = Math.max(1, Number.parseInt(sp.page ?? '1', 10) || 1);
   const term = (sp.q ?? '').trim();
 
@@ -62,10 +65,9 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
     <>
       <header className="mb-4 flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-xl font-semibold tracking-tight text-ink">Users</h1>
+        <h1 className="text-xl font-semibold tracking-tight text-ink">{t(locale, 'Users')}</h1>
           <p className="mt-0.5 text-sm text-ink-3">
-            {fmtNum(total)} {total === 1 ? 'account' : 'accounts'}. Select one to see everything about
-            it.
+            {t(locale, total === 1 ? '{count} account' : '{count} accounts', { count: fmtNum(total, locale) })}. {t(locale, 'Select one to see everything about it.')}
           </p>
         </div>
 
@@ -77,44 +79,44 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
             name="q"
             type="search"
             defaultValue={term}
-            placeholder="Name or phone"
-            aria-label="Search accounts by name or phone"
+            placeholder={t(locale, 'Name or phone')}
+            aria-label={t(locale, 'Search accounts by name or phone')}
             className="w-48"
           />
-          <Select name="role" defaultValue={sp.role ?? ''} aria-label="Filter by role">
-            <option value="">Every role</option>
-            <option value="homeowner">Homeowners</option>
-            <option value="contractor">Professionals</option>
+          <Select name="role" defaultValue={sp.role ?? ''} aria-label={t(locale, 'Filter by role')}>
+            <option value="">{t(locale, 'Every role')}</option>
+            <option value="homeowner">{t(locale, 'Homeowners')}</option>
+            <option value="contractor">{t(locale, 'Professionals')}</option>
           </Select>
-          <Select name="status" defaultValue={sp.status ?? ''} aria-label="Filter by status">
-            <option value="">Any status</option>
-            <option value="suspended">Suspended</option>
-            <option value="incomplete">Onboarding incomplete</option>
+          <Select name="status" defaultValue={sp.status ?? ''} aria-label={t(locale, 'Filter by status')}>
+            <option value="">{t(locale, 'Any status')}</option>
+            <option value="suspended">{t(locale, 'Suspended')}</option>
+            <option value="incomplete">{t(locale, 'Onboarding incomplete')}</option>
           </Select>
           <Button type="submit" variant="secondary">
-            Apply
+            {t(locale, 'Apply')}
           </Button>
         </form>
       </header>
 
-      <OutcomeBanner done={sp.done} error={sp.error} />
+      <OutcomeBanner done={sp.done} error={sp.error} days={sp.days} max={sp.max} locale={locale} />
 
       <div className="grid gap-5 xl:grid-cols-[1fr_22rem]">
         <Panel className="min-w-0 overflow-hidden">
           {error ? (
-            <ErrorState what="Could not read the account list." />
+            <ErrorState what={t(locale, 'Could not read the account list.')} locale={locale} />
           ) : rows.length === 0 ? (
             <EmptyState
-              title="No accounts match"
+              title={t(locale, 'No accounts match')}
               body={
                 filtered
-                  ? 'Widen the filters, or clear the search box and apply again.'
-                  : 'Accounts appear here as soon as someone completes phone verification in the app.'
+                  ? t(locale, 'Widen the filters, or clear the search box and apply again.')
+                  : t(locale, 'Accounts appear here as soon as someone completes phone verification in the app.')
               }
               action={
                 filtered ? (
                   <Link href="/users">
-                    <Button variant="secondary">Clear all filters</Button>
+                    <Button variant="secondary">{t(locale, 'Clear all filters')}</Button>
                   </Link>
                 ) : undefined
               }
@@ -123,10 +125,10 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
             <Table>
               <thead>
                 <tr>
-                  <TH>Account</TH>
-                  <TH>Role</TH>
-                  <TH>Status</TH>
-                  <TH align="right">Joined</TH>
+                  <TH>{t(locale, 'Account')}</TH>
+                  <TH>{t(locale, 'Role')}</TH>
+                  <TH>{t(locale, 'Status')}</TH>
+                  <TH align="right">{t(locale, 'Joined')}</TH>
                 </tr>
               </thead>
               <tbody className="stagger">
@@ -141,13 +143,13 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
                         href={buildHref(sp, { user: u.id })}
                         className="group flex min-w-0 items-center gap-2.5"
                       >
-                        <Avatar name={u.full_name} />
+                        <Avatar name={u.full_name} locale={locale} />
                         <span className="min-w-0">
                           <span
                             dir="auto"
                             className="block truncate font-medium text-ink group-hover:underline group-hover:decoration-accent group-hover:underline-offset-4"
                           >
-                            {u.full_name?.trim() || 'Unnamed'}
+                            {u.full_name?.trim() || t(locale, 'Unnamed')}
                           </span>
                           <span className="block text-xs text-ink-3" dir="ltr">
                             {fmtPhone(u.phone)}
@@ -157,23 +159,26 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
                     </TD>
                     <TD>
                       <Badge tone={u.role === 'contractor' ? 'accent' : 'info'}>
-                        {u.role === 'contractor' ? 'Professional' : 'Homeowner'}
+                        <bdi dir="auto">{formatRole(u.role, locale)}</bdi>
                       </Badge>
                     </TD>
                     <TD>
                       <span className="flex flex-wrap items-center gap-1.5">
                         {u.suspended_at ? (
-                          <Badge tone="danger" title={u.suspended_reason ?? undefined}>
-                            Suspended
+                          <Badge
+                            tone="danger"
+                            title={u.suspended_reason ? `\u2068${u.suspended_reason}\u2069` : undefined}
+                          >
+                            {t(locale, 'Suspended')}
                           </Badge>
                         ) : (
-                          <Badge tone="ok">Active</Badge>
+                          <Badge tone="ok">{t(locale, 'Active')}</Badge>
                         )}
-                        {!u.onboarding_complete ? <Badge tone="warn">Incomplete</Badge> : null}
+                        {!u.onboarding_complete ? <Badge tone="warn">{t(locale, 'Incomplete')}</Badge> : null}
                       </span>
                     </TD>
                     <TD align="right" className="whitespace-nowrap text-ink-3">
-                      <span title={fmtDateTime(u.created_at)}>{fmtAgo(u.created_at)}</span>
+                      <span title={fmtDateTime(u.created_at, locale)}>{fmtAgo(u.created_at, locale)}</span>
                     </TD>
                   </TR>
                 ))}
@@ -183,21 +188,21 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
 
           {lastPage > 1 ? (
             <nav
-              aria-label="Pagination"
+              aria-label={t(locale, 'Pagination')}
               className="flex items-center justify-between gap-3 border-t border-line px-4 py-2.5 text-xs text-ink-3"
             >
               <span>
-                Page {page} of {lastPage}
+                {t(locale, 'Page {page} of {total}', { page: fmtNum(page, locale), total: fmtNum(lastPage, locale) })}
               </span>
               <span className="flex gap-1.5">
-                <PageLink sp={sp} to={page - 1} disabled={page <= 1} label="Previous" />
-                <PageLink sp={sp} to={page + 1} disabled={page >= lastPage} label="Next" />
+                <PageLink sp={sp} to={page - 1} disabled={page <= 1} label={t(locale, 'Previous')} />
+                <PageLink sp={sp} to={page + 1} disabled={page >= lastPage} label={t(locale, 'Next')} />
               </span>
             </nav>
           ) : null}
         </Panel>
 
-        <UserDrawer userId={sp.user} backHref={buildHref(sp, { user: undefined })} />
+        <UserDrawer userId={sp.user} backHref={buildHref(sp, { user: undefined })} locale={locale} />
       </div>
     </>
   );

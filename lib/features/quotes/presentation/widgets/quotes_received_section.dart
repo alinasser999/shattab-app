@@ -1,3 +1,4 @@
+import '../../../../core/widgets/professional_reference_states.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -12,7 +13,6 @@ import '../../../../core/theme/batsh_spacing.dart';
 import '../../../../core/theme/batsh_typography.dart';
 import '../../../../core/widgets/batsh_button.dart';
 import '../../../../core/widgets/batsh_card.dart';
-import '../../../../core/widgets/batsh_error.dart';
 import '../../../../core/widgets/batsh_shimmer.dart';
 import '../../../../core/widgets/batsh_stars.dart';
 import '../../../../core/widgets/contact_buttons.dart';
@@ -85,7 +85,7 @@ class QuotesReceivedSection extends ConsumerWidget {
               ],
             ),
           ),
-          error: (e, _) => BatshError(
+          error: (e, _) => ProfessionalReferenceReadError(
             message: ErrorMapper.map(e),
             onRetry: () => ref.invalidate(quotesForBriefProvider(briefId)),
           ),
@@ -98,11 +98,15 @@ class QuotesReceivedSection extends ConsumerWidget {
                   shrinkWrap: true,
                   physics: const AlwaysScrollableScrollPhysics(),
                   children: [
-                    Text(
-                      context.l10n.noQuotesYet,
-                      style: BatshTypography.bodyMd.copyWith(
-                        color: context.colorScheme.onSurfaceVariant,
-                      ),
+                    ProfessionalReferenceState(
+                      title: context.l10n.noQuotesYet,
+                      message: context.l10n.stateQuotesMessage,
+                      motif: ProfessionalReferenceMotif.quotes,
+                      primaryLabel: context.l10n.stateQuotesRefresh,
+                      onPrimary: () =>
+                          ref.invalidate(quotesForBriefProvider(briefId)),
+                      secondaryLabel: context.l10n.stateProjectsAction,
+                      onSecondary: () => context.go(Routes.homeownerRequests),
                     ),
                   ],
                 ),

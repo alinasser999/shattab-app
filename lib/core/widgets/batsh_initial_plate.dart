@@ -57,26 +57,28 @@ class BatshInitialPlate extends StatelessWidget {
     // cannot answer intrinsic dimension queries, while this card is also used
     // inside compact rails that intentionally measure their content first.
     // FittedBox still scales the mark down for avatars and narrow tiles.
-    return ColoredBox(
-      color: background,
-      child: initial == null
-          ? const SizedBox.shrink()
-          : Center(
-              child: FittedBox(
-                fit: BoxFit.scaleDown,
-                child: Text(
-                  initial,
-                  textAlign: TextAlign.center,
-                  style: BatshTypography.displayLg.copyWith(
-                    fontSize: 96,
-                    // Sits back rather than announcing itself. The mark is
-                    // there to make the plate feel authored, not to be read.
-                    color: ink.withValues(alpha: 0.32),
-                    height: 1.0,
+    return ExcludeSemantics(
+      child: ColoredBox(
+        color: background,
+        child: initial == null
+            ? const SizedBox.shrink()
+            : Center(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    initial,
+                    textAlign: TextAlign.center,
+                    style: BatshTypography.displayLg.copyWith(
+                      fontSize: 96,
+                      // Sits back rather than announcing itself. The mark is
+                      // there to make the plate feel authored, not to be read.
+                      color: ink.withValues(alpha: 0.32),
+                      height: 1.0,
+                    ),
                   ),
                 ),
               ),
-            ),
+      ),
     );
   }
 }

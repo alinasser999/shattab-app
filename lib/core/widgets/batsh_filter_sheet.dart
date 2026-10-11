@@ -3,12 +3,12 @@ import 'package:flutter/material.dart';
 import '../l10n/l10n_extension.dart';
 import 'package:flutter/services.dart';
 
-import '../theme/batsh_motion.dart';
-import '../theme/batsh_radius.dart';
 import '../theme/batsh_spacing.dart';
 import '../theme/batsh_typography.dart';
 import '../theme/batsh_icon_size.dart';
 import 'batsh_sheet.dart';
+import 'batsh_chip.dart';
+import 'batsh_button.dart';
 
 import 'package:batsh/core/theme/theme_extension.dart';
 
@@ -50,49 +50,13 @@ class BatshFilterButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bgColor = activeCount > 0
-        ? context.colorScheme.primaryFixed
-        : context.colorScheme.surfaceContainer;
-    final fgColor = activeCount > 0
-        ? context.colorScheme.primary
-        : context.colorScheme.onSurfaceVariant;
-    final borderColor = activeCount > 0
-        ? context.colorScheme.primary.withValues(alpha: 0.3)
-        : context.colorScheme.outlineVariant.withValues(alpha: 0.6);
-    return Material(
-      color: bgColor,
-      borderRadius: BatshRadius.brFull,
-      child: InkWell(
-        onTap: () {
-          HapticFeedback.lightImpact();
-          onTap();
-        },
-        borderRadius: BatshRadius.brFull,
-        child: Container(
-          height: height,
-          padding: const EdgeInsets.symmetric(horizontal: BatshSpacing.md),
-          decoration: BoxDecoration(
-            border: Border.all(color: borderColor),
-            borderRadius: BatshRadius.brFull,
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.tune_rounded, size: BatshIconSize.md, color: fgColor),
-              const SizedBox(width: BatshSpacing.xs),
-              Text(
-                activeCount > 0
-                    ? context.l10n.filterWithCount(activeCount)
-                    : context.l10n.filter,
-                style: BatshTypography.labelMd.copyWith(
-                  color: fgColor,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+    return BatshChip(
+      label: activeCount > 0
+          ? context.l10n.filterWithCount(activeCount)
+          : context.l10n.filter,
+      icon: Icons.tune_rounded,
+      selected: activeCount > 0,
+      onTap: onTap,
     );
   }
 }
@@ -109,51 +73,12 @@ class BatshActiveFilterChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 30,
-      padding: const EdgeInsets.only(right: BatshSpacing.xs),
-      decoration: BoxDecoration(
-        color: context.colorScheme.primaryFixed,
-        borderRadius: BatshRadius.brFull,
-        border: Border.all(
-          color: context.colorScheme.primary.withValues(alpha: 0.25),
-        ),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(right: BatshSpacing.xs),
-            child: Text(
-              label,
-              style: BatshTypography.labelSm.copyWith(
-                color: context.colorScheme.primary,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-          SizedBox(
-            width: 22,
-            height: 22,
-            child: Material(
-              color: context.colorScheme.primary.withValues(alpha: 0.12),
-              shape: const CircleBorder(),
-              child: InkWell(
-                customBorder: const CircleBorder(),
-                onTap: () {
-                  HapticFeedback.lightImpact();
-                  onRemove();
-                },
-                child: Icon(
-                  Icons.close_rounded,
-                  size: BatshIconSize.sm,
-                  color: context.colorScheme.primary,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
+    return InputChip(
+      label: Text(label),
+      onDeleted: onRemove,
+      deleteButtonTooltipMessage: context.l10n.removeFilter(label),
+      materialTapTargetSize: MaterialTapTargetSize.padded,
+      visualDensity: VisualDensity.standard,
     );
   }
 }
@@ -274,8 +199,8 @@ class _BatshFilterSheetState extends State<BatshFilterSheet> {
           ),
           const Spacer(),
           if (_selected.isNotEmpty)
-            GestureDetector(
-              onTap: () {
+            TextButton(
+              onPressed: () {
                 HapticFeedback.lightImpact();
                 _clear();
               },
@@ -321,59 +246,12 @@ class _BatshFilterSheetState extends State<BatshFilterSheet> {
           runSpacing: BatshSpacing.sm,
           children: section.options.map((opt) {
             final isSelected = _selected.contains(opt.value);
-            return GestureDetector(
-              onTap: () {
-                HapticFeedback.lightImpact();
-                _toggle(opt.value, section.singleSelect);
-              },
-              child: AnimatedContainer(
-                duration: BatshMotion.fast,
-                curve: BatshMotion.easeOut,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: BatshSpacing.md,
-                  vertical: BatshSpacing.sm,
-                ),
-                decoration: BoxDecoration(
-                  color: isSelected
-                      ? context.colorScheme.primaryFixed
-                      : context.colorScheme.surfaceContainer,
-                  borderRadius: BatshRadius.brFull,
-                  border: Border.all(
-                    color: isSelected
-                        ? context.colorScheme.primary.withValues(alpha: 0.4)
-                        : context.colorScheme.outlineVariant.withValues(
-                            alpha: 0.6,
-                          ),
-                    width: isSelected ? 1.5 : 1,
-                  ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (opt.icon != null) ...[
-                      Icon(
-                        opt.icon,
-                        size: BatshIconSize.sm,
-                        color: isSelected
-                            ? context.colorScheme.primary
-                            : context.colorScheme.onSurfaceVariant,
-                      ),
-                      const SizedBox(width: BatshSpacing.xs),
-                    ],
-                    Text(
-                      opt.label,
-                      style: BatshTypography.labelMd.copyWith(
-                        color: isSelected
-                            ? context.colorScheme.primary
-                            : context.colorScheme.onSurfaceVariant,
-                        fontWeight: isSelected
-                            ? FontWeight.w600
-                            : FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+            return BatshChip(
+              label: opt.label,
+              icon: opt.icon,
+              selected: isSelected,
+              singleSelection: section.singleSelect,
+              onTap: () => _toggle(opt.value, section.singleSelect),
             );
           }).toList(),
         ),
@@ -381,74 +259,26 @@ class _BatshFilterSheetState extends State<BatshFilterSheet> {
     );
   }
 
-  Widget _buildFooter() {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(
-        BatshSpacing.lg,
-        BatshSpacing.md,
-        BatshSpacing.lg,
-        BatshSpacing.xxl,
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Material(
-              color: Colors.transparent,
-              borderRadius: BatshRadius.brMd,
-              child: InkWell(
-                borderRadius: BatshRadius.brMd,
-                onTap: () {
-                  HapticFeedback.lightImpact();
-                  Navigator.of(context).pop();
-                },
-                child: Container(
-                  height: 50,
-                  decoration: BoxDecoration(
-                    borderRadius: BatshRadius.brMd,
-                    border: Border.all(
-                      color: context.colorScheme.outlineVariant,
-                    ),
-                  ),
-                  alignment: Alignment.center,
-                  child: Text(
-                    context.l10n.cancel,
-                    style: BatshTypography.labelMd.copyWith(
-                      color: context.colorScheme.onSurfaceVariant,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ),
-            ),
+  Widget _buildFooter() => Padding(
+    padding: const EdgeInsets.all(BatshSpacing.md),
+    child: Row(
+      children: [
+        Expanded(
+          child: BatshButton(
+            label: context.l10n.cancel,
+            style: BatshButtonStyle.secondary,
+            onPressed: () => Navigator.of(context).pop(),
           ),
-          const SizedBox(width: BatshSpacing.md),
-          Expanded(
-            flex: 2,
-            child: Material(
-              color: context.colorScheme.primary,
-              borderRadius: BatshRadius.brMd,
-              child: InkWell(
-                borderRadius: BatshRadius.brMd,
-                onTap: () {
-                  HapticFeedback.lightImpact();
-                  Navigator.of(context).pop(_selected);
-                },
-                child: Container(
-                  height: 50,
-                  alignment: Alignment.center,
-                  child: Text(
-                    '${context.l10n.apply} (${_selected.length})',
-                    style: BatshTypography.labelMd.copyWith(
-                      color: context.colorScheme.onPrimary,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ),
-            ),
+        ),
+        const SizedBox(width: BatshSpacing.sm),
+        Expanded(
+          flex: 2,
+          child: BatshButton(
+            label: '${context.l10n.apply} (${_selected.length})',
+            onPressed: () => Navigator.of(context).pop(_selected),
           ),
-        ],
-      ),
-    );
-  }
+        ),
+      ],
+    ),
+  );
 }

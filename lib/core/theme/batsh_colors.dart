@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 class BatshColors {
   const BatshColors._();
 
-  /// Stitch homeowner-home palette. Applied only by the `/h/home` shell.
+  /// Legacy reference-art aliases; functional shells use the shared scheme.
   static const Color homeCanvas = Color(0xFFFAF6F0);
   static const Color homeAction = Color(0xFFB44B2A);
   static const Color homeOnAction = Color(0xFFFFFFFF);
@@ -109,7 +109,7 @@ class BatshColors {
 
   // Brand-specific
   static const Color whatsApp = Color(0xFF25D366);
-  static const Color whatsAppOn = Colors.white;
+  static const Color whatsAppOn = Color(0xFF103B21);
 
   // Overlay/scrim
   static const Color scrim = Color(0x991F1B14);

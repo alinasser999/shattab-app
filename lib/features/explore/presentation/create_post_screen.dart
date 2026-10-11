@@ -19,12 +19,14 @@ import '../../../core/widgets/batsh_shimmer.dart';
 import '../../../core/widgets/batsh_success_checkmark.dart';
 import '../../../core/widgets/batsh_text_field.dart';
 import '../../auth/presentation/providers/auth_provider.dart';
+import '../../auth/presentation/pending_protected_action.dart';
 import '../data/post_repository.dart';
 import '../domain/post.dart';
 import 'providers/explore_providers.dart';
 import 'widgets/community_feed_widgets.dart';
 import '../../../core/theme/batsh_icon_size.dart';
 import '../../../core/widgets/batsh_snack.dart';
+import '../../../core/router/routes.dart';
 
 import 'package:batsh/core/theme/theme_extension.dart';
 
@@ -48,8 +50,46 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
   void initState() {
     super.initState();
     _selectedKind = widget.initialKind ?? CommunityPostKind.standard;
+    unawaited(_restorePendingPostLaunch());
     // Re-evaluate the header Post button's enabled state while typing.
     _captionCtrl.addListener(() => setState(() {}));
+  }
+
+  Future<void> _restorePendingPostLaunch() async {
+    final session = ref.read(currentSessionProvider);
+    if (session == null) return;
+    final coordinator = ref.read(pendingProtectedActionCoordinatorProvider);
+    final pending = coordinator.resumable<ExplorePostLaunchAction>(
+      Routes.homeownerExploreCreatePost,
+      sessionUserId: session.user.id,
+      profile: ref.read(currentProfileProvider).asData?.value,
+    );
+    final kindRouteValue = pending?.kindRouteValue;
+    if (pending == null || kindRouteValue == null) return;
+
+    CommunityPostKind? restoredKind;
+    for (final kind in CommunityPostKind.values) {
+      if (kind.routeValue == kindRouteValue) restoredKind = kind;
+    }
+    if (restoredKind == null) {
+      coordinator.complete(pending.id);
+      return;
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final activeSession = ref.read(currentSessionProvider);
+      final profile = ref.read(currentProfileProvider).asData?.value;
+      if (!coordinator.claim(
+        pending.id,
+        sessionUserId: activeSession?.user.id,
+        profile: profile,
+      )) {
+        return;
+      }
+      setState(() => _selectedKind = restoredKind!);
+      coordinator.complete(pending.id);
+    });
   }
 
   @override

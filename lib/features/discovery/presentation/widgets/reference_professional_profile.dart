@@ -1,3 +1,4 @@
+import '../../../../core/widgets/professional_reference_states.dart';
 import 'package:intl/intl.dart' show DateFormat;
 import 'dart:async';
 import 'package:flutter/material.dart';
@@ -7,6 +8,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/l10n/catalog_labels.dart';
 import '../../../../core/l10n/l10n_extension.dart';
 import '../../../../core/router/routes.dart';
+import '../../../../core/theme/professional_reference_theme.dart';
 import '../../../../core/utils/error_mapper.dart';
 import '../../../../core/widgets/batsh_snack.dart';
 import '../../../../core/widgets/contact_buttons.dart';
@@ -189,212 +191,75 @@ class _ReferenceProfessionalProfileState
         color: referenceBackground,
         child: SafeArea(
           bottom: false,
-          child: Stack(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              SingleChildScrollView(
-                controller: _scroll,
-                physics: const AlwaysScrollableScrollPhysics(),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    LayoutBuilder(
-                      builder: (context, constraints) => SizedBox(
-                        height: 36 + (constraints.maxWidth - 32) / 2.01,
-                        child: Stack(
-                          children: [
-                            Positioned(
-                              top: 36,
-                              left: 16,
-                              right: 16,
-                              child: ReferenceGallery(
-                                photos: photos,
-                                ratio: 2.01,
-                                premium: listing.isSponsored,
-                                premiumLabel: listing.isPro,
-                                compact: true,
-                              ),
-                            ),
-                            Positioned(
-                              top: 0,
-                              left: 0,
-                              right: 0,
-                              height: 44,
-                              child: Row(
-                                children: [
-                                  ReferenceIconButton(
-                                    visualOffset: const Offset(0, -4),
-                                    icon: Icons.chevron_right,
-                                    label: context.l10n.back,
-                                    size: 22,
-                                    onTap: () {
-                                      if (context.canPop()) {
-                                        context.pop();
-                                      } else {
-                                        context.go(Routes.homeownerDiscover);
-                                      }
-                                    },
-                                  ),
-                                  Expanded(
-                                    child: Padding(
-                                      padding: const EdgeInsets.only(bottom: 8),
-                                      child: Text(
-                                        context.l10n.referenceProfileTitle,
-                                        textAlign: TextAlign.center,
-                                        style: referenceText(
-                                          15,
-                                          weight: FontWeight.w800,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  ReferenceIconButton(
-                                    visualOffset: const Offset(0, -4),
-                                    icon: saved
-                                        ? Icons.favorite
-                                        : Icons.favorite_border,
-                                    label: saved
-                                        ? context
-                                              .l10n
-                                              .referenceUnsaveProfessional
-                                        : context
-                                              .l10n
-                                              .referenceSaveProfessional,
-                                    size: 21,
-                                    onTap: _save,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    ReferencePremiumSurface(
-                      premium: listing.isSponsored,
-                      profile: true,
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(17, 8, 17, 10),
+              Expanded(
+                child: SingleChildScrollView(
+                  controller: _scroll,
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
                         child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            ReferenceAvatar(listing: listing, size: 58),
-                            const SizedBox(width: 7),
+                            _ProfileIconButton(
+                              icon: Icons.chevron_right,
+                              label: context.l10n.back,
+                              onTap: () {
+                                if (context.canPop()) {
+                                  context.pop();
+                                } else {
+                                  context.go(Routes.homeownerDiscover);
+                                }
+                              },
+                            ),
                             Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    referenceName(listing),
-                                    style: referenceText(
-                                      15.5,
-                                      weight: FontWeight.w800,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 5),
-                                  Text(
-                                    fixture
-                                        ? 'مصمم داخلي'
-                                        : referenceSpecialty(context, listing),
-                                    style: referenceText(
-                                      12,
-                                      color: referenceMuted,
-                                    ),
-                                  ),
-                                ],
+                              child: Text(
+                                context.l10n.referenceProfileTitle,
+                                textAlign: TextAlign.center,
+                                style: referenceText(
+                                  18,
+                                  weight: FontWeight.w700,
+                                ),
                               ),
                             ),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              children: [
-                                Directionality(
-                                  textDirection: TextDirection.ltr,
-                                  child: Row(
-                                    children: [
-                                      const Icon(
-                                        Icons.star_rounded,
-                                        size: 19,
-                                        color: Color(0xffffb322),
-                                      ),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        listing.rating?.toStringAsFixed(1) ??
-                                            '—',
-                                        style: referenceText(
-                                          17,
-                                          weight: FontWeight.w800,
-                                        ),
-                                      ),
-                                      Text(
-                                        ' ${context.l10n.referenceReviewCount(listing.reviewCount)}',
-                                        style: referenceText(
-                                          11,
-                                          color: referenceMuted,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(height: 6),
-                                Row(
-                                  children: [
-                                    Text(
-                                      listing.serviceAreas.firstOrNull ?? '',
-                                      style: referenceText(
-                                        11.5,
-                                        color: referenceMuted,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 5),
-                                    const Icon(
-                                      Icons.location_on_outlined,
-                                      color: referenceMuted,
-                                      size: 15,
-                                    ),
-                                  ],
-                                ),
-                                if (listing.verified)
-                                  Padding(
-                                    padding: const EdgeInsets.only(top: 7),
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 9,
-                                        vertical: 3,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xffeaf0db),
-                                        borderRadius: BorderRadius.circular(20),
-                                      ),
-                                      child: Row(
-                                        children: [
-                                          Text(
-                                            context.l10n.referenceVerified,
-                                            style: referenceText(
-                                              10.5,
-                                              color: const Color(0xff426129),
-                                              weight: FontWeight.w700,
-                                            ),
-                                          ),
-                                          const SizedBox(width: 4),
-                                          const Icon(
-                                            Icons.check_circle,
-                                            size: 13,
-                                            color: Color(0xff426129),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                              ],
+                            _ProfileIconButton(
+                              icon: saved
+                                  ? Icons.favorite
+                                  : Icons.favorite_border,
+                              label: saved
+                                  ? context.l10n.referenceUnsaveProfessional
+                                  : context.l10n.referenceSaveProfessional,
+                              onTap: _save,
                             ),
                           ],
                         ),
                       ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 2, 16, 6),
-                      child: SizedBox(
-                        height: 31,
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: ReferenceGallery(
+                          photos: photos,
+                          ratio: 2.01,
+                          premium: listing.isSponsored,
+                          premiumLabel: listing.isPro,
+                          compact: true,
+                        ),
+                      ),
+                      ReferencePremiumSurface(
+                        premium: listing.isSponsored,
+                        profile: true,
+                        child: _ProfileIdentity(
+                          listing: listing,
+                          fixture: fixture,
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 2, 16, 6),
                         child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
                             Expanded(
                               child: _ProfileFact(
@@ -405,7 +270,7 @@ class _ReferenceProfessionalProfileState
                             ),
                             Container(
                               width: 1,
-                              height: 12,
+                              height: 40,
                               color: const Color(0xfff1eee9),
                             ),
                             Expanded(
@@ -418,68 +283,240 @@ class _ReferenceProfessionalProfileState
                           ],
                         ),
                       ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
-                      child: Row(
-                        children: List.generate(4, (i) {
-                          final labels = [
-                            context.l10n.referenceAbout,
-                            context.l10n.referenceWorks,
-                            context.l10n.referenceServices,
-                            context.l10n.reviewsSheetTitle,
-                          ];
-                          const icons = [
-                            Icons.assignment_outlined,
-                            Icons.photo_library_outlined,
-                            Icons.settings_outlined,
-                            Icons.star_border,
-                          ];
-                          return Expanded(
-                            child: Padding(
-                              padding: EdgeInsetsDirectional.only(
-                                end: i == 3 ? 0 : 8,
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
+                        child: Row(
+                          children: List.generate(4, (i) {
+                            final labels = [
+                              context.l10n.referenceAbout,
+                              context.l10n.referenceWorks,
+                              context.l10n.referenceServices,
+                              context.l10n.reviewsSheetTitle,
+                            ];
+                            const icons = [
+                              Icons.assignment_outlined,
+                              Icons.photo_library_outlined,
+                              Icons.settings_outlined,
+                              Icons.star_border,
+                            ];
+                            return Expanded(
+                              child: Padding(
+                                padding: EdgeInsetsDirectional.only(
+                                  end: i == 3 ? 0 : 8,
+                                ),
+                                child: Semantics(
+                                  button: true,
+                                  selected: _section == i,
+                                  child: InkWell(
+                                    onTap: () => _goToSection(i),
+                                    borderRadius: BorderRadius.circular(11),
+                                    child: Container(
+                                      constraints: const BoxConstraints(
+                                        minHeight: 48,
+                                      ),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 4,
+                                        vertical: 7,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        border: Border.all(
+                                          color: const Color(0xffe9e7eb),
+                                        ),
+                                        color: Colors.white.withValues(
+                                          alpha: .55,
+                                        ),
+                                        borderRadius: BorderRadius.circular(11),
+                                      ),
+                                      child: Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(
+                                            icons[i],
+                                            size: 20,
+                                            color: referenceNavy,
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            labels[i],
+                                            textAlign: TextAlign.center,
+                                            style: referenceText(
+                                              14,
+                                              weight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
                               ),
-                              child: Semantics(
-                                button: true,
-                                selected: _section == i,
-                                child: InkWell(
-                                  onTap: () => _goToSection(i),
-                                  borderRadius: BorderRadius.circular(11),
-                                  child: SizedBox(
-                                    height: 44,
-                                    child: Align(
-                                      alignment: Alignment.topCenter,
-                                      child: Container(
-                                        height: 35,
-                                        decoration: BoxDecoration(
-                                          border: Border.all(
-                                            color: const Color(0xffe9e7eb),
-                                          ),
-                                          color: Colors.white.withValues(
-                                            alpha: .55,
-                                          ),
-                                          borderRadius: BorderRadius.circular(
-                                            11,
+                            );
+                          }),
+                        ),
+                      ),
+                      Padding(
+                        key: _sections[0],
+                        padding: const EdgeInsets.symmetric(horizontal: 17),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              context.l10n.referenceAboutProfessional,
+                              style: referenceText(18, weight: FontWeight.w700),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              listing.bio?.trim().isNotEmpty == true
+                                  ? listing.bio!
+                                  : context.l10n.referenceMissingBio,
+                              style: referenceText(
+                                16,
+                                color: ProfessionalReferenceTheme.muted,
+                                height: 1.5,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      Padding(
+                        key: _sections[1],
+                        padding: const EdgeInsets.symmetric(horizontal: 17),
+                        child: _ActionSection(
+                          heading: _SectionHeading(
+                            title: context.l10n.referencePreviousWork,
+                            icon: Icons.home_repair_service_outlined,
+                            action: () => context.push(
+                              Routes.homeownerContractorPortfolioPath(
+                                listing.id,
+                              ),
+                            ),
+                          ),
+                          gap: 8,
+                          body: Column(
+                            children: [
+                              if (projectsAsync.isLoading)
+                                const SizedBox(
+                                  height: 110,
+                                  child: Center(
+                                    child: CircularProgressIndicator(
+                                      color: referenceOrange,
+                                    ),
+                                  ),
+                                )
+                              else if (projectsAsync.hasError)
+                                _RetrySection(
+                                  onRetry: () => ref.invalidate(
+                                    portfolioForContractorProvider(listing.id),
+                                  ),
+                                )
+                              else if (projects.isEmpty)
+                                ProfessionalReferenceState(
+                                  compact: true,
+                                  motif: ProfessionalReferenceMotif.portfolio,
+                                  title: context.l10n.noWorksTitle,
+                                  message: context.l10n.statePublicWorksMessage,
+                                  primaryLabel:
+                                      context.l10n.stateServicesAction,
+                                  onPrimary: () => _goToSection(2),
+                                )
+                              else
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    for (
+                                      int i = 0;
+                                      i < projects.take(2).length;
+                                      i++
+                                    ) ...[
+                                      if (i > 0) const SizedBox(width: 7),
+                                      Expanded(
+                                        child: _ProjectCard(
+                                          project: projects[i],
+                                          onOpen: () => context.push(
+                                            Routes.homeownerProjectDetailPath(
+                                              listing.id,
+                                              projects[i].id,
+                                            ),
                                           ),
                                         ),
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      Padding(
+                        key: _sections[2],
+                        padding: const EdgeInsets.symmetric(horizontal: 17),
+                        child: Column(
+                          children: [
+                            _SectionHeading(
+                              title: context.l10n.referenceServices,
+                              icon: Icons.settings_outlined,
+                            ),
+                            const SizedBox(height: 0),
+                            for (final service in _services(context))
+                              InkWell(
+                                onTap: _quote,
+                                borderRadius: BorderRadius.circular(10),
+                                child: ConstrainedBox(
+                                  constraints: const BoxConstraints(
+                                    minHeight: 48,
+                                  ),
+                                  child: Align(
+                                    alignment: Alignment.topCenter,
+                                    child: Padding(
+                                      padding: const EdgeInsets.only(bottom: 5),
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 12,
+                                          vertical: 12,
+                                        ),
+                                        decoration: _quietBox(),
                                         child: Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.center,
                                           children: [
                                             Icon(
-                                              icons[i],
-                                              size: 16,
-                                              color: referenceNavy,
+                                              service.$3,
+                                              color: referenceOrange,
+                                              size: 24,
                                             ),
-                                            const SizedBox(width: 5),
-                                            Flexible(
-                                              child: Text(
-                                                labels[i],
-                                                style: referenceText(
-                                                  11.5,
-                                                  weight: FontWeight.w700,
-                                                ),
+                                            const SizedBox(width: 12),
+                                            Expanded(
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    service.$1,
+                                                    style: referenceText(
+                                                      16,
+                                                      weight: FontWeight.w700,
+                                                    ),
+                                                  ),
+                                                  if (service.$2.isNotEmpty)
+                                                    Text(
+                                                      service.$2,
+                                                      style: referenceText(
+                                                        14,
+                                                        color:
+                                                            ProfessionalReferenceTheme
+                                                                .muted,
+                                                        height: 1.5,
+                                                      ),
+                                                    ),
+                                                ],
+                                              ),
+                                            ),
+                                            const Directionality(
+                                              textDirection: TextDirection.ltr,
+                                              child: Icon(
+                                                Icons.chevron_left,
+                                                color: referenceMuted,
+                                                size: 22,
                                               ),
                                             ),
                                           ],
@@ -489,314 +526,148 @@ class _ReferenceProfessionalProfileState
                                   ),
                                 ),
                               ),
+                            const SizedBox(height: 10),
+                            _SectionHeading(
+                              title: context.l10n.referenceServiceAreas,
+                              icon: Icons.location_on_outlined,
                             ),
-                          );
-                        }),
-                      ),
-                    ),
-                    Padding(
-                      key: _sections[0],
-                      padding: const EdgeInsets.symmetric(horizontal: 17),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            context.l10n.referenceAboutProfessional,
-                            style: referenceText(14, weight: FontWeight.w800),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            listing.bio?.trim().isNotEmpty == true
-                                ? listing.bio!
-                                : context.l10n.referenceMissingBio,
-                            style: referenceText(
-                              11.5,
-                              color: referenceMuted,
-                              height: 1.6,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 18),
-                    Padding(
-                      key: _sections[1],
-                      padding: const EdgeInsets.symmetric(horizontal: 17),
-                      child: _ActionSection(
-                        heading: _SectionHeading(
-                          title: context.l10n.referencePreviousWork,
-                          icon: Icons.home_repair_service_outlined,
-                          action: () => context.push(
-                            Routes.homeownerContractorPortfolioPath(listing.id),
-                          ),
-                          hitHeight: 44,
-                        ),
-                        gap: 2,
-                        body: Column(
-                          children: [
-                            if (projectsAsync.isLoading)
-                              const SizedBox(
-                                height: 110,
-                                child: Center(
-                                  child: CircularProgressIndicator(
-                                    color: referenceOrange,
-                                  ),
-                                ),
-                              )
-                            else if (projectsAsync.hasError)
-                              _RetrySection(
-                                onRetry: () => ref.invalidate(
-                                  portfolioForContractorProvider(listing.id),
-                                ),
-                              )
-                            else if (projects.isEmpty)
-                              Text(
-                                context.l10n.referenceMissingWork,
-                                style: referenceText(12, color: referenceMuted),
-                              )
-                            else
-                              Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  for (
-                                    int i = 0;
-                                    i < projects.take(2).length;
-                                    i++
-                                  ) ...[
-                                    if (i > 0) const SizedBox(width: 7),
-                                    Expanded(
-                                      child: _ProjectCard(
-                                        project: projects[i],
-                                        onOpen: () => context.push(
-                                          Routes.homeownerProjectDetailPath(
-                                            listing.id,
-                                            projects[i].id,
-                                          ),
-                                        ),
-                                      ),
+                            const SizedBox(height: 8),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: [
+                                for (final area in listing.serviceAreas.take(3))
+                                  Container(
+                                    constraints: const BoxConstraints(
+                                      minHeight: 40,
                                     ),
-                                  ],
-                                ],
-                              ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Padding(
-                      key: _sections[2],
-                      padding: const EdgeInsets.symmetric(horizontal: 17),
-                      child: Column(
-                        children: [
-                          _SectionHeading(
-                            title: context.l10n.referenceServices,
-                            icon: Icons.settings_outlined,
-                          ),
-                          const SizedBox(height: 0),
-                          for (final service in _services(context))
-                            InkWell(
-                              onTap: _quote,
-                              borderRadius: BorderRadius.circular(10),
-                              child: ConstrainedBox(
-                                constraints: const BoxConstraints(
-                                  minHeight: 44,
-                                ),
-                                child: Align(
-                                  alignment: Alignment.topCenter,
-                                  child: Padding(
-                                    padding: const EdgeInsets.only(bottom: 5),
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 10,
-                                        vertical: 5,
-                                      ),
-                                      decoration: _quietBox(),
-                                      child: Row(
-                                        children: [
-                                          Icon(
-                                            service.$3,
-                                            color: referenceOrange,
-                                            size: 24,
-                                          ),
-                                          const SizedBox(width: 12),
-                                          Expanded(
-                                            child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                Text(
-                                                  service.$1,
-                                                  style: referenceText(
-                                                    11.5,
-                                                    weight: FontWeight.w700,
-                                                  ),
-                                                ),
-                                                if (service.$2.isNotEmpty)
-                                                  Text(
-                                                    service.$2,
-                                                    style: referenceText(
-                                                      9.5,
-                                                      color: referenceMuted,
-                                                      height: 1.3,
-                                                    ),
-                                                  ),
-                                              ],
-                                            ),
-                                          ),
-                                          const Directionality(
-                                            textDirection: TextDirection.ltr,
-                                            child: Icon(
-                                              Icons.chevron_left,
-                                              color: referenceMuted,
-                                              size: 20,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          const SizedBox(height: 10),
-                          _SectionHeading(
-                            title: context.l10n.referenceServiceAreas,
-                            icon: Icons.location_on_outlined,
-                          ),
-                          const SizedBox(height: 6),
-                          Row(
-                            children: [
-                              for (
-                                int i = 0;
-                                i < listing.serviceAreas.take(3).length;
-                                i++
-                              ) ...[
-                                if (i > 0) const SizedBox(width: 9),
-                                Expanded(
-                                  child: Container(
+                                    alignment: Alignment.center,
                                     padding: const EdgeInsets.symmetric(
-                                      vertical: 5,
-                                      horizontal: 4,
+                                      vertical: 8,
+                                      horizontal: 12,
                                     ),
                                     decoration: BoxDecoration(
                                       color: const Color(0xfffaecdf),
                                       borderRadius: BorderRadius.circular(20),
                                     ),
                                     child: Text(
-                                      listing.serviceAreas[i],
+                                      area,
                                       textAlign: TextAlign.center,
-                                      style: referenceText(10.5),
+                                      style: referenceText(
+                                        14,
+                                        color: ProfessionalReferenceTheme.muted,
+                                      ),
                                     ),
                                   ),
-                                ),
                               ],
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          _SectionHeading(
-                            title: context.l10n.referenceWorkingApproach,
-                            icon: Icons.settings_outlined,
-                          ),
-                          const SizedBox(height: 7),
-                          if (!fixture)
-                            Padding(
-                              padding: const EdgeInsets.only(bottom: 8),
-                              child: Text(
-                                context.l10n.referenceWorkApproachDisclaimer,
-                                style: referenceText(11, color: referenceMuted),
-                              ),
                             ),
-                          for (int i = 0; i < 3; i++)
-                            _WorkStep(index: i, last: i == 2),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 7),
-                    Padding(
-                      key: _sections[3],
-                      padding: const EdgeInsets.symmetric(horizontal: 17),
-                      child: _ActionSection(
-                        heading: _SectionHeading(
-                          title: context.l10n.reviewsSheetTitle,
-                          icon: Icons.star_border_rounded,
-                          star: true,
-                          action: () => showReviewsSheet(context, listing.id),
-                          hitHeight: 44,
-                        ),
-                        gap: 6,
-                        body: Column(
-                          children: [
-                            if (reviewsAsync.isLoading)
-                              const SizedBox(
-                                height: 120,
-                                child: Center(
-                                  child: CircularProgressIndicator(
-                                    color: referenceOrange,
-                                  ),
-                                ),
-                              )
-                            else if (reviewsAsync.hasError)
-                              _RetrySection(
-                                onRetry: () => ref.invalidate(
-                                  reviewsForContractorProvider(listing.id),
-                                ),
-                              )
-                            else ...[
-                              _RatingSummary(
-                                listing: listing,
-                                reviews: reviewsAsync.value ?? const [],
-                              ),
-                              if (listing.reviewCount >
-                                  (reviewsAsync.value?.length ?? 0))
-                                Padding(
-                                  padding: const EdgeInsets.only(top: 4),
-                                  child: Text(
-                                    context.l10n.reviewsBasedOn(
-                                      reviewsAsync.value?.length ?? 0,
-                                    ),
-                                    style: referenceText(
-                                      10,
-                                      color: referenceMuted,
-                                    ),
-                                  ),
-                                ),
-                              const SizedBox(height: 6),
-                              for (final review
-                                  in (reviewsAsync.value ?? const <Review>[])
-                                      .where(
-                                        (r) => r.comment?.isNotEmpty == true,
-                                      )
-                                      .take(2))
-                                Padding(
-                                  padding: const EdgeInsets.only(bottom: 6),
-                                  child: _ReviewCard(
-                                    review: review,
-                                    fixture: fixture,
-                                  ),
-                                ),
-                              if (listing.reviewCount == 0)
-                                Text(
-                                  context.l10n.noReviewsYet,
+                            const SizedBox(height: 16),
+                            _SectionHeading(
+                              title: context.l10n.referenceWorkingApproach,
+                              icon: Icons.settings_outlined,
+                            ),
+                            const SizedBox(height: 10),
+                            if (!fixture)
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 8),
+                                child: Text(
+                                  context.l10n.referenceWorkApproachDisclaimer,
                                   style: referenceText(
-                                    12,
-                                    color: referenceMuted,
+                                    14,
+                                    color: ProfessionalReferenceTheme.muted,
+                                    height: 1.5,
                                   ),
                                 ),
-                            ],
+                              ),
+                            for (int i = 0; i < 3; i++)
+                              _WorkStep(index: i, last: i == 2),
                           ],
                         ),
                       ),
-                    ),
-                    SizedBox(height: 52 + MediaQuery.paddingOf(context).bottom),
-                  ],
+                      const SizedBox(height: 24),
+                      Padding(
+                        key: _sections[3],
+                        padding: const EdgeInsets.symmetric(horizontal: 17),
+                        child: _ActionSection(
+                          heading: _SectionHeading(
+                            title: context.l10n.reviewsSheetTitle,
+                            icon: Icons.star_border_rounded,
+                            star: true,
+                            action: () => showReviewsSheet(context, listing.id),
+                          ),
+                          gap: 8,
+                          body: Column(
+                            children: [
+                              if (reviewsAsync.isLoading)
+                                const SizedBox(
+                                  height: 120,
+                                  child: Center(
+                                    child: CircularProgressIndicator(
+                                      color: referenceOrange,
+                                    ),
+                                  ),
+                                )
+                              else if (reviewsAsync.hasError)
+                                _RetrySection(
+                                  onRetry: () => ref.invalidate(
+                                    reviewsForContractorProvider(listing.id),
+                                  ),
+                                )
+                              else ...[
+                                _RatingSummary(
+                                  listing: listing,
+                                  reviews: reviewsAsync.value ?? const [],
+                                ),
+                                if (listing.reviewCount >
+                                    (reviewsAsync.value?.length ?? 0))
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 4),
+                                    child: Text(
+                                      context.l10n.reviewsBasedOn(
+                                        reviewsAsync.value?.length ?? 0,
+                                      ),
+                                      style: referenceText(
+                                        14,
+                                        color: ProfessionalReferenceTheme.muted,
+                                      ),
+                                    ),
+                                  ),
+                                const SizedBox(height: 6),
+                                for (final review
+                                    in (reviewsAsync.value ?? const <Review>[])
+                                        .where(
+                                          (r) => r.comment?.isNotEmpty == true,
+                                        )
+                                        .take(2))
+                                  Padding(
+                                    padding: const EdgeInsets.only(bottom: 6),
+                                    child: _ReviewCard(
+                                      review: review,
+                                      fixture: fixture,
+                                    ),
+                                  ),
+                                if (reviewsAsync.value?.isEmpty == true)
+                                  ProfessionalReferenceState(
+                                    compact: true,
+                                    motif: ProfessionalReferenceMotif.reviews,
+                                    title: context.l10n.noReviewsYet,
+                                    message:
+                                        context.l10n.stateClientReviewsMessage,
+                                    primaryLabel:
+                                        context.l10n.stateServicesAction,
+                                    onPrimary: () => _goToSection(2),
+                                  ),
+                              ],
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                    ],
+                  ),
                 ),
               ),
-              Positioned(
-                left: 0,
-                right: 0,
-                bottom: 0,
-                child: _ProfileActions(onQuote: _quote, onContact: _contact),
-              ),
+              _ProfileActions(onQuote: _quote, onContact: _contact),
             ],
           ),
         ),
@@ -837,6 +708,187 @@ BoxDecoration _quietBox() => BoxDecoration(
   ],
 );
 
+class _ProfileIconButton extends StatelessWidget {
+  const _ProfileIconButton({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+    button: true,
+    label: label,
+    child: Tooltip(
+      message: label,
+      excludeFromSemantics: true,
+      child: InkWell(
+        onTap: onTap,
+        customBorder: const CircleBorder(),
+        child: SizedBox(
+          width: 48,
+          height: 48,
+          child: Icon(icon, size: 24, color: referenceNavy),
+        ),
+      ),
+    ),
+  );
+}
+
+class _ProfileIdentity extends StatelessWidget {
+  const _ProfileIdentity({required this.listing, required this.fixture});
+  final ContractorListing listing;
+  final bool fixture;
+
+  @override
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, constraints) {
+      final useSideMetadata =
+          MediaQuery.sizeOf(context).width >= 375 &&
+          MediaQuery.textScalerOf(context).scale(14) <= 16;
+      final identity = Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            referenceName(listing),
+            style: referenceText(22, weight: FontWeight.w700, height: 1.3),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            fixture ? 'مصمم داخلي' : referenceSpecialty(context, listing),
+            style: referenceText(
+              14,
+              color: ProfessionalReferenceTheme.muted,
+              height: 1.5,
+            ),
+          ),
+        ],
+      );
+      final metadata = _ProfileIdentityMetadata(listing: listing);
+
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(17, 12, 17, 12),
+        child: useSideMetadata
+            ? Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  ReferenceAvatar(listing: listing, size: 64),
+                  const SizedBox(width: 12),
+                  Expanded(child: identity),
+                  const SizedBox(width: 10),
+                  SizedBox(width: constraints.maxWidth * .37, child: metadata),
+                ],
+              )
+            : Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      ReferenceAvatar(listing: listing, size: 64),
+                      const SizedBox(width: 12),
+                      Expanded(child: identity),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  metadata,
+                ],
+              ),
+      );
+    },
+  );
+}
+
+class _ProfileIdentityMetadata extends StatelessWidget {
+  const _ProfileIdentityMetadata({required this.listing});
+  final ContractorListing listing;
+
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.end,
+    children: [
+      Directionality(
+        textDirection: TextDirection.ltr,
+        child: Wrap(
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            const Icon(Icons.star_rounded, size: 22, color: Color(0xffffb322)),
+            const SizedBox(width: 4),
+            Text(
+              listing.rating?.toStringAsFixed(1) ?? '—',
+              style: referenceText(20, weight: FontWeight.w700),
+            ),
+            const SizedBox(width: 4),
+            Text(
+              context.l10n.referenceReviewCount(listing.reviewCount),
+              style: referenceText(14, color: ProfessionalReferenceTheme.muted),
+            ),
+          ],
+        ),
+      ),
+      const SizedBox(height: 4),
+      Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Flexible(
+            child: Text(
+              listing.serviceAreas.firstOrNull ?? '',
+              textAlign: TextAlign.end,
+              style: referenceText(
+                14,
+                color: ProfessionalReferenceTheme.muted,
+                height: 1.5,
+              ),
+            ),
+          ),
+          const SizedBox(width: 5),
+          const Icon(
+            Icons.location_on_outlined,
+            color: ProfessionalReferenceTheme.muted,
+            size: 20,
+          ),
+        ],
+      ),
+      if (listing.verified)
+        Align(
+          alignment: AlignmentDirectional.centerEnd,
+          child: Padding(
+            padding: const EdgeInsets.only(top: 6),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+              decoration: BoxDecoration(
+                color: const Color(0xffeaf0db),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    context.l10n.referenceVerified,
+                    style: referenceText(
+                      14,
+                      color: const Color(0xff426129),
+                      weight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  const Icon(
+                    Icons.check_circle,
+                    size: 18,
+                    color: Color(0xff426129),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+    ],
+  );
+}
+
 class _ProfileFact extends StatelessWidget {
   const _ProfileFact({
     required this.icon,
@@ -846,14 +898,32 @@ class _ProfileFact extends StatelessWidget {
   final IconData icon;
   final String leading, text;
   @override
-  Widget build(BuildContext context) => Row(
-    mainAxisAlignment: MainAxisAlignment.center,
+  Widget build(BuildContext context) => Column(
     children: [
-      Icon(icon, color: referenceMuted, size: 18),
-      const SizedBox(width: 7),
-      Text(leading, style: referenceText(12, weight: FontWeight.w800)),
-      const SizedBox(width: 3),
-      Text(text, style: referenceText(11.5, color: referenceMuted)),
+      Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, color: ProfessionalReferenceTheme.muted, size: 22),
+          const SizedBox(width: 7),
+          Flexible(
+            child: Text(
+              leading,
+              textAlign: TextAlign.center,
+              style: referenceText(20, weight: FontWeight.w700),
+            ),
+          ),
+        ],
+      ),
+      const SizedBox(height: 2),
+      Text(
+        text,
+        textAlign: TextAlign.center,
+        style: referenceText(
+          14,
+          color: ProfessionalReferenceTheme.muted,
+          height: 1.5,
+        ),
+      ),
     ],
   );
 }
@@ -864,57 +934,97 @@ class _SectionHeading extends StatelessWidget {
     required this.icon,
     this.action,
     this.star = false,
-    this.hitHeight = 18.2,
   });
   final String title;
   final IconData icon;
   final VoidCallback? action;
   final bool star;
-  final double hitHeight;
   @override
-  Widget build(BuildContext context) => Row(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Icon(
-        icon,
-        size: 18,
-        color: star ? const Color(0xfff7ad21) : referenceOrange,
-      ),
-      const SizedBox(width: 6),
-      Text(title, style: referenceText(14, weight: FontWeight.w800)),
-      const Spacer(),
-      if (action != null)
-        InkWell(
-          onTap: action,
-          child: SizedBox(
-            height: hitHeight,
-            child: Align(
-              alignment: Alignment.topCenter,
-              child: Row(
-                children: [
-                  Text(
-                    context.l10n.referenceViewAll,
-                    style: referenceText(
-                      11.5,
-                      color: referenceOrange,
-                      weight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(width: 5),
-                  const Directionality(
-                    textDirection: TextDirection.ltr,
-                    child: Icon(
-                      Icons.chevron_left,
-                      color: referenceOrange,
-                      size: 18,
-                    ),
-                  ),
-                ],
-              ),
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, constraints) {
+      final reflowAction =
+          action != null &&
+          (constraints.maxWidth < 310 ||
+              (MediaQuery.textScalerOf(context).scale(14) > 16 &&
+                  constraints.maxWidth < 380));
+      final titleRow = Row(
+        children: [
+          Icon(
+            icon,
+            size: 24,
+            color: star ? const Color(0xfff7ad21) : referenceOrange,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              title,
+              style: referenceText(18, weight: FontWeight.w700, height: 1.3),
             ),
           ),
+        ],
+      );
+      final actionButton = action == null
+          ? null
+          : Semantics(
+              button: true,
+              child: InkWell(
+                onTap: action,
+                borderRadius: BorderRadius.circular(8),
+                child: Container(
+                  constraints: const BoxConstraints(
+                    minWidth: 48,
+                    minHeight: 48,
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        context.l10n.referenceViewAll,
+                        textAlign: TextAlign.center,
+                        style: referenceText(
+                          14,
+                          color: ProfessionalReferenceTheme.action,
+                          weight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(width: 3),
+                      const Directionality(
+                        textDirection: TextDirection.ltr,
+                        child: Icon(
+                          Icons.chevron_left,
+                          color: ProfessionalReferenceTheme.action,
+                          size: 22,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+
+      if (reflowAction) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            titleRow,
+            Align(
+              alignment: AlignmentDirectional.centerEnd,
+              child: actionButton,
+            ),
+          ],
+        );
+      }
+      return ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: 48),
+        child: Row(
+          children: [
+            Expanded(child: titleRow),
+            ?actionButton,
+          ],
         ),
-    ],
+      );
+    },
   );
 }
 
@@ -937,31 +1047,36 @@ class _ProjectCard extends StatelessWidget {
             child: ReferenceMedia(url: project.coverPhotoUrl),
           ),
           Padding(
-            padding: const EdgeInsets.fromLTRB(7, 7, 7, 5),
+            padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   project.title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: referenceText(10.5, weight: FontWeight.w700),
+                  style: referenceText(
+                    16,
+                    weight: FontWeight.w700,
+                    height: 1.4,
+                  ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 6),
                 Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Icon(
                       Icons.location_on_outlined,
-                      size: 12,
-                      color: referenceMuted,
+                      size: 18,
+                      color: ProfessionalReferenceTheme.muted,
                     ),
-                    const SizedBox(width: 3),
+                    const SizedBox(width: 4),
                     Expanded(
                       child: Text(
                         project.location ?? '',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: referenceText(9.5, color: referenceMuted),
+                        style: referenceText(
+                          14,
+                          color: ProfessionalReferenceTheme.muted,
+                          height: 1.5,
+                        ),
                       ),
                     ),
                   ],
@@ -996,12 +1111,12 @@ class _WorkStep extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           SizedBox(
-            width: 30,
+            width: 32,
             child: Column(
               children: [
                 Container(
-                  width: 24,
-                  height: 24,
+                  width: 32,
+                  height: 32,
                   alignment: Alignment.center,
                   decoration: const BoxDecoration(
                     shape: BoxShape.circle,
@@ -1010,8 +1125,8 @@ class _WorkStep extends StatelessWidget {
                   child: Text(
                     '${index + 1}',
                     style: referenceText(
-                      13,
-                      color: referenceOrange,
+                      14,
+                      color: ProfessionalReferenceTheme.action,
                       weight: FontWeight.w700,
                     ),
                   ),
@@ -1023,21 +1138,29 @@ class _WorkStep extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(width: 5),
+          const SizedBox(width: 8),
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.only(bottom: 6, top: 2),
+              padding: const EdgeInsets.only(bottom: 10, top: 2),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     titles[index],
-                    style: referenceText(11.5, weight: FontWeight.w700),
+                    style: referenceText(
+                      16,
+                      weight: FontWeight.w700,
+                      height: 1.4,
+                    ),
                   ),
-                  const SizedBox(height: 3),
+                  const SizedBox(height: 4),
                   Text(
                     bodies[index],
-                    style: referenceText(9.5, color: referenceMuted),
+                    style: referenceText(
+                      14,
+                      color: ProfessionalReferenceTheme.muted,
+                      height: 1.5,
+                    ),
                   ),
                 ],
               ),
@@ -1059,109 +1182,119 @@ class _RatingSummary extends StatelessWidget {
       for (int i = 1; i <= 5; i++)
         i: reviews.where((r) => r.rating == i).length,
     };
-    return Container(
-      padding: const EdgeInsets.fromLTRB(11, 5, 11, 3),
-      decoration: _quietBox(),
-      child: IntrinsicHeight(
-        child: Row(
-          children: [
-            Expanded(
-              flex: 4,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    listing.rating?.toStringAsFixed(1) ?? '—',
-                    style: referenceText(
-                      29,
-                      weight: FontWeight.w800,
-                      height: 1,
-                    ),
-                  ),
-                  const SizedBox(height: 3),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: List.generate(
-                      5,
-                      (_) => const Icon(
-                        Icons.star_rounded,
-                        color: Color(0xffffaf17),
-                        size: 18,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 5),
-                  Text(
-                    context.l10n.referenceReviewCount(listing.reviewCount),
-                    style: referenceText(10.5, color: referenceMuted),
-                  ),
-                ],
-              ),
-            ),
-            Container(
-              width: 1,
-              margin: const EdgeInsets.symmetric(horizontal: 11),
-              color: const Color(0xfff0edf0),
-            ),
-            Expanded(
-              flex: 5,
-              child: Column(
-                children: [
-                  for (int stars = 5; stars >= 1; stars--)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 1.5),
-                      child: Row(
-                        children: [
-                          const Icon(
-                            Icons.star_rounded,
-                            color: Color(0xffffaf17),
-                            size: 11,
-                          ),
-                          Text(
-                            context.l10n.referenceStarCount(stars),
-                            style: referenceText(8.5, color: referenceMuted),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(4),
-                              child: Directionality(
-                                textDirection: TextDirection.ltr,
-                                child: LinearProgressIndicator(
-                                  value: reviews.isEmpty
-                                      ? 0
-                                      : buckets[stars]! / reviews.length,
-                                  minHeight: 5,
-                                  color: stars == 5
-                                      ? referenceOrange
-                                      : const Color(0xffffb326),
-                                  backgroundColor: const Color(0xffe9e8ed),
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          SizedBox(
-                            width: 20,
-                            child: Text(
-                              '${buckets[stars]}',
-                              textAlign: TextAlign.center,
-                              style: referenceText(
-                                9.5,
-                                color: referenceMuted,
-                                weight: FontWeight.w700,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                ],
-              ),
-            ),
-          ],
+    final score = Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(
+          listing.rating?.toStringAsFixed(1) ?? '—',
+          style: referenceText(32, weight: FontWeight.w700, height: 1.2),
         ),
-      ),
+        const SizedBox(height: 4),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: List.generate(
+            5,
+            (_) => const Icon(
+              Icons.star_rounded,
+              color: Color(0xffffaf17),
+              size: 20,
+            ),
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          context.l10n.referenceReviewCount(listing.reviewCount),
+          textAlign: TextAlign.center,
+          style: referenceText(14, color: ProfessionalReferenceTheme.muted),
+        ),
+      ],
+    );
+    final distribution = Column(
+      children: [
+        for (int stars = 5; stars >= 1; stars--)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 3),
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.star_rounded,
+                  color: Color(0xffffaf17),
+                  size: 16,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  context.l10n.referenceStarCount(stars),
+                  style: referenceText(
+                    14,
+                    color: ProfessionalReferenceTheme.muted,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(4),
+                    child: Directionality(
+                      textDirection: TextDirection.ltr,
+                      child: LinearProgressIndicator(
+                        value: reviews.isEmpty
+                            ? 0
+                            : buckets[stars]! / reviews.length,
+                        minHeight: 6,
+                        color: stars == 5
+                            ? referenceOrange
+                            : const Color(0xffffb326),
+                        backgroundColor: const Color(0xffe9e8ed),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  '${buckets[stars]}',
+                  textAlign: TextAlign.center,
+                  style: referenceText(
+                    14,
+                    color: ProfessionalReferenceTheme.muted,
+                    weight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+      ],
+    );
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final stack =
+            constraints.maxWidth < 350 ||
+            MediaQuery.textScalerOf(context).scale(14) > 16;
+        return Container(
+          padding: const EdgeInsets.all(12),
+          decoration: _quietBox(),
+          child: stack
+              ? Column(
+                  children: [
+                    score,
+                    const Divider(height: 24, color: Color(0xfff0edf0)),
+                    distribution,
+                  ],
+                )
+              : IntrinsicHeight(
+                  child: Row(
+                    children: [
+                      Expanded(flex: 4, child: score),
+                      Container(
+                        width: 1,
+                        margin: const EdgeInsets.symmetric(horizontal: 12),
+                        color: const Color(0xfff0edf0),
+                      ),
+                      Expanded(flex: 5, child: distribution),
+                    ],
+                  ),
+                ),
+        );
+      },
     );
   }
 }
@@ -1178,39 +1311,44 @@ class _ReviewCard extends StatelessWidget {
     final name = metadata?.name ?? context.l10n.referenceClient;
     final avatar = metadata?.avatarPath;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.all(12),
       decoration: _quietBox(),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
-            width: 42,
-            height: 42,
+            width: 48,
+            height: 48,
             child: ClipOval(child: ReferenceMedia(url: avatar)),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
+                Wrap(
+                  alignment: WrapAlignment.spaceBetween,
+                  runSpacing: 4,
                   children: [
                     Text(
                       name,
-                      style: referenceText(9.5, weight: FontWeight.w700),
+                      style: referenceText(16, weight: FontWeight.w700),
                     ),
-                    const Spacer(),
                     Text(
                       fixture
                           ? '${review.createdAt.day} سبتمبر ${review.createdAt.year}'
                           : DateFormat.yMMMd(
                               Localizations.localeOf(context).languageCode,
                             ).format(review.createdAt),
-                      style: referenceText(8, color: referenceMuted),
+                      style: referenceText(
+                        14,
+                        color: ProfessionalReferenceTheme.muted,
+                      ),
                     ),
                   ],
                 ),
-                Row(
+                const SizedBox(height: 4),
+                Wrap(
                   children: List.generate(
                     5,
                     (i) => Icon(
@@ -1218,22 +1356,28 @@ class _ReviewCard extends StatelessWidget {
                           ? Icons.star_rounded
                           : Icons.star_border_rounded,
                       color: const Color(0xffffb21b),
-                      size: 11,
+                      size: 18,
                     ),
                   ),
                 ),
                 Text(
                   review.comment ?? '',
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: referenceText(8.5, color: referenceMuted, height: 1.3),
+                  style: referenceText(
+                    16,
+                    color: ProfessionalReferenceTheme.muted,
+                    height: 1.5,
+                  ),
                 ),
                 if (review.isContactOrigin)
                   Padding(
                     padding: const EdgeInsets.only(top: 3),
                     child: Text(
                       context.l10n.professionalContactReviewAttribution,
-                      style: referenceText(8.5, color: referenceMuted),
+                      style: referenceText(
+                        14,
+                        color: ProfessionalReferenceTheme.muted,
+                        height: 1.5,
+                      ),
                     ),
                   ),
               ],
@@ -1257,26 +1401,38 @@ class _ProfileActions extends StatelessWidget {
     child: SafeArea(
       top: false,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(17, 1, 17, 1),
-        child: Row(
-          children: [
-            Expanded(
-              child: _ActionButton(
-                label: context.l10n.referenceRequestQuote,
-                icon: Icons.assignment_outlined,
-                onTap: onQuote,
-                filled: true,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: _ActionButton(
-                label: context.l10n.referenceMessageProfessional,
-                icon: Icons.chat_bubble_outline,
-                onTap: onContact,
-              ),
-            ),
-          ],
+        padding: const EdgeInsets.fromLTRB(17, 12, 17, 12),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final stacked =
+                constraints.maxWidth < 320 &&
+                MediaQuery.textScalerOf(context).scale(14) > 16;
+            final quote = _ActionButton(
+              label: context.l10n.referenceRequestQuote,
+              icon: Icons.assignment_outlined,
+              onTap: onQuote,
+              filled: true,
+            );
+            final contact = _ActionButton(
+              label: context.l10n.referenceMessageProfessional,
+              icon: Icons.chat_bubble_outline,
+              onTap: onContact,
+            );
+
+            if (stacked) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [quote, const SizedBox(height: 8), contact],
+              );
+            }
+            return Row(
+              children: [
+                Expanded(child: quote),
+                const SizedBox(width: 8),
+                Expanded(child: contact),
+              ],
+            );
+          },
         ),
       ),
     ),
@@ -1303,37 +1459,44 @@ class _ActionButton extends StatelessWidget {
     child: InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(10),
-      child: SizedBox(
-        height: 44,
-        child: Center(
-          child: Container(
-            constraints: const BoxConstraints(minHeight: 38),
-            decoration: BoxDecoration(
-              color: filled ? referenceOrange : Colors.transparent,
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(
-                color: referenceOrange.withValues(alpha: filled ? 1 : .65),
-              ),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  icon,
-                  size: 20,
-                  color: filled ? Colors.white : referenceOrange,
-                ),
-                const SizedBox(width: 7),
-                Text(
-                  label,
-                  style: referenceText(
-                    13,
-                    color: filled ? Colors.white : referenceOrange,
-                  ),
-                ),
-              ],
+      child: Container(
+        constraints: const BoxConstraints(minHeight: 48),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+        decoration: BoxDecoration(
+          color: filled
+              ? ProfessionalReferenceTheme.action
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: ProfessionalReferenceTheme.action.withValues(
+              alpha: filled ? 1 : .8,
             ),
           ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              size: 24,
+              color: filled ? Colors.white : ProfessionalReferenceTheme.action,
+            ),
+            const SizedBox(width: 8),
+            Flexible(
+              child: Text(
+                label,
+                textAlign: TextAlign.center,
+                style: referenceText(
+                  14,
+                  color: filled
+                      ? Colors.white
+                      : ProfessionalReferenceTheme.action,
+                  weight: FontWeight.w600,
+                  height: 1.3,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     ),
@@ -1344,8 +1507,21 @@ class _RetrySection extends StatelessWidget {
   const _RetrySection({required this.onRetry});
   final VoidCallback onRetry;
   @override
-  Widget build(BuildContext context) =>
-      TextButton(onPressed: onRetry, child: Text(context.l10n.tryAgain));
+  Widget build(BuildContext context) => TextButton(
+    onPressed: onRetry,
+    style: TextButton.styleFrom(
+      minimumSize: const Size(48, 48),
+      foregroundColor: ProfessionalReferenceTheme.action,
+    ),
+    child: Text(
+      context.l10n.tryAgain,
+      style: referenceText(
+        14,
+        color: ProfessionalReferenceTheme.action,
+        weight: FontWeight.w600,
+      ),
+    ),
+  );
 }
 
 class _ActionSection extends StatelessWidget {
@@ -1357,13 +1533,12 @@ class _ActionSection extends StatelessWidget {
   final Widget heading, body;
   final double gap;
   @override
-  Widget build(BuildContext context) => Stack(
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
-      Padding(
-        padding: EdgeInsets.only(top: 18.2 + gap),
-        child: body,
-      ),
-      Positioned(top: 0, left: 0, right: 0, child: heading),
+      heading,
+      SizedBox(height: gap),
+      body,
     ],
   );
 }

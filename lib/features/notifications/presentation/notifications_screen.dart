@@ -1,3 +1,6 @@
+import '../../../core/router/routes.dart';
+import '../../auth/domain/profile.dart';
+import '../../../core/widgets/professional_reference_states.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -13,12 +16,9 @@ import '../../../core/theme/batsh_spacing.dart';
 import '../../../core/theme/batsh_typography.dart';
 import '../../../core/theme/theme_extension.dart';
 import '../../../core/utils/error_mapper.dart';
-import '../../../core/utils/support_contact.dart';
 import '../../../core/widgets/batsh_shimmer.dart';
 import '../../../core/widgets/batsh_snack.dart';
 import '../../../core/widgets/notification_preferences_sheet.dart';
-import '../../../core/widgets/shattab_experience_state.dart';
-import '../../../core/widgets/shattab_pattern.dart';
 import '../../auth/presentation/providers/auth_provider.dart';
 import '../domain/app_notification.dart';
 import 'notification_copy.dart';
@@ -30,6 +30,7 @@ class NotificationsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final notifications = ref.watch(notificationsProvider);
+    final profile = ref.watch(currentProfileProvider);
     return Scaffold(
       appBar: AppBar(
         title: Text(context.l10n.notificationInboxTitle),
@@ -51,64 +52,39 @@ class NotificationsScreen extends ConsumerWidget {
           ),
         ],
       ),
-      body: Stack(
-        children: [
-          Positioned.fill(
-            child: IgnorePointer(
-              child: ExcludeSemantics(
-                child: Opacity(
-                  opacity: 0.12,
-                  child: ShattabPattern(
-                    kind: ShattabPatternKind.lattice,
-                    color: context.colorScheme.primary,
-                    opacity: 0.30,
-                  ),
+      body: notifications.when(
+        loading: () => const Padding(
+          padding: EdgeInsets.all(BatshSpacing.gutter),
+          child: BatshNotificationSkeleton(),
+        ),
+        error: (error, _) => ProfessionalReferenceReadError(
+          message: ErrorMapper.map(error),
+          onRetry: () => ref.invalidate(notificationsProvider),
+        ),
+        data: (items) => items.isEmpty
+            ? ProfessionalReferenceState(
+                motif: ProfessionalReferenceMotif.notifications,
+                title: context.l10n.notificationEmptyTitle,
+                message: context.l10n.notificationEmptyBody,
+                primaryLabel: context.l10n.stateHomeAction,
+                onPrimary: () {
+                  final role = profile.asData?.value?.role;
+                  final destination = role == UserRole.contractor
+                      ? Routes.contractorDashboard
+                      : role == UserRole.homeowner ||
+                            ref.read(currentSessionProvider) == null
+                      ? Routes.homeownerHome
+                      : Routes.splash;
+                  context.go(destination);
+                },
+              )
+            : RefreshIndicator(
+                onRefresh: () async => ref.invalidate(notificationsProvider),
+                child: _GroupedNotificationList(
+                  items: items,
+                  onTap: (item) => _openNotification(context, ref, item),
                 ),
               ),
-            ),
-          ),
-          notifications.when(
-            loading: () => const Padding(
-              padding: EdgeInsets.all(BatshSpacing.gutter),
-              child: BatshNotificationSkeleton(),
-            ),
-            error: (error, _) => Center(
-              child: Padding(
-                padding: const EdgeInsets.all(BatshSpacing.gutter),
-                child: ShattabExperienceState(
-                  icon: Icons.cloud_off_outlined,
-                  title: context.l10n.unknownErrorRetry,
-                  message: ErrorMapper.map(error),
-                  actionLabel: context.l10n.tryAgain,
-                  onAction: () => ref.invalidate(notificationsProvider),
-                  secondaryActionLabel: context.l10n.helpSupport,
-                  onSecondaryAction: () => openShattabSupport(context),
-                  pattern: ShattabPatternKind.contour,
-                ),
-              ),
-            ),
-            data: (items) => items.isEmpty
-                ? Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(BatshSpacing.gutter),
-                      child: ShattabExperienceState(
-                        icon: Icons.notifications_none_rounded,
-                        title: context.l10n.notificationEmptyTitle,
-                        message: context.l10n.notificationEmptyBody,
-                        pattern: ShattabPatternKind.arches,
-                      ),
-                    ),
-                  )
-                : RefreshIndicator(
-                    onRefresh: () async =>
-                        ref.invalidate(notificationsProvider),
-                    child: _GroupedNotificationList(
-                      items: items,
-                      onTap: (item) => _openNotification(context, ref, item),
-                    ),
-                  ),
-          ),
-        ],
       ),
     );
   }

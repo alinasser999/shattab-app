@@ -45,7 +45,7 @@ class ShattabExperienceState extends StatelessWidget {
 
     return Semantics(
       container: true,
-      label: '$title. $message',
+
       child: ClipRRect(
         borderRadius: BatshRadius.brCard,
         child: DecoratedBox(
@@ -95,11 +95,14 @@ class ShattabExperienceState extends StatelessWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                title,
-                                style: BatshTypography.titleLg.copyWith(
-                                  color: scheme.onSurface,
-                                  fontWeight: FontWeight.w700,
+                              Semantics(
+                                header: true,
+                                child: Text(
+                                  title,
+                                  style: BatshTypography.titleLg.copyWith(
+                                    color: scheme.onSurface,
+                                    fontWeight: FontWeight.w700,
+                                  ),
                                 ),
                               ),
                               const SizedBox(height: BatshSpacing.xs),

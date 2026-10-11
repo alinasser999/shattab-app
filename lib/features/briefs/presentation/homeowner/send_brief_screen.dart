@@ -21,6 +21,7 @@ import '../../../../core/widgets/batsh_text_field.dart';
 import '../../../../core/widgets/photo_picker.dart';
 import '../../../../core/utils/error_mapper.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../auth/presentation/pending_protected_action.dart';
 import '../../../auth/presentation/sign_in_sheet.dart';
 import '../../../discovery/presentation/providers/discovery_providers.dart';
 import '../../../onboarding/domain/onboarding_models.dart';
@@ -51,6 +52,7 @@ class _SendBriefScreenState extends ConsumerState<SendBriefScreen> {
   bool _draftRestored = false;
   bool _draftSaved = false;
   late final String _draftKey;
+  String? _resumeActionId;
 
   @override
   void initState() {
@@ -78,6 +80,42 @@ class _SendBriefScreenState extends ConsumerState<SendBriefScreen> {
   }
 
   Future<void> _restoreDraft() async {
+    final userId = ref.read(currentSessionProvider)?.user.id;
+    final coordinator = ref.read(pendingProtectedActionCoordinatorProvider);
+    final pending = userId == null
+        ? null
+        : coordinator.resumable<DirectBriefSendAction>(
+            Routes.homeownerSendBriefPath(widget.contractorId),
+            sessionUserId: userId,
+            profile: ref.read(currentProfileProvider).asData?.value,
+          );
+    if (pending != null) {
+      _resumeActionId = pending.id;
+      _photos = pending.draft.photos;
+      await FormDraftStore.write(_draftKey, pending.draft.toStore());
+      await FormDraftStore.clear(
+        'brief:direct:${widget.contractorId}:anonymous',
+      );
+      if (!mounted) return;
+      ApartmentType? restoredApartment;
+      for (final value in ApartmentType.values) {
+        if (value.name == pending.draft.apartmentType) {
+          restoredApartment = value;
+        }
+      }
+      setState(() {
+        _descCtrl.text = pending.draft.description;
+        _apartmentType = restoredApartment;
+        _city = pending.draft.city;
+        _district = pending.draft.district;
+        _hydrated = true;
+        _draftRestored = true;
+        _draftSaved = true;
+      });
+      _schedulePendingSubmitResume();
+      return;
+    }
+
     final draft = await FormDraftStore.read(_draftKey);
     if (!mounted || draft == null || draft.isEmpty) return;
     final apartmentName = draft['apartment_type'] as String?;
@@ -93,6 +131,25 @@ class _SendBriefScreenState extends ConsumerState<SendBriefScreen> {
       _hydrated = true;
       _draftRestored = true;
       _draftSaved = true;
+    });
+  }
+
+  void _schedulePendingSubmitResume() {
+    final actionId = _resumeActionId;
+    if (actionId == null) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final coordinator = ref.read(pendingProtectedActionCoordinatorProvider);
+      final session = ref.read(currentSessionProvider);
+      final profile = ref.read(currentProfileProvider).asData?.value;
+      if (!coordinator.claim(
+        actionId,
+        sessionUserId: session?.user.id,
+        profile: profile,
+      )) {
+        return;
+      }
+      unawaited(_submit(pendingActionId: actionId));
     });
   }
 
@@ -114,24 +171,75 @@ class _SendBriefScreenState extends ConsumerState<SendBriefScreen> {
     if (showStatus && mounted) setState(() => _draftSaved = true);
   }
 
-  Future<void> _submit() async {
-    if (ref.read(currentSessionProvider) == null) {
-      final completed = await showSignInSheet(
-        context,
-        reason: context.l10n.signInToSendRequest,
-      );
-      if (!completed || !mounted || ref.read(currentSessionProvider) == null) {
-        return;
-      }
-    }
+  Future<void> _submit({String? pendingActionId}) async {
+    final coordinator = ref.read(pendingProtectedActionCoordinatorProvider);
     final desc = _descCtrl.text.trim();
     if (desc.length < 10) {
+      if (pendingActionId != null) coordinator.release(pendingActionId);
       setState(() => _error = context.l10n.errorDescriptionShort);
       return;
     }
     if (_apartmentType == null || _city == null) {
+      if (pendingActionId != null) coordinator.release(pendingActionId);
       setState(() => _error = context.l10n.errorFillApartmentCity);
       return;
+    }
+
+    if (ref.read(currentSessionProvider) == null) {
+      await _persistDraft();
+      if (!mounted) return;
+      pendingActionId = await beginProtectedActionSignIn(
+        context,
+        ref,
+        reason: context.l10n.signInToSendRequest,
+        action: DirectBriefSendAction(
+          contractorId: widget.contractorId,
+          draft: DirectBriefDraft(
+            description: _descCtrl.text,
+            apartmentType: _apartmentType?.name,
+            city: _city,
+            district: _district,
+            photos: List<DraftPhoto>.unmodifiable(_photos),
+          ),
+        ),
+      );
+      if (pendingActionId == null ||
+          !mounted ||
+          ref.read(currentSessionProvider) == null) {
+        return;
+      }
+    }
+
+    final session = ref.read(currentSessionProvider);
+    final profile = ref.read(currentProfileProvider).asData?.value;
+    if (session == null ||
+        !coordinator.isEligibleHomeowner(profile, userId: session.user.id)) {
+      if (pendingActionId != null) coordinator.release(pendingActionId);
+      return;
+    }
+    if (pendingActionId != null &&
+        !coordinator.isClaimed(pendingActionId) &&
+        !coordinator.claim(
+          pendingActionId,
+          sessionUserId: session.user.id,
+          profile: profile,
+        )) {
+      return;
+    }
+    if (pendingActionId == null) {
+      final pending = coordinator.resumable<DirectBriefSendAction>(
+        Routes.homeownerSendBriefPath(widget.contractorId),
+        sessionUserId: session.user.id,
+        profile: profile,
+      );
+      if (pending != null &&
+          coordinator.claim(
+            pending.id,
+            sessionUserId: session.user.id,
+            profile: profile,
+          )) {
+        pendingActionId = pending.id;
+      }
     }
     setState(() {
       _busy = true;
@@ -148,11 +256,13 @@ class _SendBriefScreenState extends ConsumerState<SendBriefScreen> {
             workDescription: desc,
             photos: _photos,
           );
+      if (pendingActionId != null) coordinator.complete(pendingActionId);
       if (!mounted) return;
       await FormDraftStore.clear(_draftKey);
       if (!mounted) return;
       context.go(Routes.homeownerBriefSentPath(widget.contractorId));
     } catch (e) {
+      if (pendingActionId != null) coordinator.release(pendingActionId);
       if (!mounted) return;
       setState(() => _error = ErrorMapper.map(e));
     } finally {
@@ -221,7 +331,11 @@ class _SendBriefScreenState extends ConsumerState<SendBriefScreen> {
         errorText: _error,
       ),
       const SizedBox(height: BatshSpacing.gutter),
-      PhotoPicker(onChanged: (p) => _photos = p),
+      PhotoPicker(
+        key: ValueKey('direct-brief-$_resumeActionId'),
+        initial: _photos,
+        onChanged: (p) => _photos = p,
+      ),
       const SizedBox(height: BatshSpacing.md),
       Text(
         context.l10n.phoneVisibleContractor,

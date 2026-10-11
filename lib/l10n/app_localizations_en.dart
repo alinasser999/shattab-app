@@ -2790,6 +2790,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get newProfessional => 'New Professional';
 
   @override
+  String referenceDirectoryYearsExperienceCount(String years) {
+    return '$years years of experience';
+  }
+
+  @override
+  String get referenceUnratedLabel => 'No reviews';
+
+  @override
   String get noRatingsYet => 'No ratings yet';
 
   @override
@@ -4010,7 +4018,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Trusted professionals to help with every step, from planning and design to delivery';
 
   @override
-  String get homeReferenceServiceFullRenovationLabel => 'Full renovation';
+  String get homeReferenceServiceFullRenovationLabel => 'Renovation';
 
   @override
   String get homeReferenceHeroTagline => 'Every home\nhas a story';
@@ -4062,7 +4070,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'The result was amazing and beyond my expectations';
 
   @override
-  String get homeReferenceCommunityTitle => 'From the Shattab community';
+  String get homeReferenceCommunityTitle => 'From the community';
 
   @override
   String get homeReferenceCommunityTip => 'Advice from experience';
@@ -4668,6 +4676,52 @@ class AppLocalizationsEn extends AppLocalizations {
   String get assistantSignInRequired => 'Sign in to use the AI assistant';
 
   @override
+  String get assistantErrorQuota =>
+      'You have reached the assistant query limit. Browse professionals directly.';
+
+  @override
+  String get assistantErrorQuotaContractor =>
+      'You have reached the assistant query limit. Continue using the app from your dashboard.';
+
+  @override
+  String get assistantQuotaBrowseAction => 'Browse professionals';
+
+  @override
+  String get assistantQuotaDashboardAction => 'Open dashboard';
+
+  @override
+  String get assistantSignInAgain => 'Sign in to the same account';
+
+  @override
+  String get assistantReauthTitle => 'Recover assistant question';
+
+  @override
+  String get assistantReauthMessage =>
+      'Sign in again to the account that sent the question that could not be delivered.';
+
+  @override
+  String get assistantReauthFailed =>
+      'We could not verify the account. Check your sign-in details and try again.';
+
+  @override
+  String get assistantReauthMismatchMessage =>
+      'This is not the account that sent the question, or its account type could not be confirmed. Try the original account details or discard the question to continue with this account.';
+
+  @override
+  String get assistantReauthTryOriginal => 'Enter the original account details';
+
+  @override
+  String get assistantReauthDiscard =>
+      'Discard question and continue with this account';
+
+  @override
+  String get assistantRetryQuestion => 'Retry question';
+
+  @override
+  String get assistantConversationHiddenMessage =>
+      'This conversation is hidden because the current account or account type does not match the one that started it. Discard the question to continue with this account.';
+
+  @override
   String onboardingStepLabel(int step, int total) {
     return 'Step $step of $total';
   }
@@ -5042,7 +5096,8 @@ class AppLocalizationsEn extends AppLocalizations {
       'Choose the city and area where your home is located.';
 
   @override
-  String get homeownerReferenceSearchHint => 'Find a professional or service';
+  String get homeownerReferenceSearchHint =>
+      'Search for a service or professional';
 
   @override
   String get homeownerReferenceProfessionalsTitle =>
@@ -5068,5 +5123,171 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String homeownerReferenceOffers(int count) {
     return '$count offers';
+  }
+
+  @override
+  String get stateHomeAction => 'Home';
+
+  @override
+  String get stateQuotesRefresh => 'Refresh quotes';
+
+  @override
+  String get stateProjectsAction => 'My projects';
+
+  @override
+  String get stateQuotesMessage =>
+      'Quotes for this request will appear here. Refresh the list or return to your projects.';
+
+  @override
+  String get stateSupplyTitle => 'No professionals to show yet';
+
+  @override
+  String get stateSupplyMessage =>
+      'Professional profiles will appear here when available. You can return home.';
+
+  @override
+  String get stateClearSearchFilters => 'Clear search and filters';
+
+  @override
+  String get stateProfileAction => 'Back to profile';
+
+  @override
+  String get stateServicesAction => 'View services';
+
+  @override
+  String get stateCloseAction => 'Close';
+
+  @override
+  String get statePublicWorksMessage =>
+      'Work added by this professional will appear here.';
+
+  @override
+  String get stateClientReviewsMessage =>
+      'Reviews shared by clients will appear here.';
+
+  @override
+  String get stateFilteredCommunityTitle => 'No posts in this category';
+
+  @override
+  String get stateFilteredCommunityMessage =>
+      'Show all posts to browse the rest of the community.';
+
+  @override
+  String get stateProjectsNoResultsMessage =>
+      'No projects match these filters. Change or clear the filters to see your projects.';
+
+  @override
+  String get statePickerGuidance =>
+      'Could not select photos. Check photo access permission and retry; your selected photos are retained.';
+
+  @override
+  String get stateCommunityAllTitle => 'No posts yet';
+
+  @override
+  String get stateCommunityAllMessage =>
+      'New posts will appear here when added.';
+
+  @override
+  String get stateNoResultsMessage =>
+      'Try another search or clear search and filters to see available professionals.';
+
+  @override
+  String get stateReadErrorTitle => 'Could not load the data';
+
+  @override
+  String get stateOfflineTitle => 'No network connection';
+
+  @override
+  String get stateSavedEmptyTitle => 'You haven\'t saved any professionals yet';
+
+  @override
+  String get stateSearchNoResultsTitle => 'No matching results';
+
+  @override
+  String get homeownerAssistantEntryHint => 'Not sure where to start?';
+
+  @override
+  String get homeownerAssistantEntryTitle => 'Ask Shattab assistant';
+
+  @override
+  String get homeownerServiceDesignShortLabel => 'Design';
+
+  @override
+  String homeCloneWelcome(String name) {
+    return 'Welcome, $name';
+  }
+
+  @override
+  String get homeCloneHeroTitle => 'Your home starts here';
+
+  @override
+  String get homeCloneStartTitle => 'Have a new project?';
+
+  @override
+  String get homeCloneStartBody =>
+      'Tell us your idea and find professionals for your needs.';
+
+  @override
+  String get homeCloneAssistant => 'Ask Shattab assistant';
+
+  @override
+  String get homeCloneServiceAll => 'Service: All';
+
+  @override
+  String get homeCloneFilters => 'Filters';
+
+  @override
+  String get homeCloneFeatured => 'Featured professionals';
+
+  @override
+  String get homeCloneFeaturedSubtitle =>
+      'Explore professionals for your project';
+
+  @override
+  String get homeCloneEditorialSubtitle => 'Work selected by Shattab';
+
+  @override
+  String get homeCloneNearby => 'Near you';
+
+  @override
+  String get homeCloneKitchen => 'Kitchen specialists';
+
+  @override
+  String get homeCloneFinishing => 'Finishing from the first step';
+
+  @override
+  String get homeCloneStory => 'From an ordinary flat to a home you love';
+
+  @override
+  String get homeCloneStoryBody =>
+      'A dark traditional kitchen became a practical, comfortable space for family life.';
+
+  @override
+  String get homeCloneStoryDetails => 'See project details';
+
+  @override
+  String get homeCloneBefore => 'Before';
+
+  @override
+  String get homeCloneAfter => 'After';
+
+  @override
+  String get homeCloneCommunity => 'Community stories';
+
+  @override
+  String get homeCloneShare => 'Share your experience';
+
+  @override
+  String get homeCloneReadStory => 'Read the story';
+
+  @override
+  String get homeCloneQuestion => 'View question';
+
+  @override
+  String get homeCloneUnrated => 'New · No reviews';
+
+  @override
+  String homeCloneReviews(int count) {
+    return '$count reviews';
   }
 }

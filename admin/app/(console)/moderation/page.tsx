@@ -6,7 +6,9 @@ import {
   Avatar, Badge, Button, EmptyState, ErrorState, Input, Label, Panel, PanelHead,
   Table, TD, TH, TR,
 } from '@/components/ui';
-import { REPORT_REASON_LABEL, fmtAgo, fmtDateTime, fmtNum } from '@/lib/format';
+import { formatReportReason, formatReportTarget, fmtAgo, fmtDateTime, fmtNum } from '@/lib/format';
+import { getAdminLocale } from '@/lib/locale';
+import { t } from '@/lib/i18n';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,20 +26,13 @@ type Report = {
 
 type BlockRow = { blocked_id: string; block_count: number; full_name: string | null };
 
-const TARGET_LABEL: Record<string, string> = {
-  post: 'Post',
-  comment: 'Comment',
-  profile: 'Account',
-  brief: 'Job request',
-  review: 'Review',
-};
-
 export default async function ModerationPage({
   searchParams,
 }: {
-  searchParams: Promise<{ done?: string; error?: string }>;
+  searchParams: Promise<{ done?: string; error?: string; days?: string; max?: string }>;
 }) {
   const sp = await searchParams;
+  const locale = await getAdminLocale();
   const supabase = await supabaseServer();
 
   const [pendingRes, resolvedRes, blocksRes] = await Promise.all([
@@ -67,31 +62,31 @@ export default async function ModerationPage({
   return (
     <>
       <header className="mb-4">
-        <h1 className="text-xl font-semibold tracking-tight text-ink">Moderation</h1>
+        <h1 className="text-xl font-semibold tracking-tight text-ink">{t(locale, 'Moderation')}</h1>
         <p className="mt-0.5 text-sm text-ink-3">
-          Reports from the app, and the accounts users block most.
+          {t(locale, 'Reports from the app, and the accounts users block most.')}
         </p>
       </header>
 
-      <OutcomeBanner done={sp.done} error={sp.error} />
+      <OutcomeBanner done={sp.done} error={sp.error} days={sp.days} max={sp.max} locale={locale} />
 
       <div className="flex flex-col gap-5">
         <Panel>
           <PanelHead
-            title="Open reports"
-            hint="Oldest first. Removing content keeps its media in storage so an appeal can still be reviewed."
+            title={t(locale, 'Open reports')}
+            hint={t(locale, 'Oldest first. Removing content keeps its media in storage so an appeal can still be reviewed.')}
             action={
               <Badge tone={pendingRes.error ? 'danger' : pending.length > 0 ? 'warn' : 'ok'}>
-                {pendingRes.error ? 'Unavailable' : `${pending.length} open`}
+                {pendingRes.error ? t(locale, 'Unavailable') : t(locale, '{count} open', { count: fmtNum(pending.length, locale) })}
               </Badge>
             }
           />
           {pendingRes.error ? (
-            <ErrorState what="Could not read the report queue." />
+            <ErrorState what={t(locale, 'Could not read the report queue.')} locale={locale} />
           ) : pending.length === 0 ? (
             <EmptyState
-              title="Nothing reported"
-              body="Reports arrive here when someone uses Report in the app. Both stores require this queue to exist and to be worked."
+              title={t(locale, 'Nothing reported')}
+              body={t(locale, 'Reports arrive here when someone uses Report in the app. Both stores require this queue to exist and to be worked.')}
             />
           ) : (
             <ul className="stagger divide-y divide-line">
@@ -104,12 +99,12 @@ export default async function ModerationPage({
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="min-w-0">
                       <p className="flex flex-wrap items-center gap-1.5">
-                        <Badge tone="accent">{TARGET_LABEL[report.target_type] ?? report.target_type}</Badge>
+                        <Badge tone="accent"><bdi dir="auto">{formatReportTarget(report.target_type, locale)}</bdi></Badge>
                         <Badge tone="danger">
-                          {REPORT_REASON_LABEL[report.reason] ?? report.reason}
+                          <bdi dir="auto">{formatReportReason(report.reason, locale)}</bdi>
                         </Badge>
-                        <span className="text-xs text-ink-3" title={fmtDateTime(report.created_at)}>
-                          {fmtAgo(report.created_at)}
+                        <span className="text-xs text-ink-3" title={fmtDateTime(report.created_at, locale)}>
+                          {fmtAgo(report.created_at, locale)}
                         </span>
                       </p>
                       {report.note ? (
@@ -117,24 +112,24 @@ export default async function ModerationPage({
                           {report.note}
                         </p>
                       ) : (
-                        <p className="mt-1.5 text-sm text-ink-3">No note from the reporter.</p>
+                        <p className="mt-1.5 text-sm text-ink-3">{t(locale, 'No note from the reporter.')}</p>
                       )}
                       <p className="mt-1.5 flex flex-wrap gap-3 text-xs text-ink-3">
                         <Link
                           href={`/users?user=${report.reporter_id}`}
                           className="underline decoration-line-strong underline-offset-4 hover:text-ink hover:decoration-accent"
                         >
-                          View the reporter
+                          {t(locale, 'View the reporter')}
                         </Link>
                         {report.target_type === 'profile' ? (
                           <Link
                             href={`/users?user=${report.target_id}`}
                             className="underline decoration-line-strong underline-offset-4 hover:text-ink hover:decoration-accent"
                           >
-                            View the reported account
+                            {t(locale, 'View the reported account')}
                           </Link>
                         ) : (
-                          <span className="font-mono">{report.target_type} {report.target_id}</span>
+                        <span className="font-mono" dir="ltr">{report.target_type} {report.target_id}</span>
                         )}
                       </p>
                     </div>
@@ -148,19 +143,20 @@ export default async function ModerationPage({
                     <input type="hidden" name="report_id" value={report.id} />
                     <input type="hidden" name="path" value="/moderation" />
                     <div className="min-w-48 flex-1">
-                      <Label htmlFor={`note-${report.id}`}>Decision note</Label>
+                      <Label htmlFor={`note-${report.id}`}>{t(locale, 'Decision note')}</Label>
                       <Input
                         id={`note-${report.id}`}
                         name="note"
-                        placeholder="Recorded in the audit log"
+                        placeholder={t(locale, 'Recorded in the audit log')}
+                        dir="auto"
                       />
                     </div>
                     <Button type="submit" name="action" value="dismiss" variant="secondary" size="sm">
-                      No violation
+                      {t(locale, 'No violation')}
                     </Button>
                     {canRemoveContent ? (
                       <Button type="submit" name="action" value="remove_content" variant="danger" size="sm">
-                        Remove content
+                        {t(locale, 'Remove content')}
                       </Button>
                     ) : null}
                     <Button
@@ -170,7 +166,7 @@ export default async function ModerationPage({
                       variant="danger"
                       size="sm"
                     >
-                      {canRemoveContent ? 'Remove and suspend' : 'Suspend author'}
+                      {canRemoveContent ? t(locale, 'Remove and suspend') : t(locale, 'Suspend author')}
                     </Button>
                   </form>
                 </li>
@@ -183,22 +179,22 @@ export default async function ModerationPage({
         <div className="grid gap-5 lg:grid-cols-2">
           <Panel className="overflow-hidden">
             <PanelHead
-              title="Most blocked accounts"
-              hint="Two or more independent blocks. Blocks are private to each user; only the count is shown."
+              title={t(locale, 'Most blocked accounts')}
+              hint={t(locale, 'Two or more independent blocks. Blocks are private to each user; only the count is shown.')}
             />
             {blocksRes.error ? (
-              <ErrorState what="Could not read the block aggregate." />
+            <ErrorState what={t(locale, 'Could not read the block aggregate.')} locale={locale} />
             ) : mostBlocked.length === 0 ? (
               <EmptyState
-                title="No pattern yet"
-                body="An account appears here once at least two different people have blocked it."
+                title={t(locale, 'No pattern yet')}
+                body={t(locale, 'An account appears here once at least two different people have blocked it.')}
               />
             ) : (
               <Table>
                 <thead>
                   <tr>
-                    <TH>Account</TH>
-                    <TH align="right">Blocked by</TH>
+                    <TH>{t(locale, 'Account')}</TH>
+                    <TH align="right">{t(locale, 'Blocked by')}</TH>
                   </tr>
                 </thead>
                 <tbody className="stagger">
@@ -209,17 +205,17 @@ export default async function ModerationPage({
                           href={`/users?user=${row.blocked_id}`}
                           className="group flex min-w-0 items-center gap-2.5"
                         >
-                          <Avatar name={row.full_name} />
+                          <Avatar name={row.full_name} locale={locale} />
                           <span
                             dir="auto"
                             className="truncate font-medium text-ink group-hover:underline group-hover:decoration-accent group-hover:underline-offset-4"
                           >
-                            {row.full_name?.trim() || 'Unnamed'}
+                            {row.full_name?.trim() || t(locale, 'Unnamed')}
                           </span>
                         </Link>
                       </TD>
                       <TD align="right">
-                        <Badge tone={row.block_count >= 4 ? 'danger' : 'warn'}>{fmtNum(row.block_count)} people</Badge>
+                        <Badge tone={row.block_count >= 4 ? 'danger' : 'warn'}>{t(locale, '{count} people', { count: fmtNum(row.block_count, locale) })}</Badge>
                       </TD>
                     </TR>
                   ))}
@@ -229,40 +225,44 @@ export default async function ModerationPage({
           </Panel>
 
           <Panel className="overflow-hidden">
-            <PanelHead title="Recently resolved" hint="The last 25 decisions." />
+            <PanelHead title={t(locale, 'Recently resolved')} hint={t(locale, 'The last 25 decisions.')} />
             {resolvedRes.error ? (
-              <ErrorState what="Could not read resolved reports." />
+            <ErrorState what={t(locale, 'Could not read resolved reports.')} locale={locale} />
             ) : resolved.length === 0 ? (
               <EmptyState
-                title="Nothing resolved yet"
-                body="Decisions you make above are listed here, and in full detail under Activity."
+                title={t(locale, 'Nothing resolved yet')}
+                body={t(locale, 'Decisions you make above are listed here, and in full detail under Activity.')}
               />
             ) : (
               <Table>
                 <thead>
                   <tr>
-                    <TH>What</TH>
-                    <TH>Reason</TH>
-                    <TH>Outcome</TH>
-                    <TH align="right">When</TH>
+                    <TH>{t(locale, 'What')}</TH>
+                    <TH>{t(locale, 'Reason')}</TH>
+                    <TH>{t(locale, 'Outcome')}</TH>
+                    <TH align="right">{t(locale, 'When')}</TH>
                   </tr>
                 </thead>
                 <tbody>
                   {resolved.map((report) => (
                     <TR key={report.id}>
                       <TD className="text-ink-2">
-                        {TARGET_LABEL[report.target_type] ?? report.target_type}
+                        <bdi dir="auto">{formatReportTarget(report.target_type, locale)}</bdi>
                       </TD>
                       <TD className="text-ink-3">
-                        {REPORT_REASON_LABEL[report.reason] ?? report.reason}
+                        <bdi dir="auto">{formatReportReason(report.reason, locale)}</bdi>
                       </TD>
                       <TD>
                         <Badge tone={report.status === 'actioned' ? 'danger' : 'neutral'}>
-                          {report.status === 'actioned' ? 'Actioned' : 'Dismissed'}
+                          {report.status === 'actioned'
+                            ? t(locale, 'Actioned')
+                            : report.status === 'dismissed'
+                              ? t(locale, 'Dismissed')
+                              : <bdi dir="auto">{report.status}</bdi>}
                         </Badge>
                       </TD>
                       <TD align="right" className="whitespace-nowrap text-ink-3">
-                        <span title={fmtDateTime(report.reviewed_at)}>{fmtAgo(report.reviewed_at)}</span>
+                        <span title={fmtDateTime(report.reviewed_at, locale)}>{fmtAgo(report.reviewed_at, locale)}</span>
                       </TD>
                     </TR>
                   ))}

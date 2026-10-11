@@ -1,3 +1,4 @@
+import '../../../../core/widgets/professional_reference_states.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,11 +8,9 @@ import 'package:batsh/core/l10n/l10n_extension.dart';
 import '../../../../core/router/routes.dart';
 import '../../../../core/theme/batsh_motion.dart';
 import '../../../../core/theme/batsh_radius.dart';
-import '../../../../core/theme/batsh_shadows.dart';
 import '../../../../core/theme/batsh_spacing.dart';
 import '../../../../core/theme/batsh_typography.dart';
 import '../../../../core/utils/error_mapper.dart';
-import '../../../../core/widgets/batsh_button.dart';
 import '../../../../core/widgets/batsh_error.dart';
 import '../../../../core/widgets/batsh_scaffold.dart';
 import '../../../../core/widgets/batsh_shimmer.dart';
@@ -72,7 +71,8 @@ class _MyBriefsScreenState extends ConsumerState<MyBriefsScreen> {
                 if (filtered.isEmpty)
                   _HomeownerOrdersEmpty(
                     isGuest: isGuest,
-                    filtered: list.isNotEmpty,
+                    filtered: _filter != _OrderFilter.all,
+                    onClear: () => setState(() => _filter = _OrderFilter.all),
                     onDiscover: () => context.go(Routes.homeownerDiscover),
                     onBackToAccount: () => context.go(Routes.homeownerProfile),
                     onSignIn: () => showSignInSheet(
@@ -224,6 +224,7 @@ class _HomeownerOrdersEmpty extends StatelessWidget {
   const _HomeownerOrdersEmpty({
     required this.isGuest,
     required this.filtered,
+    required this.onClear,
     required this.onDiscover,
     required this.onBackToAccount,
     required this.onSignIn,
@@ -232,137 +233,51 @@ class _HomeownerOrdersEmpty extends StatelessWidget {
 
   final bool isGuest;
   final bool filtered;
+  final VoidCallback onClear;
   final VoidCallback onDiscover;
   final VoidCallback onBackToAccount;
   final VoidCallback onSignIn;
   final VoidCallback? onCreate;
 
   @override
-  Widget build(BuildContext context) {
-    final title = filtered
-        ? context.l10n.homeownerOrdersEmptyTitle
-        : isGuest
-        ? context.l10n.signInToSeeRequests
-        : context.l10n.homeownerOrdersEmptyTitle;
-    final message = filtered
-        ? context.l10n.homeownerOrdersEmptyMessage
-        : isGuest
-        ? context.l10n.signInEmptyMessage
-        : context.l10n.homeownerOrdersEmptyMessage;
-
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: context.colorScheme.surfaceContainerLowest,
-        borderRadius: BatshRadius.brXxl,
-        border: Border.all(
-          color: context.colorScheme.outlineVariant.withValues(alpha: 0.62),
-        ),
-        boxShadow: BatshShadows.soft,
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      ProfessionalReferenceState(
+        kind: isGuest
+            ? ProfessionalReferenceStateKind.access
+            : filtered
+            ? ProfessionalReferenceStateKind.noResults
+            : ProfessionalReferenceStateKind.empty,
+        motif: ProfessionalReferenceMotif.house,
+        title: isGuest
+            ? context.l10n.signInToSeeRequests
+            : filtered
+            ? context.l10n.noResultsFound
+            : context.l10n.homeownerOrdersEmptyTitle,
+        message: isGuest
+            ? context.l10n.signInEmptyMessage
+            : filtered
+            ? context.l10n.stateProjectsNoResultsMessage
+            : context.l10n.homeownerOrdersEmptyMessage,
+        primaryLabel: isGuest
+            ? context.l10n.signInSheetTitle
+            : filtered
+            ? context.l10n.clearFilters
+            : context.l10n.homeLiveStartAction,
+        onPrimary: isGuest
+            ? onSignIn
+            : filtered
+            ? onClear
+            : onCreate,
+        secondaryLabel: context.l10n.homeownerOrdersDiscoverAction,
+        onSecondary: onDiscover,
       ),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(
-          BatshSpacing.lg,
-          BatshSpacing.xl,
-          BatshSpacing.lg,
-          BatshSpacing.lg,
-        ),
-        child: Column(
-          children: [
-            CustomPaint(
-              size: const Size(170, 150),
-              painter: _OrderEmptyIllustrationPainter(
-                color: context.colorScheme.primary,
-              ),
-            ),
-            Text(
-              title,
-              textAlign: TextAlign.center,
-              style: BatshTypography.headlineSm.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: BatshSpacing.xs),
-            Text(
-              message,
-              textAlign: TextAlign.center,
-              style: BatshTypography.bodySm.copyWith(
-                color: context.colorScheme.onSurfaceVariant,
-              ),
-            ),
-            const SizedBox(height: BatshSpacing.lg),
-            if (isGuest)
-              BatshButton(
-                label: context.l10n.signInSheetTitle,
-                onPressed: onSignIn,
-              )
-            else
-              BatshButton(
-                label: context.l10n.homeownerOrdersDiscoverAction,
-                onPressed: onDiscover,
-              ),
-            const SizedBox(height: BatshSpacing.xs),
-            TextButton(
-              onPressed: onCreate ?? onBackToAccount,
-              child: Text(
-                onCreate == null
-                    ? context.l10n.homeownerOrdersBackToAccount
-                    : context.l10n.createNewPostButton,
-              ),
-            ),
-          ],
-        ),
+      TextButton(
+        onPressed: onBackToAccount,
+        style: TextButton.styleFrom(minimumSize: const Size(48, 48)),
+        child: Text(context.l10n.homeownerOrdersBackToAccount),
       ),
-    );
-  }
-}
-
-class _OrderEmptyIllustrationPainter extends CustomPainter {
-  const _OrderEmptyIllustrationPainter({required this.color});
-  final Color color;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final ink = Paint()
-      ..color = color.withValues(alpha: 0.78)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2;
-    final soft = Paint()
-      ..color = color.withValues(alpha: 0.10)
-      ..style = PaintingStyle.fill;
-    final board = RRect.fromRectAndRadius(
-      Rect.fromLTWH(size.width * 0.22, 26, size.width * 0.56, 98),
-      const Radius.circular(8),
-    );
-    canvas.drawRRect(board, soft);
-    canvas.drawRRect(board, ink);
-    canvas.drawLine(
-      Offset(size.width * 0.31, 46),
-      Offset(size.width * 0.69, 46),
-      ink,
-    );
-    for (var i = 0; i < 3; i++) {
-      final y = 66 + i * 18.0;
-      canvas.drawLine(
-        Offset(size.width * 0.32, y),
-        Offset(size.width * (0.52 + i * 0.05), y),
-        ink,
-      );
-    }
-    final arch = Path()
-      ..moveTo(size.width * 0.35, 112)
-      ..lineTo(size.width * 0.35, 86)
-      ..quadraticBezierTo(size.width * 0.35, 70, size.width * 0.45, 70)
-      ..quadraticBezierTo(size.width * 0.55, 70, size.width * 0.55, 86)
-      ..lineTo(size.width * 0.55, 112);
-    canvas.drawPath(arch, ink);
-    canvas.drawLine(
-      Offset(size.width * 0.28, 124),
-      Offset(size.width * 0.72, 124),
-      ink,
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant _OrderEmptyIllustrationPainter oldDelegate) =>
-      oldDelegate.color != color;
+    ],
+  );
 }

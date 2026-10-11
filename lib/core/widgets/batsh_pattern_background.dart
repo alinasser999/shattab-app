@@ -15,8 +15,8 @@ class BatshPatternBackground extends StatelessWidget {
     super.key,
     required this.child,
     this.kind = ShattabPatternKind.contour,
-    this.opacity = 0.085,
-    this.showMotifs = true,
+    this.opacity = 0.045,
+    this.showMotifs = false,
   });
 
   final Widget child;
@@ -106,48 +106,6 @@ class BatshPatternBackground extends StatelessWidget {
             ),
           ),
           child,
-          // A final watermark layer keeps the identity visible even when a
-          // scrolling viewport paints an opaque canvas over its background.
-          // It is confined to the edges and remains quiet beneath content.
-          Positioned.fill(
-            child: IgnorePointer(
-              child: RepaintBoundary(
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    PositionedDirectional(
-                      top: 136,
-                      start: -52,
-                      width: 92,
-                      height: 128,
-                      child: Opacity(
-                        opacity: 0.075,
-                        child: ShattabPattern(
-                          kind: ShattabPatternKind.arches,
-                          color: lineColor,
-                          strokeWidth: 0.75,
-                        ),
-                      ),
-                    ),
-                    PositionedDirectional(
-                      bottom: 74,
-                      end: -42,
-                      width: 118,
-                      height: 156,
-                      child: Opacity(
-                        opacity: 0.09,
-                        child: ShattabPattern(
-                          kind: ShattabPatternKind.contour,
-                          color: lineColor,
-                          strokeWidth: 0.75,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
         ],
       ),
     );

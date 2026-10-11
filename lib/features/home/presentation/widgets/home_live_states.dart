@@ -1,4 +1,6 @@
-import '../../../../core/utils/support_contact.dart';
+import '../../../quotes/presentation/providers/quotes_providers.dart';
+import '../../../../core/widgets/batsh_loading.dart';
+import '../../../../core/widgets/professional_reference_states.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/l10n/l10n_extension.dart';
@@ -34,25 +36,14 @@ class HomeLiveStateSection extends ConsumerWidget {
     });
     final inset = childHorizontalInset ?? 16;
     if (briefs.isLoading) {
-      return const Padding(
-        padding: EdgeInsets.all(24),
-        child: Center(
-          child: CircularProgressIndicator(
-            color: ProfessionalReferenceTheme.navy,
-          ),
-        ),
-      );
+      return Padding(padding: EdgeInsets.all(24), child: const BatshLoading());
     }
     if (briefs.hasError) {
       return Padding(
         padding: EdgeInsets.symmetric(horizontal: inset),
-        child: _UpdateState(
-          title: context.l10n.homeLiveErrorTitle,
+        child: ProfessionalReferenceReadError(
           message: ErrorMapper.map(briefs.error!),
-          action: context.l10n.tryAgain,
-          onAction: () => ref.invalidate(myBriefsProvider),
-          secondaryAction: context.l10n.helpSupport,
-          onSecondaryAction: () => openShattabSupport(context),
+          onRetry: () => ref.invalidate(myBriefsProvider),
         ),
       );
     }
@@ -63,6 +54,9 @@ class HomeLiveStateSection extends ConsumerWidget {
               brief.awaitsCompletionConfirmation,
         )
         .firstOrNull;
+    final quoteState = current == null
+        ? null
+        : ref.watch(quotesForBriefProvider(current.id));
     final latest = notifications.asData?.value.firstOrNull;
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: inset),
@@ -71,23 +65,37 @@ class HomeLiveStateSection extends ConsumerWidget {
         children: [
           if (child != null)
             child!
+          else if (current == null)
+            ProfessionalReferenceState(
+              title: context.l10n.homeLiveEmptyTitle,
+              message: context.l10n.homeLiveEmptyMessage,
+              motif: ProfessionalReferenceMotif.house,
+              primaryLabel: context.l10n.homeLiveStartAction,
+              onPrimary: onStartRequest,
+            )
           else
             _UpdateState(
-              title: current == null
-                  ? context.l10n.homeLiveEmptyTitle
-                  : context.l10n.homeLiveActivityTitle,
-              message: current == null
-                  ? context.l10n.homeLiveEmptyMessage
-                  : current.projectTitle ?? current.workDescription,
-              action: current == null
-                  ? context.l10n.homeLiveStartAction
-                  : context.l10n.homeLiveOpenRequests,
-              onAction: current == null ? onStartRequest : onOpenRequests,
+              title: context.l10n.homeLiveActivityTitle,
+              message: current.projectTitle ?? current.workDescription,
+              action: context.l10n.homeLiveOpenRequests,
+              onAction: () => onOpenRequests(),
             ),
+          if (current != null && quoteState!.isLoading) ...[
+            const Padding(padding: EdgeInsets.all(24), child: BatshLoading()),
+          ] else if (current != null && quoteState!.hasError) ...[
+            ProfessionalReferenceReadError(
+              message: ErrorMapper.map(quoteState.error!),
+              onRetry: () => ref.invalidate(quotesForBriefProvider(current.id)),
+            ),
+          ],
           if (notifications.isLoading) ...[
             const SizedBox(height: 12),
-            const LinearProgressIndicator(
-              color: ProfessionalReferenceTheme.navy,
+            Semantics(
+              label: context.l10n.loading,
+              liveRegion: true,
+              child: const LinearProgressIndicator(
+                color: ProfessionalReferenceTheme.navy,
+              ),
             ),
           ],
           if (notifications.hasError) ...[
@@ -123,12 +131,8 @@ class _UpdateState extends StatelessWidget {
     required this.action,
     required this.onAction,
     this.compact = false,
-    this.secondaryAction,
-    this.onSecondaryAction,
   });
   final String title, message, action;
-  final String? secondaryAction;
-  final VoidCallback? onSecondaryAction;
   final VoidCallback onAction;
   final bool compact;
   @override
@@ -172,18 +176,6 @@ class _UpdateState extends StatelessWidget {
             ),
           ),
         ),
-        if (secondaryAction != null && onSecondaryAction != null)
-          TextButton(
-            onPressed: onSecondaryAction,
-            child: Text(
-              secondaryAction!,
-              style: ProfessionalReferenceTheme.text(
-                16,
-                color: ProfessionalReferenceTheme.action,
-                weight: FontWeight.w700,
-              ),
-            ),
-          ),
       ],
     ),
   );

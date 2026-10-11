@@ -7,15 +7,12 @@ import '../../../../core/catalog/specialty_catalog.dart';
 import '../../../../core/l10n/catalog_labels.dart';
 import '../../../../core/router/routes.dart';
 import '../../../../core/theme/batsh_spacing.dart';
-import '../../../../core/theme/batsh_typography.dart';
-import '../../../../core/theme/theme_extension.dart';
+import '../../../../core/theme/professional_reference_theme.dart';
 import '../../../../core/utils/error_mapper.dart';
-import '../../../../core/widgets/batsh_button.dart';
-import '../../../../core/widgets/batsh_chip.dart';
-import '../../../../core/widgets/batsh_error.dart';
 import '../../../../core/widgets/batsh_scaffold.dart';
-import '../../../../core/widgets/batsh_section_header.dart';
 import '../../../../core/widgets/batsh_shimmer.dart';
+import '../../../../core/widgets/professional_reference_primitives.dart';
+import '../../../../core/widgets/professional_reference_states.dart';
 import '../../domain/onboarding_models.dart';
 import '../providers/onboarding_draft_provider.dart';
 import '../providers/onboarding_provider.dart';
@@ -130,7 +127,7 @@ class _ContractorServicesScreenState
     }
 
     final content = contractorAsync.hasError
-        ? BatshError(
+        ? ProfessionalReferenceReadError(
             message: ErrorMapper.map(contractorAsync.error!),
             onRetry: () => ref.invalidate(contractorProfileProvider),
           )
@@ -145,21 +142,30 @@ class _ContractorServicesScreenState
       onPopInvokedWithResult: (didPop, _) {
         if (!didPop) _back();
       },
-      child: BatshScaffold(
-        title: context.l10n.specialtiesTitle,
-        animateEntrance: false,
-        body: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              OnboardingProgressHeader(
-                step: 3,
-                stepLabel: context.l10n.onboardingStepContractorServices,
-                onBack: _back,
-              ),
-              const SizedBox(height: BatshSpacing.lg),
-              content,
-            ],
+      child: Theme(
+        data: ProfessionalReferenceTheme.scopedTheme(Theme.of(context)),
+        child: BatshScaffold(
+          title: context.l10n.specialtiesTitle,
+          animateEntrance: false,
+          body: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                OnboardingProgressHeader(
+                  step: 3,
+                  stepLabel: context.l10n.onboardingStepContractorServices,
+                  onBack: _back,
+                  referenceStyle: true,
+                ),
+                const SizedBox(height: BatshSpacing.lg),
+                ProfessionalReferenceWelcome(
+                  title: context.l10n.specialtiesTitle,
+                  message: context.l10n.specialtiesSubtitle,
+                  motif: ProfessionalReferenceMotif.services,
+                ),
+                content,
+              ],
+            ),
           ),
         ),
       ),
@@ -169,15 +175,6 @@ class _ContractorServicesScreenState
   Widget _form(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
-      BatshSectionHeader(title: context.l10n.specialtiesTitle),
-      const SizedBox(height: BatshSpacing.sm),
-      Text(
-        context.l10n.specialtiesSubtitle,
-        style: BatshTypography.bodyMd.copyWith(
-          color: context.colorScheme.onSurfaceVariant,
-        ),
-      ),
-      const SizedBox(height: BatshSpacing.md),
       Focus(
         focusNode: _specialtyFocus,
         child: Semantics(
@@ -188,6 +185,7 @@ class _ContractorServicesScreenState
             initialSelection: _specialties,
             requirePrimary: true,
             showChildren: true,
+            referenceStyle: true,
             onChanged: _setSpecialties,
           ),
         ),
@@ -197,12 +195,19 @@ class _ContractorServicesScreenState
         _InlineError(message: context.l10n.onboardingSpecialtyRequired),
       ],
       const SizedBox(height: BatshSpacing.lg),
-      BatshSectionHeader(title: context.l10n.serviceAreasTitle),
+      Semantics(
+        header: true,
+        child: Text(
+          context.l10n.serviceAreasTitle,
+          style: ProfessionalReferenceTheme.text(22, weight: FontWeight.w700),
+        ),
+      ),
       const SizedBox(height: BatshSpacing.sm),
       Text(
         context.l10n.serviceAreasSubtitle,
-        style: BatshTypography.bodyMd.copyWith(
-          color: context.colorScheme.onSurfaceVariant,
+        style: ProfessionalReferenceTheme.text(
+          16,
+          color: ProfessionalReferenceTheme.muted,
         ),
       ),
       const SizedBox(height: BatshSpacing.md),
@@ -217,7 +222,7 @@ class _ContractorServicesScreenState
             runSpacing: BatshSpacing.sm,
             children: OnboardingCatalog.citiesAndDistricts
                 .map(
-                  (entry) => BatshChip(
+                  (entry) => ProfessionalReferenceChoice(
                     label: localizedOnboardingCityLabel(context, entry.city),
                     selected: _areas.contains(entry.city),
                     semanticLabel: localizedOnboardingCityLabel(
@@ -239,7 +244,11 @@ class _ContractorServicesScreenState
       ],
       if (_saveError != null) ...[
         const SizedBox(height: BatshSpacing.md),
-        _InlineError(message: _saveError!),
+        ProfessionalReferenceInlineStatus(
+          message: '${context.l10n.onboardingSaveFailed} $_saveError',
+          retryLabel: context.l10n.onboardingRetrySave,
+          onRetry: _complete,
+        ),
       ],
       if (_busy) ...[
         const SizedBox(height: BatshSpacing.md),
@@ -247,18 +256,18 @@ class _ContractorServicesScreenState
           liveRegion: true,
           child: Text(
             context.l10n.onboardingSaving,
-            style: BatshTypography.bodySm.copyWith(
-              color: context.colorScheme.onSurfaceVariant,
+            style: ProfessionalReferenceTheme.text(
+              16,
+              color: ProfessionalReferenceTheme.muted,
             ),
           ),
         ),
       ],
       const SizedBox(height: BatshSpacing.xl),
-      BatshButton(
+      ProfessionalReferencePrimaryButton(
         label: context.l10n.done,
         onPressed: _busy ? null : _complete,
         isLoading: _busy,
-        animate: false,
       ),
       const SizedBox(height: BatshSpacing.lg),
     ],
@@ -275,7 +284,10 @@ class _InlineError extends StatelessWidget {
     liveRegion: true,
     child: Text(
       message,
-      style: BatshTypography.bodySm.copyWith(color: context.colorScheme.error),
+      style: ProfessionalReferenceTheme.text(
+        16,
+        color: Theme.of(context).colorScheme.error,
+      ),
     ),
   );
 }

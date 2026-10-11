@@ -1,4 +1,4 @@
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -7,6 +7,8 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../debug/debug_role_override.dart';
 import '../../features/assistant/presentation/assistant_screen.dart';
 import '../../features/auth/presentation/otp_screen.dart';
+import '../../features/auth/domain/assistant_reauthentication_request.dart';
+import '../../features/auth/presentation/assistant_reauthentication_screen.dart';
 import '../../features/auth/presentation/phone_entry_screen.dart';
 import '../../features/auth/presentation/providers/auth_provider.dart';
 import '../../features/billing/presentation/pro_screen.dart';
@@ -160,6 +162,18 @@ GoRouter appRouter(Ref ref) {
         path: Routes.contractorAssistant,
         pageBuilder: (_, state) =>
             slideUpPage(const AssistantScreen(isHomeowner: false), state),
+      ),
+      GoRoute(
+        path: Routes.assistantReauthentication,
+        pageBuilder: (_, state) => MaterialPage<void>(
+          key: state.pageKey,
+          fullscreenDialog: true,
+          child: state.extra is AssistantReauthenticationRequest
+              ? AssistantReauthenticationScreen(
+                  request: state.extra! as AssistantReauthenticationRequest,
+                )
+              : const SizedBox.shrink(),
+        ),
       ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navShell) =>

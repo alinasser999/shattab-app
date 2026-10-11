@@ -45,13 +45,29 @@ Future<ProviderContainer> pumpHomeownerReference(
   List<Override> extraOverrides = const [],
   bool settle = true,
   bool disposeInTearDown = true,
+  bool nativeSafeAreas = false,
+  EdgeInsets? safeAreaInsets,
+  bool capture = false,
+  void Function(HomeownerReferenceScenario)? configureScenario,
 }) async {
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1;
+  if (nativeSafeAreas || safeAreaInsets != null) {
+    final insets = safeAreaInsets ?? const EdgeInsets.only(top: 44, bottom: 34);
+    final padding = FakeViewPadding(
+      top: insets.top,
+      bottom: insets.bottom,
+      left: insets.left,
+      right: insets.right,
+    );
+    tester.view.padding = padding;
+    tester.view.viewPadding = padding;
+  }
   addTearDown(tester.view.reset);
   final scenario = HomeownerReferenceScenario.fromUri(
     Uri.parse('http://localhost/?$query'),
   );
+  configureScenario?.call(scenario);
   final replacements = extraOverrides.map((item) => item.origin).toSet();
   final container = ProviderContainer(
     overrides: [
@@ -64,7 +80,10 @@ Future<ProviderContainer> pumpHomeownerReference(
   await tester.pumpWidget(
     UncontrolledProviderScope(
       container: container,
-      child: HomeownerReferenceApp(key: UniqueKey(), scenario: scenario),
+      child: RepaintBoundary(
+        key: capture ? const ValueKey('homeowner-qa-capture') : null,
+        child: HomeownerReferenceApp(key: UniqueKey(), scenario: scenario),
+      ),
     ),
   );
   if (settle) {

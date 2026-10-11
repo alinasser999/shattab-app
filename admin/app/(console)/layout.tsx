@@ -3,6 +3,10 @@ import Image from 'next/image';
 import { currentAdmin, supabaseServer } from '@/lib/supabase/server';
 import { Nav } from '@/components/nav';
 import { Button } from '@/components/ui';
+import { LanguageSwitcher } from '@/components/language-switcher';
+import { getAdminLocale } from '@/lib/locale';
+import { t } from '@/lib/i18n';
+import type { AdminLocale } from '@/lib/i18n';
 
 /**
  * Shell for every authenticated page.
@@ -15,6 +19,7 @@ import { Button } from '@/components/ui';
 export default async function ConsoleLayout({ children }: { children: React.ReactNode }) {
   const admin = await currentAdmin();
   if (!admin) redirect('/login?denied=1');
+  const locale: AdminLocale = await getAdminLocale();
 
   // Queue counts drive the sidebar badges. Read here so every page shows the
   // same numbers and no page has to fetch them again.
@@ -30,30 +35,32 @@ export default async function ConsoleLayout({ children }: { children: React.Reac
     <div className="min-h-dvh md:grid md:grid-cols-[13.5rem_1fr]">
       {/* The sidebar is a second neutral layer, one step off the content surface,
           so the two never read as one continuous slab. */}
-      <aside className="flex flex-col gap-5 border-b border-line bg-surface px-3 py-4 md:sticky md:top-0 md:h-dvh md:border-b-0 md:border-r">
+      <aside className="flex flex-col gap-5 border-b border-line bg-surface px-3 py-4 md:sticky md:top-0 md:h-dvh md:border-b-0 md:border-e">
         <div className="flex items-center gap-2 px-1.5">
           <Image src="/icon.png" alt="" width={22} height={22} className="rounded-sm" priority />
           <span className="text-sm font-semibold tracking-tight text-ink">Shattab</span>
-          <span className="text-xs text-accent-ink">Admin</span>
+          <span className="text-xs text-accent-ink">{t(locale, 'Admin')}</span>
         </div>
 
-        <Nav queues={queues} />
+        <LanguageSwitcher locale={locale} />
+
+        <Nav queues={queues} locale={locale} />
 
         <div className="mt-auto border-t border-line pt-3">
           <p className="truncate px-1.5 text-xs text-ink-2" dir="auto" title={admin.phone}>
-            {admin.name || admin.phone || 'Admin'}
+            {admin.name || admin.phone || t(locale, 'Admin')}
           </p>
           <p className="px-1.5 text-2xs text-ink-3">
             {admin.level === 'owner'
-              ? 'Owner access'
+              ? t(locale, 'Owner access')
               : admin.level === 'moderator'
-                ? 'Moderator access'
-                : 'Admin access'}
+                ? t(locale, 'Moderator access')
+                : t(locale, 'Admin access')}
           </p>
           {/* A form POST, not a link: sign-out must not be reachable by GET. */}
           <form action="/api/signout" method="post" className="mt-1.5">
             <Button type="submit" variant="ghost" size="sm" className="w-full justify-start">
-              Sign out
+              {t(locale, 'Sign out')}
             </Button>
           </form>
         </div>
