@@ -6,6 +6,10 @@ set -Eeuo pipefail
 readonly FLUTTER_VERSION='3.44.4'
 readonly FLUTTER_ARCHIVE_URL='https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.44.4-stable.tar.xz'
 readonly FLUTTER_ARCHIVE_SHA256='c853cda0312a162854c481fe6a1bc286d84fbb74bfab7037c39750061dc9b466'
+readonly FLUTTER_PROBE_CAPTURE_MAX_BYTES=16384
+readonly FLUTTER_DIAGNOSTIC_MAX_RAW_LINE_BYTES=2048
+readonly FLUTTER_DIAGNOSTIC_MAX_LINES=11
+readonly FLUTTER_DIAGNOSTIC_MAX_OUTPUT_LINE_BYTES=240
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd -- "$SCRIPT_DIR/.." && pwd)"
@@ -15,9 +19,142 @@ OUTPUT_DIR="$ROOT_DIR/build/web"
 env_created=0
 env_identity=''
 temp_dir=''
+probe_output=''
 
 fail() {
   printf 'Vercel Flutter build failed: %s\n' "$1" >&2
+  exit 1
+}
+
+redact_flutter_diagnostic() {
+  local input_path="$1"
+  local input_bytes=''
+  local last_byte=''
+  local bounded_text=''
+  local awk_program=''
+  local line=''
+  local redacted_line=''
+  local diagnostic=''
+  local final_text=''
+  local control_free_text=''
+
+  [[ -r "$input_path" ]] || return 1
+  for command_name in head tail od sed tr awk cut wc; do
+    command -v "$command_name" >/dev/null 2>&1 || return 1
+  done
+
+  # If capture reached its byte cap, it may split a token across the stored
+  # boundary. Withhold the sample instead of exposing an unmatched fragment.
+  if ! input_bytes="$(wc -c < "$input_path" | tr -d '[:space:]')"; then
+    return 1
+  fi
+  [[ "$input_bytes" =~ ^[0-9]+$ ]] || return 1
+  if (( input_bytes >= FLUTTER_PROBE_CAPTURE_MAX_BYTES )); then
+    bounded_text='[Flutter diagnostic capture reached its byte limit; sample withheld]'
+  elif (( input_bytes == 0 )); then
+    bounded_text=''
+  else
+    if ! last_byte="$(
+      head -c "$FLUTTER_PROBE_CAPTURE_MAX_BYTES" "$input_path" \
+        | tail -c 1 \
+        | od -An -tu1 \
+        | tr -d '[:space:]'
+    )"; then
+      return 1
+    fi
+    if [[ -n "$last_byte" && ! "$last_byte" =~ ^[0-9]+$ ]]; then
+      return 1
+    fi
+    if [[ "$last_byte" != '10' ]]; then
+      bounded_text='[Flutter diagnostic ended with an incomplete line; sample withheld]'
+    else
+      # Map terminal/control bytes before inspection. Any marked, oversized,
+      # or excessive source record withholds the complete sample. Safe records
+      # are concatenated before redaction, so LF cannot split a secret/token.
+      awk_program='
+        BEGIN { source_lines = 0; unsafe = 0; sample = "" }
+        {
+          source_lines++
+          if (source_lines > max_lines || index($0, "\001") > 0 || length($0) > max_line_bytes) {
+            unsafe = 1
+            next
+          }
+          sample = sample $0
+        }
+        END {
+          if (unsafe) {
+            print "[diagnostic contained an unsafe, oversized, or excessive line; sample withheld]"
+          } else {
+            printf "%s\n", sample
+          }
+        }
+      '
+      if ! bounded_text="$(
+        head -c "$FLUTTER_PROBE_CAPTURE_MAX_BYTES" "$input_path" \
+          | LC_ALL=C tr '\000-\011\013-\037\177-\237' '\001' \
+          | LC_ALL=C awk \
+              -v max_line_bytes="$FLUTTER_DIAGNOSTIC_MAX_RAW_LINE_BYTES" \
+              -v max_lines="$FLUTTER_DIAGNOSTIC_MAX_LINES" \
+              "$awk_program"
+      )"; then
+        return 1
+      fi
+    fi
+  fi
+
+  # The normalized sample is one line, bounded by the 16 KiB capture. Redact
+  # before the output byte cut so truncation cannot expose a secret fragment.
+  line="$bounded_text"
+  if [[ -n "$line" ]]; then
+    line="${line//"$SUPABASE_URL"/[REDACTED_SUPABASE_URL]}"
+    line="${line//"$SUPABASE_ANON_KEY"/[REDACTED_SUPABASE_ANON_KEY]}"
+
+    if ! redacted_line="$(
+      printf '%s' "$line" \
+        | LC_ALL=C sed -E \
+            -e 's#eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+#[REDACTED_JWT]#g' \
+            -e 's#sb_(publishable|secret)_[A-Za-z0-9_-]+#[REDACTED_SUPABASE_TOKEN]#g' \
+            -e 's#(SUPABASE_URL|SUPABASE_ANON_KEY)[[:space:]]*=[[:space:]]*[^[:space:]]+#\1=[REDACTED]#g' \
+            -e 's#https?://[^[:space:]]+#[REDACTED_URL]#g' 2>/dev/null \
+        | LC_ALL=C cut -b "1-$FLUTTER_DIAGNOSTIC_MAX_OUTPUT_LINE_BYTES" 2>/dev/null
+    )"; then
+      return 1
+    fi
+    diagnostic="${redacted_line}"$'\n'
+  fi
+
+  final_text="${diagnostic%$'\n'}"
+  if ! control_free_text="$(
+    printf '%s' "$final_text" \
+      | LC_ALL=C tr -d '\000-\011\013-\037\177-\237' 2>/dev/null
+  )"; then
+    return 1
+  fi
+  [[ "$control_free_text" == "$final_text" ]] || return 1
+
+  printf '%s' "$diagnostic"
+}
+
+report_flutter_probe_failure() {
+  local exit_status="$1"
+  local reason="$2"
+  local safe_diagnostic=''
+
+  if safe_diagnostic="$(redact_flutter_diagnostic "$probe_output" 2>/dev/null)"; then
+    printf 'Flutter CLI startup check failed: %s (exit status %s). Redacted diagnostic follows:\n' \
+      "$reason" "$exit_status" >&2
+    if [[ -n "$safe_diagnostic" ]]; then
+      printf '%s' "$safe_diagnostic" >&2
+    else
+      printf 'No diagnostic text was available.\n' >&2
+    fi
+  else
+    printf 'Flutter diagnostic redaction failed; startup output was withheld.\n' >&2
+  fi
+
+  if [[ "$exit_status" =~ ^[1-9][0-9]*$ ]] && (( exit_status <= 255 )); then
+    exit "$exit_status"
+  fi
   exit 1
 }
 
@@ -40,6 +177,20 @@ cleanup() {
         status=1
       fi
     fi
+  fi
+
+  if [[ -n "$probe_output" ]]; then
+    case "$probe_output" in
+      "$temp_dir"/flutter-version-probe.*)
+        if [[ -e "$probe_output" || -L "$probe_output" ]]; then
+          rm -- "$probe_output" || status=1
+        fi
+        ;;
+      *)
+        printf 'Vercel Flutter build cleanup skipped an unexpected diagnostic path.\n' >&2
+        status=1
+        ;;
+    esac
   fi
 
   if [[ -n "$temp_dir" ]]; then
@@ -96,7 +247,7 @@ if [[ -e "$OUTPUT_DIR" || -L "$OUTPUT_DIR" ]]; then
   fail 'Refusing to reuse an existing build/web output directory.'
 fi
 
-for command_name in curl sha256sum tar mktemp stat chmod; do
+  for command_name in curl sha256sum tar mktemp stat chmod head cat tail od sed tr awk cut wc grep; do
   if ! command -v "$command_name" >/dev/null 2>&1; then
     fail "Required Linux build tool is unavailable: $command_name."
   fi
@@ -136,10 +287,36 @@ if [[ ! -x "$flutter_bin/flutter" ]]; then
 fi
 
 export PATH="$flutter_bin:$PATH"
-flutter_version_info="$(flutter --version --machine 2>/dev/null)" || fail 'Pinned Flutter SDK could not start.'
-if ! printf '%s\n' "$flutter_version_info" | grep -Eq '"flutterVersion"[[:space:]]*:[[:space:]]*"3\.44\.4"'; then
-  fail 'Extracted Flutter SDK version did not match the pinned release.'
+probe_output="$(mktemp "$temp_dir/flutter-version-probe.XXXXXXXXXX")" || fail 'Unable to create a private Flutter startup diagnostic file.'
+chmod 600 -- "$probe_output" || fail 'Unable to restrict Flutter startup diagnostic file permissions.'
+
+probe_statuses=()
+set +e
+flutter --version --machine 2>&1 | {
+  head -c "$FLUTTER_PROBE_CAPTURE_MAX_BYTES" > "$probe_output"
+  head_capture_status=$?
+  cat >/dev/null
+  drain_capture_status=$?
+  if (( head_capture_status != 0 || drain_capture_status != 0 )); then
+    exit 1
+  fi
+}
+probe_statuses=("${PIPESTATUS[@]}")
+set -e
+
+probe_exit_status="${probe_statuses[0]:-1}"
+probe_capture_status="${probe_statuses[1]:-1}"
+if [[ "$probe_capture_status" -ne 0 ]]; then
+  fail 'Unable to capture bounded Flutter startup diagnostics.'
 fi
+if [[ "$probe_exit_status" -ne 0 ]]; then
+  report_flutter_probe_failure "$probe_exit_status" 'Flutter CLI startup failed'
+fi
+
+if ! grep -Eq '"flutterVersion"[[:space:]]*:[[:space:]]*"3\.44\.4"' "$probe_output"; then
+  report_flutter_probe_failure 0 'Flutter version metadata did not match the pinned release'
+fi
+printf 'Verified Flutter %s CLI startup.\n' "$FLUTTER_VERSION"
 
 printf 'Running flutter pub get --enforce-lockfile.\n'
 flutter pub get --enforce-lockfile
