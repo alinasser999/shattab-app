@@ -382,12 +382,17 @@ class ApiSecretFileTests(unittest.TestCase):
 
     def test_unlink_failure_reports_possible_temp_file_and_redacts_error(self) -> None:
         unlink_error = "secret-value-must-not-appear-in-unlink-error"
+        original_unlink = os.unlink
         with mock.patch(
             "create_api_secret.os.unlink",
             side_effect=PermissionError(unlink_error),
         ) as mocked_unlink:
-            with self.assertRaises(SecretProvisionError) as raised:
-                self._create()
+            supported_dir_fd = set(os.supports_dir_fd)
+            supported_dir_fd.discard(original_unlink)
+            supported_dir_fd.add(mocked_unlink)
+            with mock.patch.object(os, "supports_dir_fd", supported_dir_fd):
+                with self.assertRaises(SecretProvisionError) as raised:
+                    self._create()
 
         message = str(raised.exception)
         self.assertIn("temporary file may remain", message)

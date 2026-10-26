@@ -406,7 +406,7 @@ def _bootstrap_postgres_password() -> None:
     try:
         stage_fd, secrets_fd, stage_stat = _pin_stage_and_secrets(create_secrets=True)
         _require_absent_at(secrets_fd, POSTGRES_SECRET_NAME)
-        password = secrets.token_hex(32).encode("ascii") + b"\n"
+        password = secrets.token_hex(32).encode("ascii")
         _create_secret_at(
             secrets_fd,
             POSTGRES_SECRET_NAME,
