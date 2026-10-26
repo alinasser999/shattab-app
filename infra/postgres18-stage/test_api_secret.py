@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import shutil
 import stat
 import subprocess
 import sys
@@ -45,32 +46,47 @@ class ApiSecretFileTests(unittest.TestCase):
         # container's accessible /run/secrets directory, not through the
         # protected host directory. Emulate that mounted view in this temp path.
         os.chmod(target.parent, 0o755)
-        module_dir = str(STAGE)
-        program = (
-            "import sys; "
-            f"sys.path.insert(0, {module_dir!r}); "
-            "from pathlib import Path; "
-            "from create_api_secret import verify_secret_for_current_process; "
-            "verify_secret_for_current_process(Path(sys.argv[1])); "
-            "print('PASS')"
-        )
+        # The GitHub workspace may not be traversable by TEST_UID. Copy only
+        # the non-secret verifier source into an isolated temporary directory
+        # that the child can read; never chmod the workspace or add it to the
+        # child's import path. TemporaryDirectory removes the copy even when
+        # setup or the subprocess fails.
+        with tempfile.TemporaryDirectory(
+            prefix="shattab-secret-child-", dir=target.parent
+        ) as child_import_directory:
+            child_directory = Path(child_import_directory)
+            module_path = child_directory / "create_api_secret.py"
+            shutil.copyfile(STAGE / "create_api_secret.py", module_path)
+            os.chmod(module_path, 0o444)
+            os.chmod(child_directory, 0o755)
 
-        def drop_privileges() -> None:
-            os.setgroups([TEST_GID])
-            os.setgid(TEST_GID)
-            os.setegid(TEST_EGID)
-            os.setuid(TEST_UID)
+            program = (
+                "import sys; "
+                "sys.dont_write_bytecode = True; "
+                "sys.path.insert(0, sys.argv[2]); "
+                "from pathlib import Path; "
+                "from create_api_secret import verify_secret_for_current_process; "
+                "verify_secret_for_current_process(Path(sys.argv[1])); "
+                "print('PASS')"
+            )
 
-        return subprocess.run(
-            [sys.executable, "-c", program, str(target)],
-            stdin=subprocess.DEVNULL,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-            check=False,
-            timeout=10,
-            preexec_fn=drop_privileges,
-        )
+            def drop_privileges() -> None:
+                os.setgroups([TEST_GID])
+                os.setgid(TEST_GID)
+                os.setegid(TEST_EGID)
+                os.setuid(TEST_UID)
+
+            return subprocess.run(
+                [sys.executable, "-c", program, str(target), str(child_directory)],
+                cwd=child_directory,
+                stdin=subprocess.DEVNULL,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                check=False,
+                timeout=10,
+                preexec_fn=drop_privileges,
+            )
 
     def _create(self) -> None:
         create_secret_file(
@@ -93,6 +109,22 @@ class ApiSecretFileTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(result.stdout.strip(), "PASS")
         self.assertNotIn(FIXTURE_PASSWORD.decode("ascii"), result.stdout + result.stderr)
+
+    def test_child_import_directory_is_removed_when_subprocess_fails(self) -> None:
+        self._create()
+        failures: tuple[BaseException, ...] = (
+            OSError("mocked child launch failure"),
+            subprocess.TimeoutExpired("python", 10),
+        )
+        for failure in failures:
+            with self.subTest(failure=type(failure).__name__):
+                with mock.patch.object(subprocess, "run", side_effect=failure) as mocked_run:
+                    with self.assertRaises(type(failure)):
+                        self._run_as_node(self.target)
+
+                child_directory = Path(mocked_run.call_args.kwargs["cwd"])
+                self.assertFalse(child_directory.exists())
+                self.assertNotIn(FIXTURE_PASSWORD.decode("ascii"), repr(mocked_run.call_args))
 
     def test_unsafe_modes_fail_the_exact_0440_predicate(self) -> None:
         for mode in (0o400, 0o444, 0o460, 0o640, 0o660):
