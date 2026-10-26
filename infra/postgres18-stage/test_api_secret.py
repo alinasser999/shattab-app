@@ -396,7 +396,7 @@ class ApiSecretFileTests(unittest.TestCase):
 
         message = str(raised.exception)
         self.assertIn("temporary file may remain", message)
-        self.assertIn("inspect both paths manually", message)
+        self.assertIn("inspect both names manually", message)
         self.assertNotIn(unlink_error, message)
         self.assertNotIn(FIXTURE_PASSWORD.decode("ascii"), message)
         self.assertEqual(mocked_unlink.call_count, 2)
