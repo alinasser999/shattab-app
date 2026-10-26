@@ -191,6 +191,10 @@ class ApiStageContractTests(unittest.TestCase):
         self.assertIn("NOT x.is_grantable", sql)
         self.assertIn("x.privilege_type = 'USAGE'", sql)
         self.assertIn("x.privilege_type = 'TEMPORARY'", sql)
+        self.assertRegex(
+            sql,
+            r"acldefault\(\s*\(CASE WHEN c\.relkind = 'S' THEN 's' ELSE 'r' END\)::\"char\",\s*c\.relowner\s*\)",
+        )
 
     def test_role_creation_is_guarded_and_does_not_embed_a_password(self) -> None:
         sql = ROLE_SQL.read_text(encoding="utf-8")
@@ -227,6 +231,10 @@ class ApiStageContractTests(unittest.TestCase):
             self.assertIn(expected, sql)
         self.assertIn(r"\password prompt", sql)
         self.assertNotRegex(sql, r"(?i)\bPASSWORD\s+['\"]")
+        self.assertRegex(
+            sql,
+            r"acldefault\(\s*\(CASE WHEN c\.relkind = 'S' THEN 's' ELSE 'r' END\)::\"char\",\s*c\.relowner\s*\)",
+        )
 
     def test_documented_secret_flow_is_hidden_absent_only_and_non_destructive(self) -> None:
         readme = STAGE_README.read_text(encoding="utf-8")

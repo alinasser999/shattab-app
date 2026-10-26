@@ -63,7 +63,10 @@ WITH non_system_objects AS (
     CROSS JOIN LATERAL aclexplode(
       COALESCE(
         c.relacl,
-        acldefault(CASE WHEN c.relkind = 'S' THEN 'S' ELSE 'r' END, c.relowner)
+        acldefault(
+          (CASE WHEN c.relkind = 'S' THEN 's' ELSE 'r' END)::"char",
+          c.relowner
+        )
       )
     ) AS x
     WHERE x.grantee = 0
