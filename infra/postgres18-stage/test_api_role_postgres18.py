@@ -5,10 +5,12 @@ and the ``api-stage-contracts`` job. It never trusts an environment-selected
 container ID: it creates a uniquely named PostgreSQL container from the exact
 digest below, on Docker's ``none`` network, with no published ports or host bind
 mounts. Runtime identity, image digest, and isolation are checked before
-``docker start``; health is checked before any ``docker exec`` or mutating SQL.
-If create times out, recovery inspects only the generated name and never claims
-absence from a bounded retry. If start times out, recovery inspects and removes
-only the previously validated full container ID.
+``docker start``. After health passes, a read-only query as the container's
+``postgres`` superuser verifies the running PGDATA and server version before the
+target is marked ready for fixture SQL. No mutating SQL runs until these checks
+pass. If create times out, recovery inspects only the generated name and never
+claims absence from a bounded retry. If start times out, recovery inspects and
+removes only the previously validated full container ID.
 """
 
 from __future__ import annotations
@@ -32,6 +34,12 @@ ROLE_SQL = STAGE / "create_api_role.sql"
 EXPECTED_IMAGE_DIGEST = "sha256:bbf83594798e144bff365a9c191c5d779f181fb3135902064ab8ff11918020fc"
 EXPECTED_IMAGE_REF = f"postgres:18.6-bookworm@{EXPECTED_IMAGE_DIGEST}"
 EXPECTED_POSTGRES_VERSION = "18.6"
+EXPECTED_DATA_DIRECTORY = "/var/lib/postgresql/18/docker"
+EXPECTED_RUNTIME_IDENTITY = f"postgres|postgres|{EXPECTED_DATA_DIRECTORY}|180006"
+RUNTIME_IDENTITY_QUERY = (
+    "SELECT current_user, current_database(), current_setting('data_directory'), "
+    "current_setting('server_version_num');"
+)
 EXPECTED_JOB = "api-stage-contracts"
 EXPECTED_WORKFLOW = "CI"
 EXPECTED_WORKFLOW_FILE = ".github/workflows/ci.yml"
@@ -278,6 +286,35 @@ class DisposablePostgres:
                 raise HarnessError("the test-owned PostgreSQL container did not become healthy in time")
             self.sleeper(1)
 
+    def _verify_runtime_data_directory(self) -> None:
+        """Read PGDATA as the container superuser after health, before fixture SQL."""
+        assert self.container_id is not None
+        result = self._docker(
+            [
+                "exec",
+                self.container_id,
+                "psql",
+                "-X",
+                "-A",
+                "-t",
+                "-F",
+                "|",
+                "-v",
+                "ON_ERROR_STOP=1",
+                "-U",
+                "postgres",
+                "-d",
+                "postgres",
+                "-c",
+                RUNTIME_IDENTITY_QUERY,
+            ],
+            timeout=30,
+        )
+        if result.returncode != 0 or result.stdout.strip() != EXPECTED_RUNTIME_IDENTITY:
+            raise HarnessError(
+                "the running PostgreSQL data directory or version does not match the disposable target"
+            )
+
     def start(self) -> "DisposablePostgres":
         # Context is checked before any Docker command; the container ID cannot
         # come from an environment variable or be reused from a local stage.
@@ -360,8 +397,11 @@ class DisposablePostgres:
 
         try:
             self._wait_until_healthy()
+            self._verify_runtime_data_directory()
         except HarnessError:
-            self._raise_after_cleanup("the test-owned PostgreSQL container failed identity or health checks")
+            self._raise_after_cleanup(
+                "the test-owned PostgreSQL container failed identity, health, or runtime PGDATA checks"
+            )
         self.validated = True
         return self
 
@@ -552,6 +592,7 @@ class FakeDockerRunner:
         port_bindings: object = None,
         network_ports: object | None = None,
         mounts: list[dict[str, object]] | None = None,
+        runtime_identity_output: str = EXPECTED_RUNTIME_IDENTITY + "\n",
     ) -> None:
         self.version_output = version_output
         self.image_ref = image_ref
@@ -574,6 +615,7 @@ class FakeDockerRunner:
         self.port_bindings = port_bindings
         self.network_ports = network_ports
         self.mounts = mounts
+        self.runtime_identity_output = runtime_identity_output
         self.commands: list[list[str]] = []
         self.generated_name: str | None = None
         self.harness_token: str | None = None
@@ -690,7 +732,7 @@ class FakeDockerRunner:
             self.recovery_container_present = False
             return subprocess.CompletedProcess(command, 0, target, "")
         if arguments[:1] == ["exec"]:
-            return subprocess.CompletedProcess(command, 0, "", "")
+            return subprocess.CompletedProcess(command, 0, self.runtime_identity_output, "")
         raise AssertionError(f"unexpected mocked Docker command: {command!r}")
 
 
@@ -915,7 +957,31 @@ class DockerTargetSafetyTests(unittest.TestCase):
         self.assertEqual(fake.remove_targets, [])
         self._assert_no_exec(self, fake)
 
-    def test_pinned_private_target_is_ready_before_any_exec_and_owns_cleanup(self) -> None:
+    def test_wrong_runtime_data_directory_blocks_fixture_sql_and_removes_only_owned_target(self) -> None:
+        fake = FakeDockerRunner(
+            runtime_identity_output="postgres|postgres|/var/lib/postgresql/data|180006\n"
+        )
+        target = self._target(fake)
+        with self.assertRaisesRegex(HarnessError, "runtime PGDATA checks"):
+            target.start()
+
+        exec_commands = [command for command in fake.commands if command[1:2] == ["exec"]]
+        self.assertEqual(len(exec_commands), 1)
+        command = exec_commands[0]
+        self.assertEqual(command[2], fake.container_id)
+        self.assertEqual(command[command.index("-U") + 1], "postgres")
+        self.assertEqual(command[command.index("-d") + 1], "postgres")
+        self.assertEqual(command[command.index("-c") + 1], RUNTIME_IDENTITY_QUERY)
+        self.assertEqual(fake.remove_targets, [fake.container_id])
+        self.assertFalse(target.validated)
+        with self.assertRaisesRegex(HarnessError, "blocked until the disposable target passes preflight"):
+            target.psql("postgres", user="postgres", sql="SELECT 1")
+        self.assertEqual(
+            [command for command in fake.commands if command[1:2] == ["exec"]],
+            exec_commands,
+        )
+
+    def test_pinned_private_target_checks_runtime_pgdata_before_ready_and_owns_cleanup(self) -> None:
         fake = FakeDockerRunner()
         target = self._target(fake).start()
         self.assertTrue(target.validated)
@@ -947,7 +1013,14 @@ class DockerTargetSafetyTests(unittest.TestCase):
             ),
             fake.commands,
         )
-        self._assert_no_exec(self, fake)
+        exec_commands = [command for command in fake.commands if command[1:2] == ["exec"]]
+        self.assertEqual(len(exec_commands), 1)
+        runtime_check = exec_commands[0]
+        self.assertEqual(runtime_check[2], fake.container_id)
+        self.assertEqual(runtime_check[runtime_check.index("-U") + 1], "postgres")
+        self.assertEqual(runtime_check[runtime_check.index("-d") + 1], "postgres")
+        self.assertEqual(runtime_check[runtime_check.index("-c") + 1], RUNTIME_IDENTITY_QUERY)
+        self.assertEqual(fake.commands.index(runtime_check), len(fake.commands) - 1)
         target.cleanup()
         cleanup = fake.commands[-1]
         self.assertEqual(cleanup[1:3], ["rm", "--force"])

@@ -1,5 +1,5 @@
 -- Guarded role creation only; password must be set later with psql's hidden \\password prompt.
--- This repeats the PG18 stock-default, catalog, target identity, and ACL checks
+-- This repeats the PG18 stock-default, catalog, database identity/version, and ACL checks
 -- in the same transaction as CREATE ROLE. It never revokes or broadens grants.
 -- Large-object checks inspect metadata and ACLs only, never object contents.
 \set ON_ERROR_STOP on
@@ -138,7 +138,6 @@ SELECT
   current_database() = 'shattab_stage'
   AND current_user = 'shattab_stage_admin'
   AND current_setting('server_version_num') = '180006'
-  AND current_setting('data_directory') = '/var/lib/postgresql/18/docker'
   AND objects.schema_count = 1
   AND objects.relation_count = 0
   AND objects.routine_count = 0

@@ -145,7 +145,6 @@ SELECT
   current_database() AS database_name,
   current_user AS login_name,
   current_setting('server_version_num') AS server_version_num,
-  current_setting('data_directory') AS data_directory,
   objects.schema_count::text AS schema_count,
   objects.relation_count::text AS relation_count,
   objects.routine_count::text AS routine_count,
@@ -166,7 +165,6 @@ SELECT
     current_database() = 'shattab_stage'
     AND current_user = 'shattab_stage_admin'
     AND current_setting('server_version_num') = '180006'
-    AND current_setting('data_directory') = '/var/lib/postgresql/18/docker'
     AND objects.schema_count = 1
     AND objects.relation_count = 0
     AND objects.routine_count = 0
@@ -193,7 +191,7 @@ CROSS JOIN explicit_default_acls defaults
 CROSS JOIN stock_future_function_defaults future_defaults
 \gset
 
-\echo Stage preflight: database= :database_name , login= :login_name , PostgreSQL= :server_version_num , data_directory= :data_directory
+\echo Stage preflight: database= :database_name , login= :login_name , PostgreSQL= :server_version_num
 \echo Catalog counts: schemas= :schema_count , relations= :relation_count , routines= :routine_count , types= :type_count , extensions= :extension_count , API role matches= :api_role_count
 \echo Allowed stock PUBLIC defaults: schema USAGE= :public_schema_usage_count , database CONNECT= :public_connect_count , database TEMPORARY= :public_temporary_count
 \echo Rejected PUBLIC grants: extra schema= :extra_public_schema_privilege_count , application objects= :public_object_privilege_count , extra database= :extra_public_db_privilege_count

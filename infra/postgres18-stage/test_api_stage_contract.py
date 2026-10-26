@@ -26,6 +26,7 @@ PACKAGE = API / "package.json"
 LOCKFILE = API / "package-lock.json"
 PREFLIGHT = STAGE / "preflight_api_role.sql"
 ROLE_SQL = STAGE / "create_api_role.sql"
+VERIFY = STAGE / "verify.py"
 STAGE_README = STAGE / "README.md"
 SECRET_HELPER = STAGE / "create_api_secret.py"
 API_README = API / "README.md"
@@ -169,7 +170,6 @@ class ApiStageContractTests(unittest.TestCase):
             "shattab_stage",
             "shattab_stage_admin",
             "180006",
-            "/var/lib/postgresql/18/docker",
             "aclexplode",
             "x.grantee = 0",
             "shattab_api",
@@ -191,6 +191,8 @@ class ApiStageContractTests(unittest.TestCase):
         self.assertIn("NOT x.is_grantable", sql)
         self.assertIn("x.privilege_type = 'USAGE'", sql)
         self.assertIn("x.privilege_type = 'TEMPORARY'", sql)
+        self.assertNotIn("current_setting('data_directory')", sql)
+        self.assertNotIn("data_directory", sql)
         self.assertRegex(
             sql,
             r"acldefault\(\s*\(CASE WHEN c\.relkind = 'S' THEN 's' ELSE 'r' END\)::\"char\",\s*c\.relowner\s*\)",
@@ -203,7 +205,6 @@ class ApiStageContractTests(unittest.TestCase):
             "current_database() = 'shattab_stage'",
             "current_user = 'shattab_stage_admin'",
             "current_setting('server_version_num') = '180006'",
-            "current_setting('data_directory') = '/var/lib/postgresql/18/docker'",
             "aclexplode",
             "x.grantee = 0",
             "public_schema_usage_count = 1",
@@ -231,10 +232,27 @@ class ApiStageContractTests(unittest.TestCase):
             self.assertIn(expected, sql)
         self.assertIn(r"\password prompt", sql)
         self.assertNotRegex(sql, r"(?i)\bPASSWORD\s+['\"]")
+        self.assertNotIn("current_setting('data_directory')", sql)
+        self.assertNotIn("data_directory", sql)
         self.assertRegex(
             sql,
             r"acldefault\(\s*\(CASE WHEN c\.relkind = 'S' THEN 's' ELSE 'r' END\)::\"char\",\s*c\.relowner\s*\)",
         )
+
+    def test_runtime_pgdata_checks_are_separate_from_admin_acl_sql(self) -> None:
+        harness = ROLE_TEST.read_text(encoding="utf-8")
+        verifier = VERIFY.read_text(encoding="utf-8")
+        readme = STAGE_README.read_text(encoding="utf-8")
+
+        self.assertIn("current_setting('data_directory')", harness)
+        self.assertIn("EXPECTED_RUNTIME_IDENTITY", harness)
+        self.assertIn('"postgres"', harness)
+        self.assertIn("current_setting('data_directory')", verifier)
+        self.assertIn("ADMIN_ROLE", verifier)
+        self.assertIn("verify.py", readme)
+        self.assertIn("`PGDATA`", readme)
+        self.assertIn("superuser", readme)
+        self.assertIn("قاعدة البيانات", readme)
 
     def test_documented_secret_flow_is_hidden_absent_only_and_non_destructive(self) -> None:
         readme = STAGE_README.read_text(encoding="utf-8")
