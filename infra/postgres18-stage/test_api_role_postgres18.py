@@ -1054,7 +1054,12 @@ class Postgres18StageRoleTests(unittest.TestCase):
             target.cleanup()
 
     def control(self, sql: str) -> subprocess.CompletedProcess[str]:
+        """Run cluster-wide setup or role-catalog queries on the maintenance DB."""
         return self.target.psql("postgres", user="postgres", sql=sql)
+
+    def stage_control(self, sql: str) -> subprocess.CompletedProcess[str]:
+        """Run database-local fixture SQL as the stage database owner."""
+        return self.target.psql("shattab_stage", user="shattab_stage_admin", sql=sql)
 
     def setUp(self) -> None:
         assert_ok(self, self.control("DROP DATABASE IF EXISTS shattab_stage WITH (FORCE);"))
@@ -1093,25 +1098,24 @@ class Postgres18StageRoleTests(unittest.TestCase):
         self.assertEqual(assert_ok(self, result).strip(), "f")
 
     def test_nonempty_application_object_fails_both_guards(self) -> None:
-        assert_ok(self, self.control("CREATE TABLE public.contract_probe (id integer);"))
+        assert_ok(self, self.stage_control("CREATE TABLE public.contract_probe (id integer);"))
         assert_guard_failure(self, self.run_preflight())
         assert_guard_failure(self, self.run_role_creation())
         self.assert_api_role_absent()
 
     def test_unexpected_public_and_default_acl_fail_both_guards(self) -> None:
-        assert_ok(self, self.control("GRANT CREATE ON SCHEMA public TO PUBLIC;"))
+        assert_ok(self, self.stage_control("GRANT CREATE ON SCHEMA public TO PUBLIC;"))
         assert_guard_failure(self, self.run_preflight())
         assert_guard_failure(self, self.run_role_creation())
-        assert_api_role_absent()
+        self.assert_api_role_absent()
+
+        assert_ok(self, self.stage_control("REVOKE CREATE ON SCHEMA public FROM PUBLIC;"))
+        assert_ok(self, self.run_preflight())
 
         # A schema-specific default ACL would silently apply to future tables.
         assert_ok(
             self,
-            self.target.psql(
-                "shattab_stage",
-                user="shattab_stage_admin",
-                sql="ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO PUBLIC;",
-            ),
+            self.stage_control("ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO PUBLIC;"),
         )
         assert_guard_failure(self, self.run_preflight())
         assert_guard_failure(self, self.run_role_creation())
@@ -1120,7 +1124,7 @@ class Postgres18StageRoleTests(unittest.TestCase):
     def test_unexpected_public_database_privilege_fails_both_guards(self) -> None:
         # CREATE is not part of the stock PostgreSQL 18 database PUBLIC baseline.
         # The grant exists only in this test-owned disposable database/container.
-        assert_ok(self, self.control("GRANT CREATE ON DATABASE shattab_stage TO PUBLIC;"))
+        assert_ok(self, self.stage_control("GRANT CREATE ON DATABASE shattab_stage TO PUBLIC;"))
         assert_guard_failure(self, self.run_preflight())
         assert_guard_failure(self, self.run_role_creation())
         self.assert_api_role_absent()
@@ -1173,7 +1177,7 @@ class Postgres18StageRoleTests(unittest.TestCase):
         )
         self.assertEqual(assert_ok(self, search_path).strip(), "search_path=pg_catalog")
 
-        effective_defaults = self.control(
+        effective_defaults = self.stage_control(
             "SELECT has_schema_privilege('shattab_api', 'public', 'USAGE'), "
             "has_schema_privilege('shattab_api', 'public', 'CREATE'), "
             "has_database_privilege('shattab_api', 'shattab_stage', 'CONNECT'), "
@@ -1186,6 +1190,34 @@ class Postgres18StageRoleTests(unittest.TestCase):
             "SELECT count(*) FROM pg_auth_members WHERE member = 'shattab_api'::regrole;"
         )
         self.assertEqual(assert_ok(self, memberships).strip(), "0")
+
+
+class StageControlHelperTests(unittest.TestCase):
+    def test_stage_control_uses_stage_database_and_admin_identity(self) -> None:
+        class RecordingTarget:
+            call: tuple[tuple[object, ...], dict[str, object]] | None = None
+
+            def psql(self, *args: object, **kwargs: object) -> subprocess.CompletedProcess[str]:
+                self.call = (args, kwargs)
+                return subprocess.CompletedProcess(args, 0, "", "")
+
+        target = RecordingTarget()
+        fixture = object.__new__(Postgres18StageRoleTests)
+        fixture.target = target  # type: ignore[assignment]
+
+        result = fixture.stage_control("CREATE TABLE public.contract_probe (id integer);")
+
+        self.assertEqual(result.returncode, 0)
+        self.assertEqual(
+            target.call,
+            (
+                ("shattab_stage",),
+                {
+                    "user": "shattab_stage_admin",
+                    "sql": "CREATE TABLE public.contract_probe (id integer);",
+                },
+            ),
+        )
 
 
 if __name__ == "__main__":
