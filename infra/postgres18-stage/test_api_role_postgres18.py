@@ -561,9 +561,9 @@ class DisposablePostgres:
         env = dict(os.environ)
         env["LC_ALL"] = "C"
 
-        def read_until(needle: bytes, timeout: float = 20.0) -> None:
+        def read_until(needle: bytes, timeout: float = 20.0, start_offset: int = 0) -> None:
             deadline = time.monotonic() + timeout
-            while needle not in output:
+            while needle not in output[start_offset:]:
                 remaining = deadline - time.monotonic()
                 if remaining <= 0:
                     raise HarnessError("psql password prompt did not reach the expected TTY state")
@@ -608,9 +608,16 @@ class DisposablePostgres:
             read_until(b"Enter new password")
             os.write(master_fd, sentinel + b"\n")
             read_until(b"Enter it again")
+            prompt_offset = len(output)
             os.write(master_fd, sentinel + b"\n")
-            os.write(master_fd, b"SELECT 'TTY_PASSWORD_CHANGED';\n\\q\n")
-            read_until(b"TTY_PASSWORD_CHANGED")
+            read_until(b"postgres=# ", start_offset=prompt_offset)
+            marker_output_offset = len(output)
+            os.write(master_fd, b"SELECT 'TTY_PASSWORD_CHANGED';\n")
+            read_until(b"postgres=# ", start_offset=marker_output_offset)
+            marker_output = bytes(output[marker_output_offset:])
+            if not any(line.strip() == b"TTY_PASSWORD_CHANGED" for line in marker_output.splitlines()):
+                raise HarnessError("psql TTY query result did not contain the expected marker row")
+            os.write(master_fd, b"\\q\n")
             try:
                 return_code = process.wait(timeout=20)
             except subprocess.TimeoutExpired:

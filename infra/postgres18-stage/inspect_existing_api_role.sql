@@ -182,7 +182,7 @@ WITH target_role AS (
     COALESCE(d.datacl, acldefault('d', d.datdba))
   ) AS x
   LEFT JOIN target_role r ON true
-  GROUP BY d.oid, d.datname
+  GROUP BY d.oid, d.datname, d.datistemplate
 ), public_database_acls AS (
   SELECT
     COALESCE(sum(public_connect_count), 0) AS public_connect_count,

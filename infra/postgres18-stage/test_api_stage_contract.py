@@ -339,6 +339,17 @@ class ApiStageContractTests(unittest.TestCase):
         assert cluster_state is not None
         self.assertIn("FROM pg_database d", cluster_state.group(1))
         self.assertNotRegex(cluster_state.group(1), r"\bWHERE\b")
+        database_acl_cte = re.search(
+            r"database_acl_by_database AS \((.*?)\), public_database_acls AS",
+            sql,
+            flags=re.DOTALL,
+        )
+        self.assertIsNotNone(database_acl_cte)
+        assert database_acl_cte is not None
+        self.assertRegex(
+            database_acl_cte.group(1),
+            r"(?m)^\s*GROUP BY d\.oid, d\.datname, d\.datistemplate\s*$",
+        )
         for expected in (
             "BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY",
             "FROM pg_database d",
@@ -678,6 +689,31 @@ class ApiStageContractTests(unittest.TestCase):
         self.assertNotIn("POSTGRES_CONTAINER_ID", role_test)
         self.assertNotIn("POSTGRES_CONTAINER_ID", workflow)
         self.assertNotIn("job.services.postgres.id", workflow)
+
+    def test_password_tty_harness_waits_for_a_fresh_psql_prompt(self) -> None:
+        role_test = ROLE_TEST.read_text(encoding="utf-8")
+        start = role_test.index("def psql_password_prompt_with_tty(")
+        end = role_test.index("\n\ndef assert_ok(", start)
+        harness = role_test[start:end]
+        second_prompt = harness.index('read_until(b"Enter it again")')
+        offset = harness.index("prompt_offset = len(output)", second_prompt)
+        second_secret = harness.index('os.write(master_fd, sentinel + b"\\n")', offset)
+        fresh_prompt = harness.index('read_until(b"postgres=# ", start_offset=prompt_offset)', second_secret)
+        marker_offset = harness.index("marker_output_offset = len(output)", fresh_prompt)
+        marker = harness.index('os.write(master_fd, b"SELECT \'TTY_PASSWORD_CHANGED\';', marker_offset)
+        query_prompt = harness.index('read_until(b"postgres=# ", start_offset=marker_output_offset)', marker)
+        marker_result_check = harness.index('line.strip() == b"TTY_PASSWORD_CHANGED"', query_prompt)
+        quit_command = harness.index('os.write(master_fd, b"\\\\q\\n")', marker_result_check)
+        self.assertLess(second_prompt, offset)
+        self.assertLess(offset, second_secret)
+        self.assertLess(second_secret, fresh_prompt)
+        self.assertLess(fresh_prompt, marker_offset)
+        self.assertLess(marker_offset, marker)
+        self.assertLess(marker, query_prompt)
+        self.assertLess(query_prompt, marker_result_check)
+        self.assertLess(marker_result_check, quit_command)
+        self.assertIn("needle not in output[start_offset:]", harness)
+        self.assertIn("captured bytes are withheld", role_test)
 
     def test_api_readme_labels_smoke_compose_stale_and_stage_local_only(self) -> None:
         readme = API_README.read_text(encoding="utf-8")
