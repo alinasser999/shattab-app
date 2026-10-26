@@ -611,12 +611,6 @@ class DisposablePostgres:
             prompt_offset = len(output)
             os.write(master_fd, sentinel + b"\n")
             read_until(b"postgres=# ", start_offset=prompt_offset)
-            marker_output_offset = len(output)
-            os.write(master_fd, b"SELECT 'TTY_PASSWORD_CHANGED';\n")
-            read_until(b"postgres=# ", start_offset=marker_output_offset)
-            marker_output = bytes(output[marker_output_offset:])
-            if not any(line.strip() == b"TTY_PASSWORD_CHANGED" for line in marker_output.splitlines()):
-                raise HarnessError("psql TTY query result did not contain the expected marker row")
             os.write(master_fd, b"\\q\n")
             try:
                 return_code = process.wait(timeout=20)
@@ -1420,8 +1414,10 @@ class Postgres18StageRoleTests(unittest.TestCase):
                 self.fail("synthetic password sentinel appeared in TTY output; captured bytes are withheld")
             if return_code != 0:
                 self.fail("psql TTY password prompt exited unsuccessfully; captured bytes are withheld")
-            if b"TTY_PASSWORD_CHANGED" not in captured:
-                self.fail("psql TTY password prompt did not complete; captured bytes are withheld")
+            password_state = self.control(
+                f"SELECT rolpassword IS NOT NULL FROM pg_authid WHERE rolname = '{role}';"
+            )
+            self.assertEqual(assert_ok(self, password_state).strip(), "t")
         finally:
             assert_ok(self, self.control(f"DROP ROLE IF EXISTS {role};"))
 

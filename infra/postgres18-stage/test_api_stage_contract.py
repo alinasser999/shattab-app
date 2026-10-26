@@ -378,9 +378,15 @@ class ApiStageContractTests(unittest.TestCase):
             "nonbaseline_public_connect_database_count = 0",
             "nonbaseline_public_temporary_database_count = 0",
             "pg_default_acl",
-            r"\quit 1",
         ):
             self.assertIn(expected, sql)
+        failure_branch = re.search(r"(?ms)^\\else(.*?)^\\endif\s*$", sql)
+        self.assertIsNotNone(failure_branch)
+        assert failure_branch is not None
+        self.assertIn("ROLLBACK;", failure_branch.group(1))
+        self.assertIn(r"\echo FAIL:", failure_branch.group(1))
+        self.assertIn("SELECT 1 / 0;", failure_branch.group(1))
+        self.assertNotIn(r"\quit 1", sql)
         readme = STAGE_README.read_text(encoding="utf-8")
         self.assertIn("لكل صف في `pg_database`", readme)
         self.assertIn("`CONNECT`", readme)
@@ -395,6 +401,8 @@ class ApiStageContractTests(unittest.TestCase):
         self.assertIn("DB_SNAPSHOT_INITIAL", readme)
         self.assertIn("DB_SNAPSHOT_AFTER", readme)
         self.assertIn("DB_SNAPSHOT_BEFORE_PASSWORD", readme)
+        self.assertIn("-v ON_ERROR_STOP=1", readme)
+        self.assertIn("-f -", readme)
         self.assertIn(
             "SELECT datname || '|' || datallowconn::text || '|' || datistemplate::text FROM pg_database ORDER BY datname;",
             readme,
@@ -699,21 +707,26 @@ class ApiStageContractTests(unittest.TestCase):
         offset = harness.index("prompt_offset = len(output)", second_prompt)
         second_secret = harness.index('os.write(master_fd, sentinel + b"\\n")', offset)
         fresh_prompt = harness.index('read_until(b"postgres=# ", start_offset=prompt_offset)', second_secret)
-        marker_offset = harness.index("marker_output_offset = len(output)", fresh_prompt)
-        marker = harness.index('os.write(master_fd, b"SELECT \'TTY_PASSWORD_CHANGED\';', marker_offset)
-        query_prompt = harness.index('read_until(b"postgres=# ", start_offset=marker_output_offset)', marker)
-        marker_result_check = harness.index('line.strip() == b"TTY_PASSWORD_CHANGED"', query_prompt)
-        quit_command = harness.index('os.write(master_fd, b"\\\\q\\n")', marker_result_check)
+        quit_command = harness.index('os.write(master_fd, b"\\\\q\\n")', fresh_prompt)
+        wait_exit = harness.index("return_code = process.wait(timeout=20)", quit_command)
         self.assertLess(second_prompt, offset)
         self.assertLess(offset, second_secret)
         self.assertLess(second_secret, fresh_prompt)
-        self.assertLess(fresh_prompt, marker_offset)
-        self.assertLess(marker_offset, marker)
-        self.assertLess(marker, query_prompt)
-        self.assertLess(query_prompt, marker_result_check)
-        self.assertLess(marker_result_check, quit_command)
+        self.assertLess(fresh_prompt, quit_command)
+        self.assertLess(quit_command, wait_exit)
+        self.assertNotIn("SELECT", harness)
+        self.assertNotIn("TTY_PASSWORD_CHANGED", harness)
         self.assertIn("needle not in output[start_offset:]", harness)
         self.assertIn("captured bytes are withheld", role_test)
+        password_test_start = role_test.index("def test_password_prompt_is_tty_and_never_echoes_synthetic_sentinel(")
+        password_test_end = role_test.index("\n    def test_wrong_database_fails_both_guards(", password_test_start)
+        password_test = role_test[password_test_start:password_test_end]
+        tty_call = password_test.index("self.target.psql_password_prompt_with_tty(role, sentinel)")
+        password_query = password_test.index("SELECT rolpassword IS NOT NULL FROM pg_authid")
+        password_assertion = password_test.index('assert_ok(self, password_state).strip(), "t"', password_query)
+        self.assertLess(tty_call, password_query)
+        self.assertLess(password_query, password_assertion)
+        self.assertIn("if sentinel in captured:", password_test)
 
     def test_api_readme_labels_smoke_compose_stale_and_stage_local_only(self) -> None:
         readme = API_README.read_text(encoding="utf-8")

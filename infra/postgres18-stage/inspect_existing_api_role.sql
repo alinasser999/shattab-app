@@ -517,5 +517,5 @@ FROM target_state
 \else
   ROLLBACK;
   \echo FAIL: existing-role or cluster-wide database state differs from the reviewed baseline; stop before changing its password, creating a secret, or starting API.
-  \quit 1
+  SELECT 1 / 0;
 \endif
