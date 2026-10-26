@@ -185,9 +185,15 @@ class ApiStageContractTests(unittest.TestCase):
             "lom.lomacl",
             "explicit_default_acl_count",
             "public_function_execute_default_count",
-            r"\quit 1",
         ):
             self.assertIn(expected, sql)
+        self.assertIn(r"\set ON_ERROR_STOP on", sql)
+        rejection_branch = sql.split(r"\else", 1)[1].split(r"\endif", 1)[0]
+        self.assertIn(r"\echo FAIL:", rejection_branch)
+        self.assertRegex(
+            rejection_branch,
+            r"DO \$\$\s+BEGIN\s+RAISE EXCEPTION 'stage preflight guard rejected target';\s+END\s+\$\$;",
+        )
         self.assertIn("NOT x.is_grantable", sql)
         self.assertIn("x.privilege_type = 'USAGE'", sql)
         self.assertIn("x.privilege_type = 'TEMPORARY'", sql)
@@ -230,6 +236,15 @@ class ApiStageContractTests(unittest.TestCase):
             "ROLLBACK;",
         ):
             self.assertIn(expected, sql)
+        self.assertIn(r"\set ON_ERROR_STOP on", sql)
+        rejection_branch = sql.split(r"\else", 1)[1].split(r"\endif", 1)[0]
+        self.assertIn(r"\echo FAIL:", rejection_branch)
+        self.assertRegex(
+            rejection_branch,
+            r"DO \$\$\s+BEGIN\s+RAISE EXCEPTION 'stage role creation guard rejected target';\s+END\s+\$\$;",
+        )
+        self.assertIn("ROLLBACK;", rejection_branch)
+        self.assertLess(rejection_branch.index("ROLLBACK;"), rejection_branch.index("RAISE EXCEPTION"))
         self.assertIn(r"\password prompt", sql)
         self.assertNotRegex(sql, r"(?i)\bPASSWORD\s+['\"]")
         self.assertNotIn("current_setting('data_directory')", sql)

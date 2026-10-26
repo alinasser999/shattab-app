@@ -193,7 +193,7 @@ CROSS JOIN stock_future_function_defaults future_defaults
 
 \echo Stage preflight: database= :database_name , login= :login_name , PostgreSQL= :server_version_num
 \echo Catalog counts: schemas= :schema_count , relations= :relation_count , routines= :routine_count , types= :type_count , extensions= :extension_count , API role matches= :api_role_count
-\echo Allowed stock PUBLIC defaults: schema USAGE= :public_schema_usage_count , database CONNECT= :public_connect_count , database TEMPORARY= :public_temporary_count
+\echo Allowed stock PUBLIC defaults: public schema USAGE= :public_schema_usage_count , database CONNECT= :public_connect_count , database TEMPORARY= :public_temporary_count
 \echo Rejected PUBLIC grants: extra schema= :extra_public_schema_privilege_count , application objects= :public_object_privilege_count , extra database= :extra_public_db_privilege_count
 \echo Large objects: total= :large_object_count , PUBLIC ACL entries= :public_large_object_privilege_count
 \echo Additional guards: explicit default ACLs= :explicit_default_acl_count , stock future function EXECUTE defaults= :public_function_execute_default_count
@@ -203,5 +203,9 @@ CROSS JOIN stock_future_function_defaults future_defaults
   \echo NOTE: PostgreSQL grants EXECUTE to PUBLIC on newly created functions by default; do not add application routines or other objects without a separate ACL review and a fresh preflight.
 \else
   \echo FAIL: stage identity, empty-catalog, large-object, role-absence, or PUBLIC/default ACL checks failed; do not create the API role or secret.
-  \quit 1
+  DO $$
+  BEGIN
+    RAISE EXCEPTION 'stage preflight guard rejected target';
+  END
+  $$;
 \endif

@@ -181,5 +181,9 @@ CROSS JOIN stock_future_function_defaults future_defaults
 \else
   ROLLBACK;
   \echo FAIL: stage identity, empty-catalog, large-object, role-absence, or PUBLIC/default ACL checks failed; no role was created.
-  \quit 1
+  DO $$
+  BEGIN
+    RAISE EXCEPTION 'stage role creation guard rejected target';
+  END
+  $$;
 \endif
