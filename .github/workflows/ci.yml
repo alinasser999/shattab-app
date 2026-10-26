@@ -105,6 +105,49 @@ jobs:
             exit 1
           fi
 
+  api-stage-contracts:
+    name: PostgreSQL 18 API stage contracts (disposable)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+    # This job uses disposable Docker containers only; it never contacts Oracle.
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24.22.1
+          cache: npm
+          cache-dependency-path: api/package-lock.json
+
+      - name: Install API dependencies
+        run: npm ci
+        working-directory: api
+
+      - name: Typecheck API
+        run: npm run typecheck
+        working-directory: api
+
+      - name: Test API
+        run: npm test
+        working-directory: api
+
+      - name: Build API
+        run: npm run build
+        working-directory: api
+
+      - name: Test staged Compose topology and static contracts
+        run: python3 infra/postgres18-stage/test_api_stage_contract.py
+
+      - name: Test API secret creation and Linux permission contract in temp paths
+        run: sudo python3 infra/postgres18-stage/test_api_secret.py
+
+      - name: Test role preflight and creation behavior in a self-owned PostgreSQL 18 container
+        run: python3 infra/postgres18-stage/test_api_role_postgres18.py
+
   ios-build:
     name: iOS compile gate
     runs-on: macos-latest

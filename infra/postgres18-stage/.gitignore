@@ -1,0 +1,6 @@
+secrets/
+*.pgpass
+*.pgpass-*
+.env
+.env.*
+!.env.example
