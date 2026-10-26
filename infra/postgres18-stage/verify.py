@@ -27,7 +27,11 @@ VOLUME = "shattab-pg18-stage_pgdata"
 NETWORK = "shattab-pg18-stage_db_internal"
 DATA_TARGET = "/var/lib/postgresql"
 SECRET_TARGET = "/run/secrets/postgres_password"
-ROOT = Path(__file__).absolute().parent
+ROOT = Path("/home/ubuntu/shattab-pg18-stage")
+COMPOSE_FILE = Path(
+    "/root/shattab-pg18-stage-tools/compose."
+    "3216004984ca41882f0cc59b6e625e4f88da2f08575e484d7167a5b0c783d008.yaml"
+)
 SECRET_DIR = ROOT / "secrets"
 SECRET_FILE = SECRET_DIR / "postgres_password"
 HEX_PASSWORD = re.compile(rb"[0-9a-f]{64}\n?\Z")
@@ -36,6 +40,75 @@ CONTAINER_ID = re.compile(r"[0-9a-f]{12,64}\Z")
 
 class VerificationError(Exception):
     """A safe, non-secret diagnostic for an expected verification failure."""
+
+
+def _directory_flags() -> int:
+    required_flags = ("O_DIRECTORY", "O_NOFOLLOW", "O_CLOEXEC")
+    if os.name != "posix" or any(not hasattr(os, name) for name in required_flags):
+        raise VerificationError("Secure directory-descriptor checks are unavailable.")
+    if os.open not in getattr(os, "supports_dir_fd", set()):
+        raise VerificationError("Secure directory-descriptor checks are unavailable.")
+    return os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC
+
+
+def _close_quietly(descriptor: int | None) -> None:
+    if descriptor is None:
+        return
+    try:
+        os.close(descriptor)
+    except OSError:
+        pass
+
+
+def _open_directory_path(path: Path, *, label: str) -> int:
+    """Walk an absolute path from / while pinning every directory component."""
+    flags = _directory_flags()
+    absolute = Path(os.path.abspath(os.fspath(path)))
+    if not absolute.is_absolute():
+        raise VerificationError(f"The {label} path is not absolute.")
+
+    current_fd: int | None = None
+    try:
+        current_fd = os.open(os.sep, flags)
+        if not stat.S_ISDIR(os.fstat(current_fd).st_mode):
+            raise VerificationError(f"The {label} path is not a real directory.")
+        for component in absolute.parts[1:]:
+            child_fd: int | None = None
+            try:
+                child_fd = os.open(component, flags, dir_fd=current_fd)
+                if not stat.S_ISDIR(os.fstat(child_fd).st_mode):
+                    raise VerificationError(f"The {label} path is not a real directory.")
+            except Exception:
+                _close_quietly(child_fd)
+                raise
+            _close_quietly(current_fd)
+            current_fd = child_fd
+        result = current_fd
+        current_fd = None
+        return result
+    except VerificationError:
+        raise
+    except OSError:
+        raise VerificationError(f"The {label} path could not be safely opened.") from None
+    finally:
+        _close_quietly(current_fd)
+
+
+def _open_child_directory(parent_fd: int, name: str, *, label: str) -> int:
+    descriptor: int | None = None
+    try:
+        descriptor = os.open(name, _directory_flags(), dir_fd=parent_fd)
+        if not stat.S_ISDIR(os.fstat(descriptor).st_mode):
+            raise VerificationError(f"The {label} path is not a real directory.")
+        result = descriptor
+        descriptor = None
+        return result
+    except VerificationError:
+        raise
+    except OSError:
+        raise VerificationError(f"The {label} path could not be safely opened.") from None
+    finally:
+        _close_quietly(descriptor)
 
 
 def docker(args: list[str], *, action: str, timeout: int = 20) -> str:
@@ -86,46 +159,58 @@ def matches_target_postgres_version(server_version: str, version_num: str) -> bo
 
 
 def check_secret_file() -> bytes:
-    """Read the server-only secret with no-follow and mode/owner checks."""
+    """Read the secret through pinned staging/secrets directory descriptors."""
+    root_fd: int | None = None
+    directory_fd: int | None = None
+    descriptor: int | None = None
     try:
-        root_stat = ROOT.lstat()
-        directory_stat = SECRET_DIR.lstat()
-        if not stat.S_ISDIR(root_stat.st_mode) or stat.S_ISLNK(root_stat.st_mode):
+        if SECRET_DIR.parent != ROOT or SECRET_FILE.parent != SECRET_DIR:
+            raise VerificationError("The protected secret paths do not match the stage layout.")
+        root_fd = _open_directory_path(ROOT, label="staging directory")
+        root_stat = os.fstat(root_fd)
+        if not stat.S_ISDIR(root_stat.st_mode):
             raise VerificationError("The staging directory is not a real directory.")
         if stat.S_IMODE(root_stat.st_mode) != 0o700:
             raise VerificationError("The staging directory must have mode 0700.")
-        if not stat.S_ISDIR(directory_stat.st_mode) or stat.S_ISLNK(
-            directory_stat.st_mode
-        ):
-            raise VerificationError("The secrets path is not a real directory.")
+        directory_fd = _open_child_directory(
+            root_fd,
+            SECRET_DIR.name,
+            label="secrets directory",
+        )
+        directory_stat = os.fstat(directory_fd)
         if stat.S_IMODE(directory_stat.st_mode) != 0o700:
             raise VerificationError("The secrets directory must have mode 0700.")
-        if directory_stat.st_uid != root_stat.st_uid:
+        if directory_stat.st_uid != 0:
             raise VerificationError(
-                "The secrets directory owner must match the staging directory owner."
+                "The secrets directory must be owned by root."
             )
-        flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0)
-        descriptor = os.open(SECRET_FILE, flags)
-        try:
-            file_stat = os.fstat(descriptor)
-            if not stat.S_ISREG(file_stat.st_mode):
-                raise VerificationError("The password secret is not a regular file.")
-            if stat.S_IMODE(file_stat.st_mode) != 0o600:
-                raise VerificationError("The password secret must have mode 0600.")
-            if file_stat.st_uid != directory_stat.st_uid:
-                raise VerificationError(
-                    "The password secret owner must match its secrets directory."
-                )
-            with os.fdopen(descriptor, "rb", closefd=False) as source:
-                password = source.read(66)
-        finally:
-            os.close(descriptor)
+        if not hasattr(os, "O_NONBLOCK") or os.open not in getattr(
+            os, "supports_dir_fd", set()
+        ):
+            raise VerificationError("Secure secret-file operations are unavailable.")
+        flags = os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK | os.O_CLOEXEC
+        descriptor = os.open(SECRET_FILE.name, flags, dir_fd=directory_fd)
+        file_stat = os.fstat(descriptor)
+        if not stat.S_ISREG(file_stat.st_mode):
+            raise VerificationError("The password secret is not a regular file.")
+        if stat.S_IMODE(file_stat.st_mode) != 0o600:
+            raise VerificationError("The password secret must have mode 0600.")
+        if file_stat.st_uid != root_stat.st_uid:
+            raise VerificationError(
+                "The password secret owner must match the staging directory owner."
+            )
+        with os.fdopen(descriptor, "rb", closefd=False) as source:
+            password = source.read(66)
     except VerificationError:
         raise
     except OSError as exc:
         raise VerificationError(
             "The protected server-side password secret could not be inspected."
         ) from exc
+    finally:
+        _close_quietly(descriptor)
+        _close_quietly(directory_fd)
+        _close_quietly(root_fd)
     if not HEX_PASSWORD.fullmatch(password):
         raise VerificationError(
             "The password secret format is not the expected 32-byte hex value."
@@ -140,8 +225,10 @@ def check_compose_config() -> None:
             "compose",
             "--env-file",
             "/dev/null",
+            "--project-directory",
+            os.fspath(ROOT),
             "-f",
-            "compose.yaml",
+            os.fspath(COMPOSE_FILE),
             "-p",
             PROJECT,
             "config",
@@ -157,8 +244,10 @@ def inspect_main_container() -> tuple[str, str]:
             "compose",
             "--env-file",
             "/dev/null",
+            "--project-directory",
+            os.fspath(ROOT),
             "-f",
-            "compose.yaml",
+            os.fspath(COMPOSE_FILE),
             "-p",
             PROJECT,
             "ps",

@@ -7,6 +7,8 @@ starts a container, contacts a database, or writes to a cloud host.
 
 from __future__ import annotations
 
+import ast
+import hashlib
 import json
 import os
 import re
@@ -14,6 +16,7 @@ import shutil
 import subprocess
 import tempfile
 import unittest
+from dataclasses import dataclass
 from pathlib import Path
 
 
@@ -39,7 +42,14 @@ NODE_IMAGE = (
 )
 
 
-def compose_model() -> dict[str, object] | None:
+@dataclass(frozen=True)
+class ComposeFixture:
+    model: dict[str, object]
+    project_directory: Path
+    compose_file: Path
+
+
+def compose_model() -> ComposeFixture | None:
     if os.environ.get("SHATTAB_STAGE_OFFLINE_ONLY") == "1":
         return None
     docker = shutil.which("docker")
@@ -47,15 +57,20 @@ def compose_model() -> dict[str, object] | None:
         return None
 
     with tempfile.TemporaryDirectory(prefix="shattab-api-compose-contract-") as raw:
-        directory = Path(raw)
-        shutil.copy2(COMPOSE, directory / "compose.yaml")
-        (directory / "api-source").mkdir()
-        secrets = directory / "secrets"
+        temporary_root = Path(raw)
+        project_directory = temporary_root / "project"
+        project_directory.mkdir()
+        snapshot_directory = temporary_root / "root-snapshot"
+        snapshot_directory.mkdir()
+        compose_file = snapshot_directory / "compose.yaml"
+        shutil.copy2(COMPOSE, compose_file)
+        (project_directory / "api-source").mkdir()
+        secrets = project_directory / "secrets"
         secrets.mkdir()
         # Harmless placeholders: deliberately unrelated to any actual credential.
         (secrets / "postgres_password").write_text("offline-placeholder\n", encoding="ascii")
         (secrets / "api_password").write_text("offline-placeholder\n", encoding="ascii")
-        env_file = directory / "empty.env"
+        env_file = temporary_root / "empty.env"
         env_file.write_text("", encoding="ascii")
 
         result = subprocess.run(
@@ -64,15 +79,17 @@ def compose_model() -> dict[str, object] | None:
                 "compose",
                 "--env-file",
                 str(env_file),
+                "--project-directory",
+                str(project_directory),
                 "-f",
-                str(directory / "compose.yaml"),
+                str(compose_file),
                 "-p",
                 "shattab-stage-contract-test",
                 "config",
                 "--format",
                 "json",
             ],
-            cwd=directory,
+            cwd=snapshot_directory,
             stdin=subprocess.DEVNULL,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
@@ -85,13 +102,18 @@ def compose_model() -> dict[str, object] | None:
                 "Temporary Docker Compose config validation failed: "
                 f"{result.stderr.strip()}"
             )
-        return json.loads(result.stdout)
+        return ComposeFixture(
+            model=json.loads(result.stdout),
+            project_directory=project_directory,
+            compose_file=compose_file,
+        )
 
 
 class ApiStageContractTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        cls.model = compose_model()
+        cls.compose_fixture = compose_model()
+        cls.model = None if cls.compose_fixture is None else cls.compose_fixture.model
 
     def test_all_dockerfile_stages_pin_the_reviewed_node_digest(self) -> None:
         dockerfile = DOCKERFILE.read_text(encoding="utf-8")
@@ -133,6 +155,99 @@ class ApiStageContractTests(unittest.TestCase):
         self.assertEqual(Path(secrets["api_password"]["file"]).name, "api_password")
         self.assertEqual({entry["source"] for entry in db["secrets"]}, {"postgres_password"})
         self.assertEqual({entry["source"] for entry in api["secrets"]}, {"api_password"})
+
+    def test_compose_relative_paths_resolve_from_project_directory_outside_snapshot(self) -> None:
+        if self.compose_fixture is None:
+            self.skipTest("Docker CLI is unavailable; source contract assertions still run.")
+
+        fixture = self.compose_fixture
+        self.assertNotEqual(fixture.compose_file.parent, fixture.project_directory)
+        services = fixture.model["services"]
+        build_context = Path(services["api"]["build"]["context"])
+        secret_files = {
+            name: Path(secret["file"])
+            for name, secret in fixture.model["secrets"].items()
+        }
+
+        self.assertEqual(build_context, fixture.project_directory / "api-source")
+        self.assertEqual(
+            secret_files["postgres_password"],
+            fixture.project_directory / "secrets" / "postgres_password",
+        )
+        self.assertEqual(
+            secret_files["api_password"],
+            fixture.project_directory / "secrets" / "api_password",
+        )
+        self.assertNotEqual(build_context, fixture.compose_file.parent / "api-source")
+        self.assertNotEqual(
+            secret_files["api_password"],
+            fixture.compose_file.parent / "secrets" / "api_password",
+        )
+
+    def test_all_privileged_compose_calls_use_the_content_addressed_snapshot(self) -> None:
+        readme = STAGE_README.read_text(encoding="utf-8")
+        verifier = VERIFY.read_text(encoding="utf-8")
+        tree = ast.parse(verifier)
+        assignments = {
+            target.id: statement.value
+            for statement in tree.body
+            if isinstance(statement, ast.Assign)
+            for target in statement.targets
+            if isinstance(target, ast.Name)
+        }
+
+        compose_file_expression = assignments["COMPOSE_FILE"]
+        self.assertIsInstance(compose_file_expression, ast.Call)
+        snapshot_path = ast.literal_eval(compose_file_expression.args[0])
+        project_directory_expression = assignments["ROOT"]
+        project_directory = ast.literal_eval(project_directory_expression.args[0])
+        self.assertEqual(
+            project_directory,
+            "/home/ubuntu/shattab-pg18-stage",
+        )
+        project_name = ast.literal_eval(assignments["PROJECT"])
+        compose_digest = hashlib.sha256(COMPOSE.read_bytes()).hexdigest()
+        expected_snapshot = (
+            "/root/shattab-pg18-stage-tools/compose."
+            f"{compose_digest}.yaml"
+        )
+        self.assertEqual(snapshot_path, expected_snapshot)
+        self.assertRegex(snapshot_path, r"^/root/shattab-pg18-stage-tools/compose\.[0-9a-f]{64}\.yaml$")
+        self.assertIn(snapshot_path, readme)
+
+        readme_calls = [line for line in readme.splitlines() if "sudo docker compose" in line]
+        self.assertEqual(len(readme_calls), 17)
+        for line_number, invocation in enumerate(readme_calls, start=1):
+            with self.subTest(readme_invocation=line_number):
+                self.assertIn(f"--project-directory {project_directory}", invocation)
+                self.assertIn(f"-f {snapshot_path}", invocation)
+                self.assertIn(f"-p {project_name}", invocation)
+
+        compose_calls = [
+            node
+            for node in ast.walk(tree)
+            if isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Name)
+            and node.func.id == "docker"
+            and node.args
+            and isinstance(node.args[0], ast.List)
+            and node.args[0].elts
+            and ast.literal_eval(node.args[0].elts[0]) == "compose"
+        ]
+        self.assertEqual(len(compose_calls), 2)
+        for call_index, call in enumerate(compose_calls, start=1):
+            argv = call.args[0].elts
+            option_values = {
+                ast.literal_eval(argv[index]): ast.unparse(argv[index + 1])
+                for index in range(len(argv) - 1)
+                if isinstance(argv[index], ast.Constant)
+                and isinstance(argv[index].value, str)
+                and argv[index].value in {"--project-directory", "-f", "-p"}
+            }
+            with self.subTest(verifier_compose_call=call_index):
+                self.assertEqual(option_values["--project-directory"], "os.fspath(ROOT)")
+                self.assertEqual(option_values["-f"], "os.fspath(COMPOSE_FILE)")
+                self.assertEqual(option_values["-p"], "PROJECT")
 
     def test_api_runtime_has_bounded_private_health_only_settings(self) -> None:
         if self.model is None:
@@ -280,14 +395,24 @@ class ApiStageContractTests(unittest.TestCase):
         self.assertIn("وضع `0440`", readme)
         self.assertIn("O_EXCL", secret_helper)
         self.assertIn("getpass.getpass", secret_helper)
-        self.assertIn("os.link(temporary_path, target, follow_symlinks=False)", secret_helper)
-        self.assertIn("parent_stat.st_uid != 0", secret_helper)
+        self.assertIn("src_dir_fd=directory_fd", secret_helper)
+        self.assertIn("dst_dir_fd=directory_fd", secret_helper)
+        self.assertIn("follow_symlinks=False", secret_helper)
+        self.assertIn("def _require_absent_at(", secret_helper)
+        self.assertIn("def _validate_secrets_directory(", secret_helper)
+        self.assertIn("info.st_uid != 0", secret_helper)
+        self.assertIn("stat.S_IMODE(info.st_mode) != 0o700", secret_helper)
         self.assertIn("before.st_gid != os.getgid()", secret_helper)
         self.assertIn("temporary file may remain", secret_helper)
         self.assertIn("cleanup_failed", secret_helper)
         self.assertIn("test ! -e", readme)
         self.assertIn("ما تفترضش إن الأرقام `1000:1000`", readme)
-        self.assertIn("sudo chown root:root /home/ubuntu/shattab-pg18-stage/secrets", readme)
+        self.assertIn(
+            "sudo python3 /root/shattab-pg18-stage-tools/create_api_secret.py "
+            "--bootstrap-postgres-password",
+            readme,
+        )
+        self.assertIn("ما تستخدمش shell redirection أو `chown`/`chmod` على مسارات الأسرار", readme)
         self.assertIn("بعد تطابق الهوية، شغّل API فقط", readme)
         self.assertIn("node:24.22.1-bookworm-slim@sha256:", readme)
         self.assertIn("صورة API المكتملة", readme)
@@ -303,19 +428,15 @@ class ApiStageContractTests(unittest.TestCase):
             "`env`",
         ):
             self.assertIn(expected, readme)
-        ownership_change = readme.index(
-            "sudo chown root:root /home/ubuntu/shattab-pg18-stage/secrets"
+        bootstrap_command = readme.index(
+            "sudo python3 /root/shattab-pg18-stage-tools/create_api_secret.py "
+            "--bootstrap-postgres-password"
         )
-        directory_verified = readme.index("المتوقع بالضبط `700 0:0`", ownership_change)
-        absent_guard = readme.index(
-            "sudo test ! -e /home/ubuntu/shattab-pg18-stage/secrets/api_password",
-            directory_verified,
+        api_secret_command = readme.index(
+            "sudo python3 /root/shattab-pg18-stage-tools/create_api_secret.py --node-uid"
         )
-        secret_helper_command = readme.index("sudo python3 create_api_secret.py", absent_guard)
-        self.assertLess(ownership_change, directory_verified)
-        self.assertLess(directory_verified, absent_guard)
-        self.assertLess(absent_guard, secret_helper_command)
-        self.assertIn("مش هيعمل overwrite", readme)
+        self.assertLess(bootstrap_command, api_secret_command)
+        self.assertIn("من غير `overwrite`", readme)
         for expected in (
             "s.uid!==0",
             "uid===0",
@@ -337,13 +458,39 @@ class ApiStageContractTests(unittest.TestCase):
         stage_tests = Path(__file__).read_text(encoding="utf-8")
         helper = SECRET_HELPER.read_text(encoding="utf-8")
         tty_guard = helper.index("if not _has_controlling_tty():")
-        target_assignment = helper.index(
-            'target = Path(__file__).resolve().parent / "secrets" / "api_password"'
+        stage_pin = helper.index(
+            "stage_fd, secrets_fd, _ = _pin_stage_and_secrets(create_secrets=False)"
         )
-        self.assertLess(tty_guard, target_assignment)
+        self.assertLess(tty_guard, stage_pin)
+        self.assertNotIn('Path(__file__).resolve().parent / "secrets"', helper)
         self.assertIn("tempfile.TemporaryDirectory", secret_tests)
         self.assertIn("with tempfile.TemporaryDirectory", stage_tests)
         self.assertNotIn('STAGE / "secrets"', secret_tests)
+        self.assertIn('mock.patch.object(secret_helper, "STAGE_ROOT", stage)', secret_tests)
+        self.assertIn("import verify as stage_verifier", secret_tests)
+        self.assertIn(
+            '@unittest.skipUnless(LINUX_ROOT, "permission behavior requires a Linux root runner")',
+            secret_tests,
+        )
+        self.assertIn("def _create_verifier_fixture(", secret_tests)
+        self.assertIn("def _check_verifier_fixture(", secret_tests)
+        self.assertIn("stage_verifier.check_secret_file()", secret_tests)
+        self.assertIn("ROOT=stage,", secret_tests)
+        self.assertIn("SECRET_DIR=secrets_directory,", secret_tests)
+        self.assertIn("SECRET_FILE=secret_file,", secret_tests)
+        self.assertIn("os.chown(stage, TEST_UID, TEST_GID)", secret_tests)
+        self.assertIn("os.chown(secrets_directory, 0, 0)", secret_tests)
+        self.assertIn("os.chown(secret_file, TEST_UID, TEST_GID)", secret_tests)
+        self.assertIn("os.chown(secret_file, TEST_UID + 1, TEST_GID)", secret_tests)
+        for verifier_case in (
+            "test_verifier_accepts_a_temporary_bootstrap_postgres_secret",
+            "test_verifier_rejects_bootstrap_secret_owner_and_mode_mismatches",
+            "test_verifier_rejects_bootstrap_secrets_directory_owner_and_mode",
+            "test_verifier_rejects_symlink_fifo_and_directory_as_bootstrap_secret",
+            "test_verifier_rejects_symlink_secrets_directory",
+            "test_verifier_uses_pinned_secrets_directory_after_path_replacement",
+        ):
+            self.assertIn(f"def {verifier_case}(", secret_tests)
         self.assertIn("test_unlink_failure_reports_possible_temp_file", secret_tests)
         self.assertIn("test_large_object_and_public_read_acl_fail_both_guards", (STAGE / "test_api_role_postgres18.py").read_text(encoding="utf-8"))
 
