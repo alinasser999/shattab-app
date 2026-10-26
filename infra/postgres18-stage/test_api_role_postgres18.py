@@ -26,10 +26,18 @@ import uuid
 from pathlib import Path
 from typing import Callable, Mapping
 
+try:
+    import pty
+    import select
+except ImportError:  # pragma: no cover - available on the Linux CI runner
+    pty = None  # type: ignore[assignment]
+    select = None  # type: ignore[assignment]
+
 
 STAGE = Path(__file__).resolve().parent
 PREFLIGHT = STAGE / "preflight_api_role.sql"
 ROLE_SQL = STAGE / "create_api_role.sql"
+INSPECT_SQL = STAGE / "inspect_existing_api_role.sql"
 
 EXPECTED_IMAGE_DIGEST = "sha256:bbf83594798e144bff365a9c191c5d779f181fb3135902064ab8ff11918020fc"
 EXPECTED_IMAGE_REF = f"postgres:18.6-bookworm@{EXPECTED_IMAGE_DIGEST}"
@@ -535,6 +543,104 @@ class DisposablePostgres:
             input_text=input_text,
             timeout=30,
         )
+
+    def psql_password_prompt_with_tty(self, role: str, sentinel: bytes) -> tuple[int, bytes]:
+        """Exercise psql's hidden password prompts through a real disposable PTY."""
+        if (
+            not self.validated
+            or self.container_id is None
+            or not CONTAINER_ID_PATTERN.fullmatch(self.container_id)
+        ):
+            raise HarnessError("interactive psql is blocked until the disposable target passes preflight")
+        if os.name != "posix" or pty is None or select is None:
+            raise HarnessError("the psql password-prompt check requires the Linux CI runner")
+
+        master_fd, slave_fd = pty.openpty()
+        process: subprocess.Popen[bytes] | None = None
+        output = bytearray()
+        env = dict(os.environ)
+        env["LC_ALL"] = "C"
+
+        def read_until(needle: bytes, timeout: float = 20.0) -> None:
+            deadline = time.monotonic() + timeout
+            while needle not in output:
+                remaining = deadline - time.monotonic()
+                if remaining <= 0:
+                    raise HarnessError("psql password prompt did not reach the expected TTY state")
+                ready, _, _ = select.select([master_fd], [], [], min(remaining, 0.25))
+                if ready:
+                    try:
+                        chunk = os.read(master_fd, 4096)
+                    except OSError:
+                        chunk = b""
+                    if chunk:
+                        output.extend(chunk)
+                    elif process is not None and process.poll() is not None:
+                        raise HarnessError("psql exited before completing its password prompt")
+                elif process is not None and process.poll() is not None:
+                    raise HarnessError("psql exited before completing its password prompt")
+
+        try:
+            process = subprocess.Popen(
+                [
+                    "docker",
+                    "exec",
+                    "-it",
+                    self.container_id,
+                    "psql",
+                    "-X",
+                    "-v",
+                    "ON_ERROR_STOP=1",
+                    "-U",
+                    "postgres",
+                    "-d",
+                    "postgres",
+                ],
+                stdin=slave_fd,
+                stdout=slave_fd,
+                stderr=slave_fd,
+                close_fds=True,
+                env=env,
+            )
+            os.close(slave_fd)
+            slave_fd = -1
+            os.write(master_fd, f"\\password {role}\n".encode("ascii"))
+            read_until(b"Enter new password")
+            os.write(master_fd, sentinel + b"\n")
+            read_until(b"Enter it again")
+            os.write(master_fd, sentinel + b"\n")
+            os.write(master_fd, b"SELECT 'TTY_PASSWORD_CHANGED';\n\\q\n")
+            read_until(b"TTY_PASSWORD_CHANGED")
+            try:
+                return_code = process.wait(timeout=20)
+            except subprocess.TimeoutExpired:
+                raise HarnessError("psql did not exit after the TTY password check") from None
+
+            while True:
+                ready, _, _ = select.select([master_fd], [], [], 0.1)
+                if not ready:
+                    break
+                try:
+                    chunk = os.read(master_fd, 4096)
+                except OSError:
+                    break
+                if not chunk:
+                    break
+                output.extend(chunk)
+            return return_code, bytes(output)
+        except (OSError, subprocess.SubprocessError):
+            raise HarnessError("the disposable psql TTY check did not complete") from None
+        finally:
+            if process is not None and process.poll() is None:
+                process.terminate()
+                try:
+                    process.wait(timeout=3)
+                except subprocess.TimeoutExpired:
+                    process.kill()
+                    process.wait(timeout=3)
+            if slave_fd >= 0:
+                os.close(slave_fd)
+            os.close(master_fd)
 
 
 def assert_ok(test: unittest.TestCase, result: subprocess.CompletedProcess[str]) -> str:
@@ -1062,9 +1168,11 @@ class Postgres18StageRoleTests(unittest.TestCase):
         return self.target.psql("shattab_stage", user="shattab_stage_admin", sql=sql)
 
     def setUp(self) -> None:
+        assert_ok(self, self.control("DROP DATABASE IF EXISTS shattab_acl_probe WITH (FORCE);"))
         assert_ok(self, self.control("DROP DATABASE IF EXISTS shattab_stage WITH (FORCE);"))
         assert_ok(self, self.control("DROP ROLE IF EXISTS shattab_api;"))
         assert_ok(self, self.control("CREATE DATABASE shattab_stage OWNER shattab_stage_admin;"))
+        assert_ok(self, self.control("CREATE DATABASE shattab_acl_probe OWNER shattab_stage_admin;"))
 
     def run_preflight(self, database: str = "shattab_stage") -> subprocess.CompletedProcess[str]:
         return self.target.psql(database, user="shattab_stage_admin", file=PREFLIGHT)
@@ -1072,9 +1180,47 @@ class Postgres18StageRoleTests(unittest.TestCase):
     def run_role_creation(self, database: str = "shattab_stage") -> subprocess.CompletedProcess[str]:
         return self.target.psql(database, user="shattab_stage_admin", file=ROLE_SQL)
 
+    def run_existing_role_guard(self, database: str) -> subprocess.CompletedProcess[str]:
+        return self.target.psql(database, user="shattab_stage_admin", file=INSPECT_SQL)
+
+    def create_existing_api_role(self) -> None:
+        assert_ok(
+            self,
+            self.control(
+                "CREATE ROLE shattab_api LOGIN NOINHERIT NOSUPERUSER NOCREATEDB "
+                "NOCREATEROLE NOREPLICATION NOBYPASSRLS CONNECTION LIMIT 3; "
+                "ALTER ROLE shattab_api SET search_path = pg_catalog;"
+            ),
+        )
+
+    def database_inventory(self) -> list[tuple[str, bool, bool]]:
+        result = self.control(
+            "SELECT datname || '|' || datallowconn::text || '|' || datistemplate::text "
+            "FROM pg_database ORDER BY datname;"
+        )
+        inventory: list[tuple[str, bool, bool]] = []
+        for line in assert_ok(self, result).splitlines():
+            if not line:
+                continue
+            fields = line.split("|")
+            if len(fields) != 3 or fields[1] not in {"true", "false"} or fields[2] not in {"true", "false"}:
+                self.fail("PostgreSQL database inventory returned an unexpected row shape")
+            inventory.append((fields[0], fields[1] == "true", fields[2] == "true"))
+        return inventory
+
     def assert_api_role_absent(self) -> None:
         role_count = self.control("SELECT count(*) FROM pg_roles WHERE rolname = 'shattab_api';")
         self.assertEqual(assert_ok(self, role_count).strip(), "0")
+
+    def assert_existing_api_role_unchanged(self) -> None:
+        result = self.control(
+            "SELECT count(*) FILTER (WHERE rolcanlogin AND NOT rolinherit AND NOT rolsuper "
+            "AND NOT rolcreatedb AND NOT rolcreaterole AND NOT rolreplication "
+            "AND NOT rolbypassrls AND rolconnlimit = 3 "
+            "AND rolconfig = ARRAY['search_path=pg_catalog']::text[] "
+            "AND rolvaliduntil IS NULL) FROM pg_roles WHERE rolname = 'shattab_api';"
+        )
+        self.assertEqual(assert_ok(self, result).strip(), "1")
 
     def test_stock_postgresql18_defaults_pass_without_acl_changes(self) -> None:
         output = assert_ok(self, self.run_preflight())
@@ -1084,6 +1230,193 @@ class Postgres18StageRoleTests(unittest.TestCase):
         self.assertIn("explicit default ACLs= 0", output)
         self.assertIn("future function EXECUTE defaults= 1", output)
         self.assertIn("PASS: stock PostgreSQL 18 defaults", output)
+
+    def test_existing_role_guard_passes_for_every_connectable_database_including_template1(self) -> None:
+        self.create_existing_api_role()
+        inventory = self.database_inventory()
+        inventory_by_name = {name: (allow_connections, is_template) for name, allow_connections, is_template in inventory}
+        self.assertEqual(inventory_by_name.get("template0"), (False, True))
+        self.assertEqual(inventory_by_name.get("template1"), (True, True))
+        self.assertIn("postgres", inventory_by_name)
+        self.assertIn("shattab_stage", inventory_by_name)
+        self.assertIn("shattab_acl_probe", inventory_by_name)
+
+        connectable_databases = [name for name, allow_connections, _ in inventory if allow_connections]
+        self.assertIn("template1", connectable_databases)
+        self.assertNotIn("template0", connectable_databases)
+        self.assertTrue(
+            all(re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", name) for name in connectable_databases)
+        )
+
+        for database in connectable_databases:
+            with self.subTest(database=database):
+                output = assert_ok(self, self.run_existing_role_guard(database))
+                self.assertIn("PASS: the existing health-only API role", output)
+                self.assertIn(f"database= {database}", output)
+                self.assertIn("names= ", output)
+                self.assertIn("template0", output)
+                self.assertIn("template1", output)
+                self.assertIn("shattab_acl_probe", output)
+                if inventory_by_name[database][1]:
+                    self.assertIn("database_TEMP= false", output)
+                else:
+                    self.assertIn("database_TEMP= true", output)
+
+    def test_template1_direct_create_grant_fails_cluster_guard(self) -> None:
+        self.create_existing_api_role()
+        inventory = {name: (allow_connections, is_template) for name, allow_connections, is_template in self.database_inventory()}
+        self.assertEqual(inventory.get("template1"), (True, True))
+        try:
+            assert_ok(
+                self,
+                self.control("GRANT CREATE ON DATABASE template1 TO shattab_api;"),
+            )
+            output = assert_guard_failure(self, self.run_existing_role_guard("shattab_stage"))
+            self.assertIn("API_direct_database= 1", output)
+            self.assertIn("cluster_CREATE= 1", output)
+            self.assertEqual(
+                {name: (allow_connections, is_template) for name, allow_connections, is_template in self.database_inventory()},
+                inventory,
+            )
+            self.assert_existing_api_role_unchanged()
+        finally:
+            assert_ok(
+                self,
+                self.control("REVOKE CREATE ON DATABASE template1 FROM shattab_api;"),
+            )
+
+    def test_template1_public_temporary_grant_fails_with_unchanged_inventory(self) -> None:
+        self.create_existing_api_role()
+        inventory = self.database_inventory()
+        inventory_by_name = {name: (allow_connections, is_template) for name, allow_connections, is_template in inventory}
+        self.assertEqual(inventory_by_name.get("template1"), (True, True))
+        self.assertEqual(inventory_by_name.get("template0"), (False, True))
+        connectable_databases = [name for name, allow_connections, _ in inventory if allow_connections]
+        for database in connectable_databases:
+            with self.subTest(pass_name="baseline", database=database):
+                assert_ok(self, self.run_existing_role_guard(database))
+
+        self.assertEqual(self.database_inventory(), inventory)
+        try:
+            assert_ok(
+                self,
+                self.control("GRANT TEMPORARY ON DATABASE template1 TO PUBLIC;"),
+            )
+            self.assertEqual(self.database_inventory(), inventory)
+            failed_guard_output = None
+            for database in connectable_databases:
+                result = self.run_existing_role_guard(database)
+                if result.returncode != 0:
+                    failed_guard_output = assert_guard_failure(self, result)
+                    break
+            self.assertIsNotNone(failed_guard_output, "the catalog guard accepted a PUBLIC TEMPORARY grant on template1")
+            assert failed_guard_output is not None
+            self.assertIn("DBs with non-baseline TEMP= 1", failed_guard_output)
+            self.assertEqual(self.database_inventory(), inventory)
+        finally:
+            assert_ok(
+                self,
+                self.control("REVOKE TEMPORARY ON DATABASE template1 FROM PUBLIC;"),
+            )
+
+        self.assertEqual(self.database_inventory(), inventory)
+        restored_inventory = {
+            name: (allow_connections, is_template)
+            for name, allow_connections, is_template in self.database_inventory()
+        }
+        self.assertEqual(restored_inventory.get("template0"), (False, True))
+        for database in connectable_databases:
+            with self.subTest(pass_name="restored", database=database):
+                assert_ok(self, self.run_existing_role_guard(database))
+
+    def test_role_only_change_between_catalog_passes_fails_with_unchanged_inventory(self) -> None:
+        self.create_existing_api_role()
+        inventory = self.database_inventory()
+        connectable_databases = [name for name, allow_connections, _ in inventory if allow_connections]
+        for database in connectable_databases:
+            with self.subTest(pass_name="baseline", database=database):
+                assert_ok(self, self.run_existing_role_guard(database))
+
+        assert_ok(self, self.control("ALTER ROLE shattab_api CONNECTION LIMIT 4;"))
+        self.assertEqual(self.database_inventory(), inventory)
+        output = assert_guard_failure(self, self.run_existing_role_guard("shattab_stage"))
+        self.assertIn("attributes_match= false", output)
+        self.assertEqual(self.database_inventory(), inventory)
+
+    def test_template0_must_remain_closed_and_is_restored_in_finally(self) -> None:
+        self.create_existing_api_role()
+        inventory = {name: (allow_connections, is_template) for name, allow_connections, is_template in self.database_inventory()}
+        self.assertEqual(inventory.get("template0"), (False, True))
+        try:
+            assert_ok(
+                self,
+                self.control("ALTER DATABASE template0 ALLOW_CONNECTIONS true;"),
+            )
+            output = assert_guard_failure(self, self.run_existing_role_guard("shattab_stage"))
+            self.assertIn("template0_closed= 0", output)
+            self.assert_existing_api_role_unchanged()
+        finally:
+            assert_ok(
+                self,
+                self.control("ALTER DATABASE template0 ALLOW_CONNECTIONS false;"),
+            )
+        restored = {name: (allow_connections, is_template) for name, allow_connections, is_template in self.database_inventory()}
+        self.assertEqual(restored.get("template0"), (False, True))
+
+    def test_second_database_direct_api_grant_fails_cluster_guard(self) -> None:
+        self.create_existing_api_role()
+        assert_ok(
+            self,
+            self.control("GRANT CONNECT ON DATABASE shattab_acl_probe TO shattab_api;"),
+        )
+        output = assert_guard_failure(self, self.run_existing_role_guard("shattab_stage"))
+        self.assertIn("API_direct_database= 1", output)
+        self.assert_existing_api_role_unchanged()
+
+    def test_second_database_api_ownership_fails_cluster_guard(self) -> None:
+        self.create_existing_api_role()
+        assert_ok(
+            self,
+            self.control("ALTER DATABASE shattab_acl_probe OWNER TO shattab_api;"),
+        )
+        output = assert_guard_failure(self, self.run_existing_role_guard("shattab_stage"))
+        self.assertIn("API_owned= 1", output)
+        self.assert_existing_api_role_unchanged()
+
+    def test_second_database_api_create_privilege_fails_cluster_guard(self) -> None:
+        self.create_existing_api_role()
+        assert_ok(
+            self,
+            self.control("GRANT CREATE ON DATABASE shattab_acl_probe TO shattab_api;"),
+        )
+        output = assert_guard_failure(self, self.run_existing_role_guard("shattab_stage"))
+        self.assertIn("cluster_CREATE= 1", output)
+        self.assert_existing_api_role_unchanged()
+
+    def test_second_database_extra_public_acl_fails_cluster_guard(self) -> None:
+        self.create_existing_api_role()
+        assert_ok(
+            self,
+            self.control("GRANT CREATE ON DATABASE shattab_acl_probe TO PUBLIC;"),
+        )
+        output = assert_guard_failure(self, self.run_existing_role_guard("shattab_stage"))
+        self.assertIn("extra_PUBLIC_database= 1", output)
+        self.assert_existing_api_role_unchanged()
+
+    def test_password_prompt_is_tty_and_never_echoes_synthetic_sentinel(self) -> None:
+        role = f"shattab_tty_{uuid.uuid4().hex[:16]}"
+        sentinel = f"ShattabSyntheticSentinel-{uuid.uuid4().hex}".encode("ascii")
+        assert_ok(self, self.control(f"CREATE ROLE {role} NOLOGIN;"))
+        try:
+            return_code, captured = self.target.psql_password_prompt_with_tty(role, sentinel)
+            if sentinel in captured:
+                self.fail("synthetic password sentinel appeared in TTY output; captured bytes are withheld")
+            if return_code != 0:
+                self.fail("psql TTY password prompt exited unsuccessfully; captured bytes are withheld")
+            if b"TTY_PASSWORD_CHANGED" not in captured:
+                self.fail("psql TTY password prompt did not complete; captured bytes are withheld")
+        finally:
+            assert_ok(self, self.control(f"DROP ROLE IF EXISTS {role};"))
 
     def test_wrong_database_fails_both_guards(self) -> None:
         assert_guard_failure(self, self.run_preflight(database="postgres"))

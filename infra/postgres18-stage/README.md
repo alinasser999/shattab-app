@@ -145,7 +145,7 @@ sudo docker compose --env-file /dev/null --project-directory /home/ubuntu/shatta
 
 القسم ده يشرح تجهيز اتصال داخلي لخدمة API (واجهة خدمات بتستقبل طلبات التطبيقات) الموجودة في `api/` مع قاعدة PostgreSQL 18 التجريبية. الـ API لسه health-only (وظيفته الحالية فحص إن العملية وقاعدة البيانات شغالين) وبيشغّل استعلام ثابت `SELECT 1`. مفيش جداول شطب أو بيانات مستخدمين أو ميزات تطبيقية في النطاق ده، ومش بديل لـ Supabase.
 
-**مفيش خطوة في القسم ده اتنفذت على Oracle.** رفع الملفات أو تشغيل الخدمة أو إنشاء دور/سر على السيرفر يحتاج موافقة صريحة منفصلة بعد مراجعة التغيير المحلي ده. ما تنفذش الخطوات دي أثناء مراجعة الكود.
+**خدمة API نفسها غير مشغّلة على Oracle حسب آخر فحص.** تغيير كلمة مرور الدور الموجود أو إنشاء ملف السر أو تشغيل الخدمة يتم فقط بعد اجتياز البوابات الموضحة في هذا الدليل والتفويض المرحلي؛ لا تنفذ الخطوات أثناء مراجعة الكود.
 
 ### 6.1 شكل الاتصال وحدوده
 
@@ -162,80 +162,135 @@ sudo docker compose --env-file /dev/null --project-directory /home/ubuntu/shatta
 
 ### 6.2 موافقة وفحص مسبق
 
-نفّذ الخطوات الجاية فقط بعد الموافقة الصريحة على تشغيل قاعدة PostgreSQL 18 التجريبية، إنشاء دور `shattab_api` وملف سره، وبناء وتشغيل حاوية API على Oracle. الموافقة لا تشمل PostgreSQL 17 `shattab-lab` أو Supabase أو فتح منافذ أو نقل بيانات التطبيق.
+دور `shattab_api` موجود بالفعل في قاعدة المرحلة حسب لقطة القراءة فقط بتاريخ `2026-10-27`؛ المسار هنا **لا ينشئ دورًا** ولا يغيّر صلاحياته أو إعداداته. التفويض الخاص بتشغيل المرحلة يسمح فقط، بعد اجتياز كل البوابات، بتغيير كلمة مرور هذا الدور يدويًا، وإنشاء ملف سره، وتشغيل خدمة `api` وحدها. لا يشمل `shattab-lab` أو Supabase أو الإنتاج أو تغييرات الشبكة أو ترحيل بيانات.
 
-قبل أي كتابة، افحص حالة `shattab-pg18-stage` من غير تغييرها. لو اسم الـ Compose project أو الصورة أو الشبكة أو الـ volume أو حالة ملفات السيرفر مختلفة عن المتوقع، وقف للمراجعة. لا تقرأ محتوى أي ملف سر. لا تستخدم مجلد `infra/postgres18-stage/secrets/` المحلي للاختبارات؛ اختبارات الكمبيوتر تستخدم مجلدًا مؤقتًا منفصلًا بقيم وهمية.
+قبل أي كتابة، افحص حالة المشروع والقاعدة من غير طباعة قيم الأسرار. لو هوية المشروع أو الصورة أو الشبكة أو الـvolume أو حالة الملفات مختلفة عن المتوقع، توقّف للمراجعة. لا تقرأ محتوى أي ملف سر، ولا تستخدم مجلد `infra/postgres18-stage/secrets/` المحلي للاختبارات؛ الاختبارات تستخدم مجلدًا مؤقتًا منفصلًا بقيم وهمية.
 
-على Ubuntu SSH (جلسة إدارة آمنة لسيرفر Ubuntu)، ابدأ بفحص إعداد القاعدة الحالي من غير طباعة قيم الأسرار:
+على Ubuntu SSH (جلسة إدارة آمنة لسيرفر Ubuntu)، تحقق بصمت من ملف Compose:
 
 ```bash
 cd /home/ubuntu/shattab-pg18-stage && sudo docker compose --env-file /dev/null --project-directory /home/ubuntu/shattab-pg18-stage -f /root/shattab-pg18-stage-tools/compose.3216004984ca41882f0cc59b6e625e4f88da2f08575e484d7167a5b0c783d008.yaml -p shattab-pg18-stage config --quiet
 ```
 
-`--quiet` يطلب التحقق من الملف من غير عرضه. لو رجع خطأ، وقف. أداة التحقق الموجودة في `/root/shattab-pg18-stage-tools/verify.py` بتثبت مجلدي المرحلة والأسرار بأوصاف ملفات مفتوحة، وتفحص الملكية والصلاحيات من خلال `fstat`. مساعد السر يفحص غياب `api_password` بالنسبة لوصف مجلد الأسرار المثبّت مباشرة قبل طلب كلمة المرور؛ لو الملف موجود أو الحالة مبهمة، يتوقف من غير استبدال.
+`--quiet` (تحقق من الإعداد من غير عرضه) لازم ينتهي بنجاح ومن غير output؛ أي خطأ يوقف الخطوات. بعده شغّل فاحص المرحلة:
 
+```bash
+sudo python3 /root/shattab-pg18-stage-tools/verify.py
+```
 
-### 6.3 نقل ملفات التشغيل بعد الموافقة
+الفاحص يتحقق من هوية حاوية PostgreSQL وصورتها وشبكتها والـvolume، ويقرأ `current_setting('data_directory')` كـ`shattab_stage_admin` الذي أنشأه Compose كـ`superuser` (دور PostgreSQL بصلاحيات كاملة). في اختبار CI يُجرى فحص `PGDATA` باستعلام قراءة فقط منفصل كـ`postgres` داخل الحاوية المعزولة قبل إنشاء fixtures؛ ملف SQL التالي نفسه لا يقرأ `data_directory` ولا يحتاج `pg_read_all_settings`. لا تستخدم `infra/postgres-lab` أو أي أداة تخصه.
 
-مجلد النشر على السيرفر منفصل عن المستودع المحلي. ملف Compose الفعّال هو الـsnapshot المملوك لـ`root` والمحفوظ باسم بصمته في `/root/shattab-pg18-stage-tools/`. احتفظ به كما هو؛ لا تنسخ ملفًا من مجلد `ubuntu` القابل للتعديل فوقه. لو احتجنا إعدادًا أقدم للرجوع، لازم نراجعه ونثبته كـsnapshot جديد باسم بصمته من غير استبدال النسخة الحالية. من `Windows PowerShell` (طرفية ويندوز)، ارفع ملفات الفحص غير السرية فقط إلى مجلد المرحلة:
+### 6.3 نقل ملفات الفحص والتحقق من الدور الموجود
+
+ملفات الخادم منفصلة عن المستودع. الـCompose الفعّال هو snapshot محمي مملوك لـ`root` تحت `/root/shattab-pg18-stage-tools/`؛ احتفظ به كما هو، ولا تشغّل Compose من مجلد `ubuntu`. من `Windows PowerShell` (طرفية ويندوز)، احسب بصمة ملف الاستعلام وارفعه باسم مرشح فريد؛ لو الاسم موجود، لا تستبدله، وافحص بصمته وأعد استخدامه فقط لو مطابقة:
 
 ```powershell
-scp .\infra\postgres18-stage\README.md .\infra\postgres18-stage\preflight_api_role.sql .\infra\postgres18-stage\create_api_role.sql ubuntu@<SERVER>:/home/ubuntu/shattab-pg18-stage/
+Get-FileHash .\infra\postgres18-stage\inspect_existing_api_role.sql -Algorithm SHA256
+ssh ubuntu@<SERVER> 'test ! -e /home/ubuntu/shattab-pg18-stage/inspect_existing_api_role.candidate-483360250627e4fc99a9cd519582e3b7b948fae9.sql && test ! -L /home/ubuntu/shattab-pg18-stage/inspect_existing_api_role.candidate-483360250627e4fc99a9cd519582e3b7b948fae9.sql'
+if ($LASTEXITCODE -ne 0) { throw 'Candidate exists; inspect it without overwriting.' }
+scp .\infra\postgres18-stage\inspect_existing_api_role.sql ubuntu@<SERVER>:/home/ubuntu/shattab-pg18-stage/inspect_existing_api_role.candidate-483360250627e4fc99a9cd519582e3b7b948fae9.sql
 ```
 
-ابدأ قاعدة PG18 حسب الأقسام 3 و4 من هذا الدليل، ثم شغّل `sudo python3 /root/shattab-pg18-stage-tools/verify.py`. لازم تنجح أداة التحقق قبل أي إنشاء دور/سر؛ هي بتراجع هوية الحاوية وصورة PostgreSQL والشبكة والـ volume، وبتتحقق من `PGDATA` الفعلي بإعداد `current_setting('data_directory')` أثناء اتصالها بدور `shattab_stage_admin`. في إعداد Compose الحالي، `POSTGRES_USER` بيعمل الدور ده كـ `superuser` (حساب PostgreSQL بصلاحيات كاملة) عند تهيئة قاعدة المرحلة. لا تشغل `infra/postgres-lab` أو أي أداة تخصه.
-
-في اختبار CI، دور `shattab_stage_admin` بيتعمل عمدًا بصلاحية أقل (`LOGIN CREATEROLE`) عشان نختبر فحوص SQL بأقل صلاحيات لازمة. لذلك harness الاختبار (برنامج الاختبار المعزول) بيفحص المسار الفعلي باستعلام قراءة فقط كـ `postgres` superuser داخل الحاوية المقفولة، وبعد تأكيد صحتها وقبل إنشاء أي fixture. ملفات SQL نفسها تراجع هوية قاعدة البيانات والدور والإصدار ومخطط قاعدة البيانات وصلاحيات `PUBLIC`؛ ما بتقرأش `data_directory` أو بتحتاج `pg_read_all_settings`.
-
-بعد نجاح التحقق، شغّل الفحص الإضافي للـ catalog (كتالوج قاعدة البيانات الذي يسجل المخططات والأدوار والصلاحيات). ده فحص قراءة فقط:
+على السيرفر، قارن `sha256sum` بالبصمة المحلية قبل تشغيل الاستعلام. لا ترفع `preflight_api_role.sql` أو `create_api_role.sql` لهذا المسار؛ الاتنين معمولين لحالة غياب الدور. استخدم فاحص المرحلة مرة تانية، ثم نفّذ الاستعلام الجديد:
 
 ```bash
-sudo docker compose --env-file /dev/null --project-directory /home/ubuntu/shattab-pg18-stage -f /root/shattab-pg18-stage-tools/compose.3216004984ca41882f0cc59b6e625e4f88da2f08575e484d7167a5b0c783d008.yaml -p shattab-pg18-stage exec -T db psql -X -v ON_ERROR_STOP=1 -U shattab_stage_admin -d shattab_stage -f - < preflight_api_role.sql
+sudo sha256sum /home/ubuntu/shattab-pg18-stage/inspect_existing_api_role.candidate-483360250627e4fc99a9cd519582e3b7b948fae9.sql
 ```
 
-النتيجة تعرض أعداد المخططات والعلاقات والدوال والأنواع والامتدادات والكائنات الكبيرة، وحالة الدور، وصلاحيات `PUBLIC` (الصلاحيات العامة لكل أدوار PostgreSQL)، وأي `default ACL` (صلاحيات افتراضية تُمنح تلقائيًا للكائنات الجديدة). الفحص يسمح فقط بالافتراضيات القياسية في قاعدة PostgreSQL 18 جديدة: `USAGE` على مخطط `public`، و`CONNECT` و`TEMPORARY` على قاعدة البيانات. لازم كل واحدة تظهر مرة واحدة ومن غير `WITH GRANT OPTION`. أي صلاحية إضافية على المخططات أو كائنات التطبيق أو قاعدة البيانات توقف الإجراء. لازم كمان ما يكونش فيه أي جدول أو دالة أو نوع أو امتداد أو كائن كبير خاص بالتطبيق، ولا أي `default ACL` صريح. في حالة الكائنات الكبيرة، الفحص يقرأ `pg_largeobject_metadata` (كتالوج فيه مالك الكائن وصلاحياته) ويفحص `lomacl` أو الافتراضي من `acldefault('L', lomowner)` عبر `aclexplode`؛ ما بيقرأش بيانات الكائن نفسها. وجود أي كائن كبير أو صلاحية `PUBLIC` عليه يوقف الإجراء. تفاصيل الحقول في [كتالوج PostgreSQL 18 للكائنات الكبيرة](https://www.postgresql.org/docs/18/catalog-pg-largeobject-metadata.html) و[دالة `acldefault` و`aclexplode`](https://www.postgresql.org/docs/18/functions-info.html). ما بتظهرش كلمة سر أو بيانات مستخدمين.
+بعد تطابق البصمة، نفّذ فاحص المرحلة مرة أخرى. الاستعلام الجديد له مستويان: كل تشغيل يراجع ACL/المالك/`CONNECT`/`TEMPORARY`/`CREATE` على مستوى الـcluster لكل صف في `pg_database`، بما فيها `template1` و`template0`؛ ثم يراجع المخططات والكائنات و`pg_default_acl` محليًا في قاعدة الاتصال الحالية. لازم تكون `shattab_stage` مملوكة لـ`shattab_stage_admin`. baseline `PUBLIC CONNECT` متوقع على كل قواعد cluster، بما فيها القوالب. أما `PUBLIC TEMPORARY` فمتوقع على القواعد العادية فقط؛ PostgreSQL 18 `initdb` (أداة التأسيس الأولي للكلستر) يسحب `CREATE` و`TEMPORARY` من `PUBLIC` على `template0` و`template1`. بالتالي دور API ما يكونش عنده `TEMPORARY` فعّال على القواعد القالبية، بينما القواعد العادية تحتفظ بالـbaseline. لازم `template1` تكون قاعدة قالبية وقابلة للاتصال، و`template0` تكون قاعدة قالبية ومغلقة (`datallowconn=false`). ممنوع محاولة الاتصال بـ`template0`.
 
-فحص SQL ده بيتأكد من عقد صلاحيات قاعدة البيانات فقط، ومش مسؤول عن `PGDATA` أو مسار الملفات؛ `verify.py` راجعهم بالفعل قبل تشغيله. في CI الاختبار السلوكي بيعيد فحص المسار الفعلي كـ `postgres` superuser في الحاوية المؤقتة قبل أي SQL تعديلي.
-
-الفحص كمان بيعرض إن PostgreSQL القياسي بيدي `EXECUTE` لـ`PUBLIC` على أي دالة جديدة افتراضيًا. ده مش كائن موجود دلوقتي، لكن معناه إن إضافة دوال مستقبلًا ممكن تدي كل الأدوار صلاحية تنفيذها. لذلك أي migration أو إضافة دالة/كائن للتطبيق محتاجة مراجعة منفصلة وإعادة فحص الصلاحيات قبل تشغيل API؛ ما تغيّرش الافتراضيات القياسية تلقائيًا أثناء تجهيز الدور.
-
-### 6.4 إنشاء دور قاعدة البيانات
-
-بعد `PASS` فقط، شغّل ملف إنشاء الدور المحمي بفحوص هوية قاعدة البيانات والإصدار، وغياب الدور وكائنات التطبيق، ومطابقة صلاحيات `PUBLIC` الافتراضية. مسار البيانات اتراجع منفصلًا بواسطة `verify.py` قبل الفحص ده. الملف يفتح معاملة واحدة؛ لو الشروط مش مطابقة، ما يعملش إنشاء. لازم تكون مخرجات الفحص السابق ما زالت حديثة وما حصلش أي تغيير إداري بينها وبين الأمر ده:
+على Ubuntu SSH، احتفظ بنفس جلسة Bash مفتوحة من بداية الفحص لحد بوابة كلمة المرور؛ متغيرات اللقطة `DB_SNAPSHOT_INITIAL` و`COMPOSE` مستخدمة تاني قبل كتابة كلمة المرور. لو الجلسة انتهت، أعد الحلقة كلها من البداية، وما تعتمدش على لقطة قديمة. خُد inventory snapshot (لقطة جرد) لكل قاعدة، بالاسم وحالتي `datallowconn` و`datistemplate`، ثم تحقق إن `template0` موجودة ومغلقة كقاعدة قالبية، و`template1` موجودة وقابلة للاتصال كقاعدة قالبية، ومافيش قاعدة أخرى مغلقة. الحلقة تشغّل الاستعلام المحلي على **كل** قاعدة `datallowconn=true`، بما فيها `template1` حتى لو `datistemplate=true`؛ بتتخطى `template0` المقفولة من غير ما تتصل بها. أي اسم غير آمن، أو قاعدة قابلة للاتصال لا يمكن فحصها، أو فشل في أي استعلام يوقف الخطوات:
 
 ```bash
-sudo docker compose --env-file /dev/null --project-directory /home/ubuntu/shattab-pg18-stage -f /root/shattab-pg18-stage-tools/compose.3216004984ca41882f0cc59b6e625e4f88da2f08575e484d7167a5b0c783d008.yaml -p shattab-pg18-stage exec -T db psql -X -v ON_ERROR_STOP=1 -U shattab_stage_admin -d shattab_stage -f - < create_api_role.sql
+set -euo pipefail
+COMPOSE=(sudo docker compose --env-file /dev/null --project-directory /home/ubuntu/shattab-pg18-stage -f /root/shattab-pg18-stage-tools/compose.3216004984ca41882f0cc59b6e625e4f88da2f08575e484d7167a5b0c783d008.yaml -p shattab-pg18-stage)
+DB_INVENTORY_SQL="SELECT datname || '|' || datallowconn::text || '|' || datistemplate::text FROM pg_database ORDER BY datname;"
+validate_database_inventory() {
+  local snapshot="$1"
+  printf '%s\n' "$snapshot" | awk -F '|' '
+    NF != 3 || $1 !~ /^[A-Za-z_][A-Za-z0-9_]*$/ || ($2 != "true" && $2 != "false") || ($3 != "true" && $3 != "false") { exit 1 }
+    $1 == "template0" { if ($2 != "false" || $3 != "true") exit 1; template0++ }
+    $1 == "template1" { if ($2 != "true" || $3 != "true") exit 1; template1++ }
+    $2 == "false" && $1 != "template0" { exit 1 }
+    END { if (template0 != 1 || template1 != 1) exit 1 }
+  '
+}
+run_catalog_guard_for_snapshot() {
+  local snapshot="$1"
+  local db_name allow_connections is_template
+  while IFS='|' read -r db_name allow_connections is_template; do
+    case "$db_name" in ''|[0-9]*|*[!A-Za-z0-9_]*) printf 'FAIL: unsafe database name; stop.\n' >&2; exit 1 ;; esac
+    if [ "$allow_connections" != "true" ]; then
+      test "$db_name" = "template0" && test "$is_template" = "true" || { printf 'FAIL: unexpected closed database; stop.\n' >&2; exit 1; }
+      continue
+    fi
+    printf 'Inspecting PG18 database: %s\n' "$db_name"
+    "${COMPOSE[@]}" exec -T db psql -X -v ON_ERROR_STOP=1 -U shattab_stage_admin -d "$db_name" -f - < /home/ubuntu/shattab-pg18-stage/inspect_existing_api_role.candidate-483360250627e4fc99a9cd519582e3b7b948fae9.sql || return 1
+  done <<< "$snapshot"
+}
+DB_SNAPSHOT_INITIAL=$("${COMPOSE[@]}" exec -T db psql -X -A -t -v ON_ERROR_STOP=1 -U shattab_stage_admin -d postgres -c "$DB_INVENTORY_SQL")
+test -n "$DB_SNAPSHOT_INITIAL"
+validate_database_inventory "$DB_SNAPSHOT_INITIAL" || { printf 'FAIL: invalid PostgreSQL database inventory; stop.\n' >&2; exit 1; }
+run_catalog_guard_for_snapshot "$DB_SNAPSHOT_INITIAL" || { printf 'FAIL: a database catalog guard failed; stop.\n' >&2; exit 1; }
+DB_SNAPSHOT_AFTER=$("${COMPOSE[@]}" exec -T db psql -X -A -t -v ON_ERROR_STOP=1 -U shattab_stage_admin -d postgres -c "$DB_INVENTORY_SQL")
+test "$DB_SNAPSHOT_AFTER" = "$DB_SNAPSHOT_INITIAL" || { printf 'FAIL: PostgreSQL database inventory changed during inspection; restart the full guard.\n' >&2; exit 1; }
 ```
 
-الدور `shattab_api` يقدر يسجل دخول، لكنه مش مالك قاعدة أو مخطط أو جدول، ومش `superuser`، وما يقدرش ينشئ قواعد أو أدوار أو يتجاوز `RLS`، وما عندوش عضوية في أدوار تانية. له حد 3 اتصالات، و`search_path=pg_catalog` (ترتيب المخططات اللي PostgreSQL بيدور فيها على الأسماء؛ هنا بيخلي البحث غير المؤهل داخل كتالوج النظام فقط). الدور بياخد افتراضيات `PUBLIC` القياسية اللي كل دور بيستفيد منها تلقائيًا حتى مع `NOINHERIT`: `USAGE` على `public` و`CONNECT` و`TEMPORARY` على قاعدة المرحلة. `TEMPORARY` بيسمح بإنشاء جداول مؤقتة داخل الجلسة؛ الـAPI الحالي ما بيعملش ده، واختيار تعطيله محتاج تغيير سياسة منفصل ومراجَع. دي صلاحيات baseline (الحد الافتراضي المشترك)، مش منحًا إضافيًا من ملف إنشاء الدور. مفيش جدول أو دالة تطبيقية موجودة أو صلاحيات عليها، والـAPI حاليًا بيعمل `SELECT 1` بس. الملف ما يحتويش كلمة سر. بعد نجاح الإنشاء، افتح جلسة `psql` تفاعلية:
+لا تعتبر `PASS` من قاعدة واحدة نجاحًا للـcluster؛ لازم كل قاعدة ظاهرة في اللقطة وقابلة للاتصال ترجع `PASS`، ولقطة ما بعد الحلقة تطابق لقطة البداية حرفيًا. ده يشمل `template1`، بينما `template0` تظهر في الجرد لكن لا نتصل بها. أي اتصال فاشل أو اسم غير آمن أو اختلاف في الجرد يوقف البوابة بالكامل. قاعدة `shattab-lab` على PostgreSQL 17 خادم منفصل، مش هتظهر في تعداد خدمة PG18 دي، وما تتصلش بها أو تفحصها ضمن الخطوة.
 
-```bash
-sudo docker compose --env-file /dev/null --project-directory /home/ubuntu/shattab-pg18-stage -f /root/shattab-pg18-stage-tools/compose.3216004984ca41882f0cc59b6e625e4f88da2f08575e484d7167a5b0c783d008.yaml -p shattab-pg18-stage exec -it db psql -X -U shattab_stage_admin -d shattab_stage
-```
+المخرجات تعرض counts ونتائج تحقق آمنة فقط. `PASS` شرط لازم قبل أي تغيير كلمة مرور أو إنشاء ملف سر أو بدء API. `FAIL` أو خطأ في الاستعلام يعني التوقف؛ لا تصلح الاختلاف بإضافة `GRANT` أو `REVOKE` أو `ALTER ROLE` ولا تشغّل ملف إنشاء الدور. لا تنه أي جلسة نشطة. أي اختلاف إداري بين الفحص والخطوة التالية يعيد البوابة من البداية.
 
-قبل الأمر، جهّز كلمة سر عشوائية في مدير أسرار (برنامج موثوق لتوليد كلمات السر وحفظها). لازم تكون بترميز `UTF-8` (ترميز موحد للنصوص) وطولها من 32 إلى 4096 بايت، ومن غير محرف `NUL` أو سطر جديد `LF` أو رجوع عربة `CR`. الطول هنا بالبايت بعد الترميز، مش بعدد الحروف. المساعد سيرفض القيمة خارج الشروط دي؛ لو كلمة مرور الدور اتضبطت بالفعل بقيمة أقصر، مش هينشئ ملف السر، وساعتها وقف وارجع غيّر كلمة المرور من جلسة `psql` تفاعلية بدل ما تخفف الشروط.
+في تشغيل CI رقم `10`، نجح job عقد API، لكن تشغيل CI العام فشل في بوابات أخرى؛ ده مش نجاح كامل للـCI ولا دليل على حالة Oracle الحية.
 
-داخل `psql` نفّذ الأمر ده واكتب السر المجهز مرتين عند المطالبات المخفية؛ `\password` (أمر بيطلب كلمة السر من غير إظهارها وبيحميها من سجل الأوامر ونص SQL) ما يطبعش القيمة. ما تحطش السر في وسيطات أمر (`argv`) أو متغيرات بيئة (`env`) أو نص SQL ظاهر:
+### 6.4 بوابة شروط السر قبل أي كتابة
 
-```text
-\password shattab_api
-```
+القسم ده فحص وتحضير فقط؛ ما تغيّرش كلمة المرور وما تنشئش ملف السر هنا. بعد `PASS` من فحص الدور، اتأكد إن `/home/ubuntu/shattab-pg18-stage/secrets/api_password` مش موجود ولا symlink، وإن مجلد الأسرار مملوك لـ`root:root` ووضعه `0700`. الفحص الآمن: `sudo test ! -e /home/ubuntu/shattab-pg18-stage/secrets/api_password && sudo test ! -L /home/ubuntu/shattab-pg18-stage/secrets/api_password && sudo stat -c '%a %u:%g %n' /home/ubuntu/shattab-pg18-stage/secrets`. لو الملف موجود أو الملكية/الوضع مختلفين، وقف؛ ما تستبدلش الملف وما تغيّرش كلمة المرور قبل مراجعة طريقة الاستعادة. اتأكد كمان إن مفيش مستهلك غير متوقع للدور؛ عدم وجود جلسة حالية مش دليل لوحده على عدم وجود عميل هيتصل لاحقًا.
 
-بعد نجاح `\password`، ما تنشئش ملف السر لسه. هنحدد UID/GID (أرقام هوية المستخدم والمجموعة في Linux) من صورة Node المثبتة وننشئ الملف بعد رفع ملفات المرحلة. لاحقًا المساعد هيطلب نفس السر مرتين إضافيتين في إدخال مخفي للمطابقة، من غير `argv` أو `env` أو طباعة.
+قبل أي كتابة حية، لازم يكون اتثبت في PostgreSQL مؤقت أو CI إن `psql \password` بيشتغل عبر TTY (طرفية تفاعلية) وبيخفي الإدخال. لو الاختبار مش متاح أو المطالبة بتعرض السر، ما تغيّرش كلمة المرور وما تنشئش الملف. جهّز كلمة مرور عشوائية في مدير أسرار موثوق؛ لازم تكون بترميز `UTF-8` (ترميز موحد للنصوص) وطولها من 32 إلى 4096 بايت، ومن غير `NUL` أو سطر جديد `LF` أو رجوع عربة `CR`. الطول محسوب بالبايت بعد الترميز. التغيير الفعلي للسر وإنشاء ملفه موجودين بعد بناء الصورة والتحقق من UID/GID في القسم 6.5 مباشرةً وقبل تشغيل API فقط.
 
 ### 6.5 تجهيز ملفات المرحلة والسر وصورة API
 
-أنشئ مجلد مصدر مستقل وفارغ على السيرفر بعد التأكد إنه مش موجود:
-
-```bash
-sudo -u ubuntu mkdir -m 700 /home/ubuntu/shattab-pg18-stage/api-source
-```
-
-لو المجلد موجود بالفعل، افحصه ولا تكتب فوقه. من `Windows PowerShell` ارفع ملفات بناء API المحددة إلى هذا المجلد، وليس إلى جذر المستودع أو مجلد الأسرار:
+ارفع مصدر البناء من الـworktree المراجع فقط، وليس من الـcheckout الأساسي المتسخ أو من مجلد المشروع كله. قبل النقل من `Windows PowerShell`، تحقق من الرأس ومن عدم وجود تغييرات على ملفات API المتتبعة:
 
 ```powershell
-scp .\api\Dockerfile .\api\package.json .\api\package-lock.json .\api\tsconfig.json .\api\.dockerignore .\api\src\app.ts .\api\src\config.ts .\api\src\database.ts .\api\src\server.ts ubuntu@<SERVER>:/home/ubuntu/shattab-pg18-stage/api-source/
+if ((git rev-parse HEAD).Trim() -ne '483360250627e4fc99a9cd519582e3b7b948fae9') { throw 'Unexpected source revision; stop.' }; git diff --quiet 483360250627e4fc99a9cd519582e3b7b948fae9 -- api; if ($LASTEXITCODE -ne 0) { throw 'Tracked API source changed; stop.' }
 ```
+
+لا تنقل أي ملف غير موجود في القائمة التالية؛ `graphify-out/` ملف محلي غير تابع لمصدر التطبيق ولا يُنقل.
+
+احسب بصمات الملفات محليًا:
+
+```powershell
+$apiFiles = @('.\api\Dockerfile', '.\api\package.json', '.\api\package-lock.json', '.\api\tsconfig.json', '.\api\.dockerignore', '.\api\src\app.ts', '.\api\src\config.ts', '.\api\src\database.ts', '.\api\src\server.ts', '.\api\src\auth\cognito.ts'); Get-FileHash -Algorithm SHA256 -Path $apiFiles | Select-Object Hash, Path
+```
+
+مجلد `api-source` الموجود من التشغيل السابق لا نكتب فوقه. أنشئ مجلد مرشح جديد بالاسم المرتبط بالـcommit، فقط إذا كان الاسم غير موجود:
+
+```bash
+sudo test ! -e /home/ubuntu/shattab-pg18-stage/api-source.candidate-483360250627e4fc99a9cd519582e3b7b948fae9 && sudo test ! -L /home/ubuntu/shattab-pg18-stage/api-source.candidate-483360250627e4fc99a9cd519582e3b7b948fae9 && sudo -u ubuntu mkdir -m 700 /home/ubuntu/shattab-pg18-stage/api-source.candidate-483360250627e4fc99a9cd519582e3b7b948fae9 && sudo -u ubuntu mkdir -m 700 /home/ubuntu/shattab-pg18-stage/api-source.candidate-483360250627e4fc99a9cd519582e3b7b948fae9/src && sudo -u ubuntu mkdir -m 700 /home/ubuntu/shattab-pg18-stage/api-source.candidate-483360250627e4fc99a9cd519582e3b7b948fae9/src/auth
+```
+
+من جذر الـworktree نفسه، ارفع allowlist (قائمة الملفات المسموح نقلها) فقط إلى المجلد المرشح:
+
+```powershell
+scp .\api\Dockerfile .\api\package.json .\api\package-lock.json .\api\tsconfig.json .\api\.dockerignore ubuntu@<SERVER>:/home/ubuntu/shattab-pg18-stage/api-source.candidate-483360250627e4fc99a9cd519582e3b7b948fae9/
+scp .\api\src\app.ts .\api\src\config.ts .\api\src\database.ts .\api\src\server.ts ubuntu@<SERVER>:/home/ubuntu/shattab-pg18-stage/api-source.candidate-483360250627e4fc99a9cd519582e3b7b948fae9/src/
+scp .\api\src\auth\cognito.ts ubuntu@<SERVER>:/home/ubuntu/shattab-pg18-stage/api-source.candidate-483360250627e4fc99a9cd519582e3b7b948fae9/src/auth/
+```
+
+قارن كل بصمات `Get-FileHash` المحلية ببصمات الملفات على السيرفر. لازم كل ملف يطابق؛ أي اختلاف أو ملف ناقص يوقف النقل:
+
+```bash
+sudo sha256sum /home/ubuntu/shattab-pg18-stage/api-source.candidate-483360250627e4fc99a9cd519582e3b7b948fae9/Dockerfile /home/ubuntu/shattab-pg18-stage/api-source.candidate-483360250627e4fc99a9cd519582e3b7b948fae9/package.json /home/ubuntu/shattab-pg18-stage/api-source.candidate-483360250627e4fc99a9cd519582e3b7b948fae9/package-lock.json /home/ubuntu/shattab-pg18-stage/api-source.candidate-483360250627e4fc99a9cd519582e3b7b948fae9/tsconfig.json /home/ubuntu/shattab-pg18-stage/api-source.candidate-483360250627e4fc99a9cd519582e3b7b948fae9/.dockerignore /home/ubuntu/shattab-pg18-stage/api-source.candidate-483360250627e4fc99a9cd519582e3b7b948fae9/src/app.ts /home/ubuntu/shattab-pg18-stage/api-source.candidate-483360250627e4fc99a9cd519582e3b7b948fae9/src/config.ts /home/ubuntu/shattab-pg18-stage/api-source.candidate-483360250627e4fc99a9cd519582e3b7b948fae9/src/database.ts /home/ubuntu/shattab-pg18-stage/api-source.candidate-483360250627e4fc99a9cd519582e3b7b948fae9/src/server.ts /home/ubuntu/shattab-pg18-stage/api-source.candidate-483360250627e4fc99a9cd519582e3b7b948fae9/src/auth/cognito.ts
+```
+
+بعد التطابق فقط، احفظ المصدر القديم باسم نسخة احتياطية جديدة من غير استبدال، ثم انقل المرشح إلى `api-source` الذي يستخدمه Compose. لو اسم النسخة الاحتياطية موجود أو أي مجلد غير متوقع، توقّف ولا تنفذ النقل. لو نقل المرشح فشل بعد حفظ المصدر القديم، لا تحذف أي مجلد؛ بعد فحص أن `api-source` غير موجود وأن backup هو المصدر القديم فقط، أعده بأمر `sudo test ! -e /home/ubuntu/shattab-pg18-stage/api-source && sudo mv -T /home/ubuntu/shattab-pg18-stage/api-source.previous-483360250627e4fc99a9cd519582e3b7b948fae9 /home/ubuntu/shattab-pg18-stage/api-source`:
+
+```bash
+sudo test -d /home/ubuntu/shattab-pg18-stage/api-source && sudo test ! -L /home/ubuntu/shattab-pg18-stage/api-source && sudo test ! -e /home/ubuntu/shattab-pg18-stage/api-source.previous-483360250627e4fc99a9cd519582e3b7b948fae9 && sudo test ! -L /home/ubuntu/shattab-pg18-stage/api-source.previous-483360250627e4fc99a9cd519582e3b7b948fae9 && sudo mv -T /home/ubuntu/shattab-pg18-stage/api-source /home/ubuntu/shattab-pg18-stage/api-source.previous-483360250627e4fc99a9cd519582e3b7b948fae9 && sudo mv -T /home/ubuntu/shattab-pg18-stage/api-source.candidate-483360250627e4fc99a9cd519582e3b7b948fae9 /home/ubuntu/shattab-pg18-stage/api-source
+```
+
+احتفظ بالنسخة القديمة ولا تمسحها. ملفات Compose والأدوات تفضل في مجلدها المحمي؛ لا ترفع ملف Compose أو تستبدل snapshot ضمن هذه الخطوة.
 
 خطوات القسم 2 ترفع `create_api_secret.py` وملف Compose المرشح، وتقارن بصمات الأدوات والـCompose قبل الاستخدام. ملف Compose الموثوق موجود في `/root/shattab-pg18-stage-tools/`؛ ارفع أي نسخة جديدة باسم مرشح مؤقت، ولا تشغّل Compose من `/home/ubuntu`.
 
@@ -254,27 +309,17 @@ sudo test ! -e /root/shattab-pg18-stage-tools/compose.<NEW_SHA256>.yaml && sudo 
 
 قارن بصمة `sha256sum` بالبصمة المحلية قبل أي استخدام. لو الملف موجود، افحص النوع والمالك والوضع والبصمة وأعد استخدامه فقط لو كلها مطابقة؛ غير كده وقف. بعد المراجعة وتثبيت الملف الجديد، غيّر ثابت `COMPOSE_FILE` في نسخة `verify.py` الجديدة وكل قيم `-f` في الدليل للبصمة الجديدة. ثبّت نسخة verifier الجديدة في اسم root-only جديد بعد مقارنة بصمتها، وسيب الـsnapshot والـverifier القديمين زي ما هم.
 
-أولًا افحص UID/GID من صورة Node الأساسية المثبتة بنفس `digest` (بصمة محتوى ثابتة) الموجودة في Dockerfile. الأمر ده قد ينزّل الصورة لو مش موجودة محليًا، لكنه ما يشغّلش خدمة دائمة ولا يفتح منفذ:
+أولًا افحص UID/GID من صورة Node الأساسية المثبتة بنفس `digest` (بصمة محتوى ثابتة) الموجودة في Dockerfile. الأمر ده قد ينزّل الصورة لو مش موجودة محليًا، لكنه ما يشغّليش خدمة دائمة ولا يفتح منفذ:
 
 ```bash
 sudo docker run --rm --entrypoint id node:24.22.1-bookworm-slim@sha256:55fb5f5a527ea2c5c4a95f963e48ef90aa38c7b346054fdc8ee9957a2b55d205 node
 ```
 
-اقرأ من النتيجة رقم `uid` ورقم `gid` للمستخدم `node`. لازم `uid` يكون غير صفر. ما تفترضش إن الأرقام `1000:1000`؛ استخدم القيم اللي ظهرت فعلًا.
+اقرأ رقم `uid` ورقم `gid` في النتيجة، ولا تفترض إنهم `1000:1000`. سجّل الرقمين للمقارنة فقط؛ ما تغيّرش كلمة المرور أو تنشئ ملف السر لسه.
 
 خطوات الـbootstrap في القسم 2 تنشئ مجلد الأسرار لو مش موجود وتتحقق إن وضعه `0700` وملكيته `root`. لا تصلّح المسارات يدويًا باستخدام `chown` أو `chmod`؛ عند أي اختلاف، وقف للمراجعة. `Docker daemon` (خدمة Docker اللي بتشغّل الحاويات بصلاحية النظام) يقرأ الملف عند تشغيل Compose بـ`sudo`.
 
-المساعد المثبّت في `/root/shattab-pg18-stage-tools/create_api_secret.py` يثبت مجلد المرحلة ومجلد الأسرار بأوصاف ملفات مفتوحة ويفحصهما عبر `fstat`. قبل طلب السر، يفحص غياب الملف باستخدام `dir_fd` (مرجع لمجلد مفتوح)؛ أي ملف أو رابط موجود يوقف العملية من غير `overwrite` (كتابة فوق الموجود). `getpass` (إدخال تفاعلي ما بيعرضش الأحرف) يطلب السر مرتين للمطابقة، والمساعد يرفض الطرفية غير التفاعلية أو طول/ترميز/محارف غير مسموحة، يكتب ملفًا مؤقتًا بصلاحية خاصة، ثم ينشره نسبةً لوصف المجلد المثبّت ومن غير استبدال ملف موجود. لو فشل حذف الملف المؤقت، هيرجع خطأ واضح إن السر قد يكون نُشر وإن ملفًا مؤقتًا ممكن يفضل؛ افحص الحالة يدويًا قبل أي إعادة محاولة. الأخطاء لا تطبع قيمة السر:
-
-```bash
-sudo python3 /root/shattab-pg18-stage-tools/create_api_secret.py --node-uid 1000 --node-gid 1000
-```
-
-الأرقام في مثال المساعد مجرد مثال؛ استبدلها بالـ UID/GID اللذين أظهرهما أمر `id` قبل التنفيذ. المساعد ينشئ `/home/ubuntu/shattab-pg18-stage/secrets/api_password` بمالك `root` ومجموعة GID الخاصة بـ`node`، يعني `root:<process-gid>`، ووضع `0440` (قراءة للمالك والمجموعة فقط). لا يغير ملفات الأسرار الموجودة. المساعد يراجع metadata (بيانات النوع والملكية والصلاحيات) على الأوصاف المثبّتة من غير قراءة محتوى السر أو عرضه.
-
-المتوقع `700` للمجلدين و`440 0:<GID>` لملف السر، حيث `<GID>` هو نفس الرقم المتحقق منه. لو فشل المساعد أو ظهر ملف جزئي/موجود، سيب الحالة زي ما هي ووقف للمراجعة؛ ما تمسحش الملف وما تعيدش إنشاءه تلقائيًا. الملف مش مشفر على قرص السيرفر؛ مدير السيرفر وDocker يقدروا يقرؤوه.
-
-بعد وجود السر، افحص إعداد Compose بصمت. لازم نجاحه من غير output؛ أي خطأ يوقف البناء:
+افحص إعداد Compose بصمت قبل البناء. لازم نجاحه من غير output؛ أي خطأ يوقف الخطوات:
 
 ```bash
 cd /home/ubuntu/shattab-pg18-stage && sudo docker compose --env-file /dev/null --project-directory /home/ubuntu/shattab-pg18-stage -f /root/shattab-pg18-stage-tools/compose.3216004984ca41882f0cc59b6e625e4f88da2f08575e484d7167a5b0c783d008.yaml -p shattab-pg18-stage config --quiet
@@ -286,21 +331,73 @@ cd /home/ubuntu/shattab-pg18-stage && sudo docker compose --env-file /dev/null -
 sudo docker compose --env-file /dev/null --project-directory /home/ubuntu/shattab-pg18-stage -f /root/shattab-pg18-stage-tools/compose.3216004984ca41882f0cc59b6e625e4f88da2f08575e484d7167a5b0c783d008.yaml -p shattab-pg18-stage build api
 ```
 
-البناء يحتاج اتصالًا لتنزيل صور Node/حزم npm وقد يستهلك مساحة وبيانات نقل. لا يفتح منفذًا ولا ينشئ جداول. بعد البناء، أعد فحص UID/GID للمستخدم داخل صورة API المكتملة:
+البناء يحتاج اتصالًا لتنزيل صور Node/حزم npm وقد يستهلك مساحة وبيانات نقل. لا يفتح منفذًا ولا ينشئ جداول. بعد البناء، افحص UID/GID للمستخدم داخل صورة API النهائية:
 
 ```bash
 sudo docker run --rm --entrypoint id shattab-api:stage node
 ```
 
-لازم UID/GID يطابقوا القيم اللي تحققت منها في صورة Node الأساسية قبل إنشاء السر. لو اختلفوا، ما تشغّلش الخدمة وما توسعش الصلاحيات؛ أوقف وراجع سبب اختلاف الصورة أو البناء.
-
-بعد تطابق الهوية، شغّل API فقط:
+لازم UID/GID يطابقوا الرقمين اللي سجّلتهم من صورة Node الأساسية، والـUID يفضل غير صفر. لو اختلفوا أو مش واضحين، ما تغيّرش كلمة المرور وما تنشئش السر وما تشغّلش الخدمة؛ راجع مصدر الاختلاف الأول. حضّر متغيرات shell من الصورة النهائية الآن، قبل أي تغيير لكلمة المرور:
 
 ```bash
-sudo docker compose --env-file /dev/null --project-directory /home/ubuntu/shattab-pg18-stage -f /root/shattab-pg18-stage-tools/compose.3216004984ca41882f0cc59b6e625e4f88da2f08575e484d7167a5b0c783d008.yaml -p shattab-pg18-stage up -d api
+NODE_UID=$(sudo docker run --rm --entrypoint id shattab-api:stage -u node) && NODE_GID=$(sudo docker run --rm --entrypoint id shattab-api:stage -g node) && test -n "$NODE_UID" && test -n "$NODE_GID" && test "$NODE_UID" -gt 0 && printf 'verified node uid=%s gid=%s\n' "$NODE_UID" "$NODE_GID"
 ```
 
-`up -d api` يربط API بالشبكة الداخلية ويستخدم `depends_on` للتأكد إن قاعدة البيانات `healthy`. مفيش `ports` في الخدمة؛ عنوان `0.0.0.0:3000` جوه الحاوية مش ظاهر مباشرة من الإنترنت.
+خلي جلسة SSH نفسها مفتوحة عشان قيم `NODE_UID` و`NODE_GID` تفضل متاحة للمساعد بعد تغيير كلمة المرور. لو خرجت من الجلسة، أعد فحوص هوية الصورة وحضّر المتغيرات من جديد قبل أي كتابة.
+
+قبل أي تغيير للسر أو إنشاء ملفه، تأكد إن قاعدة المرحلة `db` بالحالة `healthy` باستخدام ملف Compose المحمي:
+
+```bash
+sudo docker compose --env-file /dev/null --project-directory /home/ubuntu/shattab-pg18-stage -f /root/shattab-pg18-stage-tools/compose.3216004984ca41882f0cc59b6e625e4f88da2f08575e484d7167a5b0c783d008.yaml -p shattab-pg18-stage ps db
+```
+
+لازم الحالة الظاهرة تكون `healthy`. لو الحالة مختلفة أو الأمر فشل، وقف من غير تغيير السر. أعد الفحص قبل تشغيل API كمان.
+
+**بعد نجاح كل فحوص المصدر والبناء والهوية وCompose وصحة قاعدة البيانات فقط، وقبل تشغيل API مباشرةً، غيّر كلمة المرور وأنشئ ملفها.** افحص تاني إن الملف مش موجود ولا symlink وإن مجلد الأسرار يطابق `root:root` و`0700` حسب القسم 6.4. لو ظهرت حالة مختلفة، توقف.
+
+قبل كتابة كلمة المرور مباشرةً، خُد inventory snapshot جديدًا من `postgres` وقارنه باللقطة السابقة. بعد نجاح المقارنة، أعد تشغيل `validate_database_inventory` و`run_catalog_guard_for_snapshot` على كل قاعدة `datallowconn=true`؛ ده يعيد فحص ACLs والمالك والصلاحيات الفعالة و`pg_default_acl` وحالة الدور، فيكشف تغيير ACL أو role حتى لو أسماء القواعد وحالة الاتصال ما اتغيرتش. بعد الفحص الكامل، خُد snapshot أخيرًا وقارنه باللقطة الجديدة؛ يفتح الأمر التفاعلي التالي فقط لو كل الفحوص نجحت. بعد فتح `psql` اكتب `\password shattab_api`. لو الجلسة اتقفلت أو المتغيرات مش موجودة، أعد الحلقة الأولى كاملة في جلسة جديدة ولا تنفذ الأمر:
+
+```bash
+DB_SNAPSHOT_BEFORE_PASSWORD=$("${COMPOSE[@]}" exec -T db psql -X -A -t -v ON_ERROR_STOP=1 -U shattab_stage_admin -d postgres -c "$DB_INVENTORY_SQL") && test -n "$DB_SNAPSHOT_BEFORE_PASSWORD" && test "$DB_SNAPSHOT_BEFORE_PASSWORD" = "$DB_SNAPSHOT_INITIAL" || { printf 'FAIL: PostgreSQL database inventory changed before password write; restart the full guard.\n' >&2; exit 1; }
+validate_database_inventory "$DB_SNAPSHOT_BEFORE_PASSWORD" || { printf 'FAIL: invalid PostgreSQL database inventory before password write; stop.\n' >&2; exit 1; }
+run_catalog_guard_for_snapshot "$DB_SNAPSHOT_BEFORE_PASSWORD" || { printf 'FAIL: a pre-password database catalog guard failed; stop.\n' >&2; exit 1; }
+DB_SNAPSHOT_AFTER_PASSWORD_GUARD=$("${COMPOSE[@]}" exec -T db psql -X -A -t -v ON_ERROR_STOP=1 -U shattab_stage_admin -d postgres -c "$DB_INVENTORY_SQL")
+test "$DB_SNAPSHOT_AFTER_PASSWORD_GUARD" = "$DB_SNAPSHOT_BEFORE_PASSWORD" || { printf 'FAIL: PostgreSQL database inventory changed during the pre-password guard; restart the full guard.\n' >&2; exit 1; }
+```
+
+افتح جلسة تفاعلية على قاعدة المرحلة:
+
+```bash
+sudo docker compose --env-file /dev/null --project-directory /home/ubuntu/shattab-pg18-stage -f /root/shattab-pg18-stage-tools/compose.3216004984ca41882f0cc59b6e625e4f88da2f08575e484d7167a5b0c783d008.yaml -p shattab-pg18-stage exec -it db psql -X -U shattab_stage_admin -d shattab_stage
+```
+
+داخل `psql` نفّذ الأمر التالي، واكتب السر العشوائي الجاهز مرتين في المطالبتين المخفيتين:
+
+```text
+\password shattab_api
+```
+
+`\password` يغيّر كلمة مرور الدور عبر prompt مخفي، من غير إدخالها في `argv` (وسائط سطر الأوامر) أو `env` (متغيرات البيئة) أو SQL ظاهر أو سجل shell. هو لا ينشئ الدور ولا يغيّر grants أو role attributes. بعد نجاحه، اخرج من `psql` ولا تنشئ ملف السر يدويًا.
+
+المساعد المثبّت في `/root/shattab-pg18-stage-tools/create_api_secret.py` يثبت مجلد المرحلة ومجلد الأسرار بأوصاف ملفات مفتوحة ويفحصهما عبر `fstat`. قبل طلب السر، يفحص غياب الملف باستخدام `dir_fd` (مرجع لمجلد مفتوح)؛ أي ملف أو رابط موجود يوقف العملية من غير `overwrite` (كتابة فوق الموجود). `getpass` (إدخال تفاعلي ما بيعرضش الأحرف) يطلب السر مرتين للمطابقة، والمساعد يرفض الطرفية غير التفاعلية أو طول/ترميز/محارف غير مسموحة، يكتب ملفًا مؤقتًا بصلاحية خاصة، ثم ينشره نسبةً لوصف المجلد المثبّت ومن غير استبدال ملف موجود. لو فشل حذف الملف المؤقت، هيرجع خطأ واضح إن السر قد يكون نُشر وإن ملفًا مؤقتًا ممكن يفضل؛ افحص الحالة يدويًا قبل أي إعادة محاولة. الأخطاء لا تطبع قيمة السر.
+
+استخدم متغيرات `NODE_UID` و`NODE_GID` اللي حضرتها من الصورة النهائية قبل تغيير كلمة المرور؛ مفيش قيم افتراضية أو `1000:1000`. نفّذ المساعد من نفس جلسة SSH:
+
+```bash
+sudo python3 /root/shattab-pg18-stage-tools/create_api_secret.py --node-uid "$NODE_UID" --node-gid "$NODE_GID"
+```
+
+لو المتغيرين مش موجودين أو فحص الهوية فشل، ما تنفذش الأمر بقيم ثابتة؛ ارجع لفحوص الصورة قبل أي كتابة أخرى. المساعد ينشئ `/home/ubuntu/shattab-pg18-stage/secrets/api_password` بمالك `root` ومجموعة GID الخاصة بـ`node`، يعني `root:<process-gid>`، ووضع `0440` (قراءة للمالك والمجموعة فقط). لا يغير ملفات الأسرار الموجودة. المساعد يراجع metadata (بيانات النوع والملكية والصلاحيات) على الأوصاف المثبّتة من غير قراءة محتوى السر أو عرضه. المتوقع `700` للمجلدين و`440 0:<GID>` لملف السر. لو فشل المساعد أو ظهر ملف جزئي/موجود، سيب الحالة زي ما هي ووقف للمراجعة؛ ما تمسحش الملف وما تعيدش إنشاءه تلقائيًا. الملف مش مشفر على قرص السيرفر؛ مدير السيرفر وDocker يقدروا يقرؤوه.
+
+بعد إنشاء الملف، أعد `config --quiet` بصمت قبل التشغيل؛ لازم ينجح من غير output. لو فشل، ما تشغّلش API؛ ما تحذفش السر أو تغيّر كلمة المرور تلقائيًا، وافحص السبب وخطة الاستعادة.
+
+قبل التشغيل، تأكد إن خدمة `db` ظاهرة `healthy` في `docker compose ps db`؛ لو مش سليمة توقّف. بعد تطابق الهوية ونجاح فحص السر، شغّل API وحدها من غير إعادة تشغيل قاعدة البيانات:
+
+```bash
+sudo docker compose --env-file /dev/null --project-directory /home/ubuntu/shattab-pg18-stage -f /root/shattab-pg18-stage-tools/compose.3216004984ca41882f0cc59b6e625e4f88da2f08575e484d7167a5b0c783d008.yaml -p shattab-pg18-stage up -d --no-deps api
+```
+
+`--no-deps` يمنع Compose من لمس خدمة قاعدة البيانات؛ لذلك لازم تتأكد من `healthy` قبل الأمر. API تتصل بقاعدة المرحلة عبر الشبكة الداخلية فقط، ومفيش `ports` منشورة. لو فشل التشغيل، استخدم `stop api` في القسم 6.6؛ ما توقفش قاعدة البيانات وما تحذفش الـvolume أو السر.
 
 ### 6.6 تحقق من الحالة والصلاحيات والتراجع
 

@@ -29,6 +29,7 @@ PACKAGE = API / "package.json"
 LOCKFILE = API / "package-lock.json"
 PREFLIGHT = STAGE / "preflight_api_role.sql"
 ROLE_SQL = STAGE / "create_api_role.sql"
+INSPECT_SQL = STAGE / "inspect_existing_api_role.sql"
 VERIFY = STAGE / "verify.py"
 STAGE_README = STAGE / "README.md"
 SECRET_HELPER = STAGE / "create_api_secret.py"
@@ -319,6 +320,135 @@ class ApiStageContractTests(unittest.TestCase):
             r"acldefault\(\s*\(CASE WHEN c\.relkind = 'S' THEN 's' ELSE 'r' END\)::\"char\",\s*c\.relowner\s*\)",
         )
 
+    def test_existing_role_guard_is_read_only_and_checks_all_cluster_databases(self) -> None:
+        sql = re.sub(r"(?m)^\s*--.*$", "", INSPECT_SQL.read_text(encoding="utf-8"))
+        sql_without_psql_meta = "\n".join(
+            line for line in sql.splitlines() if not line.lstrip().startswith("\\")
+        )
+        forbidden = re.compile(
+            r"(?im)^\s*(CREATE|ALTER|DROP|GRANT|REVOKE|INSERT|UPDATE|DELETE|TRUNCATE|COPY|CALL)\b",
+            re.IGNORECASE,
+        )
+        self.assertIsNone(forbidden.search(sql_without_psql_meta))
+        cluster_state = re.search(
+            r"cluster_database_state AS \((.*?)\), cluster_database_summary AS",
+            sql,
+            flags=re.DOTALL,
+        )
+        self.assertIsNotNone(cluster_state)
+        assert cluster_state is not None
+        self.assertIn("FROM pg_database d", cluster_state.group(1))
+        self.assertNotRegex(cluster_state.group(1), r"\bWHERE\b")
+        for expected in (
+            "BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY",
+            "FROM pg_database d",
+            "d.datistemplate",
+            "database_acl_by_database",
+            "public_connect_count <> 1",
+            "public_temporary_count <> CASE WHEN datistemplate THEN 0 ELSE 1 END",
+            "x.grantor <> d.datdba",
+            "stage_database_owner_count = 1",
+            "api_owned_database_count = 0",
+            "template0_count = 1",
+            "template0_closed_count = 1",
+            "template1_count = 1",
+            "template1_connectable_count = 1",
+            "unexpected_closed_database_count = 0",
+            "regular_database_count",
+            "api_direct_database_acl_count = 0",
+            "cluster_database_create_count = 0",
+            "public_temporary_count = regular_database_count",
+            "cluster_database_temporary_count = regular_database_count",
+            "current_database_is_template",
+            "NOT database_temporary",
+            "has_database_privilege(r.oid, d.oid, 'CONNECT')",
+            "has_database_privilege(r.oid, d.oid, 'TEMPORARY')",
+            "has_database_privilege(r.oid, d.oid, 'CREATE')",
+            "nonbaseline_public_connect_database_count = 0",
+            "nonbaseline_public_temporary_database_count = 0",
+            "pg_default_acl",
+            r"\quit 1",
+        ):
+            self.assertIn(expected, sql)
+        readme = STAGE_README.read_text(encoding="utf-8")
+        self.assertIn("لكل صف في `pg_database`", readme)
+        self.assertIn("`CONNECT`", readme)
+        self.assertIn("`TEMPORARY`", readme)
+        self.assertIn("baseline `PUBLIC CONNECT`", readme)
+        self.assertIn("`PUBLIC TEMPORARY`", readme)
+        self.assertIn("`initdb`", readme)
+        self.assertIn("يسحب `CREATE` و`TEMPORARY`", readme)
+        self.assertIn("قاعدة `datallowconn=true`", readme)
+        self.assertIn("template1", readme)
+        self.assertIn("template0", readme)
+        self.assertIn("DB_SNAPSHOT_INITIAL", readme)
+        self.assertIn("DB_SNAPSHOT_AFTER", readme)
+        self.assertIn("DB_SNAPSHOT_BEFORE_PASSWORD", readme)
+        self.assertIn(
+            "SELECT datname || '|' || datallowconn::text || '|' || datistemplate::text FROM pg_database ORDER BY datname;",
+            readme,
+        )
+        guard_function_start = readme.index("run_catalog_guard_for_snapshot() {")
+        guard_function_end = readme.index("\n}", guard_function_start)
+        guard_function = readme[guard_function_start:guard_function_end]
+        self.assertIn("while IFS='|' read -r db_name allow_connections is_template; do", guard_function)
+        self.assertIn('if [ "$allow_connections" != "true" ]; then', guard_function)
+        self.assertIn('test "$db_name" = "template0"', guard_function)
+        self.assertIn('"${COMPOSE[@]}" exec -T db psql', guard_function)
+        self.assertIn('-d "$db_name"', guard_function)
+        self.assertIn('done <<< "$snapshot"', guard_function)
+        initial_guard = readme.index('run_catalog_guard_for_snapshot "$DB_SNAPSHOT_INITIAL"')
+        post_loop_snapshot = readme.index("DB_SNAPSHOT_AFTER=")
+        password_recheck = readme.index("DB_SNAPSHOT_BEFORE_PASSWORD=")
+        password_guard = readme.index(
+            'run_catalog_guard_for_snapshot "$DB_SNAPSHOT_BEFORE_PASSWORD"',
+            password_recheck,
+        )
+        final_password_snapshot = readme.index("DB_SNAPSHOT_AFTER_PASSWORD_GUARD=", password_guard)
+        password_write = readme.index(r"\password shattab_api", final_password_snapshot)
+        self.assertLess(guard_function_end, initial_guard)
+        self.assertLess(initial_guard, post_loop_snapshot)
+        self.assertLess(post_loop_snapshot, password_recheck)
+        self.assertLess(password_recheck, password_guard)
+        self.assertLess(password_guard, final_password_snapshot)
+        self.assertLess(final_password_snapshot, password_write)
+        role_tests = (STAGE / "test_api_role_postgres18.py").read_text(encoding="utf-8")
+        parsed_role_tests = ast.parse(role_tests)
+        methods = {
+            node.name: ast.get_source_segment(role_tests, node)
+            for node in ast.walk(parsed_role_tests)
+            if isinstance(node, ast.FunctionDef)
+        }
+        role_drift = methods["test_role_only_change_between_catalog_passes_fails_with_unchanged_inventory"]
+        self.assertIsNotNone(role_drift)
+        assert role_drift is not None
+        role_baseline_pass = role_drift.index("assert_ok(self, self.run_existing_role_guard(database))")
+        role_mutation = role_drift.index("ALTER ROLE shattab_api CONNECTION LIMIT 4;")
+        role_same_inventory = role_drift.index("self.assertEqual(self.database_inventory(), inventory)")
+        role_failed_second_pass = role_drift.index('self.run_existing_role_guard("shattab_stage")')
+        self.assertLess(role_baseline_pass, role_mutation)
+        self.assertLess(role_mutation, role_same_inventory)
+        self.assertLess(role_same_inventory, role_failed_second_pass)
+        self.assertGreaterEqual(role_drift.count("self.assertEqual(self.database_inventory(), inventory)"), 2)
+
+        acl_drift = methods["test_template1_public_temporary_grant_fails_with_unchanged_inventory"]
+        self.assertIsNotNone(acl_drift)
+        assert acl_drift is not None
+        acl_baseline_pass = acl_drift.index("assert_ok(self, self.run_existing_role_guard(database))")
+        acl_mutation = acl_drift.index("GRANT TEMPORARY ON DATABASE template1 TO PUBLIC;")
+        acl_same_inventory = acl_drift.index("self.assertEqual(self.database_inventory(), inventory)", acl_mutation)
+        acl_failed_second_pass = acl_drift.index("result = self.run_existing_role_guard(database)", acl_mutation)
+        acl_cleanup = acl_drift.index("REVOKE TEMPORARY ON DATABASE template1 FROM PUBLIC;")
+        acl_restored_guard = acl_drift.index("assert_ok(self, self.run_existing_role_guard(database))", acl_cleanup)
+        self.assertLess(acl_baseline_pass, acl_mutation)
+        self.assertLess(acl_mutation, acl_same_inventory)
+        self.assertLess(acl_same_inventory, acl_failed_second_pass)
+        self.assertLess(acl_failed_second_pass, acl_cleanup)
+        self.assertLess(acl_cleanup, acl_restored_guard)
+        self.assertIn("self.assertEqual(self.database_inventory(), inventory)", acl_drift[acl_failed_second_pass:acl_cleanup])
+        self.assertNotIn("WHERE NOT datistemplate", readme)
+        self.assertIn("PostgreSQL 17 خادم منفصل", readme)
+
     def test_role_creation_is_guarded_and_does_not_embed_a_password(self) -> None:
         sql = ROLE_SQL.read_text(encoding="utf-8")
         for expected in (
@@ -406,16 +536,16 @@ class ApiStageContractTests(unittest.TestCase):
         self.assertIn("temporary file may remain", secret_helper)
         self.assertIn("cleanup_failed", secret_helper)
         self.assertIn("test ! -e", readme)
-        self.assertIn("ما تفترضش إن الأرقام `1000:1000`", readme)
+        self.assertIn("ولا تفترض إنهم `1000:1000`", readme)
         self.assertIn(
             "sudo python3 /root/shattab-pg18-stage-tools/create_api_secret.py "
             "--bootstrap-postgres-password",
             readme,
         )
         self.assertIn("ما تستخدمش shell redirection أو `chown`/`chmod` على مسارات الأسرار", readme)
-        self.assertIn("بعد تطابق الهوية، شغّل API فقط", readme)
+        self.assertIn("بعد تطابق الهوية ونجاح فحص السر، شغّل API وحدها", readme)
         self.assertIn("node:24.22.1-bookworm-slim@sha256:", readme)
-        self.assertIn("صورة API المكتملة", readme)
+        self.assertIn("صورة API النهائية", readme)
         password_preparation = readme.index("لازم تكون بترميز `UTF-8`")
         role_password_prompt = readme.index(r"\password shattab_api")
         self.assertLess(password_preparation, role_password_prompt)
@@ -524,8 +654,25 @@ class ApiStageContractTests(unittest.TestCase):
             "test_start_timeout_removes_only_the_prevalidated_container_id",
             "test_start_timeout_with_changed_owner_token_leaves_container_untouched",
             "test_unexpected_public_database_privilege_fails_both_guards",
+            "test_existing_role_guard_passes_for_every_connectable_database_including_template1",
+            "test_template1_direct_create_grant_fails_cluster_guard",
+            "test_template1_public_temporary_grant_fails_with_unchanged_inventory",
+            "test_role_only_change_between_catalog_passes_fails_with_unchanged_inventory",
+            "test_template0_must_remain_closed_and_is_restored_in_finally",
+            "test_second_database_direct_api_grant_fails_cluster_guard",
+            "test_second_database_api_ownership_fails_cluster_guard",
+            "test_second_database_api_create_privilege_fails_cluster_guard",
+            "test_second_database_extra_public_acl_fails_cluster_guard",
+            "test_password_prompt_is_tty_and_never_echoes_synthetic_sentinel",
+            "psql_password_prompt_with_tty",
+            "pty.openpty()",
+            '"exec",\n                    "-it"',
+            "Enter new password",
+            "Enter it again",
+            "synthetic password sentinel appeared in TTY output; captured bytes are withheld",
         ):
             self.assertIn(expected, role_test)
+        self.assertIn("PostgreSQL 17 خادم منفصل", STAGE_README.read_text(encoding="utf-8"))
         self.assertIn("api-stage-contracts:", workflow)
         self.assertIn("test_api_role_postgres18.py", workflow)
         self.assertNotIn("POSTGRES_CONTAINER_ID", role_test)
