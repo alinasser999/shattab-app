@@ -132,7 +132,7 @@ jobs:
       # Run each checked-in suite in its own CLI invocation so every result is
       # visible. Continue through all suites, then fail the step if any failed.
       # The disposable negative control proves that a failing TAP assertion
-      # produces both the expected TAP line and a nonzero CLI status.
+      # produces its failure summary and a nonzero CLI status.
       - name: Run database regression suites and verify TAP failure propagation
         shell: bash
         run: |
@@ -191,10 +191,10 @@ jobs:
           if [[ "$probe_status" -eq 0 ]]; then
             echo "::error::Failure propagation probe unexpectedly exited with status 0"
             suite_failures=1
-          elif grep -Fq 'not ok 1 - failure propagation probe' "$probe_output"; then
-            echo "PASS: failure probe emitted its expected not ok assertion and exited $probe_status"
+          elif grep -Fq '# Failed test 1: "failure propagation probe"' "$probe_output" && grep -Fq 'Result: FAIL' "$probe_output"; then
+            echo "PASS: failure probe emitted the expected failure summary and exited $probe_status"
           else
-            echo "::error::Failure probe exited $probe_status without the expected TAP assertion"
+            echo "::error::Failure probe exited $probe_status without the expected failure summary"
             suite_failures=1
           fi
 

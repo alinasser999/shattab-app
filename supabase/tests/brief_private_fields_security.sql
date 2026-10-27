@@ -132,6 +132,9 @@ select ok(
   'private brief fields force row-level security'
 );
 
+-- Keep auth off search_path so pg_policies deparses auth.uid() with its schema name.
+SET LOCAL search_path = pg_catalog, extensions, public, storage, pg_temp;
+
 select ok(
   exists (
     select 1
@@ -148,6 +151,7 @@ select ok(
   ),
   'private table policy scopes both access and writes to the authenticated homeowner owner'
 );
+SET LOCAL search_path = pg_catalog, extensions, public, auth, storage, pg_temp;
 
 select ok(
   not has_table_privilege('anon', 'public.brief_private_fields', 'SELECT')
