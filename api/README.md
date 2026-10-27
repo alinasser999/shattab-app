@@ -1,11 +1,12 @@
-# Shattab API foundation — local only, NOT DEPLOYED
+# Shattab API foundation — Oracle stage health service, NOT PRODUCTION
 
-This package is a local-only Node.js service skeleton for the future Shattab
-backend. It currently exposes liveness and readiness checks and verifies a
-PostgreSQL connection before opening its HTTP listener. It has no Shattab
-feature routes and is not connected to the mobile app, admin console, Supabase,
-an identity provider, object storage, or push notifications. It is not deployed
-and is not production-ready.
+This package is a Node.js service skeleton for the future Shattab backend. As
+verified on 2026-10-27, its health-only container is running on the Oracle
+staging server on an internal Docker network. It exposes liveness and readiness
+checks and verifies a PostgreSQL connection before opening its HTTP listener.
+It has no Shattab feature routes and is not connected to the mobile app, admin
+console, Supabase, an identity provider, object storage, or push notifications.
+It is not a production deployment and is not production-ready.
 
 ## Requirements
 
@@ -63,15 +64,16 @@ unreadable, empty, invalid UTF-8, NUL-containing, or oversized files stop
 startup. The API never logs the password, file path, or raw
 filesystem/database errors.
 
-The container image runs as the non-root `node` user. The PostgreSQL 18 stage
-Compose configuration declares a separate file-backed `api_password` mount,
-but the file has not been created and no container has been started. On Linux,
-file-backed Compose secrets use bind mounts: Compose does not remap host
-ownership or mode from `uid`, `gid`, or `mode` options. The staging runbook
-therefore requires the actual host file to remain protected by its parent
-directory and to be readable by the pinned image's actual `node` UID/GID. It
-also requires checking the live mount metadata for read-only status and testing
-readability as the non-root process without printing file contents.
+The container image runs as the non-root `node` user. On 2026-10-27, the Oracle
+stage secret was created at `/root/shattab-pg18-stage-tools/secrets/api_password`
+with owner `root`, group `1000`, and mode `0440`; Compose mounts it at
+`/run/secrets/api_password` as read-only. The API container was observed
+`running` and `healthy`, both health endpoints returned HTTP `200`, and the
+database showed one idle `shattab_api` session. The container has no published
+host port. On Linux, file-backed Compose secrets use bind mounts: Compose does
+not remap host ownership or mode from `uid`, `gid`, or `mode` options. The
+staging runbook records the required host permissions and safe metadata checks;
+never print the secret file contents.
 
 ## Startup and health checks
 
@@ -125,26 +127,25 @@ listen without them. Its previous `up` and HTTP health-check commands are no
 longer a valid smoke path; do not use them to claim the database-backed API is
 healthy. The Dockerfile and package engine metadata were updated for the pinned
 Node 24.22.1 runtime. The old smoke Compose file remains stale. The separate
-`infra/postgres18-stage/compose.yaml` is local/planned staging configuration;
-it has not been copied to Oracle, built, or run there.
+`infra/postgres18-stage/compose.yaml` is the checked-in source for the stage
+configuration. A protected, root-owned Compose snapshot derived from that
+source and the ARM64 API image are currently running on Oracle stage; the exact
+host checks and limits are recorded in `infra/postgres18-stage/README.md`.
 
-The planned integration lives only in `infra/postgres18-stage/compose.yaml`.
-Its API joins the existing internal `db_internal` network, waits for the
+The stage API joins the internal `db_internal` network, waits for the
 PostgreSQL healthcheck, and runs with bounded resources, a read-only root
 filesystem, no Linux capabilities, and no host port mapping. The endpoint binds
 to `0.0.0.0` only inside that private container network; this does not publish
 port 3000 on the VPS. The API remains health-only and its only database query
 is still `SELECT 1`.
 
-The local Docker Engine was unavailable during the task audit at
-`npipe:////./pipe/dockerDesktopLinuxEngine` (`The system cannot find the file
-specified.`). The Oracle PostgreSQL 18.6 staging database was observed stopped
-and its current catalog/grants remain unknown. No API role or API secret has
-been created, no API image has been built, and no stage service has been
-started. The API role is not an application-data role and this wiring does not
-replace Supabase or make Shattab deployable end to end. Use the approval-gated
-staging runbook in `infra/postgres18-stage/README.md` only after its local
-review and the user's explicit approval.
+The stage health checks prove only that the process is alive and can run its
+constant `SELECT 1` probe using the dedicated `shattab_api` role. They do not
+prove business API behavior, user authentication, Shattab data authorization,
+migrations, backups, public reachability, or production availability. The API
+role is not an application-data role and this wiring does not replace Supabase
+or make Shattab deployable end to end. See the approval-gated operational
+details in `infra/postgres18-stage/README.md`.
 
-This is a local foundation only; it is **NOT DEPLOYED** and does not replace
+This is an **internal Oracle stage health service only**; it does not replace
 Supabase or make Shattab deployable end to end.
