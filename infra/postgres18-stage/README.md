@@ -2,6 +2,19 @@
 
 دي قاعدة PostgreSQL (قاعدة بيانات علائقية) فاضية للتجارب المرحلية على سيرفر Oracle. مش قاعدة إنتاج، ومفيش بيانات أو migrations (ملفات تغييرات مخطط قاعدة البيانات) أو مستخدمين من Supabase اتنقلوا لها. تشغيلها ما معناهش إن تطبيق شطب اتنشر.
 
+## الحالة المؤكدة على Oracle — فحص 2026-10-27
+
+القائمة دي بتلخّص آخر حالة اتأكدنا منها مباشرة على السيرفر؛ هي مش ضمان إن الحالة ما اتغيرتش بعد الفحص. قبل أي خطوة جديدة، اعمل الفحوصات المذكورة في القسم المناسب:
+
+- قاعدة PostgreSQL 18 التجريبية وقاعدة المختبر PostgreSQL 17 كانتا `healthy` وقت الفحص.
+- ملفات مصدر الـAPI العشرة المسموح بها اترفعت بعد مقارنة بصمات `SHA-256` (بصمة رقمية لمحتوى الملف)، واتحفظ المصدر السابق باسم منفصل.
+- ملف `Docker Compose` (تعريف الخدمات والشبكات والتخزين) الفعّال محفوظ كنسخة ثابتة مملوكة لـ`root` بصلاحية قراءة فقط `0444`، وفحص `config --quiet` نجح.
+- صورة `shattab-api:stage` اتبنت لمعمارية `ARM64`، ومستخدم التشغيل `node` اتأكد إنه غير `root` بهوية `UID/GID 1000:1000`. وسم الرجوع `shattab-api:stage-prev-20261026` موجود وبصمته `sha256:369a05cb4df7d37d9b87a7a036ac65e466cea2fc51c6e66b0b90bb580cef387c` حسب فحص metadata للقراءة فقط بتاريخ 2026-10-27.
+- حاوية الـAPI لسه **مش شغالة**، وملف السر `api_password` لسه **مش موجود**. ما اتغيرتش كلمة مرور دور الـAPI، وما اتعملتش migrations أو بيانات تطبيق.
+- آخر لقطة لـDocker ما أظهرتش منافذ منشورة على المضيف لـ`5432` أو `80` أو `443`. ده ما يثبتش لوحده قابلية الوصول من الإنترنت؛ قواعد OCI الفعلية لسه محتاجة تحقق مستقل.
+
+دي مرحلة تشغيل واختبار داخلية فقط؛ الـAPI لسه health-only (بتفحص حياة الخدمة واتصال قاعدة البيانات) ومش فيها وظائف شطب أو ربط مع تطبيق Flutter ولوحة الإدارة.
+
 ## 1. مكونات الحزمة
 
 `Docker Compose` (أداة بتعرّف الخدمات والشبكة والتخزين من ملف إعداد واحد) بيعرّف `db` وخدمة API التجريبية ضمن المشروع `shattab-pg18-stage`. أقسام تشغيل القاعدة بتطلب خدمة `db` فقط؛ تشغيل API موضح منفصلًا في القسم 6.
@@ -22,6 +35,8 @@
 قيم `POSTGRES_*` بتجهّز قاعدة فاضية أول مرة فقط. تغيير ملف السر بعد إنشاء الـ volume ما يغيّرش كلمة السر داخل قاعدة موجودة.
 
 ## 2. إنشاء مساحة العمل والسر على السيرفر
+
+الخطوات دي بتشرح التأسيس الأولي. بما إن مجلد المرحلة وقاعدة البيانات وملف Compose المحمي موجودين بالفعل في الحالة المؤكدة أعلاه، ما تعيدش أوامر الإنشاء اللي بتشترط إن المسارات تكون غايبة. ابدأ بفحص الحالة الحالية، وبعدها كمّل من القسم 6.3؛ أي اختلاف يوقف التنفيذ للمراجعة.
 
 الخطوات دي على `Ubuntu SSH` (جلسة اتصال آمنة لإدارة سيرفر Ubuntu). لازم مسؤول التنفيذ يعمل فحصًا جديدًا قبلها مباشرة: يتأكد إن المسار وموارد Docker الجديدة مش موجودة، وإن `shattab-lab` سليم. لو في أي اختلاف أو ملف موجود، يقف للمراجعة وما يكتبش فوقه.
 
@@ -141,11 +156,11 @@ sudo docker compose --env-file /dev/null --project-directory /home/ubuntu/shatta
 
 نجاح فحص الإعداد محليًا ما يثبتش إن الملفات اترفعت أو إن قاعدة البيانات اشتغلت على Oracle. التشغيل الفعلي لازم يتوثق من مخرجات السيرفر ومقارنة حالة `shattab-lab` قبل وبعد. قاعدة staging دي فاضية ومؤقتة؛ مش نسخة احتياطية، ومش قاعدة تطبيق، ومش دليل نشر أو جاهزية إنتاج.
 
-## 6. تكامل API تجريبي — مخطط فقط، غير منفذ
+## 6. تكامل API تجريبي — الصورة مبنية، والخدمة غير مشغّلة
 
-القسم ده يشرح تجهيز اتصال داخلي لخدمة API (واجهة خدمات بتستقبل طلبات التطبيقات) الموجودة في `api/` مع قاعدة PostgreSQL 18 التجريبية. الـ API لسه health-only (وظيفته الحالية فحص إن العملية وقاعدة البيانات شغالين) وبيشغّل استعلام ثابت `SELECT 1`. مفيش جداول شطب أو بيانات مستخدمين أو ميزات تطبيقية في النطاق ده، ومش بديل لـ Supabase.
+القسم ده يشرح تكاملًا داخليًا تجريبيًا لخدمة API (واجهة خدمات بتستقبل طلبات التطبيقات) الموجودة في `api/` مع قاعدة PostgreSQL 18. المصدر نُقل للصورة المرحلية واتعملت الصورة على Oracle، لكن الحاوية نفسها لسه مش شغالة. الـAPI health-only (وظيفتها الحالية فحص إن العملية وقاعدة البيانات شغالين) وبتشغّل استعلامًا ثابتًا `SELECT 1`. مفيش جداول شطب أو بيانات مستخدمين أو ميزات تطبيقية في النطاق ده، ومش بديل لـSupabase.
 
-**خدمة API نفسها غير مشغّلة على Oracle حسب آخر فحص.** تغيير كلمة مرور الدور الموجود أو إنشاء ملف السر أو تشغيل الخدمة يتم فقط بعد اجتياز البوابات الموضحة في هذا الدليل والتفويض المرحلي؛ لا تنفذ الخطوات أثناء مراجعة الكود.
+**حسب فحص 2026-10-27، خدمة API نفسها غير مشغّلة على Oracle وملف `api_password` غير موجود.** تغيير كلمة مرور الدور أو إنشاء ملف السر أو تشغيل الخدمة يتم فقط بعد اجتياز البوابات الموضحة في هذا الدليل؛ أعد الفحص مباشرةً قبل أي كتابة، ولا تعتمد على لقطة قديمة.
 
 ### 6.1 شكل الاتصال وحدوده
 
@@ -186,15 +201,15 @@ sudo python3 /root/shattab-pg18-stage-tools/verify.py
 
 ```powershell
 Get-FileHash .\infra\postgres18-stage\inspect_existing_api_role.sql -Algorithm SHA256
-ssh ubuntu@<SERVER> 'test ! -e /home/ubuntu/shattab-pg18-stage/inspect_existing_api_role.candidate-483360250627e4fc99a9cd519582e3b7b948fae9.sql && test ! -L /home/ubuntu/shattab-pg18-stage/inspect_existing_api_role.candidate-483360250627e4fc99a9cd519582e3b7b948fae9.sql'
+ssh ubuntu@<SERVER> 'test ! -e /home/ubuntu/shattab-pg18-stage/inspect_existing_api_role.candidate-c7f3f2024c75c13c52217e7b233a668f42f7e34d.sql && test ! -L /home/ubuntu/shattab-pg18-stage/inspect_existing_api_role.candidate-c7f3f2024c75c13c52217e7b233a668f42f7e34d.sql'
 if ($LASTEXITCODE -ne 0) { throw 'Candidate exists; inspect it without overwriting.' }
-scp .\infra\postgres18-stage\inspect_existing_api_role.sql ubuntu@<SERVER>:/home/ubuntu/shattab-pg18-stage/inspect_existing_api_role.candidate-483360250627e4fc99a9cd519582e3b7b948fae9.sql
+scp .\infra\postgres18-stage\inspect_existing_api_role.sql ubuntu@<SERVER>:/home/ubuntu/shattab-pg18-stage/inspect_existing_api_role.candidate-c7f3f2024c75c13c52217e7b233a668f42f7e34d.sql
 ```
 
 على السيرفر، قارن `sha256sum` بالبصمة المحلية قبل تشغيل الاستعلام. لا ترفع `preflight_api_role.sql` أو `create_api_role.sql` لهذا المسار؛ الاتنين معمولين لحالة غياب الدور. استخدم فاحص المرحلة مرة تانية، ثم نفّذ الاستعلام الجديد:
 
 ```bash
-sudo sha256sum /home/ubuntu/shattab-pg18-stage/inspect_existing_api_role.candidate-483360250627e4fc99a9cd519582e3b7b948fae9.sql
+sudo sha256sum /home/ubuntu/shattab-pg18-stage/inspect_existing_api_role.candidate-c7f3f2024c75c13c52217e7b233a668f42f7e34d.sql
 ```
 
 بعد تطابق البصمة، نفّذ فاحص المرحلة مرة أخرى. الاستعلام الجديد له مستويان: كل تشغيل يراجع ACL/المالك/`CONNECT`/`TEMPORARY`/`CREATE` على مستوى الـcluster لكل صف في `pg_database`، بما فيها `template1` و`template0`؛ ثم يراجع المخططات والكائنات و`pg_default_acl` محليًا في قاعدة الاتصال الحالية. لازم تكون `shattab_stage` مملوكة لـ`shattab_stage_admin`. baseline `PUBLIC CONNECT` متوقع على كل قواعد cluster، بما فيها القوالب. أما `PUBLIC TEMPORARY` فمتوقع على القواعد العادية فقط؛ PostgreSQL 18 `initdb` (أداة التأسيس الأولي للكلستر) يسحب `CREATE` و`TEMPORARY` من `PUBLIC` على `template0` و`template1`. بالتالي دور API ما يكونش عنده `TEMPORARY` فعّال على القواعد القالبية، بينما القواعد العادية تحتفظ بالـbaseline. لازم `template1` تكون قاعدة قالبية وقابلة للاتصال، و`template0` تكون قاعدة قالبية ومغلقة (`datallowconn=false`). ممنوع محاولة الاتصال بـ`template0`.
@@ -225,7 +240,7 @@ run_catalog_guard_for_snapshot() {
       continue
     fi
     printf 'Inspecting PG18 database: %s\n' "$db_name"
-    "${COMPOSE[@]}" exec -T db psql -X -v ON_ERROR_STOP=1 -U shattab_stage_admin -d "$db_name" -f - < /home/ubuntu/shattab-pg18-stage/inspect_existing_api_role.candidate-483360250627e4fc99a9cd519582e3b7b948fae9.sql || return 1
+    "${COMPOSE[@]}" exec -T db psql -X -v ON_ERROR_STOP=1 -U shattab_stage_admin -d "$db_name" -f - < /home/ubuntu/shattab-pg18-stage/inspect_existing_api_role.candidate-c7f3f2024c75c13c52217e7b233a668f42f7e34d.sql || return 1
   done <<< "$snapshot"
 }
 DB_SNAPSHOT_INITIAL=$("${COMPOSE[@]}" exec -T db psql -X -A -t -v ON_ERROR_STOP=1 -U shattab_stage_admin -d postgres -c "$DB_INVENTORY_SQL")
