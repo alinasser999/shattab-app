@@ -46,7 +46,7 @@ dependencies:
   flutter_animate: ^4.5.0
   share_plus: ^10.0.0
   flutter_image_compress: ^2.3.0
-  sentry_flutter: ^8.14.2
+  sentry_flutter: ^9.22.0
   shared_preferences: ^2.5.3
   http: ^1.4.0
 

@@ -6,8 +6,10 @@ import 'package:flutter/foundation.dart';
 /// login has its own explicit gate; the view-only role switcher remains
 /// debug-only.
 abstract final class DebugFlags {
-  static const bool _previewLogin =
-      bool.fromEnvironment('SHATTAB_PREVIEW_DEBUG_LOGIN', defaultValue: false);
+  static const bool _previewLogin = bool.fromEnvironment(
+    'SHATTAB_PREVIEW_DEBUG_LOGIN',
+    defaultValue: false,
+  );
 
   /// Shows the runtime-credential login panel in local debug builds or when
   /// explicitly enabled for a review Preview. This flag does not enable the

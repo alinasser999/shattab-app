@@ -86,9 +86,12 @@ jobs:
         with:
           version: latest
 
-      # Boots the local Docker stack and replays every migration file in
-      # order. This is the fresh-environment test: any missing dependency,
-      # wrong ordering or unreplayable statement fails here.
+      # Starts the disposable runner-local Supabase services. A first start can
+      # initialize migrations and seed data; the reset below rebuilds the DB.
+      - run: supabase start
+
+      # Recreates the LOCAL database from scratch, applies checked-in migrations
+      # in order and then seed data. This is a clean replay, not a hosted reset.
       - run: supabase db reset
 
       # pgTAP-style contract suite against the freshly replayed schema.
