@@ -18,10 +18,11 @@ It is not a production deployment and is not production-ready.
   Node process. This repository does not create the database, role, or secret.
 
 Do not use the PostgreSQL stage administrator, a database owner/migrator, or a
-Supabase `service_role` credential for the API. A dedicated least-privilege
-application role has not yet been provisioned. The API performs only a constant
-`SELECT 1` probe; it does not query Shattab tables, establish end-user identity,
-or preserve/test the existing Supabase RLS behavior.
+Supabase `service_role` credential for the API. The Oracle stage has a distinct
+least-privilege `shattab_api` login for the constant `SELECT 1` health probe;
+it has no Shattab application-data grants and is not a production application
+role. The API does not query Shattab tables, establish end-user identity, or
+preserve/test the existing Supabase RLS behavior.
 
 ## Configuration
 
@@ -127,10 +128,11 @@ listen without them. Its previous `up` and HTTP health-check commands are no
 longer a valid smoke path; do not use them to claim the database-backed API is
 healthy. The Dockerfile and package engine metadata were updated for the pinned
 Node 24.22.1 runtime. The old smoke Compose file remains stale. The separate
-`infra/postgres18-stage/compose.yaml` is the checked-in source for the stage
-configuration. A protected, root-owned Compose snapshot derived from that
-source and the ARM64 API image are currently running on Oracle stage; the exact
-host checks and limits are recorded in `infra/postgres18-stage/README.md`.
+`infra/postgres18-stage/compose.yaml` remains local/planned staging configuration;
+it has not been copied to Oracle, built, or run there. A
+protected, root-owned Compose snapshot derived from that checked-in source and
+the ARM64 API image are currently running on Oracle stage; the exact host
+checks and limits are recorded in `infra/postgres18-stage/README.md`.
 
 The stage API joins the internal `db_internal` network, waits for the
 PostgreSQL healthcheck, and runs with bounded resources, a read-only root
