@@ -3,6 +3,7 @@
 -- ownership rather than manufacturing user data in a shared environment.
 
 begin;
+SET LOCAL search_path = pg_catalog, extensions, public, auth, storage, pg_temp;
 
 select plan(27);
 

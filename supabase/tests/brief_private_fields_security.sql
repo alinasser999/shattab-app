@@ -2,6 +2,7 @@
 -- All identities and briefs are synthetic; the transaction is rolled back.
 
 begin;
+SET LOCAL search_path = pg_catalog, extensions, public, auth, storage, pg_temp;
 
 select plan(26);
 

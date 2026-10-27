@@ -100,41 +100,108 @@ jobs:
       # in order and then seed data. This is a clean replay, not a hosted reset.
       - run: supabase db reset --local
 
-      # pgTAP assertions do not change psql's exit status. pipefail preserves
-      # SQL failures through tee; compare TAP plan and assertion counts too.
-      - name: Run database regression suites
+      # pgTAP is installed only after resetting the disposable runner-local DB.
+      # This is test setup, not a migration or a write to hosted Supabase.
+      - name: Bootstrap pgTAP in disposable local database
+        shell: bash
         run: |
           set -euo pipefail
 
-          run_pgtap() {
-            suite="$1"
-            output="$2"
-            PGPASSWORD=postgres psql -XAtq \
-              -h localhost -p 54322 -U postgres -d postgres \
-              -v ON_ERROR_STOP=1 \
-              -f "$suite" | tee "$output"
+          PGPASSWORD=postgres psql -X -qAt -v ON_ERROR_STOP=1 \
+            -h localhost -p 54322 -U postgres -d postgres \
+            -c 'CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;'
 
-            if grep -q '^not ok ' "$output"; then
-              echo "::error::$suite has failing pgTAP assertions"
-              return 1
-            fi
+          extension_schema="$(PGPASSWORD=postgres psql -X -qAt -v ON_ERROR_STOP=1 \
+            -h localhost -p 54322 -U postgres -d postgres \
+            -c "SELECT n.nspname FROM pg_extension e JOIN pg_namespace n ON n.oid = e.extnamespace WHERE e.extname = 'pgtap';")"
+          if [[ "$extension_schema" != "extensions" ]]; then
+            echo "::error::Expected pgTAP in extensions, found '${extension_schema:-missing}'"
+            exit 1
+          fi
+          echo "pgTAP extension schema: $extension_schema"
 
-            plan_lines="$(grep -Ec '^1\.\.[0-9]+$' "$output" || true)"
-            if [ "$plan_lines" -ne 1 ]; then
-              echo "::error::$suite did not emit exactly one pgTAP plan"
-              return 1
-            fi
+          resolved_plan="$(PGPASSWORD=postgres psql -X -qAt -v ON_ERROR_STOP=1 \
+            -h localhost -p 54322 -U postgres -d postgres \
+            -c "SET search_path = pg_catalog, extensions, public, auth, storage, pg_temp; SELECT n.nspname || '.' || p.proname || '(' || pg_get_function_identity_arguments(p.oid) || ')' FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace WHERE p.oid = to_regprocedure('plan(integer)');")"
+          if [[ "$resolved_plan" != "extensions.plan(integer)" ]]; then
+            echo "::error::Expected unqualified plan(integer) to resolve to extensions.plan(integer), found '${resolved_plan:-missing}'"
+            exit 1
+          fi
+          echo "Unqualified plan(integer) resolves to: $resolved_plan"
 
-            planned="$(sed -n 's/^1\.\.\([0-9][0-9]*\)$/\1/p' "$output")"
-            actual="$(grep -Ec '^(ok|not ok) [0-9]+( -|$)' "$output" || true)"
-            if [ "$actual" -ne "$planned" ]; then
-              echo "::error::$suite planned $planned assertions but emitted $actual"
-              return 1
+      # Run each checked-in suite in its own CLI invocation so every result is
+      # visible. Continue through all suites, then fail the step if any failed.
+      # The disposable negative control proves that a failing TAP assertion
+      # produces both the expected TAP line and a nonzero CLI status.
+      - name: Run database regression suites and verify TAP failure propagation
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          suite_failures=0
+          run_suite() {
+            local suite="$1"
+            echo "::group::pgTAP suite: $suite"
+            if supabase test db --local "$suite"; then
+              echo "PASS: $suite (supabase test db --local)"
+            else
+              local suite_status=$?
+              echo "::error::$suite failed with supabase test db exit code $suite_status"
+              suite_failures=1
             fi
+            echo "::endgroup::"
           }
 
-          run_pgtap supabase/tests/rls_regression.sql rls.tap
-          run_pgtap supabase/tests/brief_private_fields_security.sql brief-private.tap
+          run_suite supabase/tests/rls_regression.sql
+          run_suite supabase/tests/brief_private_fields_security.sql
+          run_suite supabase/tests/homeowner_public_profile_sync.sql
+
+          # Supabase mounts test files from supabase/tests into its pgTAP
+          # container, so keep the generated negative-control fixture there.
+          probe_dir="$(mktemp -d "supabase/tests/.shattab-pgtap-probe.XXXXXX")"
+          probe_sql="$probe_dir/failure-probe.sql"
+          probe_output="${RUNNER_TEMP:-/tmp}/$(basename "$probe_dir").log"
+          cleanup_probe() {
+            rm -f -- "$probe_sql" "$probe_output"
+            rmdir -- "$probe_dir"
+          }
+          trap cleanup_probe EXIT
+
+          cat > "$probe_sql" <<'SQL'
+          BEGIN;
+          SET LOCAL search_path = pg_catalog, extensions, public, auth, storage, pg_temp;
+          SELECT plan(1);
+          SELECT ok(false, 'failure propagation probe');
+          SELECT * FROM finish();
+          ROLLBACK;
+          SQL
+
+          set +e
+          supabase test db --local "$probe_sql" 2>&1 | tee "$probe_output"
+          probe_pipeline_status=("${PIPESTATUS[@]}")
+          set -e
+          probe_status="${probe_pipeline_status[0]}"
+          tee_status="${probe_pipeline_status[1]}"
+
+          if [[ "$tee_status" -ne 0 ]]; then
+            echo "::error::Could not capture the failure-probe output (tee exit code $tee_status)"
+            suite_failures=1
+          fi
+
+          if [[ "$probe_status" -eq 0 ]]; then
+            echo "::error::Failure propagation probe unexpectedly exited with status 0"
+            suite_failures=1
+          elif grep -Fq 'not ok 1 - failure propagation probe' "$probe_output"; then
+            echo "PASS: failure probe emitted its expected not ok assertion and exited $probe_status"
+          else
+            echo "::error::Failure probe exited $probe_status without the expected TAP assertion"
+            suite_failures=1
+          fi
+
+          if [[ "$suite_failures" -ne 0 ]]; then
+            echo "::error::One or more database suites or the TAP failure-propagation probe failed"
+            exit 1
+          fi
 
   api-stage-contracts:
     name: PostgreSQL 18 API stage contracts (disposable)
