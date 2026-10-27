@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -23,7 +22,6 @@ import '../../../../core/widgets/batsh_search_bar.dart';
 import '../../../../core/widgets/batsh_shimmer.dart';
 import '../../../../core/widgets/batsh_snack.dart';
 import '../../../../core/widgets/batsh_chip.dart';
-import '../../../../core/widgets/shattab_pattern.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../onboarding/domain/onboarding_models.dart';
 import '../../../onboarding/presentation/providers/onboarding_provider.dart';
@@ -157,7 +155,7 @@ class _JobOpportunitiesScreenState
     final quoteRowsAsync = ref.watch(myQuotesWithBriefsProvider);
     final quotes =
         quoteRowsAsync.asData?.value
-            ?.map((row) => row.quote)
+            .map((row) => row.quote)
             .toList(growable: false) ??
         const [];
     final filters = ref.watch(opportunityFiltersProvider);
@@ -1201,44 +1199,6 @@ class _SummaryMetric extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _SectionHeading extends StatelessWidget {
-  const _SectionHeading({required this.title, required this.motif});
-
-  final String title;
-  final ShattabMotif motif;
-
-  @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      header: true,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(
-          BatshSpacing.md,
-          BatshSpacing.lg,
-          BatshSpacing.md,
-          BatshSpacing.sm,
-        ),
-        child: Row(
-          children: [
-            ShattabMotifIcon(
-              motif: motif,
-              color: context.colorScheme.primary,
-              size: BatshIconSize.sm,
-            ),
-            const SizedBox(width: BatshSpacing.xs),
-            Text(
-              title,
-              style: BatshTypography.titleMd.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
