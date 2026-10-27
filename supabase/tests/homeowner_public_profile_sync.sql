@@ -2,6 +2,7 @@
 -- Every fixture is synthetic and the transaction is rolled back at the end.
 
 begin;
+SET LOCAL search_path = pg_catalog, extensions, public, auth, storage, pg_temp;
 
 select plan(8);
 

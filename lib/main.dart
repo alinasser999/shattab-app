@@ -82,7 +82,8 @@ Future<void> _initializeApp() async {
     options.beforeSend = (event, hint) {
       // Defence in depth: drop the user object even if an integration
       // populates it. Errors stay useful without knowing who hit them.
-      return event.copyWith(user: null);
+      event.user = null;
+      return event;
     };
   }, appRunner: _runApp);
 }

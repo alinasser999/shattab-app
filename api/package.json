@@ -1,0 +1,27 @@
+{
+  "name": "@shattab/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24.22.1 <25"
+  },
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/server.js",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "tsx --test test/config.test.ts test/database.test.ts test/health.test.ts test/logging.test.ts test/shutdown.test.ts test/startup.test.ts test/cognito-auth.test.ts"
+  },
+  "dependencies": {
+    "aws-jwt-verify": "5.2.1",
+    "fastify": "5.12.7",
+    "pg": "8.23.1"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.2",
+    "@types/pg": "8.23.1",
+    "tsx": "4.23.15",
+    "typescript": "5.9.3"
+  }
+}

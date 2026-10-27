@@ -84,26 +84,167 @@ jobs:
 
       - uses: supabase/setup-cli@v1
         with:
-          version: latest
+          version: 2.122.0
 
-      # Boots the local Docker stack and replays every migration file in
-      # order. This is the fresh-environment test: any missing dependency,
-      # wrong ordering or unreplayable statement fails here.
-      - run: supabase db reset
-
-      # pgTAP-style contract suite against the freshly replayed schema.
-      # Individual failed assertions print "not ok" without failing psql's
-      # exit code, so grep for them explicitly.
-      - name: Run RLS regression suite
+      - name: Verify Supabase CLI version
         run: |
-          PGPASSWORD=postgres psql \
+          actual="$(supabase --version)"
+          printf '%s\n' "$actual"
+          test "$actual" = "2.122.0"
+
+      # Starts the disposable runner-local Supabase services. A first start can
+      # initialize migrations and seed data; the reset below rebuilds the DB.
+      - run: supabase start
+
+      # Recreates the LOCAL database from scratch, applies checked-in migrations
+      # in order and then seed data. This is a clean replay, not a hosted reset.
+      - run: supabase db reset --local
+
+      # pgTAP is installed only after resetting the disposable runner-local DB.
+      # This is test setup, not a migration or a write to hosted Supabase.
+      - name: Bootstrap pgTAP in disposable local database
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          PGPASSWORD=postgres psql -X -qAt -v ON_ERROR_STOP=1 \
             -h localhost -p 54322 -U postgres -d postgres \
-            -v ON_ERROR_STOP=1 \
-            -f supabase/tests/rls_regression.sql | tee tap_output.txt
-          if grep -q "^not ok" tap_output.txt; then
-            echo "::error::RLS regression suite has failing assertions"
+            -c 'CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;'
+
+          extension_schema="$(PGPASSWORD=postgres psql -X -qAt -v ON_ERROR_STOP=1 \
+            -h localhost -p 54322 -U postgres -d postgres \
+            -c "SELECT n.nspname FROM pg_extension e JOIN pg_namespace n ON n.oid = e.extnamespace WHERE e.extname = 'pgtap';")"
+          if [[ "$extension_schema" != "extensions" ]]; then
+            echo "::error::Expected pgTAP in extensions, found '${extension_schema:-missing}'"
             exit 1
           fi
+          echo "pgTAP extension schema: $extension_schema"
+
+          resolved_plan="$(PGPASSWORD=postgres psql -X -qAt -v ON_ERROR_STOP=1 \
+            -h localhost -p 54322 -U postgres -d postgres \
+            -c "SET search_path = pg_catalog, extensions, public, auth, storage, pg_temp; SELECT n.nspname || '.' || p.proname || '(' || pg_get_function_identity_arguments(p.oid) || ')' FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace WHERE p.oid = to_regprocedure('plan(integer)');")"
+          if [[ "$resolved_plan" != "extensions.plan(integer)" ]]; then
+            echo "::error::Expected unqualified plan(integer) to resolve to extensions.plan(integer), found '${resolved_plan:-missing}'"
+            exit 1
+          fi
+          echo "Unqualified plan(integer) resolves to: $resolved_plan"
+
+      # Run each checked-in suite in its own CLI invocation so every result is
+      # visible. Continue through all suites, then fail the step if any failed.
+      # The disposable negative control proves that a failing TAP assertion
+      # produces its failure summary and a nonzero CLI status.
+      - name: Run database regression suites and verify TAP failure propagation
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          suite_failures=0
+          run_suite() {
+            local suite="$1"
+            echo "::group::pgTAP suite: $suite"
+            if supabase test db --local "$suite"; then
+              echo "PASS: $suite (supabase test db --local)"
+            else
+              local suite_status=$?
+              echo "::error::$suite failed with supabase test db exit code $suite_status"
+              suite_failures=1
+            fi
+            echo "::endgroup::"
+          }
+
+          run_suite supabase/tests/rls_regression.sql
+          run_suite supabase/tests/brief_private_fields_security.sql
+          run_suite supabase/tests/homeowner_public_profile_sync.sql
+
+          # Supabase mounts test files from supabase/tests into its pgTAP
+          # container, so keep the generated negative-control fixture there.
+          probe_dir="$(mktemp -d "supabase/tests/.shattab-pgtap-probe.XXXXXX")"
+          probe_sql="$probe_dir/failure-probe.sql"
+          probe_output="${RUNNER_TEMP:-/tmp}/$(basename "$probe_dir").log"
+          cleanup_probe() {
+            rm -f -- "$probe_sql" "$probe_output"
+            rmdir -- "$probe_dir"
+          }
+          trap cleanup_probe EXIT
+
+          cat > "$probe_sql" <<'SQL'
+          BEGIN;
+          SET LOCAL search_path = pg_catalog, extensions, public, auth, storage, pg_temp;
+          SELECT plan(1);
+          SELECT ok(false, 'failure propagation probe');
+          SELECT * FROM finish();
+          ROLLBACK;
+          SQL
+
+          set +e
+          supabase test db --local "$probe_sql" 2>&1 | tee "$probe_output"
+          probe_pipeline_status=("${PIPESTATUS[@]}")
+          set -e
+          probe_status="${probe_pipeline_status[0]}"
+          tee_status="${probe_pipeline_status[1]}"
+
+          if [[ "$tee_status" -ne 0 ]]; then
+            echo "::error::Could not capture the failure-probe output (tee exit code $tee_status)"
+            suite_failures=1
+          fi
+
+          if [[ "$probe_status" -eq 0 ]]; then
+            echo "::error::Failure propagation probe unexpectedly exited with status 0"
+            suite_failures=1
+          elif grep -Fq '# Failed test 1: "failure propagation probe"' "$probe_output" && grep -Fq 'Result: FAIL' "$probe_output"; then
+            echo "PASS: failure probe emitted the expected failure summary and exited $probe_status"
+          else
+            echo "::error::Failure probe exited $probe_status without the expected failure summary"
+            suite_failures=1
+          fi
+
+          if [[ "$suite_failures" -ne 0 ]]; then
+            echo "::error::One or more database suites or the TAP failure-propagation probe failed"
+            exit 1
+          fi
+
+  api-stage-contracts:
+    name: PostgreSQL 18 API stage contracts (disposable)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+    # This job uses disposable Docker containers only; it never contacts Oracle.
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24.22.1
+          cache: npm
+          cache-dependency-path: api/package-lock.json
+
+      - name: Install API dependencies
+        run: npm ci
+        working-directory: api
+
+      - name: Typecheck API
+        run: npm run typecheck
+        working-directory: api
+
+      - name: Test API
+        run: npm test
+        working-directory: api
+
+      - name: Build API
+        run: npm run build
+        working-directory: api
+
+      - name: Test staged Compose topology and static contracts
+        run: python3 infra/postgres18-stage/test_api_stage_contract.py
+
+      - name: Test API secret creation and Linux permission contract in temp paths
+        run: sudo python3 infra/postgres18-stage/test_api_secret.py
+
+      - name: Test role preflight and creation behavior in a self-owned PostgreSQL 18 container
+        run: python3 infra/postgres18-stage/test_api_role_postgres18.py
 
   ios-build:
     name: iOS compile gate

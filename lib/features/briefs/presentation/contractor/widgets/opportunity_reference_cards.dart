@@ -775,8 +775,9 @@ class _BriefPhoto extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final url = brief?.photoUrls.where(_isTrustedBriefPhotoUrl).firstOrNull;
-    if (url == null)
+    if (url == null) {
       return _UnavailablePhoto(label: context.l10n.opportunityMediaUnavailable);
+    }
     return Semantics(
       image: true,
       label: label,

@@ -338,10 +338,7 @@ class _SpecialtyOption extends StatelessWidget {
                   ),
                   const SizedBox(width: BatshSpacing.xs),
                 ],
-                Text(
-                  label,
-                  style: labelStyle,
-                ),
+                Text(label, style: labelStyle),
                 if (selected) ...[
                   const SizedBox(width: BatshSpacing.xs),
                   Icon(

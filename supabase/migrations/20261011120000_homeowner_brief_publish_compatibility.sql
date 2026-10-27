@@ -1,5 +1,9 @@
 -- Homeowner Professionals publish flow fields.
 -- Nullable additions keep historical briefs and older clients readable.
+-- This migration owns one transaction so the lock and privacy transition are
+-- atomic even when the runner executes statements individually.
+
+begin;
 
 -- SECURITY DEFINER functions below access a FORCE RLS table. Fail closed if
 -- the migration executor cannot safely own those functions and bypass RLS.
@@ -19,8 +23,7 @@ end;
 $$;
 
 -- Hold concurrent brief writes until legacy notes have been moved and the
--- compatibility trigger is installed. The migration runner must apply this
--- file transactionally for the lock to cover the complete transition.
+-- compatibility trigger is installed. This lock stays held through COMMIT.
 lock table public.briefs in access exclusive mode;
 
 alter table public.briefs
@@ -486,3 +489,5 @@ create trigger briefs_capture_legacy_budget_note
   for each row
   when (new.budget_note is not null)
   execute function public.capture_legacy_homeowner_brief_budget_note();
+
+commit;

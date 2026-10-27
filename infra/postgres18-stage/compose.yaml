@@ -1,0 +1,126 @@
+name: shattab-pg18-stage
+
+services:
+  db:
+    image: postgres:18.6-bookworm@sha256:bbf83594798e144bff365a9c191c5d779f181fb3135902064ab8ff11918020fc
+    restart: "no"
+    stop_grace_period: 60s
+    environment:
+      POSTGRES_DB: shattab_stage
+      POSTGRES_USER: shattab_stage_admin
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+      POSTGRES_HOST_AUTH_METHOD: scram-sha-256
+      POSTGRES_INITDB_ARGS: --auth-host=scram-sha-256 --auth-local=trust
+      PGDATA: /var/lib/postgresql/18/docker
+    command:
+      - postgres
+      - -c
+      - max_connections=30
+      - -c
+      - shared_buffers=128MB
+      - -c
+      - password_encryption=scram-sha-256
+    volumes:
+      - pgdata:/var/lib/postgresql
+    networks:
+      - db_internal
+    secrets:
+      - postgres_password
+    mem_limit: 1g
+    cpus: 1.0
+    pids_limit: 128
+    shm_size: 128m
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+    healthcheck:
+      test:
+        - CMD
+        - pg_isready
+        - -h
+        - 127.0.0.1
+        - -p
+        - "5432"
+        - -U
+        - shattab_stage_admin
+        - -d
+        - shattab_stage
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 20s
+
+  api:
+    build:
+      context: ./api-source
+      dockerfile: Dockerfile
+    image: shattab-api:stage
+    init: true
+    restart: "no"
+    stop_signal: SIGTERM
+    stop_grace_period: 20s
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,nodev,size=16m
+    environment:
+      NODE_ENV: production
+      NODE_OPTIONS: --max-old-space-size=320
+      HOST: 0.0.0.0
+      PORT: "3000"
+      LOG_LEVEL: info
+      DATABASE_HOST: db
+      DATABASE_PORT: "5432"
+      DATABASE_NAME: shattab_stage
+      DATABASE_USER: shattab_api
+      DATABASE_PASSWORD_FILE: /run/secrets/api_password
+      DATABASE_POOL_MAX: "2"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - db_internal
+    secrets:
+      - source: api_password
+        target: api_password
+    mem_limit: 512m
+    cpus: 0.5
+    pids_limit: 64
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:3000/health/ready').then((response) => process.exit(response.ok ? 0 : 1), () => process.exit(1))"
+      interval: 15s
+      timeout: 4s
+      retries: 3
+      start_period: 20s
+
+volumes:
+  pgdata:
+    name: shattab-pg18-stage_pgdata
+
+networks:
+  db_internal:
+    name: shattab-pg18-stage_db_internal
+    driver: bridge
+    internal: true
+
+secrets:
+  postgres_password:
+    file: ./secrets/postgres_password
+  api_password:
+    file: ./secrets/api_password
