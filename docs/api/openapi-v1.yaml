@@ -1,0 +1,3920 @@
+openapi: 3.1.0
+info:
+  title: Shattab Business API
+  version: 1.0.0
+  description: >-
+    Target contract for the Shattab business API. This local design artifact
+    does not assert that business operations are implemented or deployed.
+    The dated local and live evidence, current migration blockers, and target
+    boundaries are recorded in x-migration-readiness.
+servers:
+  - url: /api/v1
+    description: Relative API base on the configured Shattab origin
+security: []
+x-migration-readiness:
+  evidence-date: "2026-10-26"
+  contract-status: target-design-only
+  current-state:
+    business-api: not-implemented-or-deployed
+    flutter-and-admin: direct-supabase-dependencies-remain
+    oracle-stage-api-container: absent-in-read-only-snapshot
+    providers: Cognito-R2-OCI-Object-Storage-and-server-controlled-FCM-APNs-are-targets-only
+  local-source:
+    migration-files: 90
+    latest-migration-version: "20261013140000"
+    brief-photos-bucket-configured-public: true
+    brief-photos-folder-policy: owner-folder-only
+    media-validation-function-makes-bucket-private: false
+  live-supabase-read-only-snapshot:
+    project-status: ACTIVE_HEALTHY
+    postgres-version: "17.6.1.166"
+    region: eu-central-1
+    aggregate-counts-only:
+      auth-users: 33
+      profiles: 33
+      auth-identities: 20
+      requests: 16
+      offers: 2
+      posts: 6
+      portfolio-projects: 13
+    brief-photos:
+      public: true
+      objects: 4
+    migration-ledger:
+      live-entries: 84
+      local-entries: 90
+      shared-names: 63
+      shared-name-version-mismatches: 50
+      exact-name-version-pairs: 13
+      local-only: 27
+      live-only: 21
+      comparison-limit: Metadata names and versions only; not SQL or schema equivalence.
+    security-metadata:
+      public-security-definer-functions: 57
+      anon-executable-security-definer-functions: 7
+      function-bodies-fetched: false
+      interpretation: Review requirement only; counts do not establish a vulnerability.
+    edge-functions:
+      send-push:
+        active: true
+        platform-verify-jwt: false
+        handler-guards-reviewed: false
+      assistant-chat:
+        active: true
+        platform-verify-jwt: true
+        handler-guards-reviewed: false
+      validated-media-upload:
+        present-in-live-list: false
+        present-in-local-source: true
+    linked-cli-migration-reconciliation:
+      complete: false
+      reason: No Supabase access token was available; none was requested or inspected.
+  hard-blockers-before-private-media-or-api-production-cutover:
+    - Live brief-photos is public and contains four objects; private access is not established.
+    - Reconcile local/live migration, schema, function, policy, and grant drift against a reviewed baseline; do not bulk replay local migrations.
+    - Resolve Cognito subject mapping to existing internal accounts without phone/email auto-linking.
+    - Approve and rehearse media privatization/conversion, legacy URL retirement, public cache handling, and Flutter private-cache isolation/purge.
+    - Define request-media retention and deletion timing separately; authorized complaint/supervision review may apply to retained media after request completion or cancellation.
+    - Approve and operationalize request_media.review grant/revoke authority and fail-closed access auditing.
+    - Verify old client compatibility, notification authorization/ownership, billing/entitlement ownership, and successful restore/authorization tests.
+tags:
+  - name: health
+  - name: identity
+  - name: discovery
+  - name: requests
+  - name: offers
+  - name: contact
+  - name: community
+  - name: saved-items
+  - name: reviews
+  - name: notifications
+  - name: verification
+  - name: billing
+  - name: administration
+paths:
+  /health/live:
+    get:
+      servers:
+        - url: /
+      operationId: getHealthLive
+      tags: [health]
+      summary: Check process liveness
+      description: Process-only probe; it does not disclose dependency state.
+      x-contract-status: local-foundation-target
+      security: []
+      responses:
+        '200':
+          description: The process is alive.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthEnvelope'
+        default:
+          $ref: '#/components/responses/Problem'
+  /health/ready:
+    get:
+      servers:
+        - url: /
+      operationId: getHealthReady
+      tags: [health]
+      summary: Check service readiness
+      description: Readiness stays non-sensitive and returns 503 when the service cannot serve requests.
+      x-contract-status: local-foundation-target
+      security: []
+      responses:
+        '200':
+          description: The process is initialized and accepting requests.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthEnvelope'
+        '503':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+  /me:
+    get:
+      operationId: getMe
+      tags: [identity]
+      summary: Read the authenticated account summary
+      description: Resolve the verified provider subject to exactly one internal Shattab identity. The target Cognito sub must come from a token whose signature, issuer, audience/client, expiry, and token use were verified by the trusted API; never accept a caller-supplied account ID, role, or identity claim. Never auto-link by phone or email. Ambiguous or duplicate mappings fail closed for manual reconciliation.
+      x-contract-status: planned
+      x-enablement-gates: [identity-subject-mapping-and-account-reconciliation]
+      security:
+        - ConsumerBearerAuth: []
+      responses:
+        '200':
+          description: The caller's self-safe account summary.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MeEnvelope'
+        '401':
+          $ref: '#/components/responses/Problem'
+        '409':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+  /me/bootstrap:
+    post:
+      operationId: bootstrapMe
+      tags: [identity]
+      summary: Bootstrap a verified new account
+      description: A verified, unmapped provider subject may be bootstrapped under the server's account policy. No identity, role, or account ID is accepted from the body. Never auto-link existing accounts by phone or email; ambiguous or duplicate mappings fail closed for manual reconciliation.
+      x-contract-status: planned
+      x-enablement-gates: [verified-new-subject-policy, existing-account-linking-runbook]
+      security:
+        - ConsumerBearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      responses:
+        '201':
+          description: A new internal account was created for the verified subject.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MeEnvelope'
+        '200':
+          description: The original result for an idempotent retry.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MeEnvelope'
+        '409':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+  /me/onboarding:
+    post:
+      operationId: completeMeOnboarding
+      tags: [identity]
+      summary: Select a consumer role once
+      description: The trusted server derives account identity and permits only the existing one-time homeowner or contractor onboarding choice; it owns the role lock and completion state. A caller-supplied role is not accepted as an identity or authorization claim.
+      x-contract-status: planned
+      x-enablement-gates: [hosted-role-lock-parity, onboarding-fields-reconciliation]
+      security:
+        - ConsumerBearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OnboardingInput'
+      responses:
+        '200':
+          description: Role was set or a matching retry result was returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MeEnvelope'
+        '201':
+          description: The onboarding profile was created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MeEnvelope'
+        '409':
+          $ref: '#/components/responses/Problem'
+        '422':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+  /me/profile:
+    get:
+      operationId: getMyProfile
+      tags: [identity]
+      summary: Read the caller's own profile
+      x-contract-status: planned
+      security:
+        - ConsumerBearerAuth: []
+      responses:
+        '200':
+          description: The caller's self profile.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfileEnvelope'
+        default:
+          $ref: '#/components/responses/Problem'
+    patch:
+      operationId: updateMyProfile
+      tags: [identity]
+      summary: Update the caller's display name
+      description: V1 only accepts fullName. Avatar changes wait for the public-media contract; phone, role, verification, plan, and ownership are not writable here.
+      x-contract-status: planned
+      x-enablement-gates: [profile-write-and-public-avatar-media-reconciliation]
+      security:
+        - ConsumerBearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfileUpdateInput'
+      responses:
+        '200':
+          description: Updated self profile.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfileEnvelope'
+        '409':
+          $ref: '#/components/responses/Problem'
+        '422':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+  /contractors:
+    get:
+      operationId: listContractors
+      tags: [discovery]
+      summary: Browse public contractor profiles
+      description: Guest-safe projection; excludes phone, private verification data, auth claims, and billing internals. Filters and ranking wait for parity review.
+      x-contract-status: planned
+      x-enablement-gates: [directory-filter-and-ranking-parity]
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Cursor'
+      responses:
+        '200':
+          description: A page of public contractor projections.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContractorPageEnvelope'
+        '422':
+          $ref: '#/components/responses/Problem'
+        '429':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+  /contractors/{contractorId}:
+    get:
+      operationId: getContractor
+      tags: [discovery]
+      summary: Read a public contractor profile
+      description: Does not disclose phone or private verification fields.
+      x-contract-status: planned
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/ContractorId'
+      responses:
+        '200':
+          description: Public contractor profile projection.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContractorEnvelope'
+        '404':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+  /contractors/{contractorId}/portfolio:
+    get:
+      operationId: listContractorPortfolio
+      tags: [discovery]
+      summary: List approved public portfolio items
+      description: Only media approved for public delivery may appear; private request and verification media are excluded.
+      x-contract-status: planned
+      x-enablement-gates: [public-media-approval-and-r2-adapter]
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/ContractorId'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Cursor'
+      responses:
+        '200':
+          description: A page of public portfolio metadata.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PortfolioPageEnvelope'
+        '404':
+          $ref: '#/components/responses/Problem'
+        '422':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+  /contractors/{contractorId}/reviews:
+    get:
+      operationId: listContractorReviews
+      tags: [discovery, reviews]
+      summary: List published contractor reviews
+      description: The projection omits private reviewer details.
+      x-contract-status: planned
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/ContractorId'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Cursor'
+      responses:
+        '200':
+          description: A page of published reviews.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReviewPageEnvelope'
+        '404':
+          $ref: '#/components/responses/Problem'
+        '422':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+  /me/requests:
+    get:
+      operationId: listMyRequests
+      tags: [requests]
+      summary: List the caller's homeowner requests
+      description: The server derives the owner from verified identity.
+      x-contract-status: planned
+      x-required-role: homeowner
+      security:
+        - ConsumerBearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Cursor'
+      responses:
+        '200':
+          description: A page of the caller's own requests.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RequestPageEnvelope'
+        '401':
+          $ref: '#/components/responses/Problem'
+        '403':
+          $ref: '#/components/responses/Problem'
+        '422':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+  /opportunities:
+    get:
+      operationId: listOpportunities
+      tags: [requests]
+      summary: List currently eligible open opportunities
+      description: The server recomputes service area, visibility, and entitlement. No contractor-after-acceptance photo access is implied.
+      x-contract-status: planned
+      x-required-role: contractor
+      x-enablement-gates: [opportunity-filter-and-quote-write-eligibility-parity]
+      security:
+        - ConsumerBearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Cursor'
+      responses:
+        '200':
+          description: A page of eligible opportunity projections.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RequestPageEnvelope'
+        '401':
+          $ref: '#/components/responses/Problem'
+        '403':
+          $ref: '#/components/responses/Problem'
+        '422':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+  /requests/{requestId}:
+    get:
+      operationId: getRequest
+      tags: [requests]
+      summary: Read an authorized request projection
+      description: Accessible to its owner, currently eligible contractors on open public requests, or the selected contractor on directed requests. Acceptance grants no extra photo access.
+      x-contract-status: planned
+      security:
+        - ConsumerBearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RequestId'
+      responses:
+        '200':
+          description: Authorized request projection.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RequestEnvelope'
+        '404':
+          $ref: '#/components/responses/Problem'
+        '503':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+    patch:
+      operationId: updateRequest
+      tags: [requests]
+      summary: Update an owned editable request
+      description: The server checks ownership and editable state. The input allowlist excludes owner, status, and lifecycle transitions.
+      x-contract-status: planned
+      x-enablement-gates: [hosted-editable-state-and-field-parity]
+      x-required-role: homeowner
+      security:
+        - ConsumerBearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RequestId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RequestUpdateInput'
+      responses:
+        '200':
+          description: Updated request projection.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RequestEnvelope'
+        '404':
+          $ref: '#/components/responses/Problem'
+        '409':
+          $ref: '#/components/responses/Problem'
+        '422':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+  /requests:
+    post:
+      operationId: createRequest
+      tags: [requests]
+      summary: Create a homeowner request
+      description: The server derives ownership and state. Attached staged media is reauthorized; callers cannot set status, hire, or completion fields.
+      x-contract-status: planned
+      x-required-role: homeowner
+      x-enablement-gates: [hosted-schema-parity, private-media-url-to-id-migration, private-request-photo-client-cache-and-legacy-url-cutover-rehearsal]
+      security:
+        - ConsumerBearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RequestCreateInput'
+      responses:
+        '201':
+          description: Request created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RequestEnvelope'
+        '200':
+          description: Original result for a matching idempotent retry.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RequestEnvelope'
+        '409':
+          $ref: '#/components/responses/Problem'
+        '422':
+          $ref: '#/components/responses/Problem'
+        '429':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+  /requests/{requestId}/cancellation:
+    post:
+      operationId: cancelRequest
+      tags: [requests]
+      summary: Remove a request from the active marketplace
+      description: Server chooses the safe outcome based on related offer history; body cannot set request status.
+      x-contract-status: planned
+      x-required-role: homeowner
+      x-enablement-gates: [cancellation-state-parity]
+      security:
+        - ConsumerBearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RequestId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      responses:
+        '200':
+          description: Request is no longer active.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RequestCancellationEnvelope'
+        '404':
+          $ref: '#/components/responses/Problem'
+        '409':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+  /me/request-media:
+    post:
+      operationId: uploadRequestMedia
+      tags: [requests]
+      summary: Upload one staged private request image
+      description: Inspect bytes rather than trusting a claimed MIME type. Return an opaque mediaId only, never a storage URL.
+      x-contract-status: planned
+      x-required-role: homeowner
+      x-enablement-gates: [private-image-validation-reprocessing-and-old-client-plan, private-request-photo-client-cache-and-legacy-url-cutover-rehearsal]
+      security:
+        - ConsumerBearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PrivateImageUploadInput'
+      responses:
+        '201':
+          description: Staged private media reference.
+          headers:
+            Cache-Control:
+              required: true
+              schema:
+                type: string
+                enum: [no-store]
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StagedMediaEnvelope'
+        '413':
+          $ref: '#/components/responses/Problem'
+        '415':
+          $ref: '#/components/responses/Problem'
+        '422':
+          $ref: '#/components/responses/Problem'
+        '429':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+  /me/request-media/{mediaId}:
+    delete:
+      operationId: deleteStagedRequestMedia
+      tags: [requests]
+      summary: Delete unattached staged request media
+      description: Only the owning caller may delete staged media that is not attached to a request.
+      x-contract-status: planned
+      security:
+        - ConsumerBearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/MediaId'
+      responses:
+        '204':
+          description: Staged media was deleted or was already absent for this caller.
+        '404':
+          $ref: '#/components/responses/Problem'
+        '409':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+  /requests/{requestId}/media:
+    get:
+      operationId: listRequestMedia
+      tags: [requests]
+      summary: List media references visible for this request
+      description: >-
+        Require a valid consumer bearer token before any request or media lookup; absent or invalid
+        credentials receive a uniform 401 independent of resource existence. On this consumer route, only
+        the request owner or the contractor whose offer was accepted may list media while the project is
+        active. Return the same generic 404 Problem with code NOT_FOUND for an absent request, an
+        unauthorized relationship, or a completed/cancelled/inactive request; do not distinguish these cases
+        or return a count, hasMedia flag, URL, or other existence signal. Open-request eligibility or a
+        directed request alone grants no photo access. Recheck relationship and lifecycle on every call.
+        Listing opaque references does not authorize a later byte read. Cache-Control is required and
+        restricted to no-store. Before private bytes are enabled, migrate existing media under a separately
+        approved and rehearsed plan, retire old public-URL clients, and have Flutter bypass the shared image
+        cache or isolate it by authenticated identity/session and media version, then purge it on sign-out
+        or account switch. HTTP no-store does not purge the Flutter cache. Live Supabase evidence dated
+        2026-10-26 reports brief-photos is public with four objects; this is a hard blocker, not evidence
+        that this target policy is enforced.
+      x-contract-status: planned
+      x-enablement-gates: [private-media-relationship-policy-and-migration, live-public-brief-photos-media-migration, local-live-schema-policy-grant-reconciliation, private-request-photo-client-cache-and-legacy-url-cutover-rehearsal]
+      security:
+        - ConsumerBearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RequestId'
+      responses:
+        '200':
+          description: Authorized opaque references and safe display ordering only.
+          headers:
+            Cache-Control:
+              required: true
+              schema:
+                type: string
+                enum: [no-store]
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MediaReferenceListEnvelope'
+        '401':
+          $ref: '#/components/responses/Problem'
+        '404':
+          $ref: '#/components/responses/OpaqueRequestMediaNotFound'
+        default:
+          $ref: '#/components/responses/Problem'
+  /request-media/{mediaId}/content:
+    get:
+      operationId: readRequestMediaContent
+      tags: [requests]
+      summary: Stream authorized private request-media bytes
+      description: >-
+        The mediaId is not a credential. Require a valid consumer bearer token before any resource lookup;
+        absent or invalid credentials receive a uniform 401 independent of whether the media exists. On this
+        consumer route, only the request owner or the contractor whose offer was accepted may read while the
+        project is active; deny before acceptance and after completion or cancellation. Return the same
+        generic 404 Problem with code NOT_FOUND for missing media, an unauthorized relationship, or an
+        inactive/completed/cancelled request; never distinguish these outcomes or reveal resource existence.
+        Reauthorize relationship and lifecycle on every byte read. Stream private bytes through the
+        authenticated API with Cache-Control no-store; never redirect to a reusable signed URL. Flutter must
+        bypass the shared image cache initially or key a private cache by authenticated identity/session and
+        media version and purge it on sign-out or account switch. HTTP no-store is not a substitute for
+        client-cache isolation or purge. The live public brief-photos bucket and legacy public URLs/caches
+        are hard cutover blockers until media migration and retirement are approved, rehearsed, and
+        verified.
+      x-contract-status: planned
+      x-enablement-gates: [private-media-relationship-policy-and-migration, live-public-brief-photos-media-migration, local-live-schema-policy-grant-reconciliation, private-request-photo-client-cache-and-legacy-url-cutover-rehearsal]
+      security:
+        - ConsumerBearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/MediaId'
+      responses:
+        '200':
+          description: Private media bytes for an authorized relationship.
+          headers:
+            Cache-Control:
+              required: true
+              schema:
+                type: string
+                enum: [no-store]
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        '401':
+          $ref: '#/components/responses/Problem'
+        '404':
+          $ref: '#/components/responses/OpaqueRequestMediaNotFound'
+        default:
+          $ref: '#/components/responses/Problem'
+  /requests/{requestId}/offers:
+    post:
+      operationId: createOffer
+      tags: [offers]
+      summary: Submit an offer on an eligible open request
+      description: Server derives the contractor and enforces both read visibility and write eligibility, including one active offer per contractor/request.
+      x-contract-status: planned
+      x-required-role: contractor
+      x-enablement-gates: [contractor-write-eligibility-and-entitlement-parity]
+      security:
+        - ConsumerBearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RequestId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OfferInput'
+      responses:
+        '201':
+          description: Offer created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OfferEnvelope'
+        '200':
+          description: Original result for a matching idempotent retry.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OfferEnvelope'
+        '404':
+          $ref: '#/components/responses/Problem'
+        '409':
+          $ref: '#/components/responses/Problem'
+        '422':
+          $ref: '#/components/responses/Problem'
+        '429':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+    get:
+      operationId: listRequestOffers
+      tags: [offers]
+      summary: List offers on the caller's own request
+      description: Request owner only; response omits contractor private fields.
+      x-contract-status: planned
+      x-required-role: homeowner
+      security:
+        - ConsumerBearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RequestId'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Cursor'
+      responses:
+        '200':
+          description: A page of owner-visible offers.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OfferPageEnvelope'
+        '404':
+          $ref: '#/components/responses/Problem'
+        '422':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+  /me/offers:
+    get:
+      operationId: listMyOffers
+      tags: [offers]
+      summary: List the caller's submitted offers
+      description: The server derives the contractor; no caller-supplied contractor ID.
+      x-contract-status: planned
+      x-required-role: contractor
+      security:
+        - ConsumerBearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Cursor'
+      responses:
+        '200':
+          description: A page of the caller's own offer history.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OfferPageEnvelope'
+        '401':
+          $ref: '#/components/responses/Problem'
+        '422':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+  /offers/{offerId}:
+    patch:
+      operationId: updateOffer
+      tags: [offers]
+      summary: Update an owned pending offer
+      description: Only source-backed offer values may change; request, contractor, and status are server-owned.
+      x-contract-status: planned
+      x-enablement-gates: [offer-edit-state-parity]
+      x-required-role: contractor
+      security:
+        - ConsumerBearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/OfferId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OfferUpdateInput'
+      responses:
+        '200':
+          description: Updated pending offer.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OfferEnvelope'
+        '404':
+          $ref: '#/components/responses/Problem'
+        '409':
+          $ref: '#/components/responses/Problem'
+        '422':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+  /offers/{offerId}/withdrawal:
+    post:
+      operationId: withdrawOffer
+      tags: [offers]
+      summary: Withdraw an eligible pending offer
+      description: The server sets the transition state; the caller cannot submit a replacement status.
+      x-contract-status: planned
+      x-required-role: contractor
+      security:
+        - ConsumerBearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/OfferId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      responses:
+        '200':
+          description: Offer withdrawal completed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OfferEnvelope'
+        '404':
+          $ref: '#/components/responses/Problem'
+        '409':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+  /offers/{offerId}/decline:
+    post:
+      operationId: declineOffer
+      tags: [offers]
+      summary: Decline a pending offer on the caller's request
+      description: The request owner is derived from verified identity; status is server-owned.
+      x-contract-status: planned
+      x-enablement-gates: [owner-decline-source-parity]
+      x-required-role: homeowner
+      security:
+        - ConsumerBearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/OfferId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      responses:
+        '200':
+          description: Offer declined.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OfferEnvelope'
+        '404':
+          $ref: '#/components/responses/Problem'
+        '409':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+  /requests/{requestId}/acceptance:
+    post:
+      operationId: acceptRequestOffer
+      tags: [offers, requests]
+      summary: Accept one pending offer on the caller's open request
+      description: The body selects one offer ID. The server performs one atomic winner transition and declines other pending offers.
+      x-contract-status: planned
+      x-enablement-gates: [hosted-transition-parity-and-atomicity]
+      x-required-role: homeowner
+      security:
+        - ConsumerBearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RequestId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AcceptanceInput'
+      responses:
+        '200':
+          description: Acceptance transition completed or its idempotent result was replayed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RequestEnvelope'
+        '404':
+          $ref: '#/components/responses/Problem'
+        '409':
+          $ref: '#/components/responses/Problem'
+        '422':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+  /requests/{requestId}/completion-request:
+    post:
+      operationId: requestCompletion
+      tags: [requests]
+      summary: Request confirmation of completed work
+      description: Only the contractor on the accepted offer can request completion; the request does not itself complete the work.
+      x-contract-status: planned
+      x-required-role: contractor
+      security:
+        - ConsumerBearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RequestId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      responses:
+        '200':
+          description: Completion request recorded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RequestEnvelope'
+        '404':
+          $ref: '#/components/responses/Problem'
+        '409':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+  /requests/{requestId}/completion-confirmation:
+    post:
+      operationId: confirmCompletion
+      tags: [requests]
+      summary: Confirm the requested completion
+      description: Only the request owner can confirm a previously requested completion; successful confirmation unlocks review eligibility.
+      x-contract-status: planned
+      x-required-role: homeowner
+      security:
+        - ConsumerBearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RequestId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      responses:
+        '200':
+          description: Completion was confirmed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RequestEnvelope'
+        '404':
+          $ref: '#/components/responses/Problem'
+        '409':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+
+
+  /contact-handoffs:
+    post:
+      operationId: createContactHandoff
+      tags: [contact]
+      summary: Create an authorized phone or WhatsApp handoff
+      description: Authenticated homeowner or contractor may request a handoff to another contractor from a profile or contractor post; prevent self-contact for the post owner. No phone number appears in public profile/post projections. A guest is routed by the client to signup/sign-in and, after successful authentication/onboarding, returns to the same detail and must tap again; this endpoint does not accept guest events and the client must not auto-launch after sign-in. Record authenticated intent, then return only a short-lived sensitive OS launch target with Cache-Control no-store. Record client-attested OS launch acceptance separately; neither event proves a call, sent message, conversation, or reply. Analytics may contain only channel, source surface, and observed handoff result; do not log phone, name, email, message text, launch URI, location, or target contractor identifier. Event retention and identity linkage remain unresolved and must not be invented here.
+      x-contract-status: planned
+      x-enablement-gates: [contact-target-policy-and-rate-controls, contact-telemetry-retention-and-identity-policy]
+      x-idempotent-telemetry: A retry with the same idempotency key returns the original result and must not duplicate intent telemetry.
+      security:
+        - ConsumerBearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContactHandoffInput'
+      responses:
+        '201':
+          description: Authorized handoff target.
+          headers:
+            Cache-Control:
+              required: true
+              schema:
+                type: string
+                enum: [no-store]
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContactHandoffEnvelope'
+        '404':
+          $ref: '#/components/responses/Problem'
+        '422':
+          $ref: '#/components/responses/Problem'
+        '429':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+  /contact-handoffs/{handoffId}/accepted:
+    post:
+      operationId: recordAcceptedContactHandoff
+      tags: [contact]
+      summary: Record that the operating system accepted a contact launch
+      description: Record only the authenticated caller's client-attested acceptance of the OS launch for their matching handoff. This does not assert that a call connected, a WhatsApp message was sent, a conversation started, or anyone replied. A retry with the same idempotency key returns the prior result and must not duplicate telemetry. Do not log phone, name, email, message text, launch URI, location, or target contractor identifier. Event retention and identity linkage remain unresolved.
+      x-contract-status: planned
+      x-enablement-gates: [contact-telemetry-retention-and-identity-policy]
+      security:
+        - ConsumerBearerAuth: []
+      parameters:
+        - name: handoffId
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: '#/components/parameters/IdempotencyKey'
+      responses:
+        '200':
+          description: The matching handoff event was recorded or its retry result was returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContactAcceptedEnvelope'
+        '404':
+          $ref: '#/components/responses/Problem'
+        '409':
+          $ref: '#/components/responses/Problem'
+        '429':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+  /community/posts:
+    get:
+      operationId: listCommunityPosts
+      tags: [community]
+      summary: Read the public community feed
+      description: Public projection excludes author phone. Search/filter vocabulary is not frozen here.
+      x-contract-status: planned
+      x-enablement-gates: [community-feed-filter-parity, public-media-moderation]
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Cursor'
+      responses:
+        '200':
+          description: A page of public community posts.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommunityPostPageEnvelope'
+        '422':
+          $ref: '#/components/responses/Problem'
+        '429':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+    post:
+      operationId: createCommunityPost
+      tags: [community]
+      summary: Publish a community post
+      description: Author identity is derived from verified session. Public media IDs must already belong to the approved public-media pipeline.
+      x-contract-status: planned
+      x-enablement-gates: [supported-post-role-parity, public-media-upload-and-moderation]
+      security:
+        - ConsumerBearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommunityPostInput'
+      responses:
+        '201':
+          description: Community post created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommunityPostEnvelope'
+        '409':
+          $ref: '#/components/responses/Problem'
+        '422':
+          $ref: '#/components/responses/Problem'
+        '429':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+  /community/posts/{postId}:
+    get:
+      operationId: getCommunityPost
+      tags: [community]
+      summary: Read one public community post
+      description: The response does not include author phone or an action target.
+      x-contract-status: planned
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/PostId'
+      responses:
+        '200':
+          description: Public post projection.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommunityPostEnvelope'
+        '404':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+    patch:
+      operationId: updateCommunityPost
+      tags: [community]
+      summary: Edit an owned community post
+      description: Author and moderation state are server-owned; only the typed editable fields are accepted.
+      x-contract-status: planned
+      x-enablement-gates: [post-edit-lifecycle-and-public-media-parity]
+      security:
+        - ConsumerBearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PostId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommunityPostUpdateInput'
+      responses:
+        '200':
+          description: Updated public post projection.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommunityPostEnvelope'
+        '404':
+          $ref: '#/components/responses/Problem'
+        '409':
+          $ref: '#/components/responses/Problem'
+        '422':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+    delete:
+      operationId: deleteCommunityPost
+      tags: [community]
+      summary: Delete an owned community post
+      description: Cleanup of related public media is a retryable server operation; callers cannot bypass moderation records.
+      x-contract-status: planned
+      x-enablement-gates: [post-delete-and-media-cleanup-parity]
+      security:
+        - ConsumerBearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PostId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      responses:
+        '204':
+          description: Post deletion was accepted and completed.
+        '404':
+          $ref: '#/components/responses/Problem'
+        '409':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+  /community/posts/{postId}/like:
+    put:
+      operationId: likeCommunityPost
+      tags: [community]
+      summary: Add the caller's like relation
+      x-contract-status: planned
+      security:
+        - ConsumerBearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PostId'
+      responses:
+        '204':
+          description: Like relation exists.
+        '404':
+          $ref: '#/components/responses/Problem'
+        '429':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+    delete:
+      operationId: unlikeCommunityPost
+      tags: [community]
+      summary: Remove the caller's like relation
+      x-contract-status: planned
+      security:
+        - ConsumerBearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PostId'
+      responses:
+        '204':
+          description: Like relation is absent.
+        '404':
+          $ref: '#/components/responses/Problem'
+        '429':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+  /community/posts/{postId}/save:
+    put:
+      operationId: saveCommunityPost
+      tags: [community, saved-items]
+      summary: Save a public community post
+      x-contract-status: planned
+      security:
+        - ConsumerBearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PostId'
+      responses:
+        '204':
+          description: Saved-post relation exists.
+        '404':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+    delete:
+      operationId: unsaveCommunityPost
+      tags: [community, saved-items]
+      summary: Remove a saved-post relation
+      x-contract-status: planned
+      security:
+        - ConsumerBearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PostId'
+      responses:
+        '204':
+          description: Saved-post relation is absent.
+        '404':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+  /community/posts/{postId}/comments:
+    get:
+      operationId: listCommunityComments
+      tags: [community]
+      summary: List comments visible on a public post
+      x-contract-status: planned
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/PostId'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Cursor'
+      responses:
+        '200':
+          description: A page of comments with safe author projection.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommentPageEnvelope'
+        '404':
+          $ref: '#/components/responses/Problem'
+        '422':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+    post:
+      operationId: createCommunityComment
+      tags: [community]
+      summary: Add a comment or reply
+      description: The server verifies the post is visible and any parent comment belongs to it.
+      x-contract-status: planned
+      security:
+        - ConsumerBearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PostId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommentInput'
+      responses:
+        '201':
+          description: Comment created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommentEnvelope'
+        '404':
+          $ref: '#/components/responses/Problem'
+        '409':
+          $ref: '#/components/responses/Problem'
+        '422':
+          $ref: '#/components/responses/Problem'
+        '429':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+  /community/comments/{commentId}:
+    patch:
+      operationId: updateCommunityComment
+      tags: [community]
+      summary: Edit an authored comment
+      description: The server derives comment ownership from verified identity and enforces the reconciled edit lifecycle.
+      x-contract-status: planned
+      x-enablement-gates: [comment-edit-lifecycle-parity]
+      security:
+        - ConsumerBearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/CommentId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommentUpdateInput'
+      responses:
+        '200':
+          description: Updated comment.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommentEnvelope'
+        '404':
+          $ref: '#/components/responses/Problem'
+        '409':
+          $ref: '#/components/responses/Problem'
+        '422':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+    delete:
+      operationId: deleteCommunityComment
+      tags: [community]
+      summary: Delete an authored comment
+      description: The server derives ownership and preserves audit/moderation consequences according to reconciled rules.
+      x-contract-status: planned
+      x-enablement-gates: [comment-delete-lifecycle-parity]
+      security:
+        - ConsumerBearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/CommentId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      responses:
+        '204':
+          description: Comment deletion completed.
+        '404':
+          $ref: '#/components/responses/Problem'
+        '409':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+  /me/saved-contractors:
+    get:
+      operationId: listSavedContractors
+      tags: [saved-items]
+      summary: List the caller's saved public contractors
+      x-contract-status: planned
+      x-required-role: homeowner
+      security:
+        - ConsumerBearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Cursor'
+      responses:
+        '200':
+          description: A page of saved public contractor projections.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContractorPageEnvelope'
+        '403':
+          $ref: '#/components/responses/Problem'
+        '422':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+  /me/saved-contractors/{contractorId}:
+    put:
+      operationId: saveContractor
+      tags: [saved-items]
+      summary: Save a visible public contractor
+      x-contract-status: planned
+      x-required-role: homeowner
+      security:
+        - ConsumerBearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ContractorId'
+      responses:
+        '204':
+          description: Saved-contractor relation exists.
+        '404':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+    delete:
+      operationId: unsaveContractor
+      tags: [saved-items]
+      summary: Remove a saved-contractor relation
+      x-contract-status: planned
+      x-required-role: homeowner
+      security:
+        - ConsumerBearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ContractorId'
+      responses:
+        '204':
+          description: Saved-contractor relation is absent.
+        '404':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+  /me/saved-opportunities:
+    get:
+      operationId: listSavedOpportunities
+      tags: [saved-items]
+      summary: List the caller's currently visible saved opportunities
+      description: The server rechecks open state and current eligibility for each item.
+      x-contract-status: planned
+      x-required-role: contractor
+      security:
+        - ConsumerBearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Cursor'
+      responses:
+        '200':
+          description: A page of currently eligible opportunities.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RequestPageEnvelope'
+        '403':
+          $ref: '#/components/responses/Problem'
+        '422':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+  /me/saved-opportunities/{requestId}:
+    put:
+      operationId: saveOpportunity
+      tags: [saved-items]
+      summary: Save a currently visible opportunity
+      x-contract-status: planned
+      x-required-role: contractor
+      security:
+        - ConsumerBearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RequestId'
+      responses:
+        '204':
+          description: Saved-opportunity relation exists.
+        '404':
+          $ref: '#/components/responses/Problem'
+        '409':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+    delete:
+      operationId: unsaveOpportunity
+      tags: [saved-items]
+      summary: Remove a saved-opportunity relation
+      x-contract-status: planned
+      x-required-role: contractor
+      security:
+        - ConsumerBearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RequestId'
+      responses:
+        '204':
+          description: Saved-opportunity relation is absent.
+        '404':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+  /me/saved-portfolio-items/{portfolioItemId}:
+    put:
+      operationId: savePortfolioItem
+      tags: [saved-items]
+      summary: Save a public portfolio item
+      description: Mirrors the signed-in project-detail save action. The API derives the homeowner identity from the verified session and permits only the homeowner role; repeating the save leaves the relation present. The current UI reads per-item save state, but this contract does not define that read operation.
+      x-contract-status: planned
+      x-required-role: homeowner
+      x-enablement-gates: [saved-portfolio-route-parity]
+      security:
+        - ConsumerBearerAuth: []
+      parameters:
+        - name: portfolioItemId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Saved-portfolio relation exists.
+        '404':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+    delete:
+      operationId: unsavePortfolioItem
+      tags: [saved-items]
+      summary: Remove a saved-portfolio relation
+      description: Mirrors the signed-in project-detail unsave action. The API derives the homeowner identity from the verified session and permits only the homeowner role; repeating removal leaves the relation absent. The current UI reads per-item save state, but this contract does not define that read operation.
+      x-contract-status: planned
+      x-required-role: homeowner
+      x-enablement-gates: [saved-portfolio-route-parity]
+      security:
+        - ConsumerBearerAuth: []
+      parameters:
+        - name: portfolioItemId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Saved-portfolio relation is absent.
+        '404':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+  /reviews:
+    post:
+      operationId: createBriefReview
+      tags: [reviews]
+      summary: Submit a review for completed work
+      description: The server verifies homeowner ownership, completed request, contractor relationship, and uniqueness; client IDs are evidence references only.
+      x-contract-status: planned
+      x-required-role: homeowner
+      x-enablement-gates: [hosted-review-eligibility-and-uniqueness-parity, review-comment-length-policy-reconciliation]
+      security:
+        - ConsumerBearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BriefReviewInput'
+      responses:
+        '201':
+          description: Review created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReviewEnvelope'
+        '409':
+          $ref: '#/components/responses/Problem'
+        '422':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+  /me/contact-review-prompts:
+    get:
+      operationId: listContactReviewPrompts
+      tags: [reviews]
+      summary: List the caller's due contact-review prompts
+      description: A prompt reflects a qualifying recorded contact episode, not proof that a transaction occurred.
+      x-contract-status: planned
+      x-enablement-gates: [contact-episode-eligibility-and-retention-parity]
+      x-required-role: homeowner
+      security:
+        - ConsumerBearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Cursor'
+      responses:
+        '200':
+          description: A page of the caller's own prompts.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContactPromptPageEnvelope'
+        '403':
+          $ref: '#/components/responses/Problem'
+        '422':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+  /me/contact-review-prompts/{promptId}/dismiss:
+    post:
+      operationId: dismissContactReviewPrompt
+      tags: [reviews]
+      summary: Dismiss the caller's due contact-review prompt
+      x-contract-status: planned
+      x-enablement-gates: [contact-episode-eligibility-and-retention-parity]
+      x-required-role: homeowner
+      security:
+        - ConsumerBearerAuth: []
+      parameters:
+        - name: promptId
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: '#/components/parameters/IdempotencyKey'
+      responses:
+        '204':
+          description: Prompt was dismissed.
+        '404':
+          $ref: '#/components/responses/Problem'
+        '409':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+  /me/contact-review-prompts/{promptId}/review:
+    post:
+      operationId: submitContactReviewPrompt
+      tags: [reviews]
+      summary: Submit a review from an eligible contact-review prompt
+      description: The server resolves the prompt to its contractor; request payload cannot choose another contractor.
+      x-contract-status: planned
+      x-enablement-gates: [contact-episode-eligibility-and-retention-parity, review-comment-length-policy-reconciliation]
+      x-required-role: homeowner
+      security:
+        - ConsumerBearerAuth: []
+      parameters:
+        - name: promptId
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContactReviewInput'
+      responses:
+        '201':
+          description: Contact-origin review created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReviewEnvelope'
+        '200':
+          description: Original result for a matching idempotent retry.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReviewEnvelope'
+        '404':
+          $ref: '#/components/responses/Problem'
+        '409':
+          $ref: '#/components/responses/Problem'
+        '422':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+  /me/blocks/{userId}:
+    put:
+      operationId: blockUser
+      tags: [saved-items]
+      summary: Block another consumer
+      description: The authenticated caller is the blocker; blocked-by identity is server-derived.
+      x-contract-status: planned
+      security:
+        - ConsumerBearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+      responses:
+        '204':
+          description: Block relation exists.
+        '404':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+    delete:
+      operationId: unblockUser
+      tags: [saved-items]
+      summary: Remove a block relation
+      x-contract-status: planned
+      security:
+        - ConsumerBearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+      responses:
+        '204':
+          description: Block relation is absent.
+        '404':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /me/notifications:
+    get:
+      operationId: listMyNotifications
+      tags: [notifications]
+      summary: List the caller's notification inbox
+      description: Return only the caller's items and safe entity references; no arbitrary payload destination or provider token.
+      x-contract-status: planned
+      x-enablement-gates: [notification-inbox-schema-and-foreground-transport-parity, local-live-edge-function-authorization-and-migration-review]
+      security:
+        - ConsumerBearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Cursor'
+      responses:
+        '200':
+          description: A page of the caller's own notifications.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationPageEnvelope'
+        '401':
+          $ref: '#/components/responses/Problem'
+        '422':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+  /me/notifications/{notificationId}/read:
+    post:
+      operationId: markNotificationRead
+      tags: [notifications]
+      summary: Mark one owned notification as read
+      description: The server derives read state and timestamp.
+      x-contract-status: planned
+      security:
+        - ConsumerBearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/NotificationId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      responses:
+        '204':
+          description: Notification is marked read.
+        '404':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+  /me/notifications/read-all:
+    post:
+      operationId: markAllNotificationsRead
+      tags: [notifications]
+      summary: Mark all of the caller's notifications as read
+      description: The server affects only the authenticated caller's inbox.
+      x-contract-status: planned
+      security:
+        - ConsumerBearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      responses:
+        '204':
+          description: Caller-owned unread notifications are marked read.
+        default:
+          $ref: '#/components/responses/Problem'
+  /me/device-tokens:
+    post:
+      operationId: registerDeviceToken
+      tags: [notifications]
+      summary: Register or refresh the caller's push token
+      description: Bind the raw FCM/APNs token to verified identity. Never return or log the token; resolve provider and account-switch cleanup server-side.
+      x-contract-status: planned
+      x-enablement-gates: [device-installation-identity-and-account-switch-race-parity]
+      security:
+        - ConsumerBearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeviceTokenInput'
+      responses:
+        '201':
+          description: Device registration created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeviceRegistrationEnvelope'
+        '200':
+          description: Existing registration refreshed or its retry result returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeviceRegistrationEnvelope'
+        '422':
+          $ref: '#/components/responses/Problem'
+        '429':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+  /me/device-tokens/{deviceId}:
+    delete:
+      operationId: deleteDeviceToken
+      tags: [notifications]
+      summary: Remove an owned device registration
+      description: Logout or account switch must remove the prior account binding; the token itself is never accepted in the path.
+      x-contract-status: planned
+      x-enablement-gates: [opaque-device-id-and-provider-cleanup-policy]
+      security:
+        - ConsumerBearerAuth: []
+      parameters:
+        - name: deviceId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Device registration is absent for the caller.
+        '404':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+  /me/verification-documents:
+    post:
+      operationId: uploadVerificationDocument
+      tags: [verification]
+      summary: Upload one private contractor-verification document
+      description: Inspect the actual bytes, retain privately, and return an opaque media ID only. Accepted file types and limits are not frozen here.
+      x-contract-status: planned
+      x-required-role: contractor
+      x-enablement-gates: [private-document-format-size-and-storage-policy]
+      security:
+        - ConsumerBearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PrivateDocumentUploadInput'
+      responses:
+        '201':
+          description: Private staged document reference.
+          headers:
+            Cache-Control:
+              required: true
+              schema:
+                type: string
+                enum: [no-store]
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StagedMediaEnvelope'
+        '413':
+          $ref: '#/components/responses/Problem'
+        '415':
+          $ref: '#/components/responses/Problem'
+        '422':
+          $ref: '#/components/responses/Problem'
+        '429':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+  /me/verification-requests:
+    get:
+      operationId: listMyVerificationRequests
+      tags: [verification]
+      summary: List the caller's verification submissions
+      description: Return own status/history only; omit reviewer-only notes and other users' data.
+      x-contract-status: planned
+      security:
+        - ConsumerBearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Cursor'
+      responses:
+        '200':
+          description: A page of the caller's verification history.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VerificationPageEnvelope'
+        '401':
+          $ref: '#/components/responses/Problem'
+        '422':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+    post:
+      operationId: submitVerificationRequest
+      tags: [verification]
+      summary: Submit owned documents for contractor verification
+      description: The server checks media ownership and sets pending status; caller cannot self-approve.
+      x-contract-status: planned
+      x-required-role: contractor
+      x-enablement-gates: [pending-resubmission-rule-and-hosted-parity]
+      security:
+        - ConsumerBearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VerificationRequestInput'
+      responses:
+        '201':
+          description: Verification request submitted.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VerificationEnvelope'
+        '200':
+          description: Original result for a matching idempotent retry.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VerificationEnvelope'
+        '409':
+          $ref: '#/components/responses/Problem'
+        '422':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+  /me/payment-requests:
+    get:
+      operationId: listMyPaymentRequests
+      tags: [billing]
+      summary: List the caller's payment-request status history
+      description: Read-only status projection for existing payment requests; it is not a subscription billing or entitlement contract. Plan, amount, currency, payment provider, verification/webhook authority, methods, proof-submission workflow, current paid-user compatibility, and cutover behavior remain unresolved. Do not infer billing routes or entitlement semantics from payment-request moderation.
+      x-contract-status: planned
+      x-enablement-gates: [payment-method-plan-and-status-vocabulary-reconciliation]
+      x-required-role: contractor
+      security:
+        - ConsumerBearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Cursor'
+      responses:
+        '200':
+          description: A page of the caller's own payment status records.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentRequestPageEnvelope'
+        '401':
+          $ref: '#/components/responses/Problem'
+        '422':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /admin/me:
+    get:
+      operationId: getAdminMe
+      tags: [administration]
+      summary: Read the operator's own active capabilities
+      description: Operator identity is separate from consumer identity; this endpoint never returns provider tokens.
+      x-contract-status: planned
+      x-enablement-gates: [operator-issuer-account-continuity-and-capability-grants]
+      security:
+        - AdminBearerAuth: []
+      responses:
+        '200':
+          description: Authenticated operator projection.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminMeEnvelope'
+        '401':
+          $ref: '#/components/responses/Problem'
+        '403':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+  /admin/users:
+    get:
+      operationId: listAdminUsers
+      tags: [administration]
+      summary: List users in the bounded administration projection
+      x-contract-status: planned
+      x-required-capability: users.read
+      x-enablement-gates: [operator-capability-assignment]
+      security:
+        - AdminBearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Cursor'
+      responses:
+        '200':
+          description: A page of bounded user projections.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminUserPageEnvelope'
+        '403':
+          $ref: '#/components/responses/Problem'
+        '422':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+  /admin/users/{userId}:
+    get:
+      operationId: getAdminUser
+      tags: [administration]
+      summary: Read one bounded user projection
+      x-contract-status: planned
+      x-required-capability: users.read
+      security:
+        - AdminBearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+      responses:
+        '200':
+          description: User details allowed to the users.read capability.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminUserEnvelope'
+        '403':
+          $ref: '#/components/responses/Problem'
+        '404':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+  /admin/users/{userId}/suspension:
+    post:
+      operationId: suspendAdminUser
+      tags: [administration]
+      summary: Suspend a user with a recorded reason
+      description: Actor and resulting status/timestamps are server-owned.
+      x-contract-status: planned
+      x-required-capability: users.suspend
+      x-enablement-gates: [operator-capability-assignment-and-suspension-parity, admin-reason-length-policy-reconciliation]
+      security:
+        - AdminBearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SuspensionInput'
+      responses:
+        '200':
+          description: User suspension state updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminUserEnvelope'
+        '403':
+          $ref: '#/components/responses/Problem'
+        '404':
+          $ref: '#/components/responses/Problem'
+        '409':
+          $ref: '#/components/responses/Problem'
+        '422':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+    delete:
+      operationId: unsuspendAdminUser
+      tags: [administration]
+      summary: Remove a user suspension
+      x-contract-status: planned
+      x-required-capability: users.suspend
+      x-enablement-gates: [operator-capability-assignment-and-suspension-parity]
+      security:
+        - AdminBearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+      responses:
+        '204':
+          description: User is no longer suspended.
+        '403':
+          $ref: '#/components/responses/Problem'
+        '404':
+          $ref: '#/components/responses/Problem'
+        '409':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+  /admin/reports:
+    get:
+      operationId: listAdminReports
+      tags: [administration]
+      summary: List reports in the moderation queue
+      description: Opening the ordinary queue does not fetch request photos.
+      x-contract-status: planned
+      x-required-capability: moderation.read
+      x-enablement-gates: [report-reason-catalog-and-operator-capability-assignment]
+      security:
+        - AdminBearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Cursor'
+      responses:
+        '200':
+          description: A page of report summaries.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModerationReportPageEnvelope'
+        '403':
+          $ref: '#/components/responses/Problem'
+        '422':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+  /admin/reports/{reportId}:
+    get:
+      operationId: getAdminReport
+      tags: [administration]
+      summary: Read one moderation report
+      x-contract-status: planned
+      x-required-capability: moderation.read
+      security:
+        - AdminBearerAuth: []
+      parameters:
+        - name: reportId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Report details for review without private media bytes.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModerationReportEnvelope'
+        '403':
+          $ref: '#/components/responses/Problem'
+        '404':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+  /admin/reports/{reportId}/resolution:
+    post:
+      operationId: resolveAdminReport
+      tags: [administration]
+      summary: Resolve or dismiss a report
+      description: Supported decisions are dismiss, remove_content, and suspend_author. Removal/suspension require a reason note; dismissal may omit it.
+      x-contract-status: planned
+      x-required-capability: moderation.resolve
+      x-enablement-gates: [operator-capability-assignment-and-report-target-parity, admin-reason-length-policy-reconciliation]
+      security:
+        - AdminBearerAuth: []
+      parameters:
+        - name: reportId
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReportResolutionInput'
+      responses:
+        '200':
+          description: Report resolution completed and audited.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModerationReportEnvelope'
+        '403':
+          $ref: '#/components/responses/Problem'
+        '404':
+          $ref: '#/components/responses/Problem'
+        '409':
+          $ref: '#/components/responses/Problem'
+        '422':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+  /admin/verification-requests:
+    get:
+      operationId: listAdminVerificationRequests
+      tags: [administration, verification]
+      summary: List verification submissions for review
+      x-contract-status: planned
+      x-required-capability: verification.review
+      x-enablement-gates: [operator-capability-assignment-and-verification-state-parity, admin-reason-length-policy-reconciliation]
+      security:
+        - AdminBearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Cursor'
+      responses:
+        '200':
+          description: A page of reviewer projections; private document bytes use a separate route.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminVerificationPageEnvelope'
+        '403':
+          $ref: '#/components/responses/Problem'
+        '422':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+  /admin/verification-requests/{verificationRequestId}:
+    get:
+      operationId: getAdminVerificationRequest
+      tags: [administration, verification]
+      summary: Read a verification submission for review
+      description: Document references contain opaque IDs only; bytes require a separate capability-checked read.
+      x-contract-status: planned
+      x-required-capability: verification.review
+      security:
+        - AdminBearerAuth: []
+      parameters:
+        - name: verificationRequestId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Reviewer projection with attached media IDs, no object URL.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminVerificationEnvelope'
+        '403':
+          $ref: '#/components/responses/Problem'
+        '404':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+  /admin/verification-requests/{verificationRequestId}/decision:
+    post:
+      operationId: decideVerificationRequest
+      tags: [administration, verification]
+      summary: Approve or reject a contractor verification submission
+      description: Rejection requires a reason. The submitter cannot grant their own verification.
+      x-contract-status: planned
+      x-required-capability: verification.review
+      x-enablement-gates: [operator-capability-assignment-and-verification-state-parity, admin-reason-length-policy-reconciliation]
+      security:
+        - AdminBearerAuth: []
+      parameters:
+        - name: verificationRequestId
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VerificationDecisionInput'
+      responses:
+        '200':
+          description: Verification decision recorded and audited.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminVerificationEnvelope'
+        '403':
+          $ref: '#/components/responses/Problem'
+        '404':
+          $ref: '#/components/responses/Problem'
+        '409':
+          $ref: '#/components/responses/Problem'
+        '422':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+  /admin/payment-requests:
+    get:
+      operationId: listAdminPaymentRequests
+      tags: [administration, billing]
+      summary: List payment submissions for review
+      description: The response never returns object paths or private proof URLs.
+      x-contract-status: planned
+      x-required-capability: billing.review
+      x-enablement-gates: [payment-policy-and-operator-capability-assignment]
+      security:
+        - AdminBearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Cursor'
+      responses:
+        '200':
+          description: A page of bounded payment-review projections.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminPaymentPageEnvelope'
+        '403':
+          $ref: '#/components/responses/Problem'
+        '422':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+  /admin/payment-requests/{paymentRequestId}:
+    get:
+      operationId: getAdminPaymentRequest
+      tags: [administration, billing]
+      summary: Read one payment submission for review
+      description: Proof bytes have a separate authorized streaming route; no stored path or URL is returned.
+      x-contract-status: planned
+      x-required-capability: billing.review
+      x-enablement-gates: [payment-policy-and-operator-capability-assignment]
+      security:
+        - AdminBearerAuth: []
+      parameters:
+        - name: paymentRequestId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Bounded payment projection with an opaque proof media ID when applicable.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminPaymentEnvelope'
+        '403':
+          $ref: '#/components/responses/Problem'
+        '404':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+  /admin/payment-requests/{paymentRequestId}/decision:
+    post:
+      operationId: decidePaymentRequest
+      tags: [administration, billing]
+      summary: Approve or reject a payment submission
+      description: Rejection requires a reason; client cannot set plan, amount, or billing status.
+      x-contract-status: planned
+      x-required-capability: billing.review
+      x-enablement-gates: [payment-method-plan-state-and-operator-assignment-reconciliation, admin-reason-length-policy-reconciliation]
+      security:
+        - AdminBearerAuth: []
+      parameters:
+        - name: paymentRequestId
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentDecisionInput'
+      responses:
+        '200':
+          description: Payment review decision recorded and audited.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminPaymentEnvelope'
+        '403':
+          $ref: '#/components/responses/Problem'
+        '404':
+          $ref: '#/components/responses/Problem'
+        '409':
+          $ref: '#/components/responses/Problem'
+        '422':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+  /admin/activity:
+    get:
+      operationId: listAdminActivity
+      tags: [administration]
+      summary: Read a bounded administration activity feed
+      description: Mutations are audited; output excludes credentials, request bodies, tokens, and private media bytes.
+      x-contract-status: planned
+      x-required-capability: activity.read
+      x-enablement-gates: [operator-capability-assignment-and-audit-event-schema]
+      security:
+        - AdminBearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Cursor'
+      responses:
+        '200':
+          description: A page of safe activity records.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminActivityPageEnvelope'
+        '403':
+          $ref: '#/components/responses/Problem'
+        '422':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+  /admin/requests/{requestId}/media:
+    get:
+      operationId: listAdminRequestMedia
+      tags: [administration, requests]
+      summary: List private request-media references for complaint or supervision
+      description: >-
+        Require valid admin authentication before resource lookup; absent or invalid credentials receive a
+        uniform 401 independent of resource existence. Check request_media.review and durably record each
+        attempt, including denials, using the supplied requestId and purpose before any request or media
+        existence lookup. If the capability is absent, return the same generic 404 Problem (code NOT_FOUND)
+        as for a missing request. If capability checking or the durable audit system fails, fail closed with
+        a generic 503 before resource lookup. The `request_media.review` capability is granted manually and remains effective
+        until manually revoked; an administrator may review retained media for complaint or
+        supervision even after request completion or cancellation; lifecycle closure alone
+        does not deny admin access.
+        Recheck media relationships and audit an actual
+        view before returning references. No case ID is required; opening ordinary queue rows must not fetch
+        photos. Unapproved assumption only: the existing least-privilege owner admin role would be the sole
+        grant/revoke authority and could not self-grant. This is not current enforcement or an approved
+        grantor policy. Retention and deletion timing for request media remain unresolved; gate production
+        review on that policy and its approved implementation. The live public brief-photos bucket and old
+        public URLs/caches are hard blockers; no-store does not purge client caches.
+      x-contract-status: planned
+      x-required-capability: request_media.review
+      x-enablement-gates: [admin-photo-capability-issuer-and-grant-workflow, admin-photo-grantor-owner-assumption-approval, admin-request-media-access-audit-contract, live-public-brief-photos-media-migration, local-live-schema-policy-grant-reconciliation, private-request-photo-client-cache-and-legacy-url-cutover-rehearsal, request-media-retention-and-deletion-policy]
+      security:
+        - AdminBearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RequestId'
+        - name: purpose
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [complaint, supervision]
+      responses:
+        '200':
+          description: Private media IDs and safe display ordering only.
+          headers:
+            Cache-Control:
+              required: true
+              schema:
+                type: string
+                enum: [no-store]
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MediaReferenceListEnvelope'
+        '401':
+          $ref: '#/components/responses/Problem'
+        '404':
+          $ref: '#/components/responses/OpaqueRequestMediaNotFound'
+        '422':
+          $ref: '#/components/responses/Problem'
+        '503':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+  /admin/request-media/{mediaId}/content:
+    get:
+      operationId: readAdminRequestMediaContent
+      tags: [administration, requests]
+      summary: Stream a private request photo for complaint or supervision
+      description: >-
+        Require valid admin authentication before resource lookup; absent or invalid credentials receive a
+        uniform 401 independent of resource existence. Check request_media.review and durably record each
+        attempt, including denials, using the supplied mediaId and purpose before any media or request
+        existence lookup. If the capability is absent, return the same generic 404 Problem (code NOT_FOUND)
+        as for missing media. If capability checking or the durable audit system fails, fail closed with a
+        generic 503 before resource lookup. The `request_media.review` capability is granted manually and remains effective
+        until manually revoked; an administrator may review retained media for complaint or
+        supervision even after request completion or cancellation; lifecycle closure alone
+        does not deny admin access.
+        Recheck the media-to-request relationship for
+        each read and durably record an actual view before returning bytes. No reusable signed redirect or
+        case-ID prerequisite; never record photo bytes. Unapproved assumption only: the existing
+        least-privilege owner admin role would be the sole grant/revoke authority and could not self-grant.
+        This is not current enforcement or an approved grantor policy. Retention and deletion timing for
+        request media remain unresolved; gate production review on that policy and its approved
+        implementation. The live public brief-photos bucket and legacy URLs/caches are hard blockers until
+        the separately approved migration and retirement rehearsal pass. Cache-Control no-store does not
+        purge client caches.
+      x-contract-status: planned
+      x-required-capability: request_media.review
+      x-enablement-gates: [admin-photo-capability-issuer-and-grant-workflow, admin-photo-grantor-owner-assumption-approval, admin-request-media-access-audit-contract, live-public-brief-photos-media-migration, local-live-schema-policy-grant-reconciliation, private-request-photo-client-cache-and-legacy-url-cutover-rehearsal, request-media-retention-and-deletion-policy]
+      security:
+        - AdminBearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/MediaId'
+        - name: purpose
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [complaint, supervision]
+      responses:
+        '200':
+          description: Authorized private media bytes.
+          headers:
+            Cache-Control:
+              required: true
+              schema:
+                type: string
+                enum: [no-store]
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        '401':
+          $ref: '#/components/responses/Problem'
+        '404':
+          $ref: '#/components/responses/OpaqueRequestMediaNotFound'
+        '503':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+  /admin/verification-requests/{verificationRequestId}/documents/{mediaId}/content:
+    get:
+      operationId: readAdminVerificationDocument
+      tags: [administration, verification]
+      summary: Stream a document attached to a verification submission
+      description: Recheck the review capability and media-to-submission relationship for every byte read; never return a storage URL.
+      x-contract-status: planned
+      x-required-capability: verification.review
+      security:
+        - AdminBearerAuth: []
+      parameters:
+        - name: verificationRequestId
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: '#/components/parameters/MediaId'
+      responses:
+        '200':
+          description: Authorized private document bytes.
+          headers:
+            Cache-Control:
+              required: true
+              schema:
+                type: string
+                enum: [no-store]
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        '403':
+          $ref: '#/components/responses/Problem'
+        '404':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+  /admin/payment-requests/{paymentRequestId}/proof/{mediaId}/content:
+    get:
+      operationId: readAdminPaymentProof
+      tags: [administration, billing]
+      summary: Stream proof attached to a payment submission
+      description: Recheck the review capability and media-to-submission relationship for every byte read; never return a storage URL.
+      x-contract-status: planned
+      x-required-capability: billing.review
+      x-enablement-gates: [payment-proof-storage-and-policy-reconciliation]
+      security:
+        - AdminBearerAuth: []
+      parameters:
+        - name: paymentRequestId
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: '#/components/parameters/MediaId'
+      responses:
+        '200':
+          description: Authorized private proof bytes.
+          headers:
+            Cache-Control:
+              required: true
+              schema:
+                type: string
+                enum: [no-store]
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        '403':
+          $ref: '#/components/responses/Problem'
+        '404':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+
+x-deferred-operations:
+  - method: GET
+    path: /me/saved-portfolio-items
+    gate: saved-portfolio-route-parity
+    reason: Local source confirms per-item save-state lookup on the detail screen but no saved-portfolio collection/list UI or target read projection.
+  - method: DELETE
+    path: /me
+    gate: account-deletion-retention-and-cross-service-cleanup
+  - method: GET
+    path: /me/entitlements
+    gate: billing-terms-and-server-owned-entitlement-vocabulary
+  - method: GET
+    path: /me/notification-stream
+    gate: foreground-transport-envelope-cursor-and-reconnect-contract
+  - method: GET
+    path: /billing/plans
+    gate: plan-catalogue-method-amount-currency-and-quota-reconciliation
+  - method: POST
+    path: /me/payment-requests
+    gate: payment-method-proof-requirement-and-submission-state-reconciliation
+  - method: POST
+    path: /community/reports
+    gate: report-target-reason-catalogue-and-input-limits
+  - method: POST
+    path: /requests/{requestId}/contact-handoffs
+    gate: contractor-to-homeowner-entitlement-and-relationship-policy
+  - method: PATCH
+    path: /reviews/{reviewId}
+    gate: review-edit-policy-and-source-parity
+x-deferred-fields:
+  - field: profile.avatarMediaId
+    gate: public-media-upload-approval-and-ownership-contract
+  - field: contractor-directory-filter-and-sort-query
+    gate: local-filter-and-ranking-parity
+  - field: community-feed-filter-and-search-query
+    gate: local-filter-and-search-parity
+  - field: community-post.public-media-upload
+    gate: public-user-media-validation-and-moderation-pipeline
+x-response-cache-policy:
+  authenticated-resource-responses: Cache-Control no-store
+  private-media-bytes-and-references: Cache-Control no-store
+  contact-launch-target: Cache-Control no-store
+  private-request-photo-client-cache: Bypass the shared Flutter image cache initially, or key a private cache by authenticated identity/session and media version and purge it on sign-out/account switch.
+  private-request-photo-http-cache: Cache-Control no-store is an additional HTTP-layer control and does not purge the Flutter image cache.
+  private-request-photo-cutover: Rehearse legacy public-URL client retirement and cache/version migration before private-photo cutover.
+  public-resource-caching: configure only after media approval and CDN policy are reviewed
+x-error-codes:
+  - AUTHENTICATION_REQUIRED
+  - INVALID_TOKEN
+  - FORBIDDEN
+  - NOT_FOUND
+  - VALIDATION_FAILED
+  - STATE_CONFLICT
+  - IDEMPOTENCY_KEY_REUSED
+  - ACCOUNT_LINK_REQUIRED
+  - NOT_ELIGIBLE
+  - QUOTA_EXCEEDED
+  - RATE_LIMITED
+  - DEPENDENCY_UNAVAILABLE
+  - INTERNAL_ERROR
+x-planner-follow-up:
+  - scope: contractor-showcase-profile-writes-and-portfolio-create-update-delete
+    reason: Current source has these user flows, but the approved route matrix contains no target operations for them.
+  - scope: homeowner-profile-specific-details-update
+    reason: Current source has profile-specific details, but the approved route matrix does not define their target write contract.
+  - scope: admin-direct-plan-verification-and-post-removal-actions
+    reason: Current admin action source includes these actions, but the approved route matrix does not define target API routes.
+  - scope: contact-follow-up-mark-not-worked-together
+    reason: Current source has this contact follow-up action, but the approved route matrix does not define a target operation or permission contract.
+  - scope: saved-portfolio-item-state-read-api-contract
+    reason: Current source reads save state for one portfolio project on its detail screen, but the approved matrix does not define a read operation or response projection; the unconfirmed collection list remains deferred.
+  - scope: review-comment-length-policy-reconciliation
+    reason: The target contract accepts review comments, but a source-backed character limit has not been established.
+  - scope: admin-reason-length-policy-reconciliation
+    reason: Admin suspension, moderation, verification, and payment notes/reasons have required or optional semantics, but a source-backed maximum character length has not been established.
+
+components:
+  securitySchemes:
+    ConsumerBearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Target Cognito bearer token. The trusted API verifies signature, issuer, audience/client, expiry, and expected token use, then maps verified sub to exactly one internal Shattab identity. Never trust caller-supplied account ID, role, or identity claims; never auto-link by phone/email. Duplicate or ambiguous mappings fail closed for manual reconciliation. PostgreSQL identity is transaction-scoped after verification; the runtime role is least-privilege and neither owns protected tables nor bypasses row security.
+    AdminBearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Separate logical operator identity and capability contract. Provider issuer, account continuity, and capability grant/revoke workflow remain unresolved; ordinary admin membership alone does not grant request_media.review.
+  parameters:
+    Limit:
+      name: limit
+      in: query
+      required: false
+      description: Page size. Defaults to 20 and is bounded from 1 to 50.
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 50
+        default: 20
+    Cursor:
+      name: cursor
+      in: query
+      required: false
+      description: Opaque, tamper-resistant cursor bound to filter/order context and to the caller for private collections.
+      schema:
+        type: string
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      description: Retry key scoped to verified principal, operation/resource, and payload digest.
+      schema:
+        type: string
+    ContractorId:
+      name: contractorId
+      in: path
+      required: true
+      schema:
+        type: string
+    RequestId:
+      name: requestId
+      in: path
+      required: true
+      schema:
+        type: string
+    MediaId:
+      name: mediaId
+      in: path
+      required: true
+      schema:
+        type: string
+    OfferId:
+      name: offerId
+      in: path
+      required: true
+      schema:
+        type: string
+    PostId:
+      name: postId
+      in: path
+      required: true
+      schema:
+        type: string
+    CommentId:
+      name: commentId
+      in: path
+      required: true
+      schema:
+        type: string
+    UserId:
+      name: userId
+      in: path
+      required: true
+      schema:
+        type: string
+    NotificationId:
+      name: notificationId
+      in: path
+      required: true
+      schema:
+        type: string
+
+  responses:
+    Problem:
+      description: Safe RFC 9457 problem response with a stable Shattab error code.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    OpaqueRequestMediaNotFound:
+      description: >-
+        Generic 404 Problem with code NOT_FOUND and no resource-specific detail.
+        Reuse this exact response for missing request-media resources and
+        authenticated callers without the required relationship or capability.
+        On consumer routes, inactive, completed, or cancelled requests also use
+        this response. On admin review routes, lifecycle closure alone does not
+        deny access to retained media when request_media.review is granted.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+  schemas:
+    HealthEnvelope:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+          required: [status]
+          properties:
+            status:
+              type: string
+              enum: [ok]
+          additionalProperties: false
+      additionalProperties: false
+    Problem:
+      type: object
+      required: [type, title, status, code, requestId]
+      properties:
+        type:
+          type: string
+          format: uri-reference
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+          description: Safe, non-sensitive detail; clients localize by code.
+        instance:
+          type: string
+          format: uri-reference
+        code:
+          type: string
+          description: Stable machine-readable Shattab error code.
+        fieldErrors:
+          type: array
+          items:
+            $ref: '#/components/schemas/FieldError'
+        requestId:
+          type: string
+      additionalProperties: false
+    FieldError:
+      type: object
+      required: [field, code]
+      properties:
+        field:
+          type: string
+        code:
+          type: string
+      additionalProperties: false
+    PageInfo:
+      type: object
+      required: [nextCursor, previousCursor]
+      properties:
+        nextCursor:
+          type: [string, 'null']
+        previousCursor:
+          type: [string, 'null']
+      additionalProperties: false
+    PageEnvelope:
+      type: object
+      required: [data, page]
+      properties:
+        data:
+          type: array
+          items: {}
+        page:
+          $ref: '#/components/schemas/PageInfo'
+      additionalProperties: false
+    Me:
+      type: object
+      required: [role, onboardingComplete, roleSelectionLocked]
+      properties:
+        role:
+          type: [string, 'null']
+          enum: [homeowner, contractor, 'null']
+        onboardingComplete:
+          type: boolean
+        roleSelectionLocked:
+          type: boolean
+      additionalProperties: false
+    MeEnvelope:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/Me'
+      additionalProperties: false
+    Profile:
+      type: object
+      required: [id, role, fullName, phone, onboardingComplete, roleSelectionLocked]
+      properties:
+        id:
+          type: string
+        role:
+          type: string
+          enum: [homeowner, contractor]
+        fullName:
+          type: string
+        phone:
+          type: string
+          description: Private self-profile data; never included in public profile projections.
+        onboardingComplete:
+          type: boolean
+        roleSelectionLocked:
+          type: boolean
+        avatarMediaId:
+          type: [string, 'null']
+          description: Public media reference; exact write pipeline remains gated.
+      additionalProperties: false
+    ProfileEnvelope:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/Profile'
+      additionalProperties: false
+    ProfileUpdateInput:
+      type: object
+      required: [fullName]
+      properties:
+        fullName:
+          type: string
+      additionalProperties: false
+    OnboardingInput:
+      type: object
+      required: [role, fullName]
+      properties:
+        role:
+          type: string
+          enum: [homeowner, contractor]
+        fullName:
+          type: string
+      additionalProperties: false
+    Contractor:
+      type: object
+      required: [id, fullName, specialties, serviceAreas, verified]
+      properties:
+        id:
+          type: string
+        fullName:
+          type: string
+        businessName:
+          type: [string, 'null']
+        bio:
+          type: [string, 'null']
+        avatarMediaId:
+          type: [string, 'null']
+        logoMediaId:
+          type: [string, 'null']
+        specialties:
+          type: array
+          items:
+            type: string
+        serviceAreas:
+          type: array
+          items:
+            type: string
+        verified:
+          type: boolean
+      additionalProperties: false
+    ContractorEnvelope:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/Contractor'
+      additionalProperties: false
+    ContractorPageEnvelope:
+      allOf:
+        - $ref: '#/components/schemas/PageEnvelope'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/Contractor'
+    PortfolioItem:
+      type: object
+      required: [id, title]
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: [string, 'null']
+        coverMediaId:
+          type: [string, 'null']
+        mediaIds:
+          type: array
+          items:
+            type: string
+        category:
+          type: [string, 'null']
+        location:
+          type: [string, 'null']
+        yearCompleted:
+          type: [integer, 'null']
+      additionalProperties: false
+    PortfolioPageEnvelope:
+      allOf:
+        - $ref: '#/components/schemas/PageEnvelope'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/PortfolioItem'
+    Review:
+      type: object
+      required: [id, rating, createdAt]
+      properties:
+        id:
+          type: string
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        comment:
+          type: [string, 'null']
+        createdAt:
+          type: string
+          format: date-time
+      additionalProperties: false
+    ReviewPageEnvelope:
+      allOf:
+        - $ref: '#/components/schemas/PageEnvelope'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/Review'
+    Request:
+      type: object
+      required: [id, apartmentType, city, workDescription, targetSpecialties, status, stage, createdAt]
+      properties:
+        id:
+          type: string
+        apartmentType:
+          type: string
+          enum: [studio, one_bedroom, two_bedroom, three_bedroom_plus, duplex, villa, penthouse]
+        city:
+          type: string
+        district:
+          type: [string, 'null']
+        workDescription:
+          type: string
+        targetSpecialties:
+          type: array
+          items:
+            type: string
+        projectTitle:
+          type: [string, 'null']
+        estimatedArea:
+          type: [integer, 'null']
+        startTiming:
+          type: [string, 'null']
+          description: Value vocabulary remains subject to source and product reconciliation.
+        status:
+          type: string
+          enum: [open, cancelled]
+        stage:
+          type: string
+          enum: [open, hired, completionRequested, completed]
+        createdAt:
+          type: string
+          format: date-time
+      additionalProperties: false
+    RequestEnvelope:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/Request'
+      additionalProperties: false
+    RequestPageEnvelope:
+      allOf:
+        - $ref: '#/components/schemas/PageEnvelope'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/Request'
+    RequestCreateInput:
+      type: object
+      required: [apartmentType, city, workDescription, targetSpecialties]
+      properties:
+        apartmentType:
+          type: string
+          enum: [studio, one_bedroom, two_bedroom, three_bedroom_plus, duplex, villa, penthouse]
+        city:
+          type: string
+        district:
+          type: [string, 'null']
+        workDescription:
+          type: string
+        targetSpecialties:
+          type: array
+          items:
+            type: string
+        projectTitle:
+          type: [string, 'null']
+        estimatedArea:
+          type: [integer, 'null']
+        startTiming:
+          type: [string, 'null']
+        targetContractorId:
+          type: [string, 'null']
+          description: Optional direct target; the server still validates visibility and authorization.
+        mediaIds:
+          type: array
+          items:
+            type: string
+      additionalProperties: false
+    RequestUpdateInput:
+      type: object
+      minProperties: 1
+      properties:
+        apartmentType:
+          type: string
+          enum: [studio, one_bedroom, two_bedroom, three_bedroom_plus, duplex, villa, penthouse]
+        city:
+          type: string
+        district:
+          type: [string, 'null']
+        workDescription:
+          type: string
+        targetSpecialties:
+          type: array
+          items:
+            type: string
+        projectTitle:
+          type: [string, 'null']
+        estimatedArea:
+          type: [integer, 'null']
+        startTiming:
+          type: [string, 'null']
+        mediaIds:
+          type: array
+          items:
+            type: string
+      additionalProperties: false
+    Offer:
+      type: object
+      required: [id, requestId, note, status, createdAt, updatedAt]
+      properties:
+        id:
+          type: string
+        requestId:
+          type: string
+        priceMin:
+          type: [integer, 'null']
+        priceMax:
+          type: [integer, 'null']
+        durationText:
+          type: [string, 'null']
+        note:
+          type: string
+        status:
+          type: string
+          enum: [sent, accepted, declined, withdrawn]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      additionalProperties: false
+    OfferEnvelope:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/Offer'
+      additionalProperties: false
+    OfferPageEnvelope:
+      allOf:
+        - $ref: '#/components/schemas/PageEnvelope'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/Offer'
+    OfferInput:
+      type: object
+      required: [note]
+      properties:
+        priceMin:
+          type: [integer, 'null']
+          description: EGP amount as represented by the current source model.
+        priceMax:
+          type: [integer, 'null']
+          description: EGP amount as represented by the current source model.
+        durationText:
+          type: [string, 'null']
+        note:
+          type: string
+      additionalProperties: false
+    OfferUpdateInput:
+      type: object
+      minProperties: 1
+      properties:
+        priceMin:
+          type: [integer, 'null']
+        priceMax:
+          type: [integer, 'null']
+        durationText:
+          type: [string, 'null']
+        note:
+          type: string
+      additionalProperties: false
+    AcceptanceInput:
+      type: object
+      required: [offerId]
+      properties:
+        offerId:
+          type: string
+      additionalProperties: false
+    RequestCancellationEnvelope:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+          required: [outcome]
+          properties:
+            outcome:
+              type: string
+              enum: [removed, cancelled]
+          additionalProperties: false
+      additionalProperties: false
+    MediaReference:
+      type: object
+      required: [mediaId]
+      properties:
+        mediaId:
+          type: string
+        ordinal:
+          type: [integer, 'null']
+      additionalProperties: false
+    MediaReferenceListEnvelope:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/MediaReference'
+      additionalProperties: false
+    PrivateImageUploadInput:
+      type: object
+      required: [file]
+      properties:
+        file:
+          type: string
+          format: binary
+          description: One image binary. Server inspects bytes; target validation and size limits must be reconciled before release.
+      additionalProperties: false
+    StagedMediaEnvelope:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+          required: [mediaId]
+          properties:
+            mediaId:
+              type: string
+          additionalProperties: false
+      additionalProperties: false
+    ContactHandoffInput:
+      oneOf:
+        - type: object
+          required: [contractorId, channel, sourceSurface]
+          properties:
+            contractorId:
+              type: string
+            channel:
+              type: string
+              enum: [phone, whatsapp]
+            sourceSurface:
+              type: string
+              enum: [profile]
+          additionalProperties: false
+        - type: object
+          required: [contractorId, channel, sourceSurface, sourceId]
+          properties:
+            contractorId:
+              type: string
+            channel:
+              type: string
+              enum: [phone, whatsapp]
+            sourceSurface:
+              type: string
+              enum: [communityPost]
+            sourceId:
+              type: string
+          additionalProperties: false
+    ContactHandoff:
+      type: object
+      required: [handoffId, channel, launchTarget]
+      properties:
+        handoffId:
+          type: string
+        channel:
+          type: string
+          enum: [phone, whatsapp]
+        launchTarget:
+          type: string
+          description: Short-lived OS launch target; sensitive and returned only by this authorized endpoint.
+      additionalProperties: false
+    ContactHandoffEnvelope:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/ContactHandoff'
+      additionalProperties: false
+    ContactAcceptedEnvelope:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+          required: [recorded]
+          properties:
+            recorded:
+              type: boolean
+          additionalProperties: false
+      additionalProperties: false
+    CommunityPost:
+      type: object
+      required: [id, authorId, authorRole, postType, caption, createdAt, mediaIds]
+      properties:
+        id:
+          type: string
+        authorId:
+          type: string
+        authorRole:
+          type: string
+          enum: [homeowner, contractor]
+        postType:
+          type: string
+          enum: [standard, before_after, tips, experiences, question]
+        caption:
+          type: string
+        mediaIds:
+          type: array
+          items:
+            type: string
+        category:
+          type: [string, 'null']
+        governorate:
+          type: [string, 'null']
+        city:
+          type: [string, 'null']
+        portfolioProjectId:
+          type: [string, 'null']
+        likeCount:
+          type: integer
+        commentCount:
+          type: integer
+        isLiked:
+          type: boolean
+        isSaved:
+          type: boolean
+        authorName:
+          type: [string, 'null']
+        authorAvatarMediaId:
+          type: [string, 'null']
+        createdAt:
+          type: string
+          format: date-time
+      additionalProperties: false
+    CommunityPostEnvelope:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/CommunityPost'
+      additionalProperties: false
+    CommunityPostPageEnvelope:
+      allOf:
+        - $ref: '#/components/schemas/PageEnvelope'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/CommunityPost'
+    CommunityPostInput:
+      type: object
+      required: [postType, caption]
+      properties:
+        postType:
+          type: string
+          enum: [standard, before_after, tips, experiences, question]
+        caption:
+          type: string
+        mediaIds:
+          type: array
+          items:
+            type: string
+          description: Only public-approved media IDs; public upload/approval endpoint is not yet specified.
+        category:
+          type: [string, 'null']
+        governorate:
+          type: [string, 'null']
+        city:
+          type: [string, 'null']
+        portfolioProjectId:
+          type: [string, 'null']
+      additionalProperties: false
+    CommunityPostUpdateInput:
+      type: object
+      minProperties: 1
+      properties:
+        caption:
+          type: string
+        mediaIds:
+          type: array
+          items:
+            type: string
+        category:
+          type: [string, 'null']
+        governorate:
+          type: [string, 'null']
+        city:
+          type: [string, 'null']
+      additionalProperties: false
+    Comment:
+      type: object
+      required: [id, postId, userId, content, createdAt]
+      properties:
+        id:
+          type: string
+        postId:
+          type: string
+        userId:
+          type: string
+        userName:
+          type: [string, 'null']
+        userAvatarMediaId:
+          type: [string, 'null']
+        userRole:
+          type: [string, 'null']
+          enum: [homeowner, contractor, 'null']
+        content:
+          type: string
+        parentCommentId:
+          type: [string, 'null']
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: [string, 'null']
+          format: date-time
+        likeCount:
+          type: integer
+        isLiked:
+          type: boolean
+      additionalProperties: false
+    CommentEnvelope:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/Comment'
+      additionalProperties: false
+    CommentPageEnvelope:
+      allOf:
+        - $ref: '#/components/schemas/PageEnvelope'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/Comment'
+    CommentInput:
+      type: object
+      required: [content]
+      properties:
+        content:
+          type: string
+        parentCommentId:
+          type: [string, 'null']
+      additionalProperties: false
+    CommentUpdateInput:
+      type: object
+      required: [content]
+      properties:
+        content:
+          type: string
+      additionalProperties: false
+    ReviewEnvelope:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/Review'
+      additionalProperties: false
+    BriefReviewInput:
+      type: object
+      description: The comment length limit is unresolved; reconcile policy before enabling consuming operations.
+      x-enablement-gates: [review-comment-length-policy-reconciliation]
+      required: [briefId, contractorId, rating]
+      properties:
+        briefId:
+          type: string
+          description: Evidence reference only; eligibility and ownership are verified server-side.
+        contractorId:
+          type: string
+          description: Evidence reference only; cannot authorize access or change review ownership.
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        comment:
+          type: [string, 'null']
+      additionalProperties: false
+    ContactReviewInput:
+      type: object
+      description: The comment length limit is unresolved; reconcile policy before enabling consuming operations.
+      x-enablement-gates: [review-comment-length-policy-reconciliation]
+      required: [rating]
+      properties:
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        comment:
+          type: [string, 'null']
+          description: Optional review comment; no character limit is frozen in this contract.
+      additionalProperties: false
+    ContactPrompt:
+      type: object
+      required: [id, contractorId, contractorName, firstContactedAt]
+      properties:
+        id:
+          type: string
+        contractorId:
+          type: string
+        contractorName:
+          type: string
+        firstContactedAt:
+          type: string
+          format: date-time
+      additionalProperties: false
+    ContactPromptPageEnvelope:
+      allOf:
+        - $ref: '#/components/schemas/PageEnvelope'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/ContactPrompt'
+    Notification:
+      type: object
+      required: [id, kind, isRead, createdAt]
+      properties:
+        id:
+          type: string
+        kind:
+          type: string
+          description: Notification kind vocabulary remains subject to inbox schema reconciliation.
+        entityId:
+          type: [string, 'null']
+          description: Opaque safe entity reference when one exists; no arbitrary navigation target.
+        isRead:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+      additionalProperties: false
+    NotificationPageEnvelope:
+      allOf:
+        - $ref: '#/components/schemas/PageEnvelope'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/Notification'
+    DeviceTokenInput:
+      type: object
+      required: [token, platform, locale]
+      properties:
+        token:
+          type: string
+          writeOnly: true
+          description: Raw provider token is accepted only over TLS and is never returned or logged.
+        platform:
+          type: string
+          enum: [android, ios]
+        locale:
+          type: string
+          enum: [en, ar]
+      additionalProperties: false
+    DeviceRegistrationEnvelope:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+          required: [deviceId, platform, locale]
+          properties:
+            deviceId:
+              type: string
+            platform:
+              type: string
+              enum: [android, ios]
+            locale:
+              type: string
+              enum: [en, ar]
+          additionalProperties: false
+      additionalProperties: false
+    PrivateDocumentUploadInput:
+      type: object
+      required: [file]
+      properties:
+        file:
+          type: string
+          format: binary
+          description: One private document binary. Accepted formats and size limits require source/provider policy approval.
+      additionalProperties: false
+    VerificationRequest:
+      type: object
+      required: [id, status, createdAt]
+      properties:
+        id:
+          type: string
+        status:
+          type: string
+          enum: [pending, approved, rejected]
+        note:
+          type: [string, 'null']
+        mediaIds:
+          type: array
+          items:
+            type: string
+        createdAt:
+          type: string
+          format: date-time
+      additionalProperties: false
+    VerificationEnvelope:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/VerificationRequest'
+      additionalProperties: false
+    VerificationPageEnvelope:
+      allOf:
+        - $ref: '#/components/schemas/PageEnvelope'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/VerificationRequest'
+    VerificationRequestInput:
+      type: object
+      required: [mediaIds]
+      properties:
+        mediaIds:
+          type: array
+          minItems: 1
+          items:
+            type: string
+        note:
+          type: [string, 'null']
+      additionalProperties: false
+    PaymentRequestStatus:
+      type: object
+      required: [id, status]
+      properties:
+        id:
+          type: string
+        status:
+          type: string
+          description: Opaque status text until the payment policy and state vocabulary are reconciled.
+        createdAt:
+          type: [string, 'null']
+          format: date-time
+      additionalProperties: false
+    PaymentRequestPageEnvelope:
+      allOf:
+        - $ref: '#/components/schemas/PageEnvelope'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/PaymentRequestStatus'
+    AdminMe:
+      type: object
+      required: [operatorId, capabilities]
+      properties:
+        operatorId:
+          type: string
+        capabilities:
+          type: array
+          items:
+            type: string
+          description: Only capabilities granted to this authenticated operator.
+      additionalProperties: false
+    AdminMeEnvelope:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/AdminMe'
+      additionalProperties: false
+    AdminUser:
+      type: object
+      required: [id, role, fullName, suspended]
+      properties:
+        id:
+          type: string
+        role:
+          type: string
+          enum: [homeowner, contractor]
+        fullName:
+          type: string
+        suspended:
+          type: boolean
+      additionalProperties: false
+    AdminUserEnvelope:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/AdminUser'
+      additionalProperties: false
+    AdminUserPageEnvelope:
+      allOf:
+        - $ref: '#/components/schemas/PageEnvelope'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/AdminUser'
+    SuspensionInput:
+      type: object
+      description: The reason must remain non-empty; its maximum character length is unresolved.
+      x-enablement-gates: [admin-reason-length-policy-reconciliation]
+      required: [reason]
+      properties:
+        reason:
+          type: string
+          minLength: 1
+          description: Trimmed non-empty reason; maximum character length is unresolved pending policy reconciliation.
+      additionalProperties: false
+    ModerationReport:
+      type: object
+      required: [id, targetType, targetId, status, createdAt]
+      properties:
+        id:
+          type: string
+        targetType:
+          type: string
+          description: Report target vocabulary is unresolved and must be reconciled before consumer submission is enabled.
+        targetId:
+          type: string
+        status:
+          type: string
+          description: Report state vocabulary is unresolved.
+        createdAt:
+          type: string
+          format: date-time
+      additionalProperties: false
+    ModerationReportEnvelope:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/ModerationReport'
+      additionalProperties: false
+    ModerationReportPageEnvelope:
+      allOf:
+        - $ref: '#/components/schemas/PageEnvelope'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/ModerationReport'
+    ReportResolutionInput:
+      description: Required-note semantics remain; the note character limit is unresolved.
+      x-enablement-gates: [admin-reason-length-policy-reconciliation]
+      oneOf:
+        - type: object
+          required: [action]
+          properties:
+            action:
+              type: string
+              enum: [dismiss]
+            note:
+              type: [string, 'null']
+          additionalProperties: false
+        - type: object
+          required: [action, note]
+          properties:
+            action:
+              type: string
+              enum: [remove_content, suspend_author]
+            note:
+              type: string
+              minLength: 1
+          additionalProperties: false
+    AdminVerification:
+      type: object
+      required: [id, contractorId, status, mediaIds, createdAt]
+      properties:
+        id:
+          type: string
+        contractorId:
+          type: string
+        status:
+          type: string
+          enum: [pending, approved, rejected]
+        note:
+          type: [string, 'null']
+        mediaIds:
+          type: array
+          items:
+            type: string
+        createdAt:
+          type: string
+          format: date-time
+      additionalProperties: false
+    AdminVerificationEnvelope:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/AdminVerification'
+      additionalProperties: false
+    AdminVerificationPageEnvelope:
+      allOf:
+        - $ref: '#/components/schemas/PageEnvelope'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/AdminVerification'
+    VerificationDecisionInput:
+      description: Rejection requires a non-empty reason; its maximum character length is unresolved.
+      x-enablement-gates: [admin-reason-length-policy-reconciliation]
+      oneOf:
+        - type: object
+          required: [decision]
+          properties:
+            decision:
+              type: string
+              enum: [approve]
+          additionalProperties: false
+        - type: object
+          required: [decision, reason]
+          properties:
+            decision:
+              type: string
+              enum: [reject]
+            reason:
+              type: string
+              minLength: 1
+          additionalProperties: false
+    AdminPaymentRequest:
+      type: object
+      required: [id, status]
+      properties:
+        id:
+          type: string
+        status:
+          type: string
+          description: State vocabulary remains gated on payment policy reconciliation.
+        proofMediaId:
+          type: [string, 'null']
+          description: Opaque private media ID only; never a storage path or URL.
+      additionalProperties: false
+    AdminPaymentEnvelope:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/AdminPaymentRequest'
+      additionalProperties: false
+    AdminPaymentPageEnvelope:
+      allOf:
+        - $ref: '#/components/schemas/PageEnvelope'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/AdminPaymentRequest'
+    PaymentDecisionInput:
+      description: Rejection requires a non-empty reason; its maximum character length is unresolved.
+      x-enablement-gates: [admin-reason-length-policy-reconciliation]
+      oneOf:
+        - type: object
+          required: [decision]
+          properties:
+            decision:
+              type: string
+              enum: [approve]
+          additionalProperties: false
+        - type: object
+          required: [decision, reason]
+          properties:
+            decision:
+              type: string
+              enum: [reject]
+            reason:
+              type: string
+              minLength: 1
+          additionalProperties: false
+    AdminActivity:
+      type: object
+      required: [id, action, createdAt]
+      properties:
+        id:
+          type: string
+        action:
+          type: string
+        resourceType:
+          type: [string, 'null']
+        resourceId:
+          type: [string, 'null']
+        createdAt:
+          type: string
+          format: date-time
+      additionalProperties: false
+    AdminActivityPageEnvelope:
+      allOf:
+        - $ref: '#/components/schemas/PageEnvelope'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/AdminActivity'
