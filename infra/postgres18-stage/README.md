@@ -253,7 +253,7 @@ test "$DB_SNAPSHOT_AFTER" = "$DB_SNAPSHOT_INITIAL" || { printf 'FAIL: PostgreSQL
 ارفع مصدر البناء من الـworktree المراجع فقط، وليس من الـcheckout الأساسي المتسخ أو من مجلد المشروع كله. قبل النقل من `Windows PowerShell`، تحقق من الرأس ومن عدم وجود تغييرات على ملفات API المتتبعة:
 
 ```powershell
-if ((git rev-parse HEAD).Trim() -ne '483360250627e4fc99a9cd519582e3b7b948fae9') { throw 'Unexpected source revision; stop.' }; git diff --quiet 483360250627e4fc99a9cd519582e3b7b948fae9 -- api; if ($LASTEXITCODE -ne 0) { throw 'Tracked API source changed; stop.' }
+$apiSourceCommit = '483360250627e4fc99a9cd519582e3b7b948fae9'; git merge-base --is-ancestor $apiSourceCommit HEAD; if ($LASTEXITCODE -ne 0) { throw 'API source baseline is not an ancestor of HEAD; stop.' }; git diff --quiet $apiSourceCommit -- api; if ($LASTEXITCODE -ne 0) { throw 'Tracked API source differs from its reviewed baseline; stop.' }
 ```
 
 لا تنقل أي ملف غير موجود في القائمة التالية؛ `graphify-out/` ملف محلي غير تابع لمصدر التطبيق ولا يُنقل.
