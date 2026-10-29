@@ -68,3 +68,14 @@ app.*.map.json
 # opencode config (may contain API keys)
 opencode.json
 
+
+.vercel
+.vercel/
+
+# Scratch & temporary development scripts
+scratch_*
+ref_*.png
+apply_new_hero_layout.py
+generate_*.mjs
+inject_quick_actions.py
+update_stitch_discover.py
