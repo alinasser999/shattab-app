@@ -93,6 +93,32 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
     }
   }
 
+  bool get _isDirty =>
+      _descCtrl.text.trim().isNotEmpty ||
+      _photos.isNotEmpty ||
+      _targetSpecialties.isNotEmpty;
+
+  Future<bool> _confirmDiscard() async {
+    final res = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(S.unsavedChangesTitle),
+        content: Text(S.unsavedChangesMsg),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(S.keepEditing),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(S.discard, style: const TextStyle(color: BatshColors.error)),
+          ),
+        ],
+      ),
+    );
+    return res ?? false;
+  }
+
   @override
   Widget build(BuildContext context) {
     final ho = ref.watch(homeownerProfileProvider).value;
@@ -193,18 +219,29 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
           ),
           const SizedBox(height: BatshSpacing.lg),
         ];
-    return BatshScaffold(
-      title: S.createPostTitle,
-      body: ListView(
-        children: reduced
-            ? items
-            : items.animate(interval: BatshMotion.staggerBase).fadeIn(
-                  duration: BatshMotion.normal,
-                ).slideY(
-                  begin: 0.06,
-                  end: 0,
-                  curve: BatshMotion.easeOut,
-                ),
+    return PopScope(
+      canPop: !_isDirty || _busy,
+      onPopInvokedWithResult: (didPop, _) async {
+        if (didPop) return;
+        final nav = Navigator.of(context);
+        final ok = await _confirmDiscard();
+        if (ok && mounted) {
+          nav.pop();
+        }
+      },
+      child: BatshScaffold(
+        title: S.createPostTitle,
+        body: ListView(
+          children: reduced
+              ? items
+              : items.animate(interval: BatshMotion.staggerBase).fadeIn(
+                    duration: BatshMotion.normal,
+                  ).slideY(
+                    begin: 0.06,
+                    end: 0,
+                    curve: BatshMotion.easeOut,
+                  ),
+        ),
       ),
     );
   }

@@ -26,6 +26,8 @@ class QuotesController extends _$QuotesController {
   @override
   void build() {}
 
+  final Set<String> _inFlightBriefs = {};
+
   Future<void> submit({
     required String briefId,
     int? priceMin,
@@ -33,16 +35,22 @@ class QuotesController extends _$QuotesController {
     String? durationText,
     required String note,
   }) async {
-    await ref.read(quotesRepositoryProvider).submit(
-          briefId: briefId,
-          priceMin: priceMin,
-          priceMax: priceMax,
-          durationText: durationText,
-          note: note,
-        );
-    ref.invalidate(myQuoteForBriefProvider(briefId));
-    ref.invalidate(quotesForBriefProvider(briefId));
-    ref.invalidate(myQuotesProvider);
+    if (_inFlightBriefs.contains(briefId)) return;
+    _inFlightBriefs.add(briefId);
+    try {
+      await ref.read(quotesRepositoryProvider).submit(
+            briefId: briefId,
+            priceMin: priceMin,
+            priceMax: priceMax,
+            durationText: durationText,
+            note: note,
+          );
+      ref.invalidate(myQuoteForBriefProvider(briefId));
+      ref.invalidate(quotesForBriefProvider(briefId));
+      ref.invalidate(myQuotesProvider);
+    } finally {
+      _inFlightBriefs.remove(briefId);
+    }
   }
 
   Future<void> setStatus({

@@ -150,6 +150,7 @@ class PostCard extends StatelessWidget {
           width: double.infinity,
           height: 260,
           fit: BoxFit.cover,
+          memCacheWidth: 800, // decode at display size, not source resolution
           placeholder: (_, __) => Container(
             height: 260,
             color: BatshColors.surfaceVariant,
@@ -173,6 +174,7 @@ class PostCard extends StatelessWidget {
             imageUrl: post.mediaUrls[i],
             width: double.infinity,
             fit: BoxFit.cover,
+            memCacheWidth: 800,
             placeholder: (_, __) => Container(
               color: BatshColors.surfaceVariant,
             ),

@@ -203,17 +203,26 @@ class _TopRow extends StatelessWidget {
           ),
         const Spacer(),
         if (onBookmark != null)
-          GestureDetector(
-            onTap: onBookmark,
-            child: AnimatedSwitcher(
-              duration: BatshMotion.fast,
-              child: Icon(
-                isBookmarked ? Icons.bookmark : Icons.bookmark_border,
-                key: ValueKey(isBookmarked),
-                size: 22,
-                color: isBookmarked
-                    ? BatshColors.primary
-                    : BatshColors.onSurfaceVariant.withValues(alpha: 0.5),
+          Semantics(
+            button: true,
+            label: isBookmarked ? S.unsaveTooltip : S.saveTooltip,
+            child: InkWell(
+              borderRadius: BatshRadius.brFull,
+              onTap: onBookmark,
+              child: Container(
+                constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+                alignment: Alignment.center,
+                child: AnimatedSwitcher(
+                  duration: BatshMotion.fast,
+                  child: Icon(
+                    isBookmarked ? Icons.bookmark : Icons.bookmark_border,
+                    key: ValueKey(isBookmarked),
+                    size: 22,
+                    color: isBookmarked
+                        ? BatshColors.primary
+                        : BatshColors.onSurfaceVariant.withValues(alpha: 0.5),
+                  ),
+                ),
               ),
             ),
           ),
@@ -278,7 +287,7 @@ class _TrustRow extends StatelessWidget {
                 style: BatshTypography.labelSm.copyWith(
                   fontWeight: FontWeight.w700,
                   color: BatshColors.onSurface,
-                ),
+                ).tabular,
               ),
               const SizedBox(width: 2),
               Icon(Icons.star, size: 13, color: BatshColors.tertiary),
@@ -393,7 +402,9 @@ class _ActionChip extends StatelessWidget {
         borderRadius: BatshRadius.brFull,
         onTap: onTap,
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          constraints: const BoxConstraints(minHeight: 44),
+          alignment: Alignment.center,
           decoration: BoxDecoration(
             borderRadius: BatshRadius.brFull,
             border: isPrimary

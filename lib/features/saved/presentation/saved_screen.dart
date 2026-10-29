@@ -1,3 +1,4 @@
+import '../../../core/widgets/batsh_undo_toast.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -70,9 +71,16 @@ class SavedScreen extends ConsumerWidget {
                       final card = ContractorCard(
                         listing: c,
                         isSaved: true,
-                        onToggleSave: () => ref
-                            .read(savedControllerProvider.notifier)
-                            .toggle(c.id),
+                        onToggleSave: () {
+                          ref.read(savedControllerProvider.notifier).toggle(c.id);
+                          BatshUndoToast.show(
+                            context,
+                            message: 'تم حذف المحترف من المحفوظات',
+                            onUndo: () => ref
+                                .read(savedControllerProvider.notifier)
+                                .toggle(c.id),
+                          );
+                        },
                         onTap: () => context.push(
                             Routes.homeownerContractorProfilePath(c.id)),
                       );

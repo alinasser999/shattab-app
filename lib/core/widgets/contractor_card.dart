@@ -35,7 +35,14 @@ class ContractorCard extends StatelessWidget {
     final topSpecialties = listing.specialties.take(3).toList();
     final firstAreas = listing.serviceAreas.take(2).toList();
 
-    return Material(
+    return DecoratedBox(
+      // Shadow lives on an outer box: a clipped Material clips its child's
+      // shadow away, so it must sit outside the clip to render at all.
+      decoration: BoxDecoration(
+        borderRadius: BatshRadius.brLg,
+        boxShadow: BatshShadows.soft,
+      ),
+      child: Material(
       color: BatshColors.surfaceContainerLowest,
       borderRadius: BatshRadius.brLg,
       clipBehavior: Clip.antiAlias,
@@ -44,7 +51,6 @@ class ContractorCard extends StatelessWidget {
         child: Container(
           decoration: BoxDecoration(
             borderRadius: BatshRadius.brLg,
-            boxShadow: BatshShadows.soft,
             border: Border.all(color: BatshColors.outlineVariant),
           ),
           child: Column(
@@ -117,6 +123,7 @@ class ContractorCard extends StatelessWidget {
           ),
         ),
       ),
+      ),
     );
   }
 }
@@ -141,15 +148,19 @@ class _CoverWithAvatar extends StatelessWidget {
         SizedBox(
           height: 130,
           width: double.infinity,
-          child: listing.coverPhotoUrl != null
-              ? CachedNetworkImage(
-                  imageUrl: listing.coverPhotoUrl!,
-                  fit: BoxFit.cover,
-                  placeholder: (_, _) =>
-                      const ColoredBox(color: BatshColors.surfaceContainer),
-                  errorWidget: (_, _, _) => const _CoverFallback(),
-                )
-              : const _CoverFallback(),
+          child: Hero(
+            tag: 'contractor-cover-',
+            child: listing.coverPhotoUrl != null
+                ? CachedNetworkImage(
+                    imageUrl: listing.coverPhotoUrl!,
+                    fit: BoxFit.cover,
+                    memCacheWidth: 800,
+                    placeholder: (_, _) =>
+                        const ColoredBox(color: BatshColors.surfaceContainer),
+                    errorWidget: (_, _, _) => const _CoverFallback(),
+                  )
+                : const _CoverFallback(),
+          ),
         ),
         // Gradient overlay
         Positioned.fill(
@@ -170,26 +181,31 @@ class _CoverWithAvatar extends StatelessWidget {
         ),
         // Save heart top-right
         if (onToggleSave != null)
-          Positioned(
+          Positioned.directional(
+            textDirection: Directionality.of(context),
             top: BatshSpacing.sm,
-            right: BatshSpacing.sm,
-            child: Material(
-              color: Colors.white.withValues(alpha: 0.92),
-              shape: const CircleBorder(),
-              child: IconButton(
-                tooltip: isSaved ? S.unsaveTooltip : S.saveTooltip,
-                icon: Icon(
-                  isSaved ? Icons.bookmark : Icons.bookmark_border,
-                  size: 18,
-                  color: isSaved
-                      ? BatshColors.primary
-                      : BatshColors.onSurfaceVariant,
+            end: BatshSpacing.sm,
+            child: Semantics(
+              button: true,
+              label: isSaved ? S.unsaveTooltip : S.saveTooltip,
+              child: Material(
+                color: Colors.white.withValues(alpha: 0.92),
+                shape: const CircleBorder(),
+                child: IconButton(
+                  tooltip: isSaved ? S.unsaveTooltip : S.saveTooltip,
+                  icon: Icon(
+                    isSaved ? Icons.bookmark : Icons.bookmark_border,
+                    size: 20,
+                    color: isSaved
+                        ? BatshColors.primary
+                        : BatshColors.onSurfaceVariant,
+                  ),
+                  onPressed: onToggleSave,
+                  constraints:
+                      const BoxConstraints(minWidth: 48, minHeight: 48),
+                  padding: EdgeInsets.zero,
+                  visualDensity: VisualDensity.compact,
                 ),
-                onPressed: onToggleSave,
-                constraints:
-                    const BoxConstraints(minWidth: 44, minHeight: 44),
-                padding: EdgeInsets.zero,
-                visualDensity: VisualDensity.compact,
               ),
             ),
           ),
@@ -296,7 +312,7 @@ class _StatChip extends StatelessWidget {
           const SizedBox(width: 4),
           Text(label,
               style: BatshTypography.labelSm
-                  .copyWith(fontWeight: FontWeight.w700)),
+                  .copyWith(fontWeight: FontWeight.w700).tabular),
         ],
       ),
     );

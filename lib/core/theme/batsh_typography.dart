@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -136,6 +137,21 @@ class BatshTypography {
         lineHeight: 16,
       );
 
+
+  /// Applies OpenType tabular figures (monospaced digits) to prevent layout shifts.
+  static TextStyle tabular(TextStyle base) => base.copyWith(
+        fontFeatures: [
+          ...?base.fontFeatures,
+          const FontFeature.tabularFigures(),
+        ],
+      );
+
+  /// Balanced Arabic headline styling that avoids orphan words and preserves readability.
+  static TextStyle balancedHeadline(TextStyle base) => base.copyWith(
+        height: 1.35,
+        letterSpacing: -0.15,
+      );
+
   /// Maps onto Material 3 [TextTheme] slots.
   static TextTheme get textTheme => TextTheme(
         displayLarge: displayLg,
@@ -153,5 +169,15 @@ class BatshTypography {
         labelLarge: labelLg,
         labelMedium: labelMd,
         labelSmall: labelSm,
+      );
+}
+
+extension BatshTextStyleX on TextStyle {
+  /// Enables OpenType tabular figures (monospaced digits) for prices, ratings, and counters.
+  TextStyle get tabular => copyWith(
+        fontFeatures: [
+          ...?fontFeatures,
+          const FontFeature.tabularFigures(),
+        ],
       );
 }

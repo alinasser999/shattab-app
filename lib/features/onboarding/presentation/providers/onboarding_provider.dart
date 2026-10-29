@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -109,6 +110,7 @@ class OnboardingController extends _$OnboardingController {
   }
 
   Future<String?> uploadLogo(File file) async {
+    if (kIsWeb) throw UnsupportedError('File upload not supported on web');
     final userId = _requireUserId();
     final repo = ref.read(onboardingRepositoryProvider);
     final url = await repo.uploadContractorLogo(profileId: userId, file: file);
@@ -148,6 +150,7 @@ class OnboardingController extends _$OnboardingController {
   }
 
   Future<String?> uploadCover(File file) async {
+    if (kIsWeb) throw UnsupportedError('File upload not supported on web');
     final userId = _requireUserId();
     final repo = ref.read(onboardingRepositoryProvider);
     final url = await repo.uploadContractorCover(profileId: userId, file: file);

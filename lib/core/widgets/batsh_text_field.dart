@@ -26,6 +26,7 @@ class BatshTextField extends StatelessWidget {
     this.suffixIcon,
     this.enabled = true,
     this.semanticLabel,
+    this.autofillHints,
   });
 
   final TextEditingController? controller;
@@ -45,6 +46,7 @@ class BatshTextField extends StatelessWidget {
   final Widget? suffixIcon;
   final bool enabled;
   final String? semanticLabel;
+  final Iterable<String>? autofillHints;
 
   @override
   Widget build(BuildContext context) {
@@ -77,6 +79,7 @@ class BatshTextField extends StatelessWidget {
             maxLength: maxLength,
             onChanged: onChanged,
             onFieldSubmitted: onSubmitted,
+            autofillHints: autofillHints,
             style: BatshTypography.bodyMd,
             cursorColor: BatshColors.primary,
             cursorWidth: 2,

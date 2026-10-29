@@ -1,3 +1,5 @@
+import 'package:flutter/services.dart';
+import '../../../core/widgets/batsh_quick_actions_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -18,7 +20,18 @@ class ContractorShell extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: BatshColors.background,
-      body: navigationShell,
+      body: CallbackShortcuts(
+        bindings: {
+          const SingleActivator(LogicalKeyboardKey.keyK, control: true): () =>
+              BatshQuickActionsSheet.show(context, isContractor: true),
+          const SingleActivator(LogicalKeyboardKey.keyK, meta: true): () =>
+              BatshQuickActionsSheet.show(context, isContractor: true),
+        },
+        child: Focus(
+          autofocus: true,
+          child: navigationShell,
+        ),
+      ),
       bottomNavigationBar: BatshBottomNav(
         currentIndex: navigationShell.currentIndex,
         onTap: _goToTab,

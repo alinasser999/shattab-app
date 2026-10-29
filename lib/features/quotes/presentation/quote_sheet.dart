@@ -98,6 +98,7 @@ class _QuoteSheetState extends ConsumerState<_QuoteSheet> {
             note: note,
           );
       if (!mounted) return;
+      HapticFeedback.mediumImpact();
       setState(() => _done = true);
       await Future<void>.delayed(const Duration(milliseconds: 950));
       if (!mounted) return;
@@ -111,16 +112,53 @@ class _QuoteSheetState extends ConsumerState<_QuoteSheet> {
     }
   }
 
+  bool get _isDirty =>
+      _note.text.trim().isNotEmpty ||
+      _min.text.trim().isNotEmpty ||
+      _max.text.trim().isNotEmpty;
+
+  Future<bool> _confirmDiscard() async {
+    final res = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(S.unsavedChangesTitle),
+        content: Text(S.unsavedChangesMsg),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(S.keepEditing),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(S.discard, style: const TextStyle(color: BatshColors.error)),
+          ),
+        ],
+      ),
+    );
+    return res ?? false;
+  }
+
   @override
   Widget build(BuildContext context) {
     final inset = MediaQuery.of(context).viewInsets.bottom;
-    return AnimatedPadding(
+    return PopScope(
+      canPop: !_isDirty || _submitting || _done,
+      onPopInvokedWithResult: (didPop, _) async {
+        if (didPop) return;
+        final nav = Navigator.of(context);
+        final ok = await _confirmDiscard();
+        if (ok && mounted) {
+          nav.pop(false);
+        }
+      },
+      child: AnimatedPadding(
       duration: BatshMotion.fast,
       padding: EdgeInsets.only(bottom: inset),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(BatshSpacing.marginMobile,
             BatshSpacing.gutter, BatshSpacing.marginMobile, BatshSpacing.lg),
         child: _done ? const _SuccessView() : _buildForm(context),
+      ),
       ),
     );
   }
@@ -204,6 +242,7 @@ class _QuoteSheetState extends ConsumerState<_QuoteSheet> {
 
 class _SuccessView extends StatelessWidget {
   const _SuccessView();
+
 
   @override
   Widget build(BuildContext context) {

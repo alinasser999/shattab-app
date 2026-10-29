@@ -87,6 +87,33 @@ class _SendBriefScreenState extends ConsumerState<SendBriefScreen> {
     }
   }
 
+  bool get _isDirty => _descCtrl.text.trim().isNotEmpty || _photos.isNotEmpty;
+
+  Future<bool> _confirmDiscard() async {
+    final res = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(S.unsavedChangesTitle),
+        content: Text(S.unsavedChangesMsg),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(S.keepEditing),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(S.discard, style: const TextStyle(color: BatshColors.error)),
+          ),
+        ],
+      ),
+    );
+    return res ?? false;
+  }
+
+
+
+
+
   @override
   Widget build(BuildContext context) {
     final ho = ref.watch(homeownerProfileProvider).value;
@@ -148,8 +175,18 @@ class _SendBriefScreenState extends ConsumerState<SendBriefScreen> {
       ),
       const SizedBox(height: BatshSpacing.lg),
     ];
-    return BatshScaffold(
-      title: contractor?.businessName ?? S.sendBriefDefaultTitle,
+    return PopScope(
+      canPop: !_isDirty || _busy,
+      onPopInvokedWithResult: (didPop, _) async {
+        if (didPop) return;
+        final nav = Navigator.of(context);
+        final ok = await _confirmDiscard();
+        if (ok && mounted) {
+          nav.pop();
+        }
+      },
+      child: BatshScaffold(
+        title: contractor?.businessName ?? S.sendBriefDefaultTitle,
       body: ListView(
         children: reduced
             ? items
@@ -161,6 +198,7 @@ class _SendBriefScreenState extends ConsumerState<SendBriefScreen> {
                   curve: BatshMotion.easeOut,
                 ),
       ),
+      ),
     );
   }
 }
@@ -169,6 +207,9 @@ class _ApartmentTypeRow extends StatelessWidget {
   const _ApartmentTypeRow({required this.selected, required this.onSelect});
   final ApartmentType? selected;
   final ValueChanged<ApartmentType> onSelect;
+
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -200,6 +241,9 @@ class _CityRow extends StatelessWidget {
   const _CityRow({required this.selected, required this.onSelect});
   final String? selected;
   final ValueChanged<String> onSelect;
+
+
+
 
   @override
   Widget build(BuildContext context) {

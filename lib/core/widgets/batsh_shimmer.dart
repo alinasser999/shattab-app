@@ -21,20 +21,26 @@ class BatshShimmerBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Semantics(
-      label: S.loading,
-      child: Container(
+    final reduceMotion = MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    final box = Container(
       width: width,
       height: height,
       decoration: BoxDecoration(
         color: BatshColors.surfaceContainerHigh,
         borderRadius: borderRadius ?? BatshRadius.brDefault,
       ),
-    ).animate(onPlay: (ctrl) => ctrl.repeat(reverse: true)).shimmer(
-          duration: BatshMotion.slower,
-          curve: BatshMotion.easeInOut,
-          color: BatshColors.surfaceContainerLowest,
-        ));
+    );
+
+    return Semantics(
+      label: S.loading,
+      child: reduceMotion
+          ? box
+          : box.animate(onPlay: (ctrl) => ctrl.repeat(reverse: true)).shimmer(
+                duration: BatshMotion.slower,
+                curve: BatshMotion.easeInOut,
+                color: BatshColors.surfaceContainerLowest,
+              ),
+    );
   }
 }
 

@@ -84,6 +84,7 @@ class MyPortfolioScreen extends ConsumerWidget {
                   ),
                 ),
                 child: FloatingActionButton.extended(
+                  heroTag: null,
                   onPressed: () => context.push(Routes.contractorPortfolioNew),
                   icon: const Icon(Icons.add),
                   label: Text(S.addWork),

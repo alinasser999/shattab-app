@@ -123,8 +123,12 @@ class _NavItemState extends State<_NavItem>
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: widget.onTap,
+    return Semantics(
+      button: true,
+      selected: widget.isSelected,
+      label: widget.item.label,
+      child: GestureDetector(
+        onTap: widget.onTap,
       behavior: HitTestBehavior.opaque,
       child: AnimatedBuilder(
         animation: _scaleAnim,
@@ -159,7 +163,7 @@ class _NavItemState extends State<_NavItem>
                     size: 22 + (_pillAnim.value * 4),
                     color: widget.isSelected
                         ? BatshColors.primary
-                        : BatshColors.onSurfaceVariant.withValues(alpha: 0.55),
+                        : BatshColors.onSurfaceVariant.withValues(alpha: 0.7),
                   ),
                 ],
               ),
@@ -170,7 +174,7 @@ class _NavItemState extends State<_NavItem>
               style: BatshTypography.labelSm.copyWith(
                 color: widget.isSelected
                     ? BatshColors.primary
-                    : BatshColors.onSurfaceVariant.withValues(alpha: 0.55),
+                    : BatshColors.onSurfaceVariant.withValues(alpha: 0.7),
                 fontWeight: widget.isSelected ? FontWeight.w600 : FontWeight.w500,
               ),
               child: Text(widget.item.label),
@@ -179,6 +183,7 @@ class _NavItemState extends State<_NavItem>
           ],
         ),
       ),
+    ),
     );
   }
 }

@@ -55,14 +55,10 @@ class ContractorListing {
     // but tolerate either shape so a relation re-detection can't crash us.
     final raw = json['contractor_profiles'];
     final cp = (raw is List ? raw.firstOrNull : raw) as Map<String, dynamic>?;
-    final reviews = (json['reviews'] as List?) ?? const [];
-    final reviewCount = reviews.length;
-    final reviewAvg = reviewCount == 0
-        ? 0.0
-        : reviews
-                .map((r) => ((r as Map)['rating'] as num).toDouble())
-                .reduce((a, b) => a + b) /
-            reviewCount;
+    // Rating is denormalized on contractor_profiles by the reviews_rollup
+    // trigger — no per-card review embed to average client-side.
+    final reviewCount = (cp?['rating_count'] as int?) ?? 0;
+    final reviewAvg = ((cp?['rating_avg'] as num?) ?? 0).toDouble();
     return ContractorListing(
       id: json['id'] as String,
       fullName: (json['full_name'] as String?) ?? '',

@@ -25,7 +25,20 @@ class BatshRadius {
   static const BorderRadius brXxl = BorderRadius.all(Radius.circular(xxl));
   static const BorderRadius brFull = BorderRadius.all(Radius.circular(full));
 
-  // Legacy alias
-  static const double defaultR = sm;
-  static const BorderRadius brDefault = brSm;
+  // Buttons / inputs / skeletons — 12px "pill-lite" per design tokens.
+
+  // Continuous superellipse shape borders (Pattern 18: Continuous Corners)
+  static ShapeBorder continuousShape(double radius, {BorderSide side = BorderSide.none}) =>
+      ContinuousRectangleBorder(
+        borderRadius: BorderRadius.circular(radius * 1.5),
+        side: side,
+      );
+
+  static final ShapeBorder shapeSm = continuousShape(sm);
+  static final ShapeBorder shapeMd = continuousShape(md);
+  static final ShapeBorder shapeLg = continuousShape(lg);
+  static final ShapeBorder shapeXl = continuousShape(xl);
+  static final ShapeBorder shapeDefault = shapeMd;
+  static const double defaultR = md;
+  static const BorderRadius brDefault = brMd;
 }

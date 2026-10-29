@@ -29,6 +29,7 @@ class MyBriefsScreen extends ConsumerWidget {
     return BatshScaffold(
       title: S.tabRequests,
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: null,
         onPressed: () => context.push(Routes.homeownerNewPost),
         backgroundColor: BatshColors.primary,
         foregroundColor: BatshColors.onPrimary,

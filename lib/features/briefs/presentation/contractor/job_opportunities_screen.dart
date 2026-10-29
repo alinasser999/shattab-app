@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -186,6 +187,14 @@ class _JobOpportunitiesScreenState
                 ),
               ),
               data: (list) {
+                // Pattern 7: Pre-cache job cover photos for instant detail transitions
+                if (list.isNotEmpty) {
+                  for (final b in list.take(4)) {
+                    if (b.photoUrls.isNotEmpty) {
+                      precacheImage(CachedNetworkImageProvider(b.photoUrls.first), context);
+                    }
+                  }
+                }
                 final quotedIds = ref.watch(myQuotesProvider).maybeWhen(
                       data: (qs) => {for (final q in qs) q.briefId},
                       orElse: () => <String>{},

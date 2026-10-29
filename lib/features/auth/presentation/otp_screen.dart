@@ -59,12 +59,13 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
 
     return BatshScaffold(
       title: S.otpTitle,
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: BatshSpacing.lg),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
+      body: AutofillGroup(
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: BatshSpacing.lg),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
               Text(
                 S.otpTitle,
                 style: isMobile
@@ -83,7 +84,13 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
                 hint: S.otpHint,
                 keyboardType: TextInputType.number,
                 textInputAction: TextInputAction.done,
+                autofillHints: const [AutofillHints.oneTimeCode],
                 onSubmitted: (_) => _submit(),
+                onChanged: (v) {
+                  if (v.trim().length == 6) {
+                    _submit();
+                  }
+                },
                 errorText: _errorText,
                 inputFormatters: [
                   FilteringTextInputFormatter.digitsOnly,
@@ -113,6 +120,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
           ),
         ),
       ),
+    ),
     );
   }
 }

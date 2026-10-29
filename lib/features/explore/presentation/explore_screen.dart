@@ -68,6 +68,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
     return BatshScaffold(
       title: S.exploreTitle,
       floatingActionButton: FloatingActionButton(
+        heroTag: null,
         onPressed: () {
           _ensureAuth(context, () => context.push('${_explorePrefix()}/new'));
         },

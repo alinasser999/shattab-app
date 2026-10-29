@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../../../../core/theme/batsh_colors.dart';
-import '../../../../../core/theme/batsh_motion.dart';
 import '../../../../../core/theme/batsh_radius.dart';
 import '../../../../../core/theme/batsh_spacing.dart';
+import '../../../../../core/widgets/batsh_shimmer.dart';
 
 class JobCardSkeleton extends StatelessWidget {
   const JobCardSkeleton({super.key});
@@ -22,58 +21,39 @@ class JobCardSkeleton extends StatelessWidget {
         children: [
           Row(
             children: [
-              _shimmerBox(width: 52, height: 22, radius: 20),
+              BatshShimmerBox(width: 52, height: 22, borderRadius: BorderRadius.circular(20)),
               const Spacer(),
-              _shimmerBox(width: 22, height: 22, radius: 0),
+              BatshShimmerBox(width: 22, height: 22, borderRadius: BorderRadius.zero),
             ],
           ),
           const SizedBox(height: BatshSpacing.md),
-          _shimmerBox(width: 140, height: 28),
+          const BatshShimmerBox(width: 140, height: 28),
           const SizedBox(height: BatshSpacing.sm),
-          _shimmerBox(width: double.infinity, height: 18),
+          const BatshShimmerBox(width: double.infinity, height: 18),
           const SizedBox(height: BatshSpacing.xs),
-          _shimmerBox(width: 180, height: 16),
+          const BatshShimmerBox(width: 180, height: 16),
           const SizedBox(height: BatshSpacing.sm),
           Row(
             children: [
-              _shimmerBox(width: 60, height: 20, radius: 6),
+              BatshShimmerBox(width: 60, height: 20, borderRadius: BorderRadius.circular(6)),
               const SizedBox(width: BatshSpacing.sm),
-              _shimmerBox(width: 40, height: 20, radius: 6),
+              BatshShimmerBox(width: 40, height: 20, borderRadius: BorderRadius.circular(6)),
               const Spacer(),
-              _shimmerBox(width: 40, height: 14),
+              const BatshShimmerBox(width: 40, height: 14),
             ],
           ),
           const SizedBox(height: BatshSpacing.md),
           Row(
             children: [
-              _shimmerBox(width: 80, height: 14),
+              const BatshShimmerBox(width: 80, height: 14),
               const Spacer(),
-              _shimmerBox(width: 70, height: 30, radius: 20),
+              BatshShimmerBox(width: 70, height: 30, borderRadius: BorderRadius.circular(20)),
               const SizedBox(width: BatshSpacing.sm),
-              _shimmerBox(width: 80, height: 30, radius: 20),
+              BatshShimmerBox(width: 80, height: 30, borderRadius: BorderRadius.circular(20)),
             ],
           ),
         ],
       ),
     );
-  }
-
-  Widget _shimmerBox({
-    required double width,
-    required double height,
-    double radius = 8,
-  }) {
-    return Container(
-      width: width,
-      height: height,
-      decoration: BoxDecoration(
-        color: BatshColors.surfaceContainerHigh,
-        borderRadius: BorderRadius.circular(radius),
-      ),
-    ).animate(onPlay: (ctrl) => ctrl.repeat(reverse: true)).shimmer(
-          duration: BatshMotion.slower,
-          curve: BatshMotion.easeInOut,
-          color: BatshColors.surfaceContainerLowest,
-        );
   }
 }
